@@ -22,9 +22,9 @@ log = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.skipif(
     # Default value in get() ensures that when *not* on Travis, the tests run
-    # condition=os.environ.get('TRAVIS_EVENT_TYPE', 'cron') != 'cron',
+    condition=os.environ.get('TRAVIS_EVENT_TYPE', 'cron') != 'cron',
     # For development/debugging, uncomment the following to *always* run
-    condition=False,
+    # condition=False,
     reason="Fragile source tests only run on Travis for 'cron' events.")
 
 

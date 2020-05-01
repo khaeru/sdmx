@@ -26,7 +26,7 @@ class Reader(BaseReader):
         # Initialize message instance
         msg = DataMessage()
 
-        if dsd:
+        if dsd:  # pragma: no cover
             # Store explicit DSD, if any
             msg.dataflow.structure = dsd
 
