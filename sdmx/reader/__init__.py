@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class BaseReader(ABC):
     @abstractmethod
-    def read_message(self, source):
+    def read_message(self, source, dsd=None):
         """Read message from *source*.
 
         Must return an instance of a model.Message subclass.

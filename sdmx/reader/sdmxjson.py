@@ -22,16 +22,20 @@ from sdmx.reader import BaseReader
 
 class Reader(BaseReader):
     """Read SDMXJSON 2.1 and expose it as instances from :mod:`sdmx.model`."""
-    def read_message(self, source):
+    def read_message(self, source, dsd=None):
         # Initialize message instance
         msg = DataMessage()
+
+        if dsd:
+            # Store explicit DSD, if any
+            msg.dataflow.structure = dsd
 
         # Read JSON
         source.default_size = -1
         tree = json.load(source)
 
         # Read the header
-        # FIXME KeyError: 'header'
+        # TODO handle KeyError here
         elem = tree['header']
         msg.header = Header(id=elem['id'], prepared=elem['prepared'],
                             sender=Item(**elem['sender']))
