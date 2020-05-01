@@ -24,6 +24,7 @@ release = sdmx.__version__
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
@@ -34,9 +35,15 @@ extensions = [
 
 # -- Options for HTML output ----------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
+# The theme to use for HTML and HTML Help pages.
 html_theme = 'alabaster'
+
+
+# -- Options for sphinx.ext.extlinks -----------------------------------------
+
+extlinks = {
+    'pull': ('https://github.com/khaeru/sdmx/pull/%s', 'PR #'),
+}
 
 
 # -- Options for sphinx.ext.intersphinx --------------------------------------

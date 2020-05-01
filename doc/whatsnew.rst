@@ -6,6 +6,10 @@ What's new?
 Next release (vX.Y.0)
 =====================
 
+- Test suite improvements
+
+  - :pull:`2`: Add tests of data queries for source(s): OECD
+
 
 :mod:`sdmx` v1.0.0 (2020-05-01)
 ===============================
