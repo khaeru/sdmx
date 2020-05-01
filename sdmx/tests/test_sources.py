@@ -316,6 +316,13 @@ class TestNB(DataSourceTest):
 class TestOECD(DataSourceTest):
     source_id = 'OECD'
 
+    endpoint_args = {
+        'data': dict(
+            resource_id='ITF_GOODS_TRANSPORT',
+            key='.T-CONT-RL-TEU+T-CONT-RL-TON',
+        ),
+    }
+
 
 class TestSGR(DataSourceTest):
     source_id = 'SGR'
