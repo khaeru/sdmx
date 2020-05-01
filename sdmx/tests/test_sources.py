@@ -28,21 +28,17 @@ pytestmark = pytest.mark.skipif(
     reason="Fragile source tests only run on Travis for 'cron' events.")
 
 
-structure_endpoints = list(filter(lambda r: r != Resource.data, Resource))
-
-
 def pytest_generate_tests(metafunc):
     """pytest hook for parametrizing tests with 'endpoint' arguments."""
     if 'endpoint' not in metafunc.fixturenames:
         return  # Don't need to parametrize this metafunc
 
-    endpoints = []
+    # Arguments to parametrize()
+    ep_data = []
+    ids = []
 
-    # SDMX-JSON sources do not support structure queries
+    # Use the test class' source_id attr to look up the Source class
     source = sources[metafunc.cls.source_id]
-    if source.data_content_type == DataContentType.JSON:
-        metafunc.parametrize('endpoint', endpoints)
-        return
 
     # This exception is raised by api.Request._request_from_args
     # TODO parametrize force=True to query these endpoints anyway; then CI
@@ -53,13 +49,17 @@ def pytest_generate_tests(metafunc):
         reason='Known non-supported endpoint.',
         raises=NotImplementedError)
 
-    for ep in structure_endpoints:
+    for ep in Resource:
         # Accumulate multiple marks; first takes precedence
         marks = []
 
         # Check if the associated source supports the endpoint
         supported = source.supports[ep]
-        if not supported:
+        if (source.data_content_type == DataContentType.JSON and
+                ep is not Resource.data):
+            # SDMX-JSON sources only support data queries
+            continue
+        elif not supported:
             marks.append(mark_unsupported)
 
         # Check if the test function's class contains an expected failure
@@ -81,15 +81,21 @@ def pytest_generate_tests(metafunc):
                     reason='503 Server Error: Service Unavailable')
                 )
 
-        endpoints.append(pytest.param(ep, marks=marks))
+        # Get keyword arguments for this endpoint
+        args = metafunc.cls.endpoint_args.get(ep.name, dict())
+        if ep is Resource.data and not len(args):
+            # args must be specified for a data query; no args → no test
+            continue
+
+        ep_data.append(pytest.param(ep, args, marks=marks))
+        ids.append(ep.name)
 
     # Run the test function once for each endpoint
-    metafunc.parametrize('endpoint', endpoints)
+    metafunc.parametrize('endpoint, args', ep_data, ids=ids)
 
 
 class DataSourceTest:
     """Base class for data source tests."""
-    # TODO also test data endpoints
     # TODO also test structure-specific data
 
     # Must be one of the IDs in sources.json
@@ -102,6 +108,9 @@ class DataSourceTest:
     # True to xfail if a 503 Error is returned
     tolerate_503 = False
 
+    # Keyword arguments for particular endpoints
+    endpoint_args = {}
+
     @pytest.fixture
     def req(self):
         # Use a common cache file for all agency tests
@@ -111,15 +120,13 @@ class DataSourceTest:
                        backend='sqlite')
 
     @pytest.mark.remote_data
-    def test_endpoints(self, req, endpoint):
+    def test_endpoints(self, req, endpoint, args):
         # See pytest_generate_tests() for values of 'endpoint'
         cache = self._cache_path.with_suffix('.' + endpoint)
-        result = req.get(endpoint, tofile=cache)
+        result = req.get(endpoint, tofile=cache, **args)
 
         # For debugging
-        # print(cache)
-        # print(cache.read_text())
-        # print(result)
+        # print(cache, cache.read_text(), result, sep='\n\n')
         # assert False
 
         del result
@@ -243,13 +250,13 @@ class TestINEGI(DataSourceTest):
     source_id = 'INEGI'
 
     @pytest.mark.remote_data
-    def test_endpoints(self, req, endpoint):
+    def test_endpoints(self, req, endpoint, args):
         # SSL certificate verification sometimes fails for this server; works
         # in Google Chrome
         req.session.verify = False
 
         # Otherwise identical
-        super().test_endpoints(req, endpoint)
+        super().test_endpoints(req, endpoint, **args)
 
 
 class TestINSEE(DataSourceTest):
@@ -258,11 +265,12 @@ class TestINSEE(DataSourceTest):
     tolerate_503 = True
 
     @pytest.mark.remote_data
-    def test_endpoints(self, req, endpoint):
+    def test_endpoints(self, req, endpoint, args):
         # Using the default 'INSEE' agency in the URL gives a response "La
         # syntaxe de la requête est invalide."
-        req.get(endpoint, provider='all',
+        req.get(endpoint, provider='all', **args,
                 tofile=self._cache_path.with_suffix('.' + endpoint))
+
 
 @pytest.mark.xfail(reason='Service is currently unavailable.',
                    raises=HTTPError)
