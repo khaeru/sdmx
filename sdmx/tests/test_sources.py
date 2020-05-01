@@ -256,7 +256,7 @@ class TestINEGI(DataSourceTest):
         req.session.verify = False
 
         # Otherwise identical
-        super().test_endpoints(req, endpoint, **args)
+        super().test_endpoints(req, endpoint, args)
 
 
 class TestINSEE(DataSourceTest):
