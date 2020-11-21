@@ -378,6 +378,7 @@ class Request:
             and `force` is not :obj:`True`.
 
         """
+        # Insert resource_type and resource_id into kwargs
         kwargs.update(dict(resource_type=resource_type, resource_id=resource_id))
 
         # Allow sources to modify request args
@@ -385,6 +386,11 @@ class Request:
         #      are performed, so that core code does most of the work.
         if self.source:
             self.source.modify_request_args(kwargs)
+
+        # Separate kwargs for requests.Session.send()
+        # This echoes the behaviour of requests.Session.request()
+        send_kw = ("allow_redirects", "cert", "proxies", "stream", "timeout", "verify")
+        send_kwargs = {k: kwargs.pop(k) for k in send_kw if k in kwargs}
 
         # Handle arguments
         if "url" in kwargs:
@@ -409,8 +415,20 @@ class Request:
         if dry_run:
             return req
 
+        # Update the keyword arguments to send()
+        send_kwargs.update(
+            self.session.merge_environment_settings(
+                req.url,
+                send_kwargs.get("proxies", {}),
+                send_kwargs.get("stream"),
+                send_kwargs.get("verify"),
+                send_kwargs.get("cert"),
+            )
+        )
+
         try:
-            response = self.session.send(req)
+            # Send the request
+            response = self.session.send(req, **send_kwargs)
             response.raise_for_status()
         except requests.exceptions.ConnectionError as e:
             raise e from None
