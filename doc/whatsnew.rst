@@ -10,7 +10,9 @@ What's new?
 
 Next release
 ============
- 
+
+- Respect `HTTP[S]_PROXY` environment variables (:issue:`26`, :pull:`27`).
+
 
 v1.5.0 (2020-11-12)
 ===================
