@@ -18,9 +18,7 @@ jobs:
         - windows-latest
         python-version:
         - "3.7"  # Earliest supported version
-        - "3.8"  # Latest supported version
-        # commented: not supported by pydantic 1.6.1
-        # - "3.9"  # Latest version
+        - "3.9"  # Latest supported version
         # commented: only enable once next Python version enters RC
         # - "3.10.0-rc.1"  # Development version
 
