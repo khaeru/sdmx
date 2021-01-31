@@ -1127,7 +1127,7 @@ def _ar(reader, elem):
     dsd = reader.peek("current DSD")
 
     if "None" in elem[0].tag:
-        return model.NoSpecifiedRelationship()
+        return model.NoSpecifiedRelationship
 
     # Iterate over parsed references to Components
     args = dict(dimensions=list())
@@ -1142,7 +1142,7 @@ def _ar(reader, elem):
             # consistency (the referenced ID is same as the PrimaryMeasure.id), but
             # that doesn't affect the returned value, since PrimaryMeasureRelationship
             # has no attributes.
-            return model.PrimaryMeasureRelationship()
+            return model.PrimaryMeasureRelationship
         elif ref.target_cls is model.GroupDimensionDescriptor:
             args["group_key"] = dsd.group_dimensions[ref.target_id]
 

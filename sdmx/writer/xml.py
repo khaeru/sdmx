@@ -402,14 +402,14 @@ def _cc(obj: model.ContentConstraint):
 
 
 @writer
-def _nsr(obj: model.NoSpecifiedRelationship):
+def _nsr(obj: model._NoSpecifiedRelationship):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:None"))
     return elem
 
 
 @writer
-def _pmr(obj: model.PrimaryMeasureRelationship):
+def _pmr(obj: model._PrimaryMeasureRelationship):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:PrimaryMeasure"))
     elem[-1].append(Element(":Ref", id="(not implemented)"))

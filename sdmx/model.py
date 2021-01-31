@@ -1196,12 +1196,18 @@ class AttributeRelationship(BaseModel):
     pass
 
 
-class NoSpecifiedRelationship(AttributeRelationship):
+class _NoSpecifiedRelationship(AttributeRelationship):
     pass
 
 
-class PrimaryMeasureRelationship(AttributeRelationship):
+NoSpecifiedRelationship = _NoSpecifiedRelationship()
+
+
+class _PrimaryMeasureRelationship(AttributeRelationship):
     pass
+
+
+PrimaryMeasureRelationship = _PrimaryMeasureRelationship()
 
 
 class DimensionRelationship(AttributeRelationship):
