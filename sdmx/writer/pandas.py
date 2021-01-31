@@ -213,62 +213,60 @@ def write_dataset(
 ):
     """Convert :class:`~.DataSet`.
 
-    See the :ref:`walkthrough <datetime>` for examples of using the `datetime`
-    argument.
+    See the :ref:`walkthrough <datetime>` for examples of using the `datetime` argument.
 
     Parameters
     ----------
     obj : :class:`~.DataSet` or iterable of :class:`~.Observation`
     attributes : str
-        Types of attributes to return with the data. A string containing
-        zero or more of:
+        Types of attributes to return with the data. A string containing zero or more
+        of:
 
         - ``'o'``: attributes attached to each :class:`~.Observation` .
-        - ``'s'``: attributes attached to any (0 or 1) :class:`~.SeriesKey`
-          associated with each Observation.
-        - ``'g'``: attributes attached to any (0 or more) :class:`~.GroupKey`
-          associated with each Observation.
+        - ``'s'``: attributes attached to any (0 or 1) :class:`~.SeriesKey` associated
+          with each Observation.
+        - ``'g'``: attributes attached to any (0 or more) :class:`~.GroupKey` associated
+          with each Observation.
         - ``'d'``: attributes attached to the :class:`~.DataSet` containing the
           Observations.
 
     dtype : str or :class:`numpy.dtype` or None
-        Datatype for values. If None, do not return the values of a series.
-        In this case, `attributes` must not be an empty string so that some
-        attribute is returned.
+        Datatype for values. If None, do not return the values of a series. In this
+        case, `attributes` must not be an empty string so that some attribute is
+        returned.
     constraint : .ContentConstraint, optional
         If given, only Observations included by the *constraint* are returned.
     datetime : bool or str or or .Dimension or dict, optional
-        If given, return a DataFrame with a :class:`~pandas.DatetimeIndex`
-        or :class:`~pandas.PeriodIndex` as the index and all other dimensions
-        as columns. Valid `datetime` values include:
+        If given, return a DataFrame with a :class:`~pandas.DatetimeIndex` or
+        :class:`~pandas.PeriodIndex` as the index and all other dimensions as columns.
+        Valid `datetime` values include:
 
-        - :class:`bool`: if :obj:`True`, determine the time dimension
-          automatically by detecting a :class:`~.TimeDimension`.
+        - :class:`bool`: if :obj:`True`, determine the time dimension automatically by
+          detecting a :class:`~.TimeDimension`.
         - :class:`str`: ID of the time dimension.
         - :class:`~.Dimension`: the matching Dimension is the time dimension.
         - :class:`dict`: advanced behaviour. Keys may include:
 
-          - **dim** (:class:`~.Dimension` or :class:`str`): the time dimension
-            or its ID.
-          - **axis** (`{0 or 'index', 1 or 'columns'}`): axis on which to place
-            the time dimension (default: 0).
-          - **freq** (:obj:`True` or :class:`str` or :class:`~.Dimension`):
-            produce :class:`pandas.PeriodIndex`. If :class:`str`, the ID of a
-            Dimension containing a frequency specification. If a Dimension, the
-            specified dimension is used for the frequency specification.
+          - **dim** (:class:`~.Dimension` or :class:`str`): the time dimension or its
+            ID.
+          - **axis** (`{0 or 'index', 1 or 'columns'}`): axis on which to place the time
+            dimension (default: 0).
+          - **freq** (:obj:`True` or :class:`str` or :class:`~.Dimension`): produce
+            :class:`pandas.PeriodIndex`. If :class:`str`, the ID of a Dimension
+            containing a frequency specification. If a Dimension, the specified
+            dimension is used for the frequency specification.
 
-            Any Dimension used for the frequency specification is does not
-            appear in the returned DataFrame.
+            Any Dimension used for the frequency specification is does not appear in the
+            returned DataFrame.
 
     Returns
     -------
     :class:`pandas.DataFrame`
-        - if `attributes` is not ``''``, a data frame with one row per
-          Observation, ``value`` as the first column, and additional columns
-          for each attribute;
+        - if `attributes` is not ``''``, a data frame with one row per Observation,
+          ``value`` as the first column, and additional columns for each attribute;
         - if `datetime` is given, various layouts as described above; or
-        - if `_rtype` (passed from :func:`write_datamessage`) is 'compat',
-          various layouts as described in the :ref:`HOWTO <howto-rtype>`.
+        - if `_rtype` (passed from :func:`write_datamessage`) is 'compat', various
+          layouts as described in the :ref:`HOWTO <howto-rtype>`.
     :class:`pandas.Series` with :class:`pandas.MultiIndex`
         Otherwise.
     """
@@ -302,7 +300,11 @@ def write_dataset(
         if dtype:
             row["value"] = observation.value
         if attributes:
+            # Add the combined attributes from observation, series- and group keys
             row.update(observation.attrib)
+        if "d" in attributes:
+            # Add the attributes of the data set
+            row.update(getattr(obj, "attrib", dict()))
 
         data[tuple(map(str, key.get_values()))] = row
 

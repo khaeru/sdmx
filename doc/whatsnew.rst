@@ -11,7 +11,10 @@ What's new?
 Next release
 ============
 
+Bug fixes
+---------
 
+- `attributes=` "d" ignored in :func:`.to_pandas` (:issue:`55`).
 
 v2.0.0 (2021-01-26)
 ===================
