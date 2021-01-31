@@ -14,8 +14,8 @@ Next release
 Bug fixes
 ---------
 
-- :obj:`NoSpecifiedRelationship` and :obj:`PrimaryMeasureRelationship` do not need to be instantiated; they are singletons (:issue:`54`).
-- `attributes=` "d" ignored in :func:`.to_pandas` (:issue:`55`).
+- :obj:`NoSpecifiedRelationship` and :obj:`PrimaryMeasureRelationship` do not need to be instantiated; they are singletons (:issue:`54`, :pull:`56`).
+- `attributes=` "d" ignored in :func:`.to_pandas` (:issue:`55`, :pull:`56`).
 
 v2.0.0 (2021-01-26)
 ===================
