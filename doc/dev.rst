@@ -86,63 +86,40 @@ Releasing
 
 Before releasing, check:
 
-- https://github.com/khaeru/sdmx/actions?query=workflow:pytest+branch:master to
-  ensure that the push and scheduled builds are passing.
-- https://readthedocs.org/projects/sdmx1/builds/ to ensure that the docs build
-  is passing.
+- https://github.com/khaeru/sdmx/actions?query=workflow:pytest+branch:master to ensure that the push and scheduled builds are passing.
+- https://readthedocs.org/projects/sdmx1/builds/ to ensure that the docs build is passing.
 
 Address any failures before releasing.
 
-1. Edit :file:`doc/whatsnew.rst` to replace "Next release" with the version number and date.
-   Make a commit with a message like "Mark vX.Y.Z in whatsnew.rst".
+1. Edit :file:`doc/whatsnew.rst`.
+   Comment the heading "Next release", then insert another heading below it, at the same level, with the version number and date.
+   Make a commit with a message like "Mark vX.Y.Z in doc/whatsnew".
 
-2. Tag the version as a release candidate, e.g.::
+2. Tag the version as a release candidate, i.e. with a ``rcN`` suffix, and push::
 
     $ git tag v1.2.3rc1
+    $ git push --tags master
 
-3. Test-build and check the source and binary packages::
+3. Check:
 
-    $ rm -rf build dist
-    $ python setup.py bdist_wheel sdist
-    $ twine check dist/*
+   - at https://github.com/khaeru/sdmx/actions?query=workflow:publish that the workflow completes: the package builds successfully and is published to TestPyPI.
+   - at https://test.pypi.org/project/sdmx1/ that:
+
+      - The package can be downloaded, installed and run.
+      - The README is rendered correctly.
 
    Address any warnings or errors that appear.
-   If needed, make a new commit and go back to step (2).
+   If needed, make a new commit and go back to step (2), incrementing the rc number.
 
-4. Upload the packages to the PyPI test repository::
-
-    $ twine upload -r testpypi dist/*
-
-5. Check at https://test.pypi.org/project/sdmx1/ that:
-
-   - The package can be downloaded, installed and run.
-   - The README is rendered correctly.
-   - Links to the documentation go to the correct version.
-
-   If not, modify the code and go back to step (2).
-
-6. Tag the release::
+4. **Optional.** This step (but *not* step (2)) can also be performed directly on GitHub; see (5), next.
+   Tag the release itself and push::
 
     $ git tag v1.2.3
+    $ git push --tags master
 
-   If this is the same commit as the release candidate tag, delete that tag.
+5. Visit https://github.com/khaeru/sdmx/releases and mark the new release: either using the pushed tag from (4), or by creating the tag and release simultaneously.
 
-7. Built and upload to both PyPI and the test repo (to supersede the RC)::
-
-    $ rm -rf build dist
-    $ python setup.py bdist_wheel sdist
-    $ twine check dist/*
-    $ twine upload dist/*
-    $ twine upload -r testpypi dist/*
-
-8. Edit :file:`doc/whatsnew.rst` to add a new heading for the next release.
-   Make a commit with a message like "Reset whatsnew.rst to development state".
-
-9. Push the commits and tag to GitHub::
-
-    $ git push --tags
-
-   Visit https://github.com/khaeru/sdmx/releases and mark the new release using the pushed tag.
+6. Check at https://github.com/khaeru/sdmx/actions?query=workflow:publish and https://pypi.org/project/sdmx1/ that the distributions are published.
 
 
 Internal code reference
