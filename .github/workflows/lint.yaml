@@ -35,9 +35,3 @@ jobs:
         pip install flake8 isort
         flake8 --count --max-complexity=27 --show-source --statistics
         isort --check-only .
-
-    - name: Test package build
-      run: |
-        pip install twine wheel
-        python3 setup.py bdist_wheel sdist
-        twine check dist/*
