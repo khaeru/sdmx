@@ -8,8 +8,13 @@ What's new?
    :backlinks: none
    :depth: 1
 
-.. Next release
-.. ============
+Next release
+============
+
+Bug fixes
+---------
+
+- :mod:`.reader.xml` ignored values like ``0`` or ``0.0`` that evaluated equivalent to :obj:`False` (:pull:`86`).
 
 v2.6.0 (2021-07-11)
 ===================
