@@ -72,21 +72,29 @@ def test_ds(dsd, obs):
 
 def test_ds_structurespecific(dsd):
     series_key = dsd.make_key(m.SeriesKey, dict(FOO=1, BAR=2))
-    dimension_key = dsd.make_key(m.Key, dict(BAZ=3))
     primary_measure = m.PrimaryMeasure(id="OBS_VALUE")
-    observation = m.Observation(
-        series_key=series_key,
-        dimension=dimension_key,
-        value_for=primary_measure,
-        value=25,
-    )
-    series = {series_key: [observation]}
+    observations = [
+        m.Observation(
+            series_key=series_key,
+            dimension=dsd.make_key(m.Key, dict(BAZ=3)),
+            value_for=primary_measure,
+            value=25,
+        ),
+        m.Observation(
+            series_key=series_key,
+            dimension=dsd.make_key(m.Key, dict(BAZ=4)),
+            value_for=primary_measure,
+            value=0,
+        ),
+    ]
+    series = {series_key: observations}
     ds = m.StructureSpecificDataSet(structured_by=dsd, series=series)
     dm = message.DataMessage(data=[ds])
     result = sdmx.to_xml(dm, pretty_print=True)
     exp = (
         '    <Series FOO="1" BAR="2">\n'
         '      <Obs OBS_VALUE="25" BAZ="3"/>\n'
+        '      <Obs OBS_VALUE="0" BAZ="4"/>\n'
         "    </Series>"
     )
     assert exp in result.decode()
