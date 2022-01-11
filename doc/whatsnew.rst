@@ -11,6 +11,7 @@ What's new?
 Next release
 ============
 
+- Pydantic >= 1.9 is supported (:pull:`91`).
 - Python 3.10 is fully supported (:pull:`89`).
 
 v2.6.1 (2021-07-27)

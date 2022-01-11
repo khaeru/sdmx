@@ -130,7 +130,7 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
             if error:
                 raise ValidationError([error], self.__class__)
             else:
-                return v.popitem()
+                return (key, value)
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
