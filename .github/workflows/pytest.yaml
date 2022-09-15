@@ -30,33 +30,36 @@ jobs:
 
     steps:
     - name: Cancel previous runs that have not completed
-      uses: styfle/cancel-workflow-action@0.7.0
+      uses: styfle/cancel-workflow-action@0.10.0
       with:
         access_token: ${{ github.token }}
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Checkout test data
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: khaeru/sdmx-test-data
         path: sdmx-test-data
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache Python packages
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cache/pip
-          ~/Library/Caches/pip
-          ~/appdata/local/pip/cache
-        key: ${{ matrix.os }}
-
     - name: Upgrade pip, wheel
       run: python -m pip install --upgrade pip wheel
+
+    - name: Locate pip cache directory
+      id: pip-cache
+      run: echo "::set-output name=dir::$(pip cache dir)"
+
+    - name: Cache Python packages
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ${{ matrix.os }}-py${{ matrix.python-version }}
+        restore-keys: |
+          ${{ matrix.version.os }}
 
     - name: Install the Python package and dependencies
       run: pip install .[cache,docs,tests]
@@ -67,7 +70,7 @@ jobs:
       run: pytest --cov-report=xml -ra --color=yes --verbose
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
 
     - name: Check typing with mypy
       run: |
@@ -85,29 +88,31 @@ jobs:
 
     steps:
     - name: Cancel previous runs that have not completed
-      uses: styfle/cancel-workflow-action@0.7.0
+      uses: styfle/cancel-workflow-action@0.10.0
       with:
         access_token: ${{ github.token }}
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Checkout test data
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: khaeru/sdmx-test-data
         path: sdmx-test-data
 
-    - uses: actions/setup-python@v2
-
-    - name: Cache Python packages
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cache/pip
-        key: ubuntu-latest
+    - uses: actions/setup-python@v4
+      id: py
 
     - name: Upgrade pip, wheel
       run: python -m pip install --upgrade pip wheel
+
+    - name: Cache Python packages
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ubuntu-latest-py${{ steps.py.outputs.python-version }}
+        restore-keys: |
+          ubuntu-latest
 
     - name: Install the Python package and dependencies
       run: pip install .[cache,docs,tests]
@@ -119,11 +124,11 @@ jobs:
       run: pytest -m "network" --cov-report=xml -ra --color=yes --verbose
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
 
     - name: Deploy to GitHub Pages
       if: success()
-      uses: crazy-max/ghaction-github-pages@v2
+      uses: crazy-max/ghaction-github-pages@v3
       with:
         build_dir: service-endpoints
       env:
