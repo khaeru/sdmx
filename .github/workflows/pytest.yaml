@@ -19,7 +19,8 @@ jobs:
         python-version:
         - "3.7"  # Earliest supported version; actually 3.7.2
         - "3.9"
-        - "3.10" # Latest supported version
+        - "3.10.6"  # Work around python/mypy#13627
+        # - "3.10.7"  # Latest supported version. mypy errors; see above.
         # commented: only enable once next Python version enters RC
         # - "3.11.0-rc.1"  # Development version
 
