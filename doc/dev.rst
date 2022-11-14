@@ -47,7 +47,7 @@ To retrieve them, use one of the following methods:
 
        $ git clone git@github.com:khaeru/sdmx-test-data.git
 
-   b. Download https://github.com/khaeru/sdmx-test-data/archive/main.zip
+   b. Download https://github.com/khaeru/sdmx-test-data/archive/.zip
 
 2. Indicate where pytest can find the files, by one of two methods:
 
@@ -91,16 +91,22 @@ Before releasing, check:
 
 Address any failures before releasing.
 
-1. Edit :file:`doc/whatsnew.rst`.
+1. Create a new branch::
+
+     $ git checkout -v release/X.Y.Z
+
+2. Edit :file:`doc/whatsnew.rst`.
    Comment the heading "Next release", then insert another heading below it, at the same level, with the version number and date.
-   Make a commit with a message like "Mark vX.Y.Z in doc/whatsnew".
 
-2. Tag the version as a release candidate, i.e. with a ``rcN`` suffix, and push::
+3. Make a commit with a message like "Mark vX.Y.Z in doc/whatsnew".
 
-    $ git tag v1.2.3rc1
-    $ git push --tags origin main
+4. Tag the version as a release candidate, i.e. with a ``rcN`` suffix, and push::
 
-3. Check:
+    $ git tag vX.Y.ZrcN
+    $ git push --tags --set-upstream origin release/X.Y.Z
+
+5. Open a pull request with the title “Release vX.Y.Z” using this branch.
+   Check:
 
    - at https://github.com/khaeru/sdmx/actions?query=workflow:publish that the workflow completes: the package builds successfully and is published to TestPyPI.
    - at https://test.pypi.org/project/sdmx1/ that:
@@ -108,18 +114,20 @@ Address any failures before releasing.
       - The package can be downloaded, installed and run.
       - The README is rendered correctly.
 
-   Address any warnings or errors that appear.
-   If needed, make a new commit and go back to step (2), incrementing the rc number.
+   If needed, address any warnings or errors that appear and then continue from step (3), i.e. make (a) new commit(s) and tag, incrementing the release candidate number, e.g. from ``rc1`` to ``rc2``.
 
-4. **Optional.** This step (but *not* step (2)) can also be performed directly on GitHub; see (5), next.
-   Tag the release itself and push::
+6. Merge the PR using the “rebase and merge” method.
 
-    $ git tag v1.2.3
+7. (optional) Tag the release itself and push::
+
+    $ git tag vX.Y.Z
     $ git push --tags origin main
 
-5. Visit https://github.com/khaeru/sdmx/releases and mark the new release: either using the pushed tag from (4), or by creating the tag and release simultaneously.
+   This step (but *not* step (3)) can also be performed directly on GitHub; see (7), next.
 
-6. Check at https://github.com/khaeru/sdmx/actions?query=workflow:publish and https://pypi.org/project/sdmx1/ that the distributions are published.
+8. Visit https://github.com/khaeru/sdmx/releases and mark the new release: either using the pushed tag from (7), or by creating the tag and release simultaneously.
+
+9. Check at https://github.com/khaeru/sdmx/actions?query=workflow:publish and https://pypi.org/project/sdmx1/ that the distributions are published.
 
 
 Internal code reference
