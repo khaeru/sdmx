@@ -7,6 +7,7 @@ Format = namedtuple("Format", "mime base data meta extra")
 #: Values for the ``extra`` field of :class:`Format`.
 Extra = IntFlag("Extra", "ss ts")
 
+
 #: SDMX formats. Each record is an instance of :class:`Format`, containing the following
 #: fields:
 #:
@@ -44,12 +45,10 @@ FORMATS = [
         False,
         Extra.ss | Extra.ts,
     ),
-    Format("application/vnd.sdmx.data+json;version=1.0.0", "json", True, False, 0),
-    Format("application/vnd.sdmx.data+csv;version=1.0.0", "csv", True, False, 0),
     Format("application/vnd.sdmx.structure+xml;version=2.1", "xml", False, False, 0),
-    Format(
-        "application/vnd.sdmx.structure+json;version=1.0.0", "json", False, False, 0
-    ),
+    Format("application/vnd.sdmx.data+xml;version=3.0.0", "xml", True, False, 0),
+    Format("application/vnd.sdmx.structure+xml;version=3.0.0", "xml", True, False, 0),
+    Format("application/vnd.sdmx.metadata+xml;version=2.0.0", "xml", True, False, 0),
     Format("application/vnd.sdmx.schema+xml;version=2.1", "xml", False, True, 0),
     Format(
         "application/vnd.sdmx.genericmetadata+xml;version=2.1", "xml", True, True, 0
@@ -61,6 +60,17 @@ FORMATS = [
         True,
         Extra.ss,
     ),
+    # JSON formats
+    Format("application/vnd.sdmx.data+json;version=1.0.0", "json", True, False, 0),
+    Format("application/vnd.sdmx.data+json;version=2.0.0", "json", True, False, 0),
+    Format(
+        "application/vnd.sdmx.structure+json;version=1.0.0", "json", False, False, 0
+    ),
+    Format("application/vnd.sdmx.structure+json;version=2.0.0", "json", True, False, 0),
+    Format("application/vnd.sdmx.metadata+json;version=2.0.0", "json", True, False, 0),
+    # CSV formats
+    Format("application/vnd.sdmx.data+csv;version=1.0.0", "csv", True, False, 0),
+    Format("application/vnd.sdmx.metadata+csv;version=2.0.0", "csv", True, False, 0),
 ]
 
 
