@@ -5,6 +5,8 @@ these tests, a command-line argument must be given:
 
 $ pytest -m network [...]
 """
+import re
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -120,10 +122,11 @@ def test_doc_usage_structure():
 
     # Check specific headers
     headers = msg1.response.headers
-    assert headers["Content-Type"] == (
-        "application/vnd.sdmx.structure+xml; " "version=2.1"
+    assert re.fullmatch(
+        r"application/vnd\.sdmx\.structure\+xml; ?version=2\.1",
+        headers["Content-Type"],
     )
-    assert all(k in headers for k in ["Connection", "Date", "Server"])
+    assert {"Connection", "Date", "Server"} <= set(headers)
 
     # Removed: in pandaSDMX 0.x this was a convenience method that (for this
     # structure message) returned two DataStructureDefinitions. Contra the
