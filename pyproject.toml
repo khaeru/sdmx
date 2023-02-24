@@ -20,6 +20,7 @@ exclude = [
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available.
 module = [
+  "lxml.builder",  # Not covered by lxml-stubs
   "requests_mock",
 ]
 ignore_missing_imports = true
