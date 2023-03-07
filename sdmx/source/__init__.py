@@ -152,12 +152,10 @@ class Source(BaseModel):
 
 
 class _NoSource(Source):
-    id = ""
-    url = ""
-    name = ""
+    pass
 
 
-NoSource = _NoSource()
+NoSource = _NoSource(id="", url="", name="")
 
 
 def add_source(
