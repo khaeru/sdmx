@@ -29,6 +29,14 @@ from sdmx.model import (
 )
 
 
+class TestAnnotation:
+    def test_text(self) -> None:
+        """`text` can be :class:`str`."""
+        a = model.Annotation(text="Foo")
+
+        assert a.text.localizations["en"] == "Foo"
+
+
 class TestAnnotableArtefact:
     def test_get_annotation(self):
         aa = model.AnnotableArtefact(
@@ -460,6 +468,10 @@ def test_internationalstring() -> None:
 
 
 class TestItem:
+    def test_name(self) -> None:
+        """`name` can be :class:`str`."""
+        Item(name="Foo")
+
     def test_general(self):
         # Add a tree of 10 items
         items = []
@@ -569,6 +581,13 @@ def test_itemscheme_compare(caplog):
         "Not identical: name <en: Foo> != <en: Bar>",
         "…for items with id='foo'",
     ]
+
+
+class TestCode:
+    def test_name(self) -> None:
+        c = model.Code(id="FOO", name=("en", "Foo"))
+
+        assert "Foo" == c.name.localizations["en"]
 
 
 class TestAttributeValue:
@@ -685,6 +704,13 @@ class TestDataKeySet:
     def test_len(self, dks):
         """__len__() works."""
         assert 0 == len(dks)
+
+
+class TestContact:
+    def test_init(self) -> None:
+        model.Contact(
+            name="Jane Smith", org_unit="Statistics Office", responsibility="Director"
+        )
 
 
 @pytest.mark.parametrize(
