@@ -359,7 +359,7 @@ class TestIdentifiableArtefact:
             sorted([DataStructureDefinition(id="c")] + items)
 
 
-def test_nameable(caplog):
+def test_nameable(caplog) -> None:
     na1 = model.NameableArtefact(
         name=dict(en="Name"), description=dict(en="Description")
     )
@@ -397,9 +397,9 @@ def test_maintainable():
         model.MaintainableArtefact(maintainer=model.Agency(id="FOO"), urn=urn)
 
 
-def test_internationalstring():
+def test_internationalstring() -> None:
     # Constructor; the .name attribute is an InternationalString
-    i = Item(id="ECB")
+    i: Item = Item(id="ECB")
 
     # Set and get using the attribute directly
     i.name.localizations["DE"] = "Europäische Zentralbank"
@@ -416,24 +416,24 @@ def test_internationalstring():
     )
 
     # Setting with a string directly sets the value in the default locale
-    i.name = "European Central Bank"
+    i.name = "European Central Bank"  # type: ignore [assignment]
     assert len(i.name.localizations) == 1
     assert i.name.localizations[DEFAULT_LOCALE] == "European Central Bank"
 
     # Setting with a (locale, text) tuple
-    i.name = ("FI", "Euroopan keskuspankki")
+    i.name = ("FI", "Euroopan keskuspankki")  # type: ignore [assignment]
     assert len(i.name.localizations) == 1
 
     # Setting with a dict()
-    i.name = {"IT": "Banca centrale europea"}
+    i.name = {"IT": "Banca centrale europea"}  # type: ignore [assignment]
     assert len(i.name.localizations) == 1
 
     # Using some other type is an error
     with raises(pydantic.ValidationError):
-        i.name = 123
+        i.name = 123  # type: ignore [assignment]
 
     # Same, but in the constructor
-    i2 = Item(id="ECB", name="European Central Bank")
+    i2: Item = Item(id="ECB", name="European Central Bank")
 
     # str() uses the default locale
     assert str(i2.name) == "European Central Bank"
@@ -443,11 +443,11 @@ def test_internationalstring():
         Item(id="ECB", name=None)
 
     # …giving empty dict is equivalent to giving nothing
-    i3 = Item(id="ECB", name={})
+    i3: Item = Item(id="ECB", name={})
     assert i3.name.localizations == Item(id="ECB").name.localizations
 
     # Create with iterable of 2-tuples
-    i4 = Item(
+    i4: Item = Item(
         id="ECB",
         name=[("DE", "Europäische Zentralbank"), ("FR", "Banque centrale européenne")],
     )
