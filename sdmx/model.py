@@ -22,9 +22,8 @@ Details of the implementation:
 
 import logging
 from collections import ChainMap
-from collections.abc import Collection
-from collections.abc import Iterable as IterableABC
 from copy import copy
+from dataclasses import _MISSING_TYPE, MISSING
 from datetime import date, datetime, timedelta
 from enum import Enum
 from functools import lru_cache
@@ -108,9 +107,12 @@ class InternationalString:
 
     """
 
+    # Types that can be converted into InternationalString
+    _CONVERTIBLE = Union[str, Sequence, Mapping, Iterable[Tuple[str, str]]]
+
     localizations: Dict[str, str] = {}
 
-    def __init__(self, value=None, **kwargs):
+    def __init__(self, value: Optional[_CONVERTIBLE] = None, **kwargs):
         super().__init__()
 
         # Handle initial values according to type
@@ -118,23 +120,26 @@ class InternationalString:
             # Bare string
             value = {DEFAULT_LOCALE: value}
         elif (
-            isinstance(value, Collection)
+            isinstance(value, Sequence)
             and len(value) == 2
             and isinstance(value[0], str)
         ):
             # 2-tuple of str is (locale, label)
             value = {value[0]: value[1]}
-        elif isinstance(value, dict):
+        elif isinstance(value, Mapping):
             # dict; use directly
-            pass
-        elif isinstance(value, IterableABC):
-            # Iterable of 2-tuples
-            value = {locale: label for (locale, label) in value}
+            value = dict(value)
         elif value is None:
             # Keyword arguments → dict, possibly empty
             value = dict(kwargs)
         else:
-            raise ValueError(value, kwargs)
+            try:
+                # Iterable of 2-tuples
+                value = {  # type: ignore [misc]
+                    locale: label for (locale, label) in value
+                }
+            except Exception:
+                raise ValueError(value, kwargs)
 
         self.localizations = value
 
@@ -200,6 +205,10 @@ class InternationalString:
         except KeyError:
             # No existing value/None; return the assigned value
             return value
+
+
+_TInternationalString = Union[InternationalString, InternationalString._CONVERTIBLE]
+_TInternationalStringInit = Union[_TInternationalString, _MISSING_TYPE, None]
 
 
 class Annotation(BaseModel):
