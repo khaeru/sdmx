@@ -53,6 +53,7 @@ from sdmx.rest import Resource
 from sdmx.util import (
     BaseModel,
     DictLike,
+    Field,
     compare,
     dictlike_field,
     only,
@@ -1016,9 +1017,9 @@ class Contact(BaseModel):
     #:
     responsibility: InternationalString = InternationalString()
     #:
-    email: List[str]
+    email: List[str] = Field(default_factory=list)
     #:
-    uri: List[str]
+    uri: List[str] = Field(default_factory=list)
 
 
 class Organisation(Item["Organisation"]):
