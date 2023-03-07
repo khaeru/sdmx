@@ -23,7 +23,6 @@ Details of the implementation:
 import logging
 from collections import ChainMap
 from copy import copy
-from dataclasses import _MISSING_TYPE, MISSING
 from datetime import date, datetime, timedelta
 from enum import Enum
 from functools import lru_cache
@@ -208,7 +207,8 @@ class InternationalString:
 
 
 _TInternationalString = Union[InternationalString, InternationalString._CONVERTIBLE]
-_TInternationalStringInit = Union[_TInternationalString, _MISSING_TYPE, None]
+# _TInternationalStringInit = Union[_TInternationalString, _MISSING_TYPE, None]
+_TInternationalStringInit = Union[_TInternationalString, None]
 
 
 class Annotation(BaseModel):
@@ -224,8 +224,8 @@ class Annotation(BaseModel):
     #: Content of the annotation.
     text: InternationalString = InternationalString()
 
-    def __init__(self, *, text: _TInternationalStringInit = MISSING, **kwargs):
-        if text is not MISSING:
+    def __init__(self, *, text: _TInternationalStringInit = None, **kwargs):
+        if text is not None:
             kwargs["text"] = InternationalString(text)
         super().__init__(**kwargs)
 
@@ -358,13 +358,13 @@ class NameableArtefact(IdentifiableArtefact):
     def __init__(
         self,
         *,
-        name: _TInternationalStringInit = MISSING,
-        description: _TInternationalStringInit = MISSING,
+        name: _TInternationalStringInit = None,
+        description: _TInternationalStringInit = None,
         **kwargs,
     ):
-        if name is not MISSING:
+        if name is not None:
             kwargs["name"] = InternationalString(name)
-        if description is not MISSING:
+        if description is not None:
             kwargs["description"] = InternationalString(description)
         super().__init__(**kwargs)
 
@@ -1056,16 +1056,16 @@ class Contact(BaseModel):
     def __init__(
         self,
         *,
-        name: _TInternationalStringInit = MISSING,
-        org_unit: _TInternationalStringInit = MISSING,
-        responsibility: _TInternationalStringInit = MISSING,
+        name: _TInternationalStringInit = None,
+        org_unit: _TInternationalStringInit = None,
+        responsibility: _TInternationalStringInit = None,
         **kwargs,
     ):
-        if name is not MISSING:
+        if name is not None:
             kwargs["name"] = InternationalString(name)
-        if org_unit is not MISSING:
+        if org_unit is not None:
             kwargs["org_unit"] = InternationalString(org_unit)
-        if responsibility is not MISSING:
+        if responsibility is not None:
             kwargs["responsibility"] = InternationalString(responsibility)
         super().__init__(**kwargs)
 
