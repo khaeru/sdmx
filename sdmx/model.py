@@ -224,6 +224,11 @@ class Annotation(BaseModel):
     #: Content of the annotation.
     text: InternationalString = InternationalString()
 
+    def __init__(self, *, text: _TInternationalStringInit = MISSING, **kwargs):
+        if text is not MISSING:
+            kwargs["text"] = InternationalString(text)
+        super().__init__(**kwargs)
+
 
 class AnnotableArtefact(BaseModel):
     #: :class:`Annotations <.Annotation>` of the object.
@@ -349,6 +354,19 @@ class NameableArtefact(IdentifiableArtefact):
     name: InternationalString = InternationalString()
     #: Multi-lingual description of the object.
     description: InternationalString = InternationalString()
+
+    def __init__(
+        self,
+        *,
+        name: _TInternationalStringInit = MISSING,
+        description: _TInternationalStringInit = MISSING,
+        **kwargs,
+    ):
+        if name is not MISSING:
+            kwargs["name"] = InternationalString(name)
+        if description is not MISSING:
+            kwargs["description"] = InternationalString(description)
+        super().__init__(**kwargs)
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -520,8 +538,8 @@ class Item(NameableArtefact, Generic[IT]):
     parent: Optional[Union[IT, "ItemScheme"]] = None
     child: List[IT] = []
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         # Add this Item as a child of its parent
         parent = kwargs.get("parent", None)
@@ -979,6 +997,11 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
 class Code(Item["Code"]):
     """SDMX-IM Code."""
 
+    # NB this exists solely to prevent mypy errors when name= is given as a type other
+    # than InternationalString, eventually handled by NameableArtefact
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
 
 class Codelist(ItemScheme[Code]):
     _Item = Code
@@ -1029,6 +1052,22 @@ class Contact(BaseModel):
     email: List[str] = Field(default_factory=list)
     #:
     uri: List[str] = Field(default_factory=list)
+
+    def __init__(
+        self,
+        *,
+        name: _TInternationalStringInit = MISSING,
+        org_unit: _TInternationalStringInit = MISSING,
+        responsibility: _TInternationalStringInit = MISSING,
+        **kwargs,
+    ):
+        if name is not MISSING:
+            kwargs["name"] = InternationalString(name)
+        if org_unit is not MISSING:
+            kwargs["org_unit"] = InternationalString(org_unit)
+        if responsibility is not MISSING:
+            kwargs["responsibility"] = InternationalString(responsibility)
+        super().__init__(**kwargs)
 
 
 class Organisation(Item["Organisation"]):
