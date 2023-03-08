@@ -22,8 +22,6 @@ Details of the implementation:
 
 import logging
 from collections import ChainMap
-from collections.abc import Collection
-from collections.abc import Iterable as IterableABC
 from copy import copy
 from datetime import date, datetime, timedelta
 from enum import Enum
@@ -53,6 +51,7 @@ from sdmx.rest import Resource
 from sdmx.util import (
     BaseModel,
     DictLike,
+    Field,
     compare,
     dictlike_field,
     only,
@@ -107,9 +106,12 @@ class InternationalString:
 
     """
 
+    # Types that can be converted into InternationalString
+    _CONVERTIBLE = Union[str, Sequence, Mapping, Iterable[Tuple[str, str]]]
+
     localizations: Dict[str, str] = {}
 
-    def __init__(self, value=None, **kwargs):
+    def __init__(self, value: Optional[_CONVERTIBLE] = None, **kwargs):
         super().__init__()
 
         # Handle initial values according to type
@@ -117,23 +119,26 @@ class InternationalString:
             # Bare string
             value = {DEFAULT_LOCALE: value}
         elif (
-            isinstance(value, Collection)
+            isinstance(value, Sequence)
             and len(value) == 2
             and isinstance(value[0], str)
         ):
             # 2-tuple of str is (locale, label)
             value = {value[0]: value[1]}
-        elif isinstance(value, dict):
+        elif isinstance(value, Mapping):
             # dict; use directly
-            pass
-        elif isinstance(value, IterableABC):
-            # Iterable of 2-tuples
-            value = {locale: label for (locale, label) in value}
+            value = dict(value)
         elif value is None:
             # Keyword arguments → dict, possibly empty
             value = dict(kwargs)
         else:
-            raise ValueError(value, kwargs)
+            try:
+                # Iterable of 2-tuples
+                value = {  # type: ignore [misc]
+                    locale: label for (locale, label) in value
+                }
+            except Exception:
+                raise ValueError(value, kwargs)
 
         self.localizations = value
 
@@ -201,6 +206,11 @@ class InternationalString:
             return value
 
 
+_TInternationalString = Union[InternationalString, InternationalString._CONVERTIBLE]
+# _TInternationalStringInit = Union[_TInternationalString, _MISSING_TYPE, None]
+_TInternationalStringInit = Union[_TInternationalString, None]
+
+
 class Annotation(BaseModel):
     #: Can be used to disambiguate multiple annotations for one AnnotableArtefact.
     id: Optional[str] = None
@@ -213,6 +223,11 @@ class Annotation(BaseModel):
 
     #: Content of the annotation.
     text: InternationalString = InternationalString()
+
+    def __init__(self, *, text: _TInternationalStringInit = None, **kwargs):
+        if text is not None:
+            kwargs["text"] = InternationalString(text)
+        super().__init__(**kwargs)
 
 
 class AnnotableArtefact(BaseModel):
@@ -339,6 +354,19 @@ class NameableArtefact(IdentifiableArtefact):
     name: InternationalString = InternationalString()
     #: Multi-lingual description of the object.
     description: InternationalString = InternationalString()
+
+    def __init__(
+        self,
+        *,
+        name: _TInternationalStringInit = None,
+        description: _TInternationalStringInit = None,
+        **kwargs,
+    ):
+        if name is not None:
+            kwargs["name"] = InternationalString(name)
+        if description is not None:
+            kwargs["description"] = InternationalString(description)
+        super().__init__(**kwargs)
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -510,8 +538,8 @@ class Item(NameableArtefact, Generic[IT]):
     parent: Optional[Union[IT, "ItemScheme"]] = None
     child: List[IT] = []
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         # Add this Item as a child of its parent
         parent = kwargs.get("parent", None)
@@ -969,6 +997,11 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
 class Code(Item["Code"]):
     """SDMX-IM Code."""
 
+    # NB this exists solely to prevent mypy errors when name= is given as a type other
+    # than InternationalString, eventually handled by NameableArtefact
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
 
 class Codelist(ItemScheme[Code]):
     _Item = Code
@@ -1016,9 +1049,25 @@ class Contact(BaseModel):
     #:
     responsibility: InternationalString = InternationalString()
     #:
-    email: List[str]
+    email: List[str] = Field(default_factory=list)
     #:
-    uri: List[str]
+    uri: List[str] = Field(default_factory=list)
+
+    def __init__(
+        self,
+        *,
+        name: _TInternationalStringInit = None,
+        org_unit: _TInternationalStringInit = None,
+        responsibility: _TInternationalStringInit = None,
+        **kwargs,
+    ):
+        if name is not None:
+            kwargs["name"] = InternationalString(name)
+        if org_unit is not None:
+            kwargs["org_unit"] = InternationalString(org_unit)
+        if responsibility is not None:
+            kwargs["responsibility"] = InternationalString(responsibility)
+        super().__init__(**kwargs)
 
 
 class Organisation(Item["Organisation"]):
