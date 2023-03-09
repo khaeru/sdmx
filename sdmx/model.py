@@ -403,7 +403,7 @@ class NameableArtefact(IdentifiableArtefact):
             cls=self.__class__.__name__, id=self.id, name=f": {name}" if name else ""
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<{cls} {id}{name}>".format(**self._repr_kw())
 
 
@@ -444,7 +444,7 @@ class VersionableArtefact(NameableArtefact):
             "version", self, other, strict
         )
 
-    def _repr_kw(self) -> Mapping:
+    def _repr_kw(self) -> MutableMapping[str, str]:
         return ChainMap(
             super()._repr_kw(),
             dict(version=f"({self.version})" if self.version else ""),
@@ -494,13 +494,13 @@ class MaintainableArtefact(VersionableArtefact):
             "maintainer", self, other, strict
         )
 
-    def _repr_kw(self):
+    def _repr_kw(self) -> MutableMapping[str, str]:
         return ChainMap(
             super()._repr_kw(),
             dict(maint=f"{self.maintainer}:" if self.maintainer else ""),
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<{cls} {maint}{id}{version}{name}>".format(**self._repr_kw())
 
 
