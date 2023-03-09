@@ -54,6 +54,7 @@ docs = [
 tests = [
     "pytest >= 5",
     "pytest-cov",
+    "pytest-xdist",
     "requests-mock >= 1.4"
 ]
 
