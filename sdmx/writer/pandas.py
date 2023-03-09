@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 from pandas.core.indexes.datetimes import prefix_mapping  # type: ignore [attr-defined]
 
-from sdmx import message, model
-from sdmx.model import (
+from sdmx import message
+from sdmx.model import v21 as model
+from sdmx.model.v21 import (
     DEFAULT_LOCALE,
     AllDimensions,
     DataAttribute,

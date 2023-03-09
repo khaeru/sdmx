@@ -2,10 +2,10 @@
 import json
 import logging
 
-from sdmx import model
 from sdmx.format import list_media_types
 from sdmx.message import DataMessage, Header
-from sdmx.model import (
+from sdmx.model import v21 as model
+from sdmx.model.v21 import (
     ActionType,
     AllDimensions,
     AttributeValue,

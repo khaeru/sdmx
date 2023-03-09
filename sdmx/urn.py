@@ -1,7 +1,7 @@
 import re
 from typing import Dict
 
-from sdmx.model import PACKAGE, MaintainableArtefact
+from sdmx.model.v21 import PACKAGE, MaintainableArtefact
 
 #: Regular expression for URNs.
 URN = re.compile(

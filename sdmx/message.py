@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import Any, List, Optional, Text, Union
 
-from sdmx import model
+from sdmx.model import v21 as model
 from sdmx.util import (
     BaseModel,
     DictLike,

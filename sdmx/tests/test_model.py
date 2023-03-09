@@ -5,8 +5,9 @@ import pydantic
 import pytest
 from pytest import raises
 
-from sdmx import Resource, model
-from sdmx.model import (
+from sdmx import Resource
+from sdmx.model import v21 as model
+from sdmx.model.v21 import (
     DEFAULT_LOCALE,
     AttributeDescriptor,
     AttributeValue,
@@ -215,7 +216,7 @@ def test_contentconstraint():
 
 def test_dataset():
     # Enumeration values can be used to initialize
-    from sdmx.model import ActionType
+    from sdmx.model.v21 import ActionType
 
     DataSet(action=ActionType["information"])
 

@@ -4,8 +4,9 @@ import pandas as pd
 import pytest
 
 import sdmx
-from sdmx import message, model
-from sdmx.model import Key
+from sdmx import message
+from sdmx.model import v21 as model
+from sdmx.model.v21 import Key
 from sdmx.testing import MessageTest
 
 

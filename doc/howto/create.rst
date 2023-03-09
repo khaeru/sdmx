@@ -67,7 +67,7 @@ There are different classes to describe dimensions, measures, and attributes.
 .. ipython:: python
 
     import sdmx
-    from sdmx.model import (
+    from sdmx.model.v21 import (
         DataStructureDefinition,
         Dimension,
         PrimaryMeasure,
@@ -107,7 +107,7 @@ The function generates a single Observation object by using the different column
 
 .. ipython:: python
 
-    from sdmx.model import Key, AttributeValue, Observation
+    from sdmx.model.v21 import Key, AttributeValue, Observation
 
     # `key` is a Key that gives values for each dimension.
     # `attrs` is a dictionary of attribute values (here, only 1).
@@ -148,7 +148,7 @@ We meet this requirement by creating two data sets, so that each data set contai
 
 .. ipython:: python
 
-    from sdmx.model import DataSet
+    from sdmx.model.v21 import DataSet
 
     # Only the Observations with UNIT_MEASURE="PT"
     ds1 = DataSet(structured_by=dsd, obs=observations[:4])
@@ -171,7 +171,7 @@ We create a DFD as well.
 
 .. ipython:: python
 
-    from sdmx.model import DataflowDefinition
+    from sdmx.model.v21 import DataflowDefinition
     from sdmx.message import DataMessage
 
     # The DFD points to the DSD

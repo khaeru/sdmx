@@ -1,6 +1,6 @@
 import pytest
 
-from sdmx import model
+from sdmx.model import v21 as model
 from sdmx.source import Source, add_source, list_sources, sources
 
 

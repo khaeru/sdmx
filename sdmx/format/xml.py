@@ -5,7 +5,8 @@ from operator import itemgetter
 
 from lxml.etree import QName
 
-from sdmx import message, model
+from sdmx import message
+from sdmx.model import v21 as model
 
 log = logging.getLogger(__name__)
 

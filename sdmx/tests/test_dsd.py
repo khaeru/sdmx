@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import sdmx
-from sdmx import model
+from sdmx.model import v21 as model
 from sdmx.testing import MessageTest
 
 

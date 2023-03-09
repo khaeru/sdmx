@@ -1,5 +1,5 @@
-from sdmx import model
 from sdmx.format import xml
+from sdmx.model import v21 as model
 
 
 def test_tag_for_class():

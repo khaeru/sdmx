@@ -5,7 +5,7 @@ See sdmx.experimental for more information.
 import pytest
 
 from sdmx.experimental import DataSet as PandasDataSet
-from sdmx.model import AttributeValue, DataAttribute, DataSet, Key, Observation
+from sdmx.model.v21 import AttributeValue, DataAttribute, DataSet, Key, Observation
 
 
 # Run the tests on both the standard DataSet class, and the experimental,

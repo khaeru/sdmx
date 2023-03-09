@@ -6,7 +6,7 @@ from warnings import warn
 import requests
 
 from sdmx.message import Message
-from sdmx.model import DataStructureDefinition, MaintainableArtefact
+from sdmx.model.v21 import DataStructureDefinition, MaintainableArtefact
 from sdmx.reader import get_reader_for_media_type
 from sdmx.rest import URL, Resource
 from sdmx.session import ResponseIO, Session

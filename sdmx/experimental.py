@@ -16,7 +16,7 @@ from typing import Optional, Text
 
 import pandas as pd
 
-from sdmx.model import (
+from sdmx.model.v21 import (
     ActionType,
     AnnotableArtefact,
     AttributeValue,

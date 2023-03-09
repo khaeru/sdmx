@@ -1,7 +1,7 @@
 import sdmx
-from sdmx import model
 from sdmx.message import DataMessage, Header
-from sdmx.model import AttributeValue, DataAttribute, DataSet, Key, Observation
+from sdmx.model import v21 as model
+from sdmx.model.v21 import AttributeValue, DataAttribute, DataSet, Key, Observation
 from sdmx.testing import assert_pd_equal
 
 
