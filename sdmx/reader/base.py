@@ -3,14 +3,14 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import List
 
-from sdmx.util import parse_content_type
+from sdmx.format import MediaType
 
 log = logging.getLogger(__name__)
 
 
 class BaseReader(ABC):
-    #: List of HTTP content types handled by the reader.
-    content_types: List[str] = []
+    #: List of media types handled by the reader.
+    media_types: List[MediaType] = []
 
     #: List of file name suffixes handled by the reader.
     suffixes: List[str] = []
@@ -28,15 +28,10 @@ class BaseReader(ABC):
 
     @classmethod
     @lru_cache()
-    def supports_content_type(cls, value: str) -> bool:
+    def handles_media_type(cls, value: str) -> bool:
         """:obj:`True` if the reader can handle content/media type `value`."""
-        other = parse_content_type(value)
-        for ctype in map(parse_content_type, cls.content_types):
-            if ctype[0] == other[0]:
-                if ctype[1] != other[1]:
-                    log.debug(
-                        f"Match {ctype[0]} with params {other[1]}; expected {ctype[1]}"
-                    )
+        for mt in cls.media_types:
+            if mt.match(value):
                 return True
         return False
 
