@@ -24,9 +24,6 @@ jobs:
         # commented: only enable once next Python version enters RC
         # - "3.12.0-rc.1"  # Development version
 
-        exclude:
-        - { os: windows-latest, python-version: "3.11" }  # no wheels for lxml
-
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
