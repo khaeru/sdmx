@@ -7,7 +7,7 @@ import requests
 
 from sdmx.message import Message
 from sdmx.model import DataStructureDefinition, MaintainableArtefact
-from sdmx.reader import get_reader_for_content_type
+from sdmx.reader import get_reader_for_media_type
 from sdmx.rest import URL, Resource
 from sdmx.session import ResponseIO, Session
 from sdmx.source import NoSource, list_sources, sources
@@ -472,7 +472,7 @@ class Client:
         # Select reader class
         content_type = response.headers.get("content-type", None)
         try:
-            Reader = get_reader_for_content_type(content_type)
+            Reader = get_reader_for_media_type(content_type)
         except ValueError:
             raise ValueError(
                 f"can't determine a reader for response content type {content_type!r}"
