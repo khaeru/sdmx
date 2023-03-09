@@ -37,6 +37,7 @@ from typing import (
     Iterable,
     List,
     Mapping,
+    MutableMapping,
     Optional,
     Sequence,
     Set,
@@ -396,11 +397,10 @@ class NameableArtefact(IdentifiableArtefact):
             return True
         return False
 
-    def _repr_kw(self):
+    def _repr_kw(self) -> MutableMapping[str, str]:
+        name = self.name.localized_default()
         return dict(
-            cls=self.__class__.__name__,
-            id=self.id,
-            name=f": {self.name}" if len(self.name.localizations) else "",
+            cls=self.__class__.__name__, id=self.id, name=f": {name}" if name else ""
         )
 
     def __repr__(self):
