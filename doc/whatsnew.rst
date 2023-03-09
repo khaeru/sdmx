@@ -11,6 +11,13 @@ What's new?
 .. Next release
 .. ============
 
+v2.7.1 (2023-03-09)
+===================
+
+- No functional changes.
+- Update typing to aid type checking of downstream code (:pull:`117`).
+- Update documentation (:pull:`112`) and packaging (:pull:`118`).
+
 v2.7.0 (2022-11-14)
 ===================
 
