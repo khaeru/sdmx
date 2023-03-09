@@ -1,6 +1,66 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
+requires = ["build", "setuptools-scm"]
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
+[project]
+name = "sdmx1"
+description = "Statistical Data and Metadata eXchange (SDMX)"
+dynamic = ["version"]
+authors = [
+  {name = "SDMX Python developers"}
+]
+maintainers = [
+  {name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name"}
+]
+readme = "README.rst"
+keywords = ["statistics", "SDMX", "pandas", "data", "economics", "science"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Financial and Insurance Industry",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+]
+requires-python = ">=3.7.2"
+dependencies = [
+  "lxml >= 3.6",
+  "pandas >= 1.0",
+  "pydantic >= 1.9.2",
+  "python-dateutil",
+  "requests >= 2.7",
+]
+
+[project.optional-dependencies]
+cache = ["requests-cache"]
+docs = [
+    "IPython",
+    "sphinx >=4,<6",
+    "sphinx-book-theme",
+]
+tests = [
+    "pytest >= 5",
+    "pytest-cov",
+    "requests-mock >= 1.4"
+]
+
+[project.urls]
+homepage = "https://github.com/khaeru/sdmx"
+repository = "https://github.com/khaeru/sdmx"
+documentation = "https://sdmx1.readthedocs.io/en/latest"
 
 [tool.coverage.run]
 omit = [
@@ -36,6 +96,3 @@ markers = [
     "network: tests requiring a network connection",
     "source: slower, network tests of individual SDMX web services",
 ]
-
-[tool.setuptools_scm]
-local_scheme = "no-local-version"
