@@ -1,6 +1,49 @@
 from warnings import warn
 
 from . import v21
+from .common import (
+    ActionType,
+    Agency,
+    AgencyScheme,
+    AnnotableArtefact,
+    Categorisation,
+    Category,
+    CategoryScheme,
+    Concept,
+    ConceptScheme,
+    ConstraintRoleType,
+    IdentifiableArtefact,
+    Item,
+    ItemScheme,
+    MaintainableArtefact,
+    Organisation,
+    OrganisationScheme,
+    Representation,
+    UsageStatus,
+)
+from .internationalstring import InternationalString
+
+__all__ = [
+    "ActionType",
+    "Agency",
+    "AgencyScheme",
+    "AnnotableArtefact",
+    "Categorisation",
+    "Category",
+    "CategoryScheme",
+    "Concept",
+    "ConceptScheme",
+    "ConstraintRoleType",
+    "IdentifiableArtefact",
+    "InternationalString",
+    "Item",
+    "ItemScheme",
+    "MaintainableArtefact",
+    "Organisation",
+    "OrganisationScheme",
+    "Representation",
+    "UsageStatus",
+]
 
 
 def __getattr__(name):
