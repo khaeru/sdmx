@@ -58,11 +58,12 @@ jobs:
     - name: Run pytest
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
-      run: >-
-        pytest
-          -ra --color=yes --verbose
-          --cov-report=xml
+      run: |
+        pytest \
+          -ra --color=yes --verbose \
+          --cov-report=xml \
           --numprocesses auto
+      shell: bash
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3
@@ -101,11 +102,12 @@ jobs:
       continue-on-error: true
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
-      run: >-
-        pytest -m "network"
-          -ra --color=yes --verbose
-          --cov-report=xml
+      run: |
+        pytest -m "network" \
+          -ra --color=yes --verbose \
+          --cov-report=xml \
           --numprocesses auto
+      shell: bash
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3
