@@ -1,14 +1,12 @@
 # TODO test str() and repr() implementations
 import logging
 
-import pydantic
 import pytest
 from pytest import raises
 
 from sdmx import Resource
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
-    DEFAULT_LOCALE,
     AttributeDescriptor,
     AttributeValue,
     ConstraintRole,
@@ -24,7 +22,6 @@ from sdmx.model.v21 import (
     GroupKey,
     IdentifiableArtefact,
     Item,
-    ItemScheme,
     Key,
     Observation,
 )
@@ -440,68 +437,6 @@ class TestItem:
 
         # Hierarchical IDs constructed automatically
         assert items[0].child[0].hierarchical_id == "Bar 2.Foo 0.Foo 1"
-
-
-def test_itemscheme():
-    is0 = ItemScheme(id="is0")
-    foo0 = Item(id="foo0")
-
-    # With a single Item
-
-    # append()
-    is0.append(foo0)
-
-    # __getattr__
-    assert is0.foo0 is foo0
-
-    # __getitem__
-    assert is0["foo0"] is foo0
-
-    # __contains__
-    assert "foo0" in is0
-    assert foo0 in is0
-
-    # __len__
-    assert len(is0) == 1
-
-    # __repr__
-    assert repr(is0) == "<ItemScheme is0 (1 items)>"
-
-    # __iter__
-    assert all(i is foo0 for i in is0)
-
-    # With multiple Items
-
-    foo1 = Item(id="foo1")
-    foo2 = Item(id="foo2")
-    items_list = [foo0, foo1, foo2]
-    items_dict = {"foo0": foo0, "foo1": foo1, "foo2": foo2}
-
-    # set with a non-dict
-    is0.items = items_list
-    assert is0.items == items_dict
-
-    # set with a dict
-    is0.items = items_dict
-    assert is0.items == items_dict
-
-    # extend()
-    is0.items = [foo0]
-    is0.extend(items_list[1:])
-    assert is0.items == items_dict
-
-    # setdefault()
-    bar0 = is0.setdefault(id="bar")
-    assert bar0.id == "bar"
-
-    with raises(ValueError):
-        is0.setdefault(foo0, id="bar")
-
-    is0.setdefault(id="bar1", parent="foo0")
-    bar1 = is0.setdefault(id="bar1", parent=foo0)
-
-    # get_hierarchical()
-    assert is0.get_hierarchical("foo0.bar1") == bar1
 
 
 def test_itemscheme_compare(caplog):
