@@ -23,6 +23,15 @@ SDMX-JSON
     :members:
     :undoc-members:
 
+SDMX-CSV
+=========
+
+.. currentmodule:: sdmx.reader.csv
+
+.. autoclass:: sdmx.reader.csv.Reader
+    :members:
+    :undoc-members:
+
 
 Reader API
 ==========

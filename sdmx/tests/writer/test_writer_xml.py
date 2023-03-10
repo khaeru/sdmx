@@ -4,8 +4,8 @@ import pytest
 
 import sdmx
 from sdmx import message
-from sdmx import model as m
-from sdmx.model import DataSet, DataStructureDefinition, Dimension, Key, Observation
+from sdmx.model import v21 as m
+from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
 from sdmx.writer.xml import writer as XMLWriter
 
 log = logging.getLogger(__name__)

@@ -1,5 +1,6 @@
 import pytest
 
+from sdmx.format import Flag, MediaType
 from sdmx.reader.base import BaseReader
 
 
@@ -9,7 +10,9 @@ class TestBaseReader:
         """A reader that implements the minimum abstract methods."""
 
         class cls(BaseReader):
-            content_types = ["application/foo; bar=baz"]
+            media_types = [
+                MediaType("", "xml", "2.1", Flag.data, full="application/foo"),
+            ]
 
             def read_message(self, source, dsd=None):
                 pass  # pragma: no cover
@@ -19,10 +22,10 @@ class TestBaseReader:
     def test_detect(self, MinimalReader):
         assert False is MinimalReader.detect(b"foo")
 
-    def test_supports_content_type(self, caplog, MinimalReader):
-        """:meth:`.support_content_type` matches even when params differ, but logs."""
-        assert True is MinimalReader.supports_content_type("application/foo; bar=qux")
+    def test_handles_media_type(self, caplog, MinimalReader):
+        """:meth:`.handles_media_type` matches even when params differ, but logs."""
+        assert True is MinimalReader.handles_media_type("application/foo; bar=qux")
         assert (
-            "Match application/foo with params {'bar': 'qux'}; expected {'bar': 'baz'}"
-            in caplog.messages
+            "Match application/foo with params {'bar': 'qux'}; "
+            "expected {'version': '2.1'}" in caplog.messages
         )

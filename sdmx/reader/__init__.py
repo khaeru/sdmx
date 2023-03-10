@@ -29,8 +29,8 @@ def detect_content_reader(content):
     raise ValueError(f"{repr(content)} not recognized by any of {_readers()}")
 
 
-def get_reader_for_content_type(ctype):
-    """Return a reader class for HTTP content type `content`.
+def get_reader_for_media_type(value):
+    """Return a reader class for HTTP content/media type `value`.
 
     Raises
     ------
@@ -39,13 +39,13 @@ def get_reader_for_content_type(ctype):
 
     See also
     --------
-    BaseReader.content_types
+    BaseReader.media_type
     """
     for cls in READERS:
-        if cls.supports_content_type(ctype):
+        if cls.handles_media_type(value):
             return cls
 
-    raise ValueError(f"Content type {repr(ctype)} not supported by any of {_readers()}")
+    raise ValueError(f"Media type {value!r} not supported by any of {_readers()}")
 
 
 def get_reader_for_path(path):

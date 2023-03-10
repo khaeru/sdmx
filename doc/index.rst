@@ -1,7 +1,7 @@
 Statistical Data and Metadata eXchange (SDMX) in Python
 *******************************************************
 
-:mod:`sdmx` is an Apache 2.0-licensed `Python <http://www.python.org>`_ library that implements `SDMX <http://www.sdmx.org>`_ 2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_), a format for exchange of **statistical data and metadata** used by national statistical agencies, central banks, and international organisations.
+:mod:`sdmx` is an Apache 2.0-licensed `Python <http://www.python.org>`_ library that implements `SDMX <http://www.sdmx.org>`_  2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0, a format for exchange of **statistical data and metadata** used by national statistical agencies, central banks, and international organisations.
 
 :mod:`sdmx` can be used to:
 

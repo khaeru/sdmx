@@ -4,7 +4,7 @@ import pytest
 from pytest import raises
 
 import sdmx
-from sdmx.model import TimeDimension
+from sdmx.model.v21 import TimeDimension
 from sdmx.testing import assert_pd_equal
 
 

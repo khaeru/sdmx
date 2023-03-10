@@ -1,11 +1,31 @@
+import re
+
 import pytest
 
-from sdmx.reader import get_reader_for_content_type
+from sdmx.reader import get_reader_for_media_type
 
 
-def test_get_reader_for_content_type():
-    ctype = "application/x-pdf"
+@pytest.mark.parametrize(
+    "value",
+    [
+        "application/x-pdf",
+        "application/vnd.sdmx.data+xml; version=3.0.0",
+    ],
+)
+def test_get_reader_for_media_type0(value):
     with pytest.raises(
-        ValueError, match=f"Content type '{ctype}' not supported by any of"
+        ValueError, match=re.escape(f"Media type {value!r} not supported by any of")
     ):
-        get_reader_for_content_type(ctype)
+        get_reader_for_media_type(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "application/xml;charset=UTF-8",
+        "draft-sdmx-json;charset=UTF-8",
+    ],
+)
+def test_get_reader_for_media_type1(value):
+    # Does not raise
+    get_reader_for_media_type(value)

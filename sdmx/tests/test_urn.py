@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from sdmx import model as m
+from sdmx.model import v21 as m
 from sdmx.urn import make, match
 
 

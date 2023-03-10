@@ -13,7 +13,7 @@ import pytest
 
 import sdmx
 from sdmx import Client
-from sdmx.model import GenericDataSet
+from sdmx.model.v21 import GenericDataSet
 from sdmx.testing import assert_pd_equal
 from sdmx.util import DictLike
 

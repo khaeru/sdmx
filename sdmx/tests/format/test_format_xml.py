@@ -1,9 +1,5 @@
-from sdmx import model
 from sdmx.format import xml
-
-
-def test_content_types():
-    assert 11 == len(xml.CONTENT_TYPES)
+from sdmx.model import v21 as model
 
 
 def test_tag_for_class():

@@ -227,6 +227,7 @@ def only(iterator: Iterator) -> Any:
         return result
 
 
+@lru_cache()
 def parse_content_type(value: str) -> Tuple[str, Dict[str, Any]]:
     """Return content type and parameters from `value`.
 

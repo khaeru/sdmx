@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from pkg_resources import resource_stream
 from requests import Response
 
-from sdmx.model import DataStructureDefinition
+from sdmx.model.v21 import DataStructureDefinition
 from sdmx.rest import Resource
 from sdmx.util import BaseModel, validator
 

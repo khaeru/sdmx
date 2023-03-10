@@ -1,7 +1,7 @@
 import pytest
 
 from sdmx import message
-from sdmx.model import Agency, Annotation, Code, Codelist
+from sdmx.model.v21 import Agency, Annotation, Code, Codelist
 
 CL_ITEMS = [
     dict(id="A", name={"en": "Average of observations through period"}),

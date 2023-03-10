@@ -2,10 +2,10 @@
 import json
 import logging
 
-from sdmx import model
-from sdmx.format.json import CONTENT_TYPES
+from sdmx.format import list_media_types
 from sdmx.message import DataMessage, Header
-from sdmx.model import (
+from sdmx.model import v21 as model
+from sdmx.model.v21 import (
     ActionType,
     AllDimensions,
     AttributeValue,
@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 class Reader(BaseReader):
     """Read SDMX-JSON and expose it as instances from :mod:`sdmx.model`."""
 
-    content_types = CONTENT_TYPES
+    media_types = list_media_types(base="json", version="1.0.0")
     suffixes = [".json"]
 
     @classmethod

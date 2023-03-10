@@ -4,7 +4,8 @@ from operator import itemgetter
 import pytest
 
 import sdmx
-from sdmx import message, model
+from sdmx import message
+from sdmx.model import v21 as model
 
 
 @pytest.mark.parametrize(

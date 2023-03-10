@@ -42,6 +42,7 @@ dependencies = [
   "pydantic >= 1.9.2",
   "python-dateutil",
   "requests >= 2.7",
+  "typing_extensions",
 ]
 
 [project.optional-dependencies]

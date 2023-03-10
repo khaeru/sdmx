@@ -8,7 +8,7 @@ from lxml import etree
 
 import sdmx
 from sdmx.format.xml import qname
-from sdmx.model import Facet, FacetType, FacetValueType
+from sdmx.model.v21 import Facet, FacetType, FacetValueType
 from sdmx.reader.xml import Reader, XMLParseError
 from sdmx.writer.xml import Element as E
 

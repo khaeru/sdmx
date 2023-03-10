@@ -1,13 +1,12 @@
 # TODO test str() and repr() implementations
 import logging
 
-import pydantic
 import pytest
 from pytest import raises
 
-from sdmx import Resource, model
-from sdmx.model import (
-    DEFAULT_LOCALE,
+from sdmx import Resource
+from sdmx.model import v21 as model
+from sdmx.model.v21 import (
     AttributeDescriptor,
     AttributeValue,
     ConstraintRole,
@@ -23,7 +22,6 @@ from sdmx.model import (
     GroupKey,
     IdentifiableArtefact,
     Item,
-    ItemScheme,
     Key,
     Observation,
 )
@@ -215,7 +213,7 @@ def test_contentconstraint():
 
 def test_dataset():
     # Enumeration values can be used to initialize
-    from sdmx.model import ActionType
+    from sdmx.model.v21 import ActionType
 
     DataSet(action=ActionType["information"])
 
@@ -405,64 +403,6 @@ def test_maintainable():
         model.MaintainableArtefact(maintainer=model.Agency(id="FOO"), urn=urn)
 
 
-def test_internationalstring() -> None:
-    # Constructor; the .name attribute is an InternationalString
-    i: Item = Item(id="ECB")
-
-    # Set and get using the attribute directly
-    i.name.localizations["DE"] = "Europäische Zentralbank"
-    assert i.name.localizations["DE"] == "Europäische Zentralbank"
-
-    # Set and get using item convenience
-    i.name["FR"] = "Banque centrale européenne"
-    assert len(i.name.localizations) == 2
-    assert i.name["FR"] == "Banque centrale européenne"
-
-    # repr() gives all localizations
-    assert repr(i.name) == "\n".join(
-        sorted(["DE: Europäische Zentralbank", "FR: Banque centrale européenne"])
-    )
-
-    # Setting with a string directly sets the value in the default locale
-    i.name = "European Central Bank"  # type: ignore [assignment]
-    assert len(i.name.localizations) == 1
-    assert i.name.localizations[DEFAULT_LOCALE] == "European Central Bank"
-
-    # Setting with a (locale, text) tuple
-    i.name = ("FI", "Euroopan keskuspankki")  # type: ignore [assignment]
-    assert len(i.name.localizations) == 1
-
-    # Setting with a dict()
-    i.name = {"IT": "Banca centrale europea"}  # type: ignore [assignment]
-    assert len(i.name.localizations) == 1
-
-    # Using some other type is an error
-    with raises(pydantic.ValidationError):
-        i.name = 123  # type: ignore [assignment]
-
-    # Same, but in the constructor
-    i2: Item = Item(id="ECB", name="European Central Bank")
-
-    # str() uses the default locale
-    assert str(i2.name) == "European Central Bank"
-
-    # Giving empty dict is equivalent to giving nothing
-    i3: Item = Item(id="ECB", name={})
-    assert i3.name.localizations == Item(id="ECB").name.localizations
-
-    # Create with iterable of 2-tuples
-    i4: Item = Item(
-        id="ECB",
-        name=[("DE", "Europäische Zentralbank"), ("FR", "Banque centrale européenne")],
-    )
-    assert i4.name["FR"] == "Banque centrale européenne"
-
-    # Compares equal with same contents
-    is1 = model.InternationalString(en="Foo", fr="Le foo")
-    is2 = model.InternationalString(en="Foo", fr="Le foo")
-    assert is1 == is2
-
-
 class TestItem:
     def test_name(self) -> None:
         """`name` can be :class:`str`."""
@@ -497,68 +437,6 @@ class TestItem:
 
         # Hierarchical IDs constructed automatically
         assert items[0].child[0].hierarchical_id == "Bar 2.Foo 0.Foo 1"
-
-
-def test_itemscheme():
-    is0 = ItemScheme(id="is0")
-    foo0 = Item(id="foo0")
-
-    # With a single Item
-
-    # append()
-    is0.append(foo0)
-
-    # __getattr__
-    assert is0.foo0 is foo0
-
-    # __getitem__
-    assert is0["foo0"] is foo0
-
-    # __contains__
-    assert "foo0" in is0
-    assert foo0 in is0
-
-    # __len__
-    assert len(is0) == 1
-
-    # __repr__
-    assert repr(is0) == "<ItemScheme is0 (1 items)>"
-
-    # __iter__
-    assert all(i is foo0 for i in is0)
-
-    # With multiple Items
-
-    foo1 = Item(id="foo1")
-    foo2 = Item(id="foo2")
-    items_list = [foo0, foo1, foo2]
-    items_dict = {"foo0": foo0, "foo1": foo1, "foo2": foo2}
-
-    # set with a non-dict
-    is0.items = items_list
-    assert is0.items == items_dict
-
-    # set with a dict
-    is0.items = items_dict
-    assert is0.items == items_dict
-
-    # extend()
-    is0.items = [foo0]
-    is0.extend(items_list[1:])
-    assert is0.items == items_dict
-
-    # setdefault()
-    bar0 = is0.setdefault(id="bar")
-    assert bar0.id == "bar"
-
-    with raises(ValueError):
-        is0.setdefault(foo0, id="bar")
-
-    is0.setdefault(id="bar1", parent="foo0")
-    bar1 = is0.setdefault(id="bar1", parent=foo0)
-
-    # get_hierarchical()
-    assert is0.get_hierarchical("foo0.bar1") == bar1
 
 
 def test_itemscheme_compare(caplog):
@@ -738,3 +616,11 @@ class TestContact:
 )
 def test_get_class(args, expected):
     assert expected is model.get_class(**args)
+
+
+def test_deprecated():
+    """Deprecation warning when importing SDMX 2.1-specific class from :mod:`.model`."""
+    with pytest.warns(
+        DeprecationWarning, match=r"DataStructureDefinition from sdmx\.model"
+    ):
+        from sdmx.model import DataStructureDefinition  # noqa: F401

@@ -5,8 +5,10 @@ from io import BytesIO
 
 import pandas as pd
 import pytest
+import requests_mock
 
 import sdmx
+from sdmx.source import sources
 
 
 def test_deprecated_request(caplog):
@@ -136,6 +138,23 @@ class TestClient:
             DeprecationWarning, match="validate= keyword argument to Client.get"
         ):
             client.get("datastructure", validate=False, dry_run=True)
+
+    def test_v3_unsupported(self, testsource, client):
+        """Client raises an exception when an SDMX 3.0 message is returned."""
+        mock = requests_mock.Mocker()
+        df_id = "DATAFLOW"
+        key = ".KEY2.KEY3..KEY5"
+        url = f"{sources[testsource].url}/data/{df_id}/{key}"
+        mock.get(
+            url,
+            body="",
+            headers={"Content-Type": "application/vnd.sdmx.data+xml; version=3.0.0"},
+        )
+
+        with mock, pytest.raises(
+            ValueError, match="can't determine a reader for response content type"
+        ):
+            client.get("data", resource_id=df_id, key=key)
 
 
 def test_request_get_exceptions():
