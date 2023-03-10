@@ -1,9 +1,8 @@
 Implementation notes
 ********************
 
-:mod:`sdmx.model` implements the SDMX version 2.1.
-(:term:`What is an 'information model'? <information model>`)
-This page gives brief explanations of **how** :mod:`sdmx` **implements the standards**, focusing on additional features, conveniences, or interpretations/naming choices that are not strictly detemined by the standards.
+:mod:`sdmx.model` implements the SDMX :term:`information model`.
+This page gives brief explanations of **how** :mod:`sdmx` **implements the standards**, focusing on additional features, conveniences, or interpretations/naming choices that are not strictly determined by the standards.
 
 Although this page is organized to correspond to the standards, it **does not recapitulate them** (:ref:`as stated <not-the-standard>`)—nor does it set out to teach all their details.
 For those purposes, see :doc:`resources`; or the :doc:`walkthrough`, which includes some incidental explanations.
@@ -11,6 +10,36 @@ For those purposes, see :doc:`resources`; or the :doc:`walkthrough`, which inclu
 .. contents::
    :backlinks: none
    :local:
+
+.. _sdmx-version-policy:
+
+SDMX versions 2.0, 2.1, and 3.0
+===============================
+
+Multiple versions of the SDMX standards have been published:
+
+- 2.0 in November 2005.
+- 2.1 in August 2011; published at the ISO in January 2013; and revised multiple times since.
+- 3.0 in October 2022.
+
+For the current package, :mod:`sdmx`:
+
+- SDMX 2.0 is not implemented, and no implementation is currently planned.
+
+  - Some data providers still exist which only offer SDMX-ML 2.0 and/or an SDMX 2.0 REST web service.
+    These implementations of SDMX 2.0 can be incomplete, inconsistent, or not fully compliant with the standard.
+    This makes it more difficulty and costly to support them.
+  - While no SDMX 2.0 implementation is planned, contributions from new developers are possible and welcome.
+
+- SDMX 2.1 is implemented, as described on this page.
+- SDMX 3.0 is partly implemented, and a full implementation is planned.
+
+  - As of v2.8.0, this means that :mod:`sdmx` recognizes SDMX-ML 3.0 and SDMX 3.0 REST web services as distinct from their 2.1 versions, and will clearly indicate (e.g. with standard Python :class:`NotImplementedError`) where support is not yet implemented.
+  - Some parts of the Information Model, file formats, and REST web services are unchanged from SDMX 2.1 to 3.0, so in effect these are already implemented by :mod:`sdmx`.
+  - Support for SDMX 3.0 will be expanded incrementally.
+    Follow the :doc:`whatsnew`; :issue:`87`; and other GitHub issues and pull requests for details.
+  - As of 2023-03-10, none of the :doc:`data sources <sources>` pre-packaged with :mod:`sdmx` are known operate a SDMX 3.0 web service or provide SDMX-{ML,JSON} 3.0 data and metadata.
+    Please `open an issue <https://github.com/khaeru/sdmx/issues>`__ on GitHub to report “live” examples and specimens of real-world SDMX 3.0 data and services that can be added.
 
 .. _im-base-classes:
 
@@ -237,7 +266,7 @@ The Eurostat and ECB help materials provide descriptions and examples of HTTP us
 - REST web services, i.e. not SOAP services;
 - Data retrieved in SDMX version 2.1 :ref:`formats <formats>`.
   Some existing services offer a parameter to select SDMX 2.1 *or* 2.0 format; :mod:`sdmx` does not support the latter.
-  Other services *only* provide SDMX 2.0-formatted data; these cannot be used with :mod:`sdmx`.
+  Other services *only* provide SDMX 2.0-formatted data; these cannot be used with :mod:`sdmx` (:ref:`see here <sdmx-version-policy>`).
 
 :class:`.Client` constructs valid URLs and automatically add some parameter and header values.
 These can be overridden; see :meth:`.Client.get`.
