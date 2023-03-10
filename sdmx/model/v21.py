@@ -1,4 +1,4 @@
-"""SDMX Information Model (SDMX-IM).
+"""SDMX 2.1 Information Model (SDMX-IM).
 
 This module implements many of the classes described in the SDMX-IM specification
 ('spec'), which is available from:
@@ -239,7 +239,7 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
 
 
 class Code(Item["Code"]):
-    """SDMX-IM Code."""
+    """SDMX 2.1 Code."""
 
     # NB this exists solely to prevent mypy errors when name= is given as a type other
     # than InternationalString, eventually handled by NameableArtefact
@@ -255,15 +255,15 @@ class Codelist(ItemScheme[Code]):
 
 
 class ConstrainableArtefact(BaseModel):
-    """SDMX-IM ConstrainableArtefact."""
+    """SDMX 2.1 ConstrainableArtefact."""
 
 
 class DataConsumer(Organisation, ConstrainableArtefact):
-    """SDMX-IM DataConsumer."""
+    """SDMX 2.1 DataConsumer."""
 
 
 class DataProvider(Organisation, ConstrainableArtefact):
-    """SDMX-IM DataProvider."""
+    """SDMX 2.1 DataProvider."""
 
 
 class DataConsumerScheme(ItemScheme[DataConsumer], OrganisationScheme):
@@ -331,7 +331,7 @@ class Constraint(MaintainableArtefact):
 
 
 class SelectionValue(BaseModel):
-    """SDMX-IM SelectionValue."""
+    """SDMX 2.1 SelectionValue."""
 
 
 class MemberValue(SelectionValue):
@@ -351,7 +351,7 @@ class MemberValue(SelectionValue):
 
 
 class TimeRangeValue(SelectionValue):
-    """SDMX-IM TimeRangeValue."""
+    """SDMX 2.1 TimeRangeValue."""
 
 
 class Period(BaseModel):
@@ -406,7 +406,7 @@ class DimensionComponent(Component):
 
 
 class Dimension(DimensionComponent):
-    """SDMX-IM Dimension."""
+    """SDMX 2.1 Dimension."""
 
 
 # (continued from §10.3)
@@ -520,15 +520,15 @@ class ContentConstraint(Constraint):
 
 
 class TimeDimension(DimensionComponent):
-    """SDMX-IM TimeDimension."""
+    """SDMX 2.1 TimeDimension."""
 
 
 class MeasureDimension(DimensionComponent):
-    """SDMX-IM MeasureDimension."""
+    """SDMX 2.1 MeasureDimension."""
 
 
 class PrimaryMeasure(Component):
-    """SDMX-IM PrimaryMeasure."""
+    """SDMX 2.1 PrimaryMeasure."""
 
 
 class MeasureDescriptor(ComponentList[PrimaryMeasure]):
@@ -543,6 +543,7 @@ class _NoSpecifiedRelationship(AttributeRelationship):
     pass
 
 
+#: A singleton.
 NoSpecifiedRelationship = _NoSpecifiedRelationship()
 
 
@@ -550,6 +551,7 @@ class _PrimaryMeasureRelationship(AttributeRelationship):
     pass
 
 
+#: A singleton.
 PrimaryMeasureRelationship = _PrimaryMeasureRelationship()
 
 
@@ -677,7 +679,7 @@ _NullConstraint = _NullConstraintClass()
 
 @validate_dictlike
 class DataStructureDefinition(Structure, ConstrainableArtefact):
-    """SDMX-IM DataStructureDefinition (‘DSD’)."""
+    """SDMX 2.1 DataStructureDefinition (‘DSD’)."""
 
     #: A :class:`AttributeDescriptor` that describes the attributes of the data
     #: structure.
@@ -1018,11 +1020,12 @@ class KeyValue(BaseModel):
         return hash(self.id + str(self.value))
 
 
+#: Synonym for :class:`.KeyValue`.
 TimeKeyValue = KeyValue
 
 
 class AttributeValue(BaseModel):
-    """SDMX-IM AttributeValue.
+    """SDMX 2.1 AttributeValue.
 
     In the spec, AttributeValue is an abstract class. Here, it serves as both the
     concrete subclasses CodedAttributeValue and UncodedAttributeValue.
@@ -1280,7 +1283,7 @@ class SeriesKey(Key):
 
 @validate_dictlike
 class Observation(BaseModel):
-    """SDMX-IM Observation.
+    """SDMX 2.1 Observation.
 
     This class also implements the spec classes ObservationValue,
     UncodedObservationValue, and CodedObservation.
@@ -1449,25 +1452,38 @@ class DataSet(AnnotableArtefact):
 
 
 class StructureSpecificDataSet(DataSet):
-    """SDMX-IM StructureSpecificDataSet."""
+    """SDMX 2.1 StructureSpecificDataSet.
+
+    This subclass has no additional functionality compared to DataSet.
+    """
 
 
 class GenericDataSet(DataSet):
-    """SDMX-IM GenericDataSet."""
+    """SDMX 2.1 GenericDataSet.
+
+    This subclass has no additional functionality compared to DataSet.
+    """
 
 
 class GenericTimeSeriesDataSet(DataSet):
-    """SDMX-IM GenericTimeSeriesDataSet."""
+    """SDMX 2.1 GenericTimeSeriesDataSet.
+
+    This subclass has no additional functionality compared to DataSet.
+    """
 
 
 class StructureSpecificTimeSeriesDataSet(DataSet):
-    """SDMX-IM StructureSpecificTimeSeriesDataSet."""
+    """SDMX 2.1 StructureSpecificTimeSeriesDataSet.
+
+    This subclass has no additional functionality compared to DataSet.
+    """
 
 
 class _AllDimensions:
     pass
 
 
+#: A singleton.
 AllDimensions = _AllDimensions()
 
 
@@ -1475,11 +1491,11 @@ AllDimensions = _AllDimensions()
 
 
 class MetadataflowDefinition(StructureUsage, ConstrainableArtefact):
-    """SDMX-IM MetadataflowDefinition."""
+    """SDMX 2.1 MetadataflowDefinition."""
 
 
 class MetadataStructureDefinition(Structure, ConstrainableArtefact):
-    """SDMX-IM MetadataStructureDefinition."""
+    """SDMX 2.1 MetadataStructureDefinition."""
 
 
 # §11: Data Provisioning

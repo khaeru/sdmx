@@ -14,8 +14,8 @@ class InternationalString:
     SDMX-IM LocalisedString is not implemented. Instead, the 'localizations' is a
     mapping where:
 
-     - keys correspond to the 'locale' property of LocalisedString.
-     - values correspond to the 'label' property of LocalisedString.
+    - keys correspond to the 'locale' property of LocalisedString.
+    - values correspond to the 'label' property of LocalisedString.
 
     When used as a type hint with pydantic, InternationalString fields can be assigned
     to in one of four ways::
@@ -100,7 +100,7 @@ class InternationalString:
         result.localizations.update(other.localizations)
         return result
 
-    def localized_default(self, locale=None):
+    def localized_default(self, locale=None) -> str:
         """Return the string in *locale*, or else the first defined."""
         try:
             return self.localizations[locale]
