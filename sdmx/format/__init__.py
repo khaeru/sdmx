@@ -2,7 +2,12 @@ import logging
 from dataclasses import dataclass
 from enum import IntFlag
 from functools import lru_cache
-from typing import List, Literal, Optional
+from typing import List, Optional
+
+try:
+    from typing import Literal
+except ImportError:  # Python 3.7
+    from typing_extensions import Literal  # type: ignore
 
 from sdmx.util import parse_content_type
 
