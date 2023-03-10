@@ -3,10 +3,15 @@ import pytest
 from sdmx.format import Flag, MediaType, list_media_types
 
 
-class TestFormat:
+class TestMediaType:
     @pytest.fixture
     def mt(self):
         yield MediaType("foo", "xml", "3.0.0", Flag.meta | Flag.ts)
+
+    def test_match(self, mt):
+        other = "application/vnd.sdmx.foo+xml; version=3.0.1, bar=baz"
+        assert mt.match(other) is True
+        assert mt.match(other, strict=True) is False
 
     def test_flags(self, mt):
         assert mt.is_data is False
