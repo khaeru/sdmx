@@ -616,3 +616,11 @@ class TestContact:
 )
 def test_get_class(args, expected):
     assert expected is model.get_class(**args)
+
+
+def test_deprecated():
+    """Deprecation warning when importing SDMX 2.1-specific class from :mod:`.model`."""
+    with pytest.warns(
+        DeprecationWarning, match=r"DataStructureDefinition from sdmx\.model"
+    ):
+        from sdmx.model import DataStructureDefinition  # noqa: F401
