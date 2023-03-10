@@ -8,8 +8,42 @@ What's new?
    :backlinks: none
    :depth: 1
 
-.. Next release
-.. ============
+Next release
+============
+
+Migration notes
+---------------
+
+Code such as the following will emit a :class:`DeprecationWarning`:
+
+.. code-block:: python
+
+   from sdmx.model import DataStructureDefinition
+   from sdmx import model
+
+   dsd = model.DataStructureDefinition(...)
+
+This occurs for :mod:`sdmx.model` classes (e.g. :class:`.DataStructureDefinition`) which may have a different implementation in SDMX 3.0 than in SDMX 2.1.
+It does *not* occur for classes (e.g. :class:`.InternationalString`) that are unchanged from SDMX 2.1 to 3.0.
+
+Code can be adjusted by importing explicitly from the new :mod:`.v21` submodule:
+
+.. code-block:: python
+
+   from sdmx.model.v21 import DataStructureDefinition
+   from sdmx.model import v21 as model
+
+   dsd = model.DataStructureDefinition(...)
+
+All changes
+-----------
+
+- Outline and prepare for for SDMX 3.0 support (:pull:`120`).
+  Read :ref:`sdmx-version-policy` for details.
+- The internal :class:`Format` is replaced by a :class:`.MediaType`, allowing to distinguish the “, version=3.0.0” parameters in the HTTP ``Content-Type`` header.
+- :attr:`.xml.Reader.media_types` and :attr:`.json.Reader.media_types` explicitly indicated supported media types.
+- :attr:`.ItemScheme.is_partial` defaults to :data:`None`.
+- Add empty/stub :mod:`.format.csv`, :mod:`.reader.csv` (cf. :issue:`34`), and :mod:`.model.v30`.
 
 v2.7.1 (2023-03-09)
 ===================
