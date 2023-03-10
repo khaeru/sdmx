@@ -17,7 +17,7 @@ sdmx: Statistical data and metadata exchange
 `Source code @ Github <https://github.com/khaeru/sdmx/>`_ —
 `Authors <https://github.com/khaeru/sdmx/graphs/contributors>`_
 
-`sdmx` is an `Apache 2.0-licensed <LICENSE>`_ Python package that implements `SDMX <http://www.sdmx.org>`_ 2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_), a format for exchange of **statistical data and metadata** used by national statistical agencies, central banks, and international organisations.
+`sdmx` is an `Apache 2.0-licensed <LICENSE>`_ Python package that implements `SDMX <http://www.sdmx.org>`_ 2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0, a format for exchange of **statistical data and metadata** used by national statistical agencies, central banks, and international organisations.
 
 `sdmx` can be used to:
 
