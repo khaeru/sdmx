@@ -72,6 +72,7 @@ from .common import (
     FacetType,
     FacetValueType,
     IdentifiableArtefact,
+    ISOConceptReference,
     Item,
     ItemScheme,
     MaintainableArtefact,
@@ -80,12 +81,13 @@ from .common import (
     OrganisationScheme,
     Representation,
     UsageStatus,
+    VersionableArtefact,
 )
 from .internationalstring import DEFAULT_LOCALE, InternationalString
 
-# The following are not used in this file, but expected by code that imports
-# sdmx.model.v21 as model
 __all__ = [
+    # The following are not used in this file, but expected by sdmx code that imports
+    # sdmx.model.v21 as model
     "DEFAULT_LOCALE",
     "Annotation",
     "Contact",
@@ -94,6 +96,9 @@ __all__ = [
     "FacetValueType",
     "InternationalString",
     "NameableArtefact",
+    # The following are not used in sdmx code, but included for backwards compatibility
+    "ISOConceptReference",
+    "VersionableArtefact",
 ]
 
 log = logging.getLogger(__name__)
