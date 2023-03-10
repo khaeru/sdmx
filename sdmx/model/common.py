@@ -442,7 +442,9 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     # TODO add delete()
     # TODO add sorting capability; perhaps sort when new items are inserted
 
-    is_partial: Optional[bool]
+    # NB the IM does not specify; this could be True by default, but would need to check
+    # against the automatic construction in .reader.*.
+    is_partial: Optional[bool] = None
 
     #: Members of the ItemScheme. Both ItemScheme and Item are abstract classes.
     #: Concrete classes are paired: for example, a :class:`.Codelist` contains
