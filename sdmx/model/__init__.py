@@ -61,6 +61,6 @@ def __getattr__(name):
                 ]
             ),
             category=DeprecationWarning,
-            stacklevel=-2,
+            stacklevel=2,
         )
         return result
