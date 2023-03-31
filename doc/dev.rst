@@ -47,7 +47,7 @@ To retrieve them, use one of the following methods:
 
        $ git clone git@github.com:khaeru/sdmx-test-data.git
 
-   b. Download https://github.com/khaeru/sdmx-test-data/archive/.zip
+   b. Download https://github.com/khaeru/sdmx-test-data/archive/main.zip
 
 2. Indicate where pytest can find the files, by one of two methods:
 
