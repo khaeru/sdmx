@@ -60,7 +60,7 @@ class Annotation(BaseModel):
 class AnnotableArtefact(BaseModel):
     #: :class:`Annotations <.Annotation>` of the object.
     #:
-    #: :mod:`pandaSDMX` implementation: The IM does not specify the name of this
+    #: :mod:`.sdmx` implementation detail: The IM does not specify the name of this
     #: feature.
     annotations: List[Annotation] = []
 
@@ -425,7 +425,7 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     :attr:`items` attribute, in which the keys are the :attr:`~.IdentifiableArtefact.id`
     of the Item.
 
-    Because this may change in future versions of pandaSDMX, user code should not access
+    Because this may change in future versions, user code should not access
     :attr:`items` directly. Instead, use the :func:`getattr` and indexing features of
     ItemScheme, or the public methods, to access and manipulate Items:
 
