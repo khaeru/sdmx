@@ -53,7 +53,6 @@ For example, every :class:`.Code` is a ``NameableArtefact``; [1]_ this means it 
    - has a list of :attr:`~.AnnotableArtefact.annotations`
 
 :class:`.IdentifiableArtefact`
-
    - has an :attr:`id <.IdentifiableArtefact.id>`, :attr:`URI <.IdentifiableArtefact.uri>`, and :attr:`URN <.IdentifiableArtefact.urn>`.
    - is “annotable”; this means it *also* has the `annotations` attribute of an AnnotableArtefact.
 
@@ -61,30 +60,24 @@ For example, every :class:`.Code` is a ``NameableArtefact``; [1]_ this means it 
    The URI and URN are *globally* unique. See `Wikipedia <https://en.wikipedia.org/wiki/Uniform_Resource_Identifier#URLs_and_URNs>`_ for a discussion of the differences between the two.
 
 :class:`.NameableArtefact`
-
-  - has a :attr:`name <.NameableArtefact.name>` and :attr:`description <.NameableArtefact.description>`, and
-  - is identifiable, therefore *also* annotable.
+   - has a :attr:`name <.NameableArtefact.name>` and :attr:`description <.NameableArtefact.description>`, and
+   - is identifiable, therefore *also* annotable.
 
 :class:`.VersionableArtefact`
-
-  - has a :attr:`version <.VersionableArtefact.version>` number,
-  - may be valid between certain times (:attr:`valid_from <.VersionableArtefact.valid_from>`, :attr:`valid_to <.VersionableArtefact.valid_to>`), and
-  - is nameable, identifiable, *and* annotable.
+   - has a :attr:`version <.VersionableArtefact.version>` number,
+   - may be valid between certain times (:attr:`valid_from <.VersionableArtefact.valid_from>`, :attr:`valid_to <.VersionableArtefact.valid_to>`), and
+   - is nameable, identifiable, *and* annotable.
 
 :class:`.MaintainableArtefact`
+   - is under the authority of a particular :attr:`maintainer <.MaintainableArtefact.maintainer>`, and
+   - is versionable, nameable, identifiable, and annotable.
 
-  - is under the authority of a particular :attr:`maintainer <.MaintainableArtefact.maintainer>`, and
-  - is versionable, nameable, identifiable, and annotable.
-
-  In an SDMX message, a maintainable object might not be given in full; only as a reference (with :attr:`is_external_reference <.MaintainableArtefact.is_external_reference>` set to :obj:`True`).
-  If so, it might have a :attr:`structure_url <.MaintainableArtefact.structure_url>`, where the maintainer provides more information about the object.
-
+   In an SDMX message, a maintainable object might not be given in full; only as a reference (with :attr:`is_external_reference <.MaintainableArtefact.is_external_reference>` set to :obj:`True`).
+   If so, it might have a :attr:`structure_url <.MaintainableArtefact.structure_url>`, where the maintainer provides more information about the object.
 
 The API reference for :mod:`sdmx.model` shows the parent classes for each class, to describe whether they are versionable, nameable, identifiable, and/or maintainable.
 
-Because SDMX is used worldwide, an :class:`.InternationalString` type is used in
-the IM—for instance, the `name` of a Nameable object is an
-``InternationalString``, with zero or more :attr:`localizations <.InternationalString.localizations>` in different locales.
+Because SDMX is used worldwide, an :class:`.InternationalString` type is used in the IM—for instance, the `name` of a Nameable object is an InternationalString, with zero or more :attr:`localizations <.InternationalString.localizations>` in different locales.
 
 .. [1] Indirectly, through :class:`Item`.
 
@@ -102,15 +95,14 @@ Data
 ====
 
 :class:`.Observation`
+   A single data point/datum.
 
-  A single data point/datum.
-  The value is stored as the :attr:`~.Observation.value` attribute.
+   The value is stored as the :attr:`~.Observation.value` attribute.
 
 :class:`.DataSet`
+   A collection of Observations, SeriesKeys, and/or GroupKeys.
 
-  A collection of Observations, SeriesKeys, and/or GroupKeys.
-
-  .. note:: **There are no 'Series' or 'Group' classes** in the IM!
+   .. note:: **There are no 'Series' or 'Group' classes** in the IM!
 
      Instead, the *idea* of 'data series' within a DataSet is modeled as:
 
@@ -137,13 +129,13 @@ Data
    :class:`.SeriesKey`
       The dimension(s) shared by all Observations in a conceptual series.
 
-   :class:`.GroupKey`.
+   :class:`.GroupKey`
       The dimension(s) comprising the group.
       These may be a subset of all the dimensions in the DataSet, in which case all matching Observations are considered part of the 'group'—even if they are associated with different SeriesKeys.
 
       GroupKeys are often used to attach AttributeValues; see below.
 
-:class:`AttributeValue`
+:class:`.AttributeValue`
   Value (:attr:`.AttributeValue.value`) for a DataAttribute (:attr:`.AttributeValue.value_for`).
 
   May be attached to any of: DataSet, SeriesKey, GroupKey, or Observation.
@@ -243,7 +235,7 @@ SDMX-CSV
 
     Reference: https://github.com/sdmx-twg/sdmx-csv
 
-    :mod:`sdmx` **does not** currently support SDMX-CSV.
+    :mod:`sdmx` **does not** currently support SDMX-CSV; see :issue:`34`, :issue:`36`.
 
 :mod:`sdmx`:
 
