@@ -49,7 +49,7 @@ dependencies = [
 cache = ["requests-cache"]
 docs = [
     "IPython",
-    "sphinx >=4,<6",
+    "sphinx >=4",
     "sphinx-book-theme",
 ]
 tests = [
