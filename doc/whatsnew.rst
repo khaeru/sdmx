@@ -8,8 +8,11 @@ What's new?
    :backlinks: none
    :depth: 1
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.8.0 (2023-03-31)
+===================
 
 Migration notes
 ---------------
