@@ -14,7 +14,7 @@ Next release
 Migration notes
 ---------------
 
-Code such as the following will emit a :class:`DeprecationWarning`:
+In order to prepare for future support of SDMX 3.0, code such as the following will emit a :class:`DeprecationWarning`:
 
 .. code-block:: python
 
@@ -44,6 +44,7 @@ All changes
 - :attr:`.xml.Reader.media_types` and :attr:`.json.Reader.media_types` explicitly indicated supported media types.
 - :attr:`.ItemScheme.is_partial` defaults to :data:`None`.
 - Add empty/stub :mod:`.format.csv`, :mod:`.reader.csv` (cf. :issue:`34`), and :mod:`.model.v30`.
+- Improve readability in :doc:`implementation` (:pull:`121`).
 
 v2.7.1 (2023-03-09)
 ===================

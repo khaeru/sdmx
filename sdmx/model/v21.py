@@ -563,8 +563,8 @@ class DimensionRelationship(AttributeRelationship):
 
 
 class GroupRelationship(AttributeRelationship):
-    # 'Retained for compatibility reasons' in SDMX 2.1; not used by pandaSDMX.
-    #:
+    #: “Retained for compatibility reasons” in SDMX 2.1 versus 2.0; not used by
+    #: :mod:`sdmx`.
     group_key: Optional["GroupDimensionDescriptor"] = None
 
 

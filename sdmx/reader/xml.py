@@ -12,7 +12,18 @@ from collections import ChainMap, defaultdict
 from copy import copy
 from itertools import chain, count, product
 from sys import maxsize
-from typing import Any, Dict, Iterable, Mapping, Optional, Type, Union, cast
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 from dateutil.parser import isoparse
 from lxml import etree
@@ -241,8 +252,13 @@ class Reader(BaseReader):
 
         try:
             # Use the etree event-driven parser
-            for event, element in etree.iterparse(  # type: ignore [attr-defined]
-                source, events=("start", "end")
+            # NB (typing) iterparse() returns tuples. For "start" and "end", the second
+            #    item is etree._Element, but for other events, e.g. "start-ns", it is
+            #    not. types-lxml accurately reflects this. Narrow the type here for the
+            #    following code.
+            for event, element in cast(
+                Iterator[Tuple[str, etree._Element]],
+                etree.iterparse(source, events=("start", "end")),
             ):
                 try:
                     # Retrieve the parsing function for this element & event
