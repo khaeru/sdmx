@@ -28,6 +28,9 @@ class _MissingID(str):
     def __str__(self):
         return "(missing id)"
 
+    def __hash__(self):
+        return hash(None)
+
     def __eq__(self, other):
         return isinstance(other, self.__class__)
 

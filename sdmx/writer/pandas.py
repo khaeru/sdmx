@@ -436,7 +436,7 @@ def _maybe_convert_datetime(df, arg, obj, dsd=None):
     # Unstack all but the time dimension and convert
     other_dims = list(filter(lambda d: d != param["dim"], df.index.names))
     df = df.unstack(other_dims)
-    df.index = pd.to_datetime(df.index)
+    df.index = pd.to_datetime(df.index, format="mixed")
 
     if param["freq"]:
         # Determine frequency string, Dimension, or Attribute

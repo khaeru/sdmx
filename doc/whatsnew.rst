@@ -8,8 +8,13 @@ What's new?
    :backlinks: none
    :depth: 1
 
-.. Next release
-.. ============
+Next release
+============
+
+- Bugfix: correctly handle ``&detail=referencepartial`` REST query parameter and :class:`.StructureMessage` containing ≥2 :class:`.MaintainableArtefact` with the same maintainer and ID, but different versions (:issue:`116`, :pull:`124`).
+  See the documentation for :mod:`.reader.xml`.
+- :mod:`sdmx` is fully compatible with pandas 2.0.0, released 2023-04-03 (:pull:`124`).
+  The minimum version of Python is increased from 3.7 (EOL 2023-06-27) to 3.8.
 
 v2.8.0 (2023-03-31)
 ===================

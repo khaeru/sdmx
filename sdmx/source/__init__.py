@@ -1,10 +1,10 @@
+import importlib.resources
 import json
 from enum import Enum
 from importlib import import_module
-from io import IOBase, TextIOWrapper
+from io import IOBase
 from typing import Any, Dict, Optional, Tuple, Union
 
-from pkg_resources import resource_stream
 from requests import Response
 
 from sdmx.model.v21 import DataStructureDefinition
@@ -221,9 +221,16 @@ def list_sources():
 
 def load_package_sources():
     """Discover all sources listed in :file:`sources.json`."""
-    with resource_stream("sdmx", "sources.json") as f:
-        # TextIOWrapper is for Python 3.5 compatibility
-        for info in json.load(TextIOWrapper(f)):
+    try:
+        ref = importlib.resources.files("sdmx").joinpath("sources.json")
+    except AttributeError:  # Python <3.9
+        from copy import copy
+
+        with importlib.resources.path("sdmx", "sources.json") as path:
+            ref = copy(path)
+
+    with ref.open("rb") as f:
+        for info in json.load(f):
             add_source(info)
 
 

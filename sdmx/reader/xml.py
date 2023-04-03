@@ -1,4 +1,4 @@
-"""SDMXML v2.1 reader."""
+"""SDMX-ML v2.1 reader."""
 # Contents of this file are organized in the order:
 #
 # - Utility methods and global variables.
@@ -367,6 +367,7 @@ class Reader(BaseReader):
         self,
         cls_or_name: Union[Type, str],
         id: Optional[str] = None,
+        version: Optional[str] = None,
         subclass: bool = False,
     ) -> Optional[Any]:
         """Return a reference to an object while leaving it in its stack.
@@ -374,7 +375,8 @@ class Reader(BaseReader):
         Always returns 1 object. Returns :obj:`None` if no matching object exists, or if
         2 or more objects meet the conditions.
 
-        If `id` is given, only return an IdentifiableArtefact with the matching ID.
+        If `id` (and `version`) is/are given, only return an IdentifiableArtefact with
+        the matching ID (and version).
 
         If `cls_or_name` is a class and `subclass` is :obj:`True`; check all objects in
         the stack `cls_or_name` *or any stack for a subclass of this class*.
@@ -387,7 +389,12 @@ class Reader(BaseReader):
         else:
             results = self.stack.get(cls_or_name, dict())
 
-        if id:
+        if id and version:
+            for v in results.values():
+                if v.id == id and v.version == version:
+                    return v
+            return None
+        elif id:
             return results.get(id)
         elif len(results) != 1:
             # 0 or ≥2 results
@@ -438,7 +445,9 @@ class Reader(BaseReader):
             return ref
 
         # Try to get the target directly
-        target = self.get_single(ref.target_cls, ref.target_id, subclass=True)
+        target = self.get_single(
+            ref.target_cls, ref.target_id, ref.version, subclass=True
+        )
 
         if target:
             return target
@@ -759,18 +768,27 @@ def _structures(reader, elem):
         ("provisionagreement", model.ProvisionAgreement),
         ("structure", model.DataStructureDefinition),
     ):
-        for obj in reader.pop_all(name, subclass=True):
-            target = getattr(msg, attr)
-            if obj.id not in target:
-                # Store using ID alone
-                target[obj.id] = obj
-            else:
-                # ID already exists; this occurs when two MaintainableArtefacts have the
-                # same ID, but different maintainers. Re-store using IDs that will be
-                # unique
-                existing = target.pop(obj.id)
-                target[f"{existing.maintainer.id}:{existing.id}"] = existing
-                target[f"{obj.maintainer.id}:{obj.id}"] = obj
+        target = getattr(msg, attr)
+
+        # Store using maintainer, ID, and version
+        tmp = {
+            (getattr(obj.maintainer, "id", None), obj.id, obj.version): obj
+            for obj in reader.pop_all(name, subclass=True)
+        }
+
+        # Construct string IDs
+        if len(set(k[0:2] for k in tmp.keys())) < len(tmp):
+            # Some non-unique (maintainer ID, object ID) pairs; include version
+            id_expr = "{0}:{1}({2})"
+        elif len(set(k[1] for k in tmp.keys())) < len(tmp):
+            # Some non-unique object IDs; include maintainer ID
+            id_expr = "{0}:{1}"
+        else:
+            # Only object ID
+            id_expr = "{1}"
+
+        for k, obj in tmp.items():
+            target[id_expr.format(*k)] = obj
 
 
 # Parsers for sdmx.model classes
@@ -906,7 +924,7 @@ def _item(reader, elem):
 def _itemscheme(reader, elem):
     cls = class_for_tag(elem.tag)
 
-    is_ = reader.maintainable(cls, elem)
+    is_ = reader.maintainable(cls, elem, is_partial=elem.attrib.get("isPartial"))
 
     # Iterate over all Item objects *and* their children
     iter_all = chain(*[iter(item) for item in reader.pop_all(cls._Item)])

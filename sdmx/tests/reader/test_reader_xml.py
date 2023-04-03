@@ -101,6 +101,34 @@ def test_gh_104(caplog, specimen):
     )
 
 
+def test_gh_116(specimen):
+    """Test of https://github.com/khaeru/sdmx/issues/116.
+
+    See also
+    --------
+    .test_sources.TestESTAT.test_gh_116
+    """
+    with specimen("ESTAT/GOV_10Q_GGNFA.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    # Both versions of the GEO codelist are accessible in the message
+    cl1 = msg.codelist["ESTAT:GEO(13.0)"]
+    cl2 = msg.codelist["ESTAT:GEO(13.1)"]
+
+    # cl1 is complete and items are available
+    assert not cl1.is_partial and 0 < len(cl1)
+    # cl2 is partial, and fewer codes are included than in cl1
+    assert cl2.is_partial and 0 < len(cl2) < len(cl1)
+
+    cl3 = msg.codelist["ESTAT:UNIT(15.1)"]
+    cl4 = msg.codelist["ESTAT:UNIT(15.2)"]
+
+    # cl3 is complete and items are available
+    assert not cl3.is_partial and 0 < len(cl3)
+    # cl4 is partial, and fewer codes are included than in cl1
+    assert cl4.is_partial and 0 < len(cl4) < len(cl3)
+
+
 # Each entry is a tuple with 2 elements:
 # 1. an instance of lxml.etree.Element to be parsed.
 # 2. Either:
