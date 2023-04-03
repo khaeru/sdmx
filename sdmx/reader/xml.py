@@ -445,7 +445,9 @@ class Reader(BaseReader):
             return ref
 
         # Try to get the target directly
-        target = self.get_single(ref.target_cls, ref.target_id, subclass=True)
+        target = self.get_single(
+            ref.target_cls, ref.target_id, ref.version, subclass=True
+        )
 
         if target:
             return target
