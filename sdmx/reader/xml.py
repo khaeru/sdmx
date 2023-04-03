@@ -367,6 +367,7 @@ class Reader(BaseReader):
         self,
         cls_or_name: Union[Type, str],
         id: Optional[str] = None,
+        version: Optional[str] = None,
         subclass: bool = False,
     ) -> Optional[Any]:
         """Return a reference to an object while leaving it in its stack.
@@ -374,7 +375,8 @@ class Reader(BaseReader):
         Always returns 1 object. Returns :obj:`None` if no matching object exists, or if
         2 or more objects meet the conditions.
 
-        If `id` is given, only return an IdentifiableArtefact with the matching ID.
+        If `id` (and `version`) is/are given, only return an IdentifiableArtefact with
+        the matching ID (and version).
 
         If `cls_or_name` is a class and `subclass` is :obj:`True`; check all objects in
         the stack `cls_or_name` *or any stack for a subclass of this class*.
@@ -387,7 +389,12 @@ class Reader(BaseReader):
         else:
             results = self.stack.get(cls_or_name, dict())
 
-        if id:
+        if id and version:
+            for v in results.values():
+                if v.id == id and v.version == version:
+                    return v
+            return None
+        elif id:
             return results.get(id)
         elif len(results) != 1:
             # 0 or ≥2 results
