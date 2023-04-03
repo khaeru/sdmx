@@ -209,10 +209,16 @@ class TestESTAT(DataSourceTest):
 
     @pytest.mark.network
     def test_gh_116(self, caplog, cache_path, client):
-        """Test of https://github.com/khaeru/sdmx/issues/116."""
+        """Test of https://github.com/khaeru/sdmx/issues/116.
+
+        See also
+        --------
+        .test_reader_xml.test_gh_116
+        """
         msg = client.get(
             "dataflow", "GOV_10Q_GGNFA", params=dict(detail="referencepartial")
         )
+
         # Both versions of the GEO codelist are accessible in the message
         cl1 = msg.codelist["ESTAT:GEO(13.0)"]
         cl2 = msg.codelist["ESTAT:GEO(13.1)"]
