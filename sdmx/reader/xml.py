@@ -1,4 +1,4 @@
-"""SDMXML v2.1 reader."""
+"""SDMX-ML v2.1 reader."""
 # Contents of this file are organized in the order:
 #
 # - Utility methods and global variables.

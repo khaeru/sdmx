@@ -8,8 +8,11 @@ What's new?
    :backlinks: none
    :depth: 1
 
-.. Next release
-.. ============
+Next release
+============
+
+- Bugfix: correctly handle ``&detail=referencepartial`` REST query parameter and :class:`.StructureMessage` containing ≥2 :class:`.MaintainableArtefact` with the same maintainer and ID, but different versions (:issue:`116`, :pull:`124`).
+  See the documentation for :mod:`.reader.xml`.
 
 v2.8.0 (2023-03-31)
 ===================
