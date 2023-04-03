@@ -759,18 +759,27 @@ def _structures(reader, elem):
         ("provisionagreement", model.ProvisionAgreement),
         ("structure", model.DataStructureDefinition),
     ):
-        for obj in reader.pop_all(name, subclass=True):
-            target = getattr(msg, attr)
-            if obj.id not in target:
-                # Store using ID alone
-                target[obj.id] = obj
-            else:
-                # ID already exists; this occurs when two MaintainableArtefacts have the
-                # same ID, but different maintainers. Re-store using IDs that will be
-                # unique
-                existing = target.pop(obj.id)
-                target[f"{existing.maintainer.id}:{existing.id}"] = existing
-                target[f"{obj.maintainer.id}:{obj.id}"] = obj
+        target = getattr(msg, attr)
+
+        # Store using maintainer, ID, and version
+        tmp = {
+            (obj.maintainer.id, obj.id, obj.version): obj
+            for obj in reader.pop_all(name, subclass=True)
+        }
+
+        # Construct string IDs
+        if len(set(k[0:2] for k in tmp.keys())) < len(tmp):
+            # Some non-unique (maintainer ID, object ID) pairs; include version
+            id_expr = "{0}:{1}({2})"
+        elif len(set(k[1] for k in tmp.keys())) < len(tmp):
+            # Some non-unique object IDs; include maintainer ID
+            id_expr = "{0}:{1}"
+        else:
+            # Only object ID
+            id_expr = "{1}"
+
+        for k, obj in tmp.items():
+            target[id_expr.format(*k)] = obj
 
 
 # Parsers for sdmx.model classes
