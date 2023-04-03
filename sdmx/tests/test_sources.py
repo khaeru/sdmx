@@ -207,6 +207,29 @@ class TestESTAT(DataSourceTest):
         )
         client.data(**args)
 
+    @pytest.mark.network
+    def test_gh_116(self, caplog, cache_path, client):
+        """Test of https://github.com/khaeru/sdmx/issues/116."""
+        msg = client.get(
+            "dataflow", "GOV_10Q_GGNFA", params=dict(detail="referencepartial")
+        )
+        # Both versions of the GEO codelist are accessible in the message
+        cl1 = msg.codelist["ESTAT:GEO(13.0)"]
+        cl2 = msg.codelist["ESTAT:GEO(13.1)"]
+
+        # cl1 is complete and items are available
+        assert not cl1.is_partial and 0 < len(cl1)
+        # cl2 is partial, and fewer codes are included than in cl1
+        assert cl2.is_partial and 0 < len(cl2) < len(cl1)
+
+        cl3 = msg.codelist["ESTAT:UNIT(15.1)"]
+        cl4 = msg.codelist["ESTAT:UNIT(15.2)"]
+
+        # cl3 is complete and items are available
+        assert not cl3.is_partial and 0 < len(cl3)
+        # cl4 is partial, and fewer codes are included than in cl1
+        assert cl4.is_partial and 0 < len(cl4) < len(cl3)
+
 
 class TestILO(DataSourceTest):
     source_id = "ILO"
