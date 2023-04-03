@@ -772,7 +772,7 @@ def _structures(reader, elem):
 
         # Store using maintainer, ID, and version
         tmp = {
-            (obj.maintainer.id, obj.id, obj.version): obj
+            (getattr(obj.maintainer, "id", None), obj.id, obj.version): obj
             for obj in reader.pop_all(name, subclass=True)
         }
 
