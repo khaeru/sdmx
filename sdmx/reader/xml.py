@@ -906,7 +906,7 @@ def _item(reader, elem):
 def _itemscheme(reader, elem):
     cls = class_for_tag(elem.tag)
 
-    is_ = reader.maintainable(cls, elem)
+    is_ = reader.maintainable(cls, elem, is_partial=elem.attrib.get("isPartial"))
 
     # Iterate over all Item objects *and* their children
     iter_all = chain(*[iter(item) for item in reader.pop_all(cls._Item)])
