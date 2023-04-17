@@ -99,6 +99,25 @@ class AnnotableArtefact(BaseModel):
 
         raise KeyError(attrib)
 
+    def eval_annotation(self, id: str, globals=None):
+        """Retrieve the annotation with the given `id` and :func:`eval` its contents.
+
+        This can be used for unpacking Python values (e.g. :class:`dict`) stored as an
+        annotation on a :class:`~sdmx.model.Code`.
+
+        Returns :obj:`None` if no attribute exists with the given `id`.
+        """
+        try:
+            value = str(self.get_annotation(id=id).text)
+        except KeyError:  # No such attribute
+            return None
+
+        try:
+            return eval(value, globals or {})
+        except Exception as e:  # Something that can't be eval()'d, e.g. a plain string
+            log.debug(f"Could not eval({value!r}): {e}")
+            return value
+
 
 class IdentifiableArtefact(AnnotableArtefact):
     #: Unique identifier of the object.
