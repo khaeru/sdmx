@@ -1442,6 +1442,12 @@ class DataSet(AnnotableArtefact):
         else:
             return ActionType[value]
 
+    def __str__(self):
+        return (
+            f"<DataSet structured_by={self.structured_by!r} with {len(self)} "
+            "observations>"
+        )
+
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
 
