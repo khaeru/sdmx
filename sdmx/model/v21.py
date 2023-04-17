@@ -1007,14 +1007,23 @@ class KeyValue(BaseModel):
         `other` may be :class:`.KeyValue` or :class:`.ComponentValue`; if so, and both
         `self` and `other` have :attr:`.value_for`, these must refer to the same object.
         """
+        other_value = self._compare_value(other)
+        result = self.value == other_value
         if isinstance(other, (KeyValue, ComponentValue)):
-            return (self.value == other.value) and (
+            result &= (
                 self.value_for in (None, other.value_for) or other.value_for is None
             )
-        elif isinstance(other, MemberValue):
-            return self.value == other.value
+        return result
+
+    @staticmethod
+    def _compare_value(other):
+        if isinstance(other, (KeyValue, ComponentValue, MemberValue)):
+            return other.value
         else:
-            return self.value == other
+            return other
+
+    def __lt__(self, other):
+        return self.value < self._compare_value(other)
 
     def __str__(self):
         return "{0.id}={0.value}".format(self)
