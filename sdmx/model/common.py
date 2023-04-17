@@ -124,8 +124,8 @@ class IdentifiableArtefact(AnnotableArtefact):
     id: str = MissingID
     #: Universal resource identifier that may or may not be resolvable.
     uri: Optional[str] = None
-    #: Universal resource name. For use in SDMX registries; all registered
-    #: objects have a URN.
+    #: Universal resource name. For use in SDMX registries; all registered objects have
+    #: a URN.
     urn: Optional[str] = None
 
     urn_group: Dict = dict()
@@ -294,8 +294,7 @@ class MaintainableArtefact(VersionableArtefact):
     #: :obj:`True` if the content of the object is held externally; i.e., not
     #: the current :class:`Message`.
     is_external_reference: Optional[bool] = None
-    #: URL of an SDMX-compliant web service from which the object can be
-    #: retrieved.
+    #: URL of an SDMX-compliant web service from which the object can be retrieved.
     service_url: Optional[str] = None
     #: URL of an SDMX-ML document containing the object.
     structure_url: Optional[str] = None

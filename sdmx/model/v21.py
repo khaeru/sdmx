@@ -550,7 +550,7 @@ class _NoSpecifiedRelationship(AttributeRelationship):
     pass
 
 
-#: A singleton.
+#: A singleton. Indicates that the attribute is attached to the entire data set.
 NoSpecifiedRelationship = _NoSpecifiedRelationship()
 
 
@@ -1301,8 +1301,8 @@ class SeriesKey(Key):
 class Observation(BaseModel):
     """SDMX 2.1 Observation.
 
-    This class also implements the spec classes ObservationValue,
-    UncodedObservationValue, and CodedObservation.
+    This class also implements the IM classes ObservationValue, UncodedObservationValue,
+    and CodedObservation.
     """
 
     #:
