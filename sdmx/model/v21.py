@@ -145,6 +145,10 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
             self.auto_order = value.order + 1
         self.components.append(value)
 
+    def extend(self, values: Iterable[CT]) -> None:
+        for value in values:
+            self.append(value)
+
     def get(self, id) -> CT:
         """Return the component with the given *id*."""
         # Search for an existing Component
