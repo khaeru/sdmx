@@ -138,8 +138,11 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
     _Component: Type = Component
 
     # Convenience access to the components
-    def append(self, value: CT):
+    def append(self, value: CT) -> None:
         """Append *value* to :attr:`components`."""
+        if hasattr(value, "order") and value.order is None:
+            value.order = max(self.auto_order, len(self.components) + 1)
+            self.auto_order = value.order + 1
         self.components.append(value)
 
     def get(self, id) -> CT:
