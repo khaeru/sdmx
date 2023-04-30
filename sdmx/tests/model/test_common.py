@@ -1,6 +1,12 @@
 import pytest
 
-from sdmx.model import AnnotableArtefact, Annotation, Item, ItemScheme, Representation
+from sdmx.model.common import (
+    AnnotableArtefact,
+    Annotation,
+    Item,
+    ItemScheme,
+    Representation,
+)
 
 
 class TestAnnotableArtefact:
