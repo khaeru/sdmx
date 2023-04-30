@@ -73,13 +73,13 @@ def to_csv(
     elif rtype is pd.DataFrame:
         return result
     else:
-        raise ValueError(f"Unknown rtype={rtype!r}")
+        raise ValueError(f"Invalid rtype={rtype!r}")
 
 
 @writer
 def dataset(
     obj: model.DataSet,
-    *args,
+    *,
     labels: Literal["id", "both"] = "id",
     time_format: Literal["original", "normalized"] = "original",
     **kwargs,
@@ -131,12 +131,7 @@ def dataset(
     ValueError
         If :attr:`.DataSet.described_by` is :data:`None`.
     """
-    # Check arguments
-    if len(args):
-        raise ValueError(
-            f"to_csv() does not accept any positional arguments; got {args}"
-        )
-    elif labels == "both":
+    if labels == "both":
         raise NotImplementedError(f"labels={labels}")
     elif time_format != "original":
         raise NotImplementedError(f"time_format={time_format}")
@@ -150,7 +145,7 @@ def dataset(
 
     # Construct the DATAFLOW column
     if obj.described_by is None:
-        raise ValueError(f"No associated data flow definition for {obj!r}")
+        raise ValueError(f"No associated data flow definition for {obj}")
     dfd_urn = urn.make(obj.described_by).split("=", maxsplit=1)[1]
     df_col = pd.Series(dfd_urn, index=tmp.index, name="DATAFLOW")
 
