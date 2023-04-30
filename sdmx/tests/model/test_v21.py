@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from sdmx.model.v21 import ComponentList, Dimension, DimensionDescriptor
+from sdmx.model.v21 import ComponentList, Dimension, DimensionDescriptor, KeyValue
 
 
 class TestComponentList:
@@ -46,3 +46,10 @@ class TestComponentList:
 
         # Order is not altered
         assert (3, 2, 1) == tuple(map(attrgetter("order"), components))
+
+
+class TestKeyValue:
+    def test_sort(self) -> None:
+        kv1 = KeyValue(id="DIM", value="3")
+        assert kv1 < KeyValue(id="DIM", value="foo")
+        assert kv1 < "foo"
