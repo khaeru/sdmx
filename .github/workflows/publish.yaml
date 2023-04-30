@@ -12,5 +12,6 @@ on:
 jobs:
   publish:
     uses: iiasa/actions/.github/workflows/publish.yaml@pypi-trusted
+    environment: release
     permissions:
       id-token: write
