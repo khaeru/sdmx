@@ -130,7 +130,7 @@ CT = TypeVar("CT", bound=Component)
 class ComponentList(IdentifiableArtefact, Generic[CT]):
     #:
     components: List[CT] = []
-    #:
+    #: Counter used to automatically populate :attr:`.DimensionComponent.order` values.
     auto_order = 1
 
     # The default type of the Components in the ComponentList. See comment on
@@ -146,6 +146,7 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
         self.components.append(value)
 
     def extend(self, values: Iterable[CT]) -> None:
+        """Extend :attr:`components` with *values*."""
         for value in values:
             self.append(value)
 
@@ -492,9 +493,7 @@ class ContentConstraint(Constraint):
         if self.data_content_region:
             return all(value in cr for cr in self.data_content_region)
         else:
-            raise NotImplementedError(
-                "ContentConstraint does not contain a CubeRegion"
-            )
+            raise NotImplementedError("ContentConstraint does not contain a CubeRegion")
 
     def to_query_string(self, structure):
         cr_count = len(self.data_content_region)

@@ -7,6 +7,21 @@ Next release
 ============
 
 - Add :func:`.to_csv` (:mod:`.writer.csv`) to generate SDMX-CSV 1.0 (corresponding to SDMX 2.1) representation of :class:`DataSets <.DataSet>` (:issue:`36`, :pull:`125`).
+- Information Model classes (:pull:`125`):
+
+  - Add :meth:`.AnnotableArtefact.eval_annotation`, which can be used to retrieve Python data structures stored using :func:`repr` as :attr:`.Annotation.text` on an object.
+  - Implement :meth:`.KeyValue.__lt__`, for use with Python :func:`.sorted`.
+  - Implement :meth:`.DataSet.__str__`.
+    The previous default string representation included the representation of *every* observation in the data set, which could be excessively verbose.
+    Use ``repr(ds)`` explicitly if this is desired.
+  - :meth:`.ComponentList.append` (thus also child classes including :class:`.DimensionDescriptor`) now sets :attr:`.DimensionComponent.order` on the appended components (dimensions), if not already set.
+  - Add :meth:`.ComponentList.extend`.
+
+- :mod:`sdmx.writer.xml` (:pull:`125`):
+
+  - Write :attr:`.DataSet.attrib`, i.e. :class:`AttributeValue` attached directly to a data set, rather than to its contents.
+  - Write :class:`.Contact`, e.g. within an :class:`.AgencyScheme`.
+
 - Bugfix: correctly handle ``&detail=referencepartial`` REST query parameter and :class:`.StructureMessage` containing ≥2 :class:`.MaintainableArtefact` with the same maintainer and ID, but different versions (:issue:`116`, :pull:`124`).
   See the documentation for :mod:`.reader.xml`.
 - :mod:`sdmx` is fully compatible with pandas 2.0.0, released 2023-04-03 (:pull:`124`).

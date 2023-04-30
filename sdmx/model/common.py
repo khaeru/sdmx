@@ -103,7 +103,7 @@ class AnnotableArtefact(BaseModel):
         """Retrieve the annotation with the given `id` and :func:`eval` its contents.
 
         This can be used for unpacking Python values (e.g. :class:`dict`) stored as an
-        annotation on a :class:`~sdmx.model.Code`.
+        annotation on an AnnotableArtefact (e.g. :class:`~sdmx.model.Code`).
 
         Returns :obj:`None` if no attribute exists with the given `id`.
         """
