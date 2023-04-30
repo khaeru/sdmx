@@ -7,10 +7,6 @@ Contributions are welcome!
 - For current development priorities, see the list of `GitHub milestones <https://github.com/khaeru/sdmx/milestones>`_ and issues/PRs targeted to each.
 - For wishlist features, see issues on GitHub tagged `‘enh’ <https://github.com/khaeru/sdmx/labels/enh>`_ or `‘wishlist’ <https://github.com/khaeru/sdmx/labels/wishlist>`_.
 
-.. contents::
-   :local:
-   :backlinks: none
-
 Code style
 ==========
 

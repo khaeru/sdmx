@@ -17,10 +17,6 @@ Some parts of the API are described on separate pages:
 
 See also the :doc:`implementation`.
 
-.. contents::
-   :local:
-   :backlinks: none
-
 Top-level methods and classes
 -----------------------------
 
@@ -36,6 +32,7 @@ Top-level methods and classes
       log
       read_sdmx
       read_url
+      to_csv
       to_pandas
       to_xml
 

@@ -42,7 +42,6 @@ from typing import (
     TypeVar,
     Union,
 )
-from warnings import warn
 
 from sdmx.rest import Resource
 from sdmx.util import (
@@ -130,7 +129,7 @@ CT = TypeVar("CT", bound=Component)
 class ComponentList(IdentifiableArtefact, Generic[CT]):
     #:
     components: List[CT] = []
-    #:
+    #: Counter used to automatically populate :attr:`.DimensionComponent.order` values.
     auto_order = 1
 
     # The default type of the Components in the ComponentList. See comment on
@@ -138,9 +137,17 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
     _Component: Type = Component
 
     # Convenience access to the components
-    def append(self, value: CT):
+    def append(self, value: CT) -> None:
         """Append *value* to :attr:`components`."""
+        if hasattr(value, "order") and value.order is None:
+            value.order = max(self.auto_order, len(self.components) + 1)
+            self.auto_order = value.order + 1
         self.components.append(value)
+
+    def extend(self, values: Iterable[CT]) -> None:
+        """Extend :attr:`components` with *values*."""
+        for value in values:
+            self.append(value)
 
     def get(self, id) -> CT:
         """Return the component with the given *id*."""
@@ -485,19 +492,17 @@ class ContentConstraint(Constraint):
         if self.data_content_region:
             return all(value in cr for cr in self.data_content_region)
         else:
-            raise NotImplementedError(
-                "ContentConstraint does not contain a CubeRegion."
-            )
+            raise NotImplementedError("ContentConstraint does not contain a CubeRegion")
 
     def to_query_string(self, structure):
         cr_count = len(self.data_content_region)
         try:
             if cr_count > 1:
-                warn(f"to_query_string() using first of {cr_count} " "CubeRegions.")
+                log.warning(f"to_query_string() using first of {cr_count} CubeRegions")
 
             return self.data_content_region[0].to_query_string(structure)
         except IndexError:
-            raise RuntimeError("ContentConstraint does not contain a CubeRegion.")
+            raise RuntimeError("ContentConstraint does not contain a CubeRegion")
 
     def iter_keys(
         self,
@@ -543,7 +548,7 @@ class _NoSpecifiedRelationship(AttributeRelationship):
     pass
 
 
-#: A singleton.
+#: A singleton. Indicates that the attribute is attached to the entire data set.
 NoSpecifiedRelationship = _NoSpecifiedRelationship()
 
 
@@ -1000,14 +1005,23 @@ class KeyValue(BaseModel):
         `other` may be :class:`.KeyValue` or :class:`.ComponentValue`; if so, and both
         `self` and `other` have :attr:`.value_for`, these must refer to the same object.
         """
+        other_value = self._compare_value(other)
+        result = self.value == other_value
         if isinstance(other, (KeyValue, ComponentValue)):
-            return (self.value == other.value) and (
+            result &= (
                 self.value_for in (None, other.value_for) or other.value_for is None
             )
-        elif isinstance(other, MemberValue):
-            return self.value == other.value
+        return result
+
+    @staticmethod
+    def _compare_value(other):
+        if isinstance(other, (KeyValue, ComponentValue, MemberValue)):
+            return other.value
         else:
-            return self.value == other
+            return other
+
+    def __lt__(self, other):
+        return self.value < self._compare_value(other)
 
     def __str__(self):
         return "{0.id}={0.value}".format(self)
@@ -1285,8 +1299,8 @@ class SeriesKey(Key):
 class Observation(BaseModel):
     """SDMX 2.1 Observation.
 
-    This class also implements the spec classes ObservationValue,
-    UncodedObservationValue, and CodedObservation.
+    This class also implements the IM classes ObservationValue, UncodedObservationValue,
+    and CodedObservation.
     """
 
     #:
@@ -1425,6 +1439,12 @@ class DataSet(AnnotableArtefact):
             return value
         else:
             return ActionType[value]
+
+    def __str__(self):
+        return (
+            f"<DataSet structured_by={self.structured_by!r} with {len(self)} "
+            "observations>"
+        )
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.

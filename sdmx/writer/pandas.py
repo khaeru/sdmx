@@ -22,8 +22,8 @@ from sdmx.model.v21 import (
 from sdmx.util import DictLike
 from sdmx.writer.base import BaseWriter
 
-#: Default return type for :func:`write_dataset` and similar methods. Either
-#: 'compat' or 'rows'. See the ref:`HOWTO <howto-rtype>`.
+#: Default return type for :func:`write_dataset` and similar methods. Either 'compat' or
+#: 'rows'. See the ref:`HOWTO <howto-rtype>`.
 DEFAULT_RTYPE = "rows"
 
 
@@ -68,8 +68,8 @@ def _dict(obj: dict, *args, **kwargs):
             # Can safely concatenate these to a pd.MultiIndex'd Series.
             return pd.concat(result)
         else:
-            # The individual pd.Series are indexed by different dimensions; do
-            # not concatenate.
+            # The individual pd.Series are indexed by different dimensions; do not
+            # concatenate
             return DictLike(result)
     elif result_type == {str}:
         return pd.Series(result)
@@ -132,8 +132,8 @@ def write_structuremessage(obj: message.StructureMessage, include=None, **kwargs
     ----------
     obj : .StructureMessage
     include : iterable of str or str, optional
-        One or more of the attributes of the StructureMessage (
-        'category_scheme', 'codelist', etc.) to transform.
+        One or more of the attributes of the StructureMessage ('category_scheme',
+        'codelist', etc.) to transform.
     kwargs :
         Passed to :meth:`write` for each attribute.
 
@@ -271,8 +271,8 @@ def write_dataset(
     :class:`pandas.Series` with :class:`pandas.MultiIndex`
         Otherwise.
     """
-    # If called directly on a DataSet (rather than a parent DataMessage),
-    # cannot determine the "dimension at observation level"
+    # If called directly on a DataSet (rather than a parent DataMessage), cannot
+    # determine the "dimension at observation level"
     rtype = kwargs.setdefault("_rtype", "rows")
 
     # Validate attributes argument
@@ -344,11 +344,11 @@ def _dataset_compat(df, datetime, kwargs):
     if obs_dim in (AllDimensions, None):
         pass  # Do nothing
     elif isinstance(obs_dim, TimeDimension):
-        # Don't modify *df*; only change arguments so that
-        # _maybe_convert_datetime performs the desired changes
+        # Don't modify *df*; only change arguments so that _maybe_convert_datetime
+        # performs the desired changes
         if datetime is False or datetime is True:
-            # Either datetime is not given, or True without specifying a
-            # dimension; overwrite
+            # Either datetime is not given, or True without specifying a dimension;
+            # overwrite
             datetime = obs_dim
         elif isinstance(datetime, dict):
             # Dict argument; ensure the 'dim' key is the same as obs_dim

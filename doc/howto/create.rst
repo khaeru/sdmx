@@ -7,11 +7,6 @@ The opposite—creating SDMX messages from Python or pandas objects—is also po
 (Helper code to simplify this process is still a :doc:`planned future development </dev>`.)
 This page gives a minimal demonstration.
 
-.. contents::
-   :local:
-   :backlinks: none
-
-
 Create some example data
 ========================
 

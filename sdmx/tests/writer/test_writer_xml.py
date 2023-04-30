@@ -10,6 +10,8 @@ from sdmx.writer.xml import writer as XMLWriter
 
 log = logging.getLogger(__name__)
 
+# Fixtures
+
 
 @pytest.fixture
 def dsd():
@@ -40,7 +42,27 @@ def dks(dsd):
     )
 
 
-def test_codelist(tmp_path, codelist):
+# Test specific methods associated with specific classes
+
+
+def test_contact() -> None:
+    c = m.Contact(
+        name="John Smith", org_unit="Human Resources", telephone="+1234567890"
+    )
+
+    result = sdmx.to_xml(c, pretty_print=True)
+
+    assert result.decode().endswith(
+        """
+  <com:Name xml:lang="en">John Smith</com:Name>
+  <str:Department xml:lang="en">Human Resources</str:Department>
+  <str:Telephone>+1234567890</str:Telephone>
+</str:Contact>
+"""
+    )
+
+
+def test_codelist(codelist):
     result = sdmx.to_xml(codelist, pretty_print=True)
     print(result.decode())
 
@@ -119,6 +141,9 @@ def test_obs(obs):
 def test_Footer(footer):
     """:class:`.Footer` can be written."""
     sdmx.to_xml(footer)
+
+
+# sdmx.message classes
 
 
 def test_structuremessage(tmp_path, structuremessage):

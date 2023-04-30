@@ -5,7 +5,7 @@
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
 
-from typing import Iterable, cast
+from typing import Iterable, List, cast
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -230,7 +230,7 @@ def _footer(obj: message.Footer):
 # §3.2: Base structures
 
 
-def i11lstring(obj, name):
+def i11lstring(obj, name) -> List[etree._Element]:
     """InternationalString.
 
     Returns a list of elements with name `name`.
@@ -319,6 +319,9 @@ def _item(obj: model.Item, **kwargs):
         e_parent.append(Element(":Ref", id=obj.parent.id, style="Ref"))
         elem.append(e_parent)
 
+    if isinstance(obj, model.Organisation):
+        elem.extend(writer.recurse(c) for c in obj.contact)
+
     return elem
 
 
@@ -361,6 +364,23 @@ def _concept(obj: model.Concept, **kwargs):
     if obj.core_representation:
         elem.append(writer.recurse(obj.core_representation, "CoreRepresentation"))
 
+    return elem
+
+
+# §4.6: Organisations
+
+
+@writer
+def _contact(obj: model.Contact):
+    elem = Element("str:Contact")
+    elem.extend(
+        i11lstring(obj.name, "com:Name")
+        + i11lstring(obj.org_unit, "str:Department")
+        + i11lstring(obj.responsibility, "str:Role")
+        + ([Element("str:Telephone", obj.telephone)] if obj.telephone else [])
+        + [Element("str:URI", text=value) for value in obj.uri]
+        + [Element("str:Email", text=value) for value in obj.email]
+    )
     return elem
 
 
@@ -620,6 +640,10 @@ def _ds(obj: model.DataSet):
     if obj.structured_by:
         attrib["structureRef"] = obj.structured_by.id
     elem = Element("mes:DataSet", **attrib)
+
+    # AttributeValues attached to the data set
+    if len(obj.attrib):
+        elem.append(_av("gen:Attributes", obj.attrib.values()))
 
     obs_to_write = set(map(id, obj.obs))
 

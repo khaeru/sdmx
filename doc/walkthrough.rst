@@ -4,11 +4,6 @@ Walkthrough
 This page walks through an example :mod:`sdmx` workflow, providing explanations of some SDMX concepts along the way.
 See also :doc:`resources`, :doc:`HOWTOs <howto>` for miscellaneous tasks, and follow links to the :doc:`glossary` where some terms are explained.
 
-.. contents::
-   :local:
-   :backlinks: none
-
-
 SDMX workflow
 =============
 
