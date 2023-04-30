@@ -1,10 +1,6 @@
 How to…
 =======
 
-.. contents::
-   :local:
-   :backlinks: none
-
 On other pages:
 
 .. toctree::
@@ -115,7 +111,7 @@ Select data frame layouts returned by :func:`.to_pandas`
 One is the `datetime` argument; see :ref:`datetime`.
 The other is the `rtype` argument.
 
-To select the same behaviour as pandSDMX 0.9, give `rtype` = 'compat', or set :data:`.DEFAULT_RTYPE` to 'compat':
+To select the same behaviour as pandaSDMX 0.9, give `rtype` = 'compat', or set :data:`.DEFAULT_RTYPE` to 'compat':
 
 .. ipython:: python
 

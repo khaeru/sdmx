@@ -17,10 +17,6 @@ Some parts of the API are described on separate pages:
 
 See also the :doc:`implementation`.
 
-.. contents::
-   :local:
-   :backlinks: none
-
 Top-level methods and classes
 -----------------------------
 

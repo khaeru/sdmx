@@ -17,11 +17,6 @@ Read the following sections, or the file :file:`sources.json` in the package sou
 
 :mod:`sdmx` also supports adding other data sources; see :meth:`add_source` and :class:`~.source.Source`.
 
-.. contents::
-   :local:
-   :backlinks: none
-
-
 Data source limitations
 -----------------------
 

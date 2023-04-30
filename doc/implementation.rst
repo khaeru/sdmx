@@ -7,10 +7,6 @@ This page gives brief explanations of **how** :mod:`sdmx` **implements the stand
 Although this page is organized to correspond to the standards, it **does not recapitulate them** (:ref:`as stated <not-the-standard>`)—nor does it set out to teach all their details.
 For those purposes, see :doc:`resources`; or the :doc:`walkthrough`, which includes some incidental explanations.
 
-.. contents::
-   :backlinks: none
-   :local:
-
 .. _sdmx-version-policy:
 
 SDMX versions 2.0, 2.1, and 3.0
