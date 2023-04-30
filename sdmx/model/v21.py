@@ -493,18 +493,18 @@ class ContentConstraint(Constraint):
             return all(value in cr for cr in self.data_content_region)
         else:
             raise NotImplementedError(
-                "ContentConstraint does not contain a CubeRegion."
+                "ContentConstraint does not contain a CubeRegion"
             )
 
     def to_query_string(self, structure):
         cr_count = len(self.data_content_region)
         try:
             if cr_count > 1:
-                warn(f"to_query_string() using first of {cr_count} " "CubeRegions.")
+                warn(f"to_query_string() using first of {cr_count} CubeRegions")
 
             return self.data_content_region[0].to_query_string(structure)
         except IndexError:
-            raise RuntimeError("ContentConstraint does not contain a CubeRegion.")
+            raise RuntimeError("ContentConstraint does not contain a CubeRegion")
 
     def iter_keys(
         self,
