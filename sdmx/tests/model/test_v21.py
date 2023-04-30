@@ -3,7 +3,37 @@ from typing import List
 
 import pytest
 
-from sdmx.model.v21 import ComponentList, Dimension, DimensionDescriptor, KeyValue
+from sdmx.model.common import ConstraintRoleType
+from sdmx.model.v21 import (
+    ComponentList,
+    ConstraintRole,
+    ContentConstraint,
+    CubeRegion,
+    DataStructureDefinition,
+    Dimension,
+    DimensionDescriptor,
+    KeyValue,
+)
+
+
+class TestContentConstraint:
+    @pytest.fixture
+    def dsd(self) -> DataStructureDefinition:
+        return DataStructureDefinition()
+
+    def test_to_query_string(self, caplog, dsd) -> None:
+        cc = ContentConstraint(
+            role=ConstraintRole(role=ConstraintRoleType["allowable"])
+        )
+
+        with pytest.raises(RuntimeError, match="does not contain"):
+            cc.to_query_string(dsd)
+
+        cc.data_content_region.extend([CubeRegion(), CubeRegion()])
+
+        cc.to_query_string(dsd)
+
+        assert "first of 2 CubeRegions" in caplog.messages[-1]
 
 
 class TestComponentList:

@@ -42,7 +42,6 @@ from typing import (
     TypeVar,
     Union,
 )
-from warnings import warn
 
 from sdmx.rest import Resource
 from sdmx.util import (
@@ -499,7 +498,7 @@ class ContentConstraint(Constraint):
         cr_count = len(self.data_content_region)
         try:
             if cr_count > 1:
-                warn(f"to_query_string() using first of {cr_count} CubeRegions")
+                log.warning(f"to_query_string() using first of {cr_count} CubeRegions")
 
             return self.data_content_region[0].to_query_string(structure)
         except IndexError:
