@@ -105,8 +105,7 @@ jobs:
       run: |
         pytest -m "network" \
           -ra --color=yes --verbose \
-          --cov-report=xml \
-          --numprocesses auto
+          --cov-report=xml
       shell: bash
 
     - name: Upload test coverage to Codecov.io
