@@ -3,6 +3,20 @@
 Convert ``sdmx`` objects to other formats
 *****************************************
 
+.. _writer-csv:
+
+``writer.csv``: Write to SDMX-CSV
+=================================
+
+.. versionadded:: 2.9.0
+
+See :func:`.to_csv`.
+
+.. automodule:: sdmx.writer.csv
+   :members:
+   :exclude-members: to_csv
+   :show-inheritance:
+
 .. _writer-pandas:
 
 ``writer.pandas``: Convert to ``pandas`` objects
@@ -62,7 +76,6 @@ Other objects are converted as follows:
    Support selection of language for conversion of
    :class:`InternationalString <sdmx.model.InternationalString>`.
 
-
 ``writer.xml``: Write to SDMX-ML
 ================================
 
@@ -74,7 +87,6 @@ See :func:`.to_xml`.
    :members:
    :exclude-members: to_xml
    :show-inheritance:
-
 
 Writer API
 ==========

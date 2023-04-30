@@ -36,6 +36,7 @@ Top-level methods and classes
       log
       read_sdmx
       read_url
+      to_csv
       to_pandas
       to_xml
 
