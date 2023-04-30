@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.9.0 (2023-04-30)
+===================
 
 - Add :func:`.to_csv` (:mod:`.writer.csv`) to generate SDMX-CSV 1.0 (corresponding to SDMX 2.1) representation of :class:`DataSets <.DataSet>` (:issue:`36`, :pull:`125`).
 - Information Model classes (:pull:`125`):
