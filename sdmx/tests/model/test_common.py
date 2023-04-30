@@ -1,6 +1,32 @@
 import pytest
 
-from sdmx.model import Item, ItemScheme, Representation
+from sdmx.model import AnnotableArtefact, Annotation, Item, ItemScheme, Representation
+
+
+class TestAnnotableArtefact:
+    def test_eval_annotation(self, caplog) -> None:
+        aa = AnnotableArtefact()
+
+        value = dict(foo=1.1, bar=2, baz=True)
+
+        aa.annotations.append(Annotation(id="test-anno0", text=repr(value)))
+        aa.annotations.append(Annotation(id="test-anno1", text="value['foo']"))
+
+        # Returns None for a missing ID
+        assert None is aa.eval_annotation(id="wrong-id")
+
+        # Entire value is retrieved
+        assert value == aa.eval_annotation(id="test-anno0")
+
+        # Cannot handle a variable reference with no globals;
+        assert "value['foo']" == aa.eval_annotation(id="test-anno1")
+        assert "name 'value' is not defined" in caplog.messages[0]
+        caplog.clear()
+
+        # Globals can be used if passed
+        assert value["foo"] == aa.eval_annotation(
+            id="test-anno1", globals=dict(value=value)
+        )
 
 
 class TestItemScheme:
