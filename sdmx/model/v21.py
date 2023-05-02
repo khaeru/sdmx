@@ -9,8 +9,8 @@ This module implements many of the classes described in the SDMX-IM specificatio
 
 Details of the implementation:
 
-- Python typing and pydantic are used to enforce the types of attributes that reference
-  instances of other classes.
+- Python dataclasses and type hinting are used to enforce the types of attributes that
+  reference instances of other classes.
 - Some classes have convenience attributes not mentioned in the spec, to ease navigation
   between related objects. These are marked “:mod:`sdmx` extension not in the IM.”
 - Class definitions are grouped by section of the spec, but these sections appear out
