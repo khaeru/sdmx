@@ -125,25 +125,22 @@ class InternationalString:
         except AttributeError:
             return NotImplemented
 
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.__validate
-
-    @classmethod
-    def __validate(cls, value, values, config, field):
-        # Any value that the constructor can handle can be assigned
-        if not isinstance(value, InternationalString):
-            value = InternationalString(value)
-
-        try:
-            # Update existing value
-            existing = values[field.name]
-            existing.localizations.update(value.localizations)
-            return existing
-        except KeyError:
-            # No existing value/None; return the assigned value
-            return value
-
 
 _TInternationalString = Union[InternationalString, InternationalString._CONVERTIBLE]
 _TInternationalStringInit = Union[_TInternationalString, None]
+
+
+class InternationalStringDescriptor:
+    def __set_name__(self, owner, name):
+        self._name = "_" + name
+
+    def __get__(self, obj, type):
+        if obj is None:
+            return None
+
+        return getattr(obj, self._name, InternationalString())
+
+    def __set__(self, obj, value: _TInternationalStringInit):
+        if not isinstance(value, InternationalString):
+            value = InternationalString(value)
+        setattr(obj, self._name, value)
