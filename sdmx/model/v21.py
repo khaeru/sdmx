@@ -669,7 +669,7 @@ class DimensionDescriptor(ComponentList[DimensionComponent]):
         dd = cls()
         for order, (id, kv) in enumerate(key.values.items()):
             cl = Codelist(id=id)
-            cl.append(Code(id=kv.value))
+            cl.append(Code(id=str(kv.value)))
             dd.components.append(
                 Dimension(
                     id=id,
@@ -858,7 +858,7 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
         for k in iter_keys:
             for i, (id, kv) in enumerate(k.values.items()):
                 try:
-                    dd[i].local_representation.enumerated.append(Code(id=kv.value))
+                    dd[i].local_representation.enumerated.append(Code(id=str(kv.value)))
                 except ValueError:
                     pass  # Item already exists
 
