@@ -1399,6 +1399,7 @@ class Observation:
 class DataSet(AnnotableArtefact):
     # SDMX-IM features
     #:
+    # TODO add validation
     action: Optional[ActionType] = None
     #:
     attrib: DictLike[str, AttributeValue] = dictlike_field()
@@ -1461,13 +1462,6 @@ class DataSet(AnnotableArtefact):
 
                 # Store a reference to the observation
                 self.series[series_key].append(obs)
-
-    @validator("action")
-    def _validate_action(cls, value):
-        if value in ActionType:
-            return value
-        else:
-            return ActionType[value]
 
     def __str__(self):
         return (
