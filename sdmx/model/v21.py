@@ -1318,7 +1318,7 @@ class SeriesKey(Key):
     def group_attrib(self):
         """Return a view of combined group attributes."""
         # Needed to pass existing tests
-        view = DictLike()
+        view = self.attrib.copy()
         for gk in self.group_keys:
             view.update(gk.attrib)
         return view
