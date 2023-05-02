@@ -630,9 +630,9 @@ def _header(reader, elem):
         extracted=reader.pop_single("Extracted") or None,
         id=reader.pop_single("ID") or None,
         prepared=reader.pop_single("Prepared") or None,
+        receiver=reader.pop_single("Receiver") or None,
         reporting_begin=reader.pop_single("ReportingBegin") or None,
         reporting_end=reader.pop_single("ReportingEnd") or None,
-        receiver=reader.pop_single("Receiver") or None,
         sender=reader.pop_single("Sender") or None,
         test=str(reader.pop_single("Test")).lower() == "true",
     )
@@ -919,7 +919,7 @@ def _item(reader, elem):
 
 @end(
     "str:AgencyScheme str:Codelist str:ConceptScheme str:CategoryScheme "
-    "str:DataConsumerScheme str:DataProviderScheme",
+    "str:DataConsumerScheme str:DataProviderScheme"
 )
 def _itemscheme(reader, elem):
     cls = class_for_tag(elem.tag)
@@ -959,8 +959,8 @@ def _facet(reader, elem):
         # Convert case of the value. In XML, first letter is uppercase; in
         # the spec and Python enum, lowercase.
         value_type=model.FacetValueType[fvt[0].lower() + fvt[1:]],
-        # Other attributes are for Facet.type, an instance of FacetType. Convert
-        # the attribute name from camelCase to snake_case
+        # Other attributes are for Facet.type, an instance of FacetType. Convert the
+        # attribute name from camelCase to snake_case
         type=model.FacetType(**{to_snake(key): val for key, val in attrib.items()}),
     )
     reader.push(elem, f)
