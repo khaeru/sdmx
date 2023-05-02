@@ -51,10 +51,11 @@ class InternationalString:
     localizations: Dict[str, str] = {}
 
     def __init__(self, value: Optional[_CONVERTIBLE] = None, **kwargs):
-        super().__init__()
-
         # Handle initial values according to type
-        if isinstance(value, str):
+        if value is None:
+            # Keyword arguments → dict, possibly empty
+            value = dict(kwargs)
+        elif isinstance(value, str):
             # Bare string
             value = {DEFAULT_LOCALE: value}
         elif (
@@ -67,9 +68,6 @@ class InternationalString:
         elif isinstance(value, Mapping):
             # dict; use directly
             value = dict(value)
-        elif value is None:
-            # Keyword arguments → dict, possibly empty
-            value = dict(kwargs)
         else:
             try:
                 # Iterable of 2-tuples
@@ -135,10 +133,14 @@ class InternationalStringDescriptor:
         self._name = "_" + name
 
     def __get__(self, obj, type):
-        if obj is None:
-            return None
-
-        return getattr(obj, self._name, InternationalString())
+        try:
+            return getattr(obj, self._name)
+        except AttributeError:
+            if obj is None:
+                return None
+            else:
+                setattr(obj, self._name, InternationalString())
+                return getattr(obj, self._name)
 
     def __set__(self, obj, value: _TInternationalStringInit):
         if not isinstance(value, InternationalString):
