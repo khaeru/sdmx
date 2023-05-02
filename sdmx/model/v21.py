@@ -17,17 +17,19 @@ Details of the implementation:
   of order so that dependent classes are defined first.
 
 """
-# TODO for complete implementation of the IM, enforce TimeKeyValue (instead of KeyValue)
-#      for {Generic,StructureSpecific} TimeSeriesDataSet.
-
 import logging
 from copy import copy
+
+# TODO for complete implementation of the IM, enforce TimeKeyValue (instead of KeyValue)
+#      for {Generic,StructureSpecific} TimeSeriesDataSet.
+from dataclasses import InitVar, dataclass, field
 from datetime import date, datetime
 from functools import lru_cache
 from itertools import product
 from operator import attrgetter, itemgetter
 from typing import (
     Any,
+    ClassVar,
     Dict,
     Generator,
     Generic,
@@ -44,15 +46,7 @@ from typing import (
 )
 
 from sdmx.rest import Resource
-from sdmx.util import (
-    BaseModel,
-    DictLike,
-    compare,
-    dictlike_field,
-    only,
-    validate_dictlike,
-    validator,
-)
+from sdmx.util import DictLike, compare, dictlike_field, only
 
 from .common import (
     ActionType,
@@ -106,11 +100,14 @@ log = logging.getLogger(__name__)
 # §3.3: Basic Inheritance
 
 
+@dataclass(repr=False)
 class Component(IdentifiableArtefact):
     #:
     concept_identity: Optional[Concept] = None
     #:
     local_representation: Optional[Representation] = None
+
+    __hash__ = IdentifiableArtefact.__hash__
 
     def __contains__(self, value):
         for repr in [
@@ -126,15 +123,16 @@ class Component(IdentifiableArtefact):
 CT = TypeVar("CT", bound=Component)
 
 
+@dataclass
 class ComponentList(IdentifiableArtefact, Generic[CT]):
     #:
-    components: List[CT] = []
+    components: List[CT] = field(default_factory=list)
     #: Counter used to automatically populate :attr:`.DimensionComponent.order` values.
     auto_order = 1
 
     # The default type of the Components in the ComponentList. See comment on
     # ItemScheme._Item
-    _Component: Type = Component
+    _Component: ClassVar[Type] = Component
 
     # Convenience access to the components
     def append(self, value: CT) -> None:
@@ -245,13 +243,15 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
 # §4.3: Codelist
 
 
+@dataclass(repr=False)
 class Code(Item["Code"]):
     """SDMX 2.1 Code."""
 
-    # NB this exists solely to prevent mypy errors when name= is given as a type other
-    # than InternationalString, eventually handled by NameableArtefact
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    __hash__ = IdentifiableArtefact.__hash__
+
+    def __post_init__(self):
+        __tracebackhide__ = True
+        super().__post_init__()
 
 
 class Codelist(ItemScheme[Code]):
@@ -261,7 +261,7 @@ class Codelist(ItemScheme[Code]):
 # §10.2: Constraint inheritance
 
 
-class ConstrainableArtefact(BaseModel):
+class ConstrainableArtefact:
     """SDMX 2.1 ConstrainableArtefact."""
 
 
@@ -284,32 +284,36 @@ class DataProviderScheme(ItemScheme[DataProvider], OrganisationScheme):
 # §10.3: Constraints
 
 
-class ConstraintRole(BaseModel):
+@dataclass
+class ConstraintRole:
     #:
     role: ConstraintRoleType
 
 
-class ComponentValue(BaseModel):
+@dataclass
+class ComponentValue:
     #:
     value_for: Component
     #:
     value: Any
 
 
-class DataKey(BaseModel):
+@dataclass
+class DataKey:
     #: :obj:`True` if the :attr:`keys` are included in the :class:`.Constraint`;
     # :obj:`False` if they are excluded.
     included: bool
     #: Mapping from :class:`.Component` to :class:`.ComponentValue` comprising the key.
-    key_value: Dict[Component, ComponentValue]
+    key_value: Dict[Component, ComponentValue] = field(default_factory=dict)
 
 
-class DataKeySet(BaseModel):
+@dataclass
+class DataKeySet:
     #: :obj:`True` if the :attr:`keys` are included in the :class:`.Constraint`;
     #: :obj:`False` if they are excluded.
     included: bool
     #: :class:`DataKeys <.DataKey>` appearing in the set.
-    keys: List[DataKey] = []
+    keys: List[DataKey] = field(default_factory=list)
 
     def __len__(self):
         """:func:`len` of the DataKeySet = :func:`len` of its :attr:`keys`."""
@@ -319,16 +323,13 @@ class DataKeySet(BaseModel):
         return any(item == dk for dk in self.keys)
 
 
+@dataclass
 class Constraint(MaintainableArtefact):
+    # NB the spec gives 1..* for this attribute, but this implementation allows only 1
+    role: Optional[ConstraintRole] = None
     #: :class:`.DataKeySet` included in the Constraint.
     data_content_keys: Optional[DataKeySet] = None
     # metadata_content_keys: MetadataKeySet = None
-    # NB the spec gives 1..* for this attribute, but this implementation allows only 1
-    role: ConstraintRole
-
-    # NB this is required to prevent “unhashable type: 'dict'” in pydantic
-    class Config:
-        validate_assignment = False
 
     def __contains__(self, value):
         if self.data_content_keys is None:
@@ -337,10 +338,11 @@ class Constraint(MaintainableArtefact):
         return value in self.data_content_keys
 
 
-class SelectionValue(BaseModel):
+class SelectionValue:
     """SDMX 2.1 SelectionValue."""
 
 
+@dataclass
 class MemberValue(SelectionValue):
     #:
     value: str
@@ -361,24 +363,27 @@ class TimeRangeValue(SelectionValue):
     """SDMX 2.1 TimeRangeValue."""
 
 
-class Period(BaseModel):
+@dataclass
+class Period:
     is_inclusive: bool
     period: datetime
 
 
+@dataclass
 class RangePeriod(TimeRangeValue):
     start: Period
     end: Period
 
 
-class MemberSelection(BaseModel):
-    #:
-    included: bool = True
+@dataclass
+class MemberSelection:
     #:
     values_for: Component
+    #:
+    included: bool = True
     #: Value(s) included in the selection. Note that the name of this attribute is not
     #: stated in the IM, so 'values' is chosen for the implementation in this package.
-    values: List[SelectionValue] = []
+    values: List[SelectionValue] = field(default_factory=list)
 
     def __contains__(self, value):
         """Compare KeyValue to MemberValue."""
@@ -407,21 +412,30 @@ class AttachmentConstraint(Constraint):
 # §5.2: Data Structure Definition
 
 
+@dataclass(repr=False)
 class DimensionComponent(Component):
     #:
     order: Optional[int] = None
 
+    __eq__ = IdentifiableArtefact.__eq__
+    __hash__ = IdentifiableArtefact.__hash__
 
+
+@dataclass(repr=False)
 class Dimension(DimensionComponent):
     """SDMX 2.1 Dimension."""
 
+    __eq__ = IdentifiableArtefact.__eq__
+    __hash__ = IdentifiableArtefact.__hash__
+
 
 # (continued from §10.3)
-class CubeRegion(BaseModel):
+@dataclass
+class CubeRegion:
     #:
     included: bool = True
     #:
-    member: Dict[Dimension, MemberSelection] = {}
+    member: Dict[Dimension, MemberSelection] = field(default_factory=dict)
 
     def __contains__(self, other: Union["Key", "KeyValue"]) -> bool:
         """Membership test.
@@ -481,11 +495,12 @@ class CubeRegion(BaseModel):
 
 
 # (continued from §10.3)
+@dataclass
 class ContentConstraint(Constraint):
     #: :class:`CubeRegions <.CubeRegion>` included in the ContentConstraint.
-    data_content_region: List[CubeRegion] = []
+    data_content_region: List[CubeRegion] = field(default_factory=list)
     #:
-    content: Set[ConstrainableArtefact] = set()
+    content: Set[ConstrainableArtefact] = field(default_factory=set)
     # metadata_content_region: MetadataTargetRegion = None
 
     def __contains__(self, value):
@@ -540,7 +555,7 @@ class MeasureDescriptor(ComponentList[PrimaryMeasure]):
     _Component = PrimaryMeasure
 
 
-class AttributeRelationship(BaseModel):
+class AttributeRelationship:
     pass
 
 
@@ -560,24 +575,30 @@ class _PrimaryMeasureRelationship(AttributeRelationship):
 PrimaryMeasureRelationship = _PrimaryMeasureRelationship()
 
 
+@dataclass
 class DimensionRelationship(AttributeRelationship):
     #:
-    dimensions: List[DimensionComponent] = []
+    dimensions: List[DimensionComponent] = field(default_factory=list)
     #: NB the IM says "0..*" here in a diagram, but the text does not match.
     group_key: Optional["GroupDimensionDescriptor"] = None
 
 
+@dataclass
 class GroupRelationship(AttributeRelationship):
     #: “Retained for compatibility reasons” in SDMX 2.1 versus 2.0; not used by
     #: :mod:`sdmx`.
     group_key: Optional["GroupDimensionDescriptor"] = None
 
 
+@dataclass
 class DataAttribute(Component):
     #:
     related_to: Optional[AttributeRelationship] = None
     #:
     usage_status: Optional[UsageStatus] = None
+
+    __hash__ = IdentifiableArtefact.__hash__
+    __eq__ = IdentifiableArtefact.__eq__
 
 
 class ReportingYearStartDay(DataAttribute):
@@ -588,6 +609,7 @@ class AttributeDescriptor(ComponentList[DataAttribute]):
     _Component = DataAttribute
 
 
+@dataclass
 class Structure(MaintainableArtefact):
     #:
     grouping: Optional[ComponentList] = None
@@ -598,6 +620,7 @@ class StructureUsage(MaintainableArtefact):
     structure: Optional[Structure] = None
 
 
+@dataclass
 class DimensionDescriptor(ComponentList[DimensionComponent]):
     """Describes a set of dimensions.
 
@@ -668,10 +691,6 @@ class GroupDimensionDescriptor(DimensionDescriptor):
         pass
 
 
-DimensionRelationship.update_forward_refs()
-GroupRelationship.update_forward_refs()
-
-
 class _NullConstraintClass:
     """Constraint that allows anything."""
 
@@ -682,21 +701,23 @@ class _NullConstraintClass:
 _NullConstraint = _NullConstraintClass()
 
 
-@validate_dictlike
+@dataclass
 class DataStructureDefinition(Structure, ConstrainableArtefact):
     """SDMX 2.1 DataStructureDefinition (‘DSD’)."""
 
     #: A :class:`AttributeDescriptor` that describes the attributes of the data
     #: structure.
-    attributes: AttributeDescriptor = AttributeDescriptor()
+    attributes: AttributeDescriptor = field(default_factory=AttributeDescriptor)
     #: A :class:`DimensionDescriptor` that describes the dimensions of the data
     #: structure.
-    dimensions: DimensionDescriptor = DimensionDescriptor()
+    dimensions: DimensionDescriptor = field(default_factory=DimensionDescriptor)
     #: A :class:`.MeasureDescriptor`.
-    measures: MeasureDescriptor = MeasureDescriptor()
+    measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)
     #: Mapping from  :attr:`.GroupDimensionDescriptor.id` to
     #: :class:`.GroupDimensionDescriptor`.
     group_dimensions: DictLike[str, GroupDimensionDescriptor] = dictlike_field()
+
+    __hash__ = IdentifiableArtefact.__hash__
 
     # Convenience methods
     def iter_keys(
@@ -723,9 +744,7 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
         # arguments are frozen so these can be set using loop variables and stored in a
         # map() object that isn't modified on future loops
         def make_factory(id=None, value_for=None):
-            return lambda value: KeyValue.construct(
-                id=id, value=value, value_for=value_for
-            )
+            return lambda value: KeyValue(id=id, value=value, value_for=value_for)
 
         # List of iterables of (dim.id, KeyValues) along each dimension
         all_kvs: List[Iterable[Tuple[str, KeyValue]]] = []
@@ -955,9 +974,12 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
         )
 
 
+@dataclass(repr=False)
 class DataflowDefinition(StructureUsage, ConstrainableArtefact):
     #:
-    structure: DataStructureDefinition = DataStructureDefinition()
+    structure: DataStructureDefinition = field(default_factory=DataStructureDefinition)
+
+    __hash__ = IdentifiableArtefact.__hash__
 
     def iter_keys(
         self, constraint: Optional[Constraint] = None, dims: List[str] = []
@@ -985,7 +1007,8 @@ def value_for_dsd_ref(kind, args, kwargs):
     return args, kwargs
 
 
-class KeyValue(BaseModel):
+@dataclass
+class KeyValue:
     """One value in a multi-dimensional :class:`Key`."""
 
     #:
@@ -995,9 +1018,11 @@ class KeyValue(BaseModel):
     #:
     value_for: Optional[Dimension] = None
 
-    def __init__(self, *args, **kwargs):
-        args, kwargs = value_for_dsd_ref("dimension", args, kwargs)
-        super().__init__(*args, **kwargs)
+    dsd: InitVar[DataStructureDefinition | None] = None
+
+    def __post_init__(self, dsd):
+        if dsd:
+            self.value_for = getattr(dsd, "dimensions").get(self.value_for)
 
     def __eq__(self, other):
         """Compare the value to a simple Python built-in type or other key-like.
@@ -1024,10 +1049,10 @@ class KeyValue(BaseModel):
         return self.value < self._compare_value(other)
 
     def __str__(self):
-        return "{0.id}={0.value}".format(self)
+        return f"{self.id}={self.value}"
 
     def __repr__(self):
-        return "<{0.__class__.__name__}: {0.id}={0.value}>".format(self)
+        return f"<{self.__class__.__name__}: {self.id}={self.value}>"
 
     def __hash__(self):
         # KeyValue instances with the same id & value hash identically
@@ -1038,7 +1063,8 @@ class KeyValue(BaseModel):
 TimeKeyValue = KeyValue
 
 
-class AttributeValue(BaseModel):
+@dataclass
+class AttributeValue:
     """SDMX 2.1 AttributeValue.
 
     In the spec, AttributeValue is an abstract class. Here, it serves as both the
@@ -1053,9 +1079,11 @@ class AttributeValue(BaseModel):
     #:
     start_date: Optional[date] = None
 
-    def __init__(self, *args, **kwargs):
-        args, kwargs = value_for_dsd_ref("attribute", args, kwargs)
-        super(AttributeValue, self).__init__(*args, **kwargs)
+    dsd: InitVar[DataStructureDefinition | None] = None
+
+    def __post_init__(self, dsd):
+        if dsd:
+            self.value_for = getattr(dsd, "attributes").get(self.value_for)
 
     def __eq__(self, other):
         """Compare the value to a Python built-in type, e.g. str."""
@@ -1084,14 +1112,14 @@ class AttributeValue(BaseModel):
         )
 
 
-@validate_dictlike
-class Key(BaseModel):
+@dataclass
+class Key:
     """SDMX Key class.
 
     The constructor takes an optional list of keyword arguments; the keywords are used
     as Dimension or Attribute IDs, and the values as KeyValues.
 
-    For convience, the values of the key may be accessed directly:
+    For convenience, the values of the key may be accessed directly:
 
     >>> k = Key(foo=1, bar=2)
     >>> k.values['foo']
@@ -1123,11 +1151,9 @@ class Key(BaseModel):
 
     def __init__(self, arg: Union[Mapping, Sequence[KeyValue], None] = None, **kwargs):
         # DimensionDescriptor
+        self.attrib = kwargs.pop("attrib", DictLike())
         dd = kwargs.pop("described_by", None)
-
-        super().__init__(
-            attrib=kwargs.pop("attrib", DictLike()), described_by=dd, values=DictLike()
-        )
+        self.described_by = dd
 
         if arg and isinstance(arg, Mapping):
             if len(kwargs):
@@ -1163,7 +1189,10 @@ class Key(BaseModel):
     @classmethod
     def _fast(cls, kvs):
         """Use :meth:`pydantic.BaseModel.construct` for faster construction."""
-        return cls.construct(values=DictLike(kvs))
+        # TODO Obsolete; remove
+        result = cls()
+        result.values.update(kvs)
+        return result
 
     def __len__(self):
         """The length of the Key is the number of KeyValues it contains."""
@@ -1192,10 +1221,12 @@ class Key(BaseModel):
 
     # Convenience access to values by attribute
     def __getattr__(self, name):
+        if name.lstrip("_") == "values":
+            raise AttributeError(name)
         try:
-            return self.__getitem__(name)
-        except KeyError as e:
-            raise AttributeError(e)
+            return self.values[name]
+        except KeyError:
+            raise AttributeError(name)
 
     # Copying
     def __copy__(self):
@@ -1295,8 +1326,8 @@ class SeriesKey(Key):
         return view
 
 
-@validate_dictlike
-class Observation(BaseModel):
+@dataclass
+class Observation:
     """SDMX 2.1 Observation.
 
     This class also implements the IM classes ObservationValue, UncodedObservationValue,
@@ -1314,7 +1345,7 @@ class Observation(BaseModel):
     #:
     value_for: Optional[PrimaryMeasure] = None
     #: :mod:`sdmx` extension not in the IM.
-    group_keys: Set[GroupKey] = set()
+    group_keys: Set[GroupKey] = field(default_factory=set)
 
     @property
     def attrib(self):
@@ -1366,7 +1397,7 @@ class Observation(BaseModel):
         )
 
 
-@validate_dictlike
+@dataclass
 class DataSet(AnnotableArtefact):
     # SDMX-IM features
     #:
@@ -1381,7 +1412,7 @@ class DataSet(AnnotableArtefact):
     structured_by: Optional[DataStructureDefinition] = None
 
     #: All observations in the DataSet.
-    obs: List[Observation] = []
+    obs: List[Observation] = field(default_factory=list)
 
     #: Map of series key → list of observations.
     #: :mod:`sdmx` extension not in the IM.
@@ -1521,7 +1552,7 @@ class MetadataStructureDefinition(Structure, ConstrainableArtefact):
 # §11: Data Provisioning
 
 
-class Datasource(BaseModel):
+class Datasource:
     url: str
 
 
@@ -1539,6 +1570,7 @@ class RESTDatasource(QueryDatasource):
     pass
 
 
+@dataclass
 class ProvisionAgreement(MaintainableArtefact, ConstrainableArtefact):
     #:
     structure_usage: Optional[StructureUsage] = None
