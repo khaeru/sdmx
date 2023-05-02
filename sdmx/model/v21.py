@@ -932,18 +932,16 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
         # Convert keyword arguments to either KeyValue or AttributeValue
         keyvalues = []
         for order, (id, value) in enumerate(values.items()):
-            args = dict(id=id, value=value)
-
-            if id in self.attributes:
+            if id in self.attributes.components:
                 # Reference a DataAttribute from the AttributeDescriptor
                 da = attr(id)
-                # Store the attribute value, referencing
-                key.attrib[da.id] = AttributeValue(**args, value_for=da)
+                # Store the attribute value, referencing da
+                key.attrib[da.id] = AttributeValue(value=value, value_for=da)
                 continue
 
             # Reference a Dimension from the DimensionDescriptor. If extend=False and
             # the Dimension does not exist, this will raise KeyError
-            args["value_for"] = dim(id)
+            args = dict(id=id, value=value, value_for=dim(id))
 
             # Retrieve the order
             order = args["value_for"].order
