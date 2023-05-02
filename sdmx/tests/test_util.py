@@ -1,21 +1,20 @@
 import pickle
+from dataclasses import dataclass
 from typing import Generator, Type
 
-import pydantic
 import pytest
-from pydantic import StrictStr
 
 import sdmx
-from sdmx.util import BaseModel, DictLike, only, parse_content_type, validate_dictlike
+from sdmx.util import DictLike, dictlike_field, only, parse_content_type
 
 
 class TestDictLike:
     @pytest.fixture
     def Foo(self) -> Generator[Type, None, None]:
         # Example class
-        @validate_dictlike
-        class Foo(BaseModel):
-            items: DictLike[StrictStr, int] = DictLike()
+        @dataclass
+        class Foo:
+            items: DictLike[str, int] = dictlike_field()
 
         yield Foo
 
@@ -53,17 +52,6 @@ class TestDictLike:
         assert isinstance(copied, DictLike)
         assert copied.TIME_PERIOD == dl.TIME_PERIOD
 
-    def test_validate_dictlike(self, Foo):
-        """``@validate_dictlike()`` adds a validator to a pydantic model field."""
-        # At least 1 validator is added, with the name _validate_whole
-        assert 1 <= len(Foo.__fields__["items"].post_validators)
-        assert "_validate_whole" == Foo.__fields__["items"].post_validators[0].__name__
-
-        # ValidationError
-        f = Foo()
-        with pytest.raises(pydantic.ValidationError, match="not a valid dict"):
-            f.items = {"bar", "baz"}
-
     def test_validation(self, Foo) -> None:
         f = Foo()
         assert type(f.items) is DictLike
@@ -77,29 +65,30 @@ class TestDictLike:
         assert type(f.items) is DictLike
 
         # Type checking on creation
-        with pytest.raises(pydantic.ValidationError):
+        pydantic_ValidationError = None
+        with pytest.raises(pydantic_ValidationError):
             f = Foo(items={1: "a"})
 
         # Type checking on assignment
         f = Foo()
-        with pytest.raises(pydantic.ValidationError):
+        with pytest.raises(pydantic_ValidationError):
             f.items = {1: "a"}
 
         # Type checking on setting elements
         f = Foo(items={"a": 1})
-        with pytest.raises(pydantic.ValidationError):
+        with pytest.raises(pydantic_ValidationError):
             f.items[123] = 456
 
         # commented: this does not work, since validate_dictlike does not operate
         # until initial values are assigned to the field
         # f = Foo()
-        # with pytest.raises(pydantic.ValidationError):
+        # with pytest.raises(pydantic_ValidationError):
         #     f.items[123] = 456
 
-        # Use validate_dictlike() twice
-        @validate_dictlike
-        class Bar(BaseModel):
-            elems: DictLike[StrictStr, float] = DictLike()
+        # # Use validate_dictlike() twice
+        # @validate_dictlike
+        # class Bar(BaseModel):
+        #     elems: DictLike[StrictStr, float] = DictLike()
 
     def test_compare(self, caplog):
         dl1 = DictLike(a="foo", b="bar")

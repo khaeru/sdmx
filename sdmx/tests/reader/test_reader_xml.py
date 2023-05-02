@@ -169,7 +169,7 @@ ELEMENTS = [
     # …invalid attributes cause an exception
     (
         E(qname("str:TextFormat"), invalidFacetTypeAttr="foo"),
-        re.compile("ValidationError: .* extra fields not permitted", flags=re.DOTALL),
+        re.compile("unexpected keyword argument 'invalid_facet_type_attr'"),
     ),
     # xml._dk
     (E(qname("str:Key")), None),
