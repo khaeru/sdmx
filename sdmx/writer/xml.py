@@ -167,10 +167,12 @@ def _sm(obj: message.StructureMessage):
         ("constraint", "Constraints"),
         ("provisionagreement", "ProvisionAgreements"),
     ]:
-        if not len(getattr(obj, attr)):
+        coll = getattr(obj, attr)
+        if not len(coll):
             continue
         container = Element(f"str:{tag}")
-        container.extend(writer.recurse(s) for s in getattr(obj, attr).values())
+        for s in filter(lambda s: not s.is_external_reference, coll.values()):
+            container.append(writer.recurse(s))
         structures.append(container)
 
     if obj.footer:
