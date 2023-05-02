@@ -205,16 +205,29 @@ class TestSeriesData_SiblingGroup_TS(StructuredMessageTest):
         assert g2.CURRENCY == "JPY"
         print(list(data.group.keys()), g2, g2.attrib, sep="\n")
         assert g2.attrib.TITLE == "ECB reference exchange rate, Japanese yen/Euro"
-        # Check group attributes of a series
+
+        # Check direct attributes of SeriesKey
         s = list(data.series)[0]
+        assert 4 == len(s.attrib)
+
+        # Check group attributes of a series
         g_attrib = s.group_attrib
         assert isinstance(g_attrib, Mapping)
-        assert len(g_attrib) == 1
+        assert 1 == len(g_attrib)
 
 
 class TestSeriesData_RateGroup_TS(StructuredMessageTest):
     filename = "rg-ts-ss.xml"
     dsd_filename = "rg-structure.xml"
+
+    def test_dsd(self, dsd):
+        ad = dsd.attributes
+        for id in ("CONF_STATUS_OBS", "OBS_STATUS"):
+            assert isinstance(ad.get(id).related_to, model._PrimaryMeasureRelationship)
+        for id in ("COLL_METHOD", "TITLE"):
+            assert isinstance(ad.get(id).related_to, model.GroupRelationship)
+        for id in ("DECIMALS", "UNIT_MEASURE", "UNIT_MULT"):
+            assert isinstance(ad.get(id).related_to, model.DimensionRelationship)
 
     def test_groups(self, msg):
         data = msg.data[0]
@@ -225,8 +238,9 @@ class TestSeriesData_RateGroup_TS(StructuredMessageTest):
         assert (
             g2.attrib.TITLE == "ECB reference exchange rate, U.K. Pound sterling /Euro"
         )
+
         # Check group attributes of a series
         s = list(data.series)[0]
         g_attrib = s.group_attrib
         assert isinstance(g_attrib, Mapping)
-        assert len(g_attrib) == 5
+        assert 5 == len(g_attrib)
