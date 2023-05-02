@@ -1,5 +1,6 @@
 # TODO test str() and repr() implementations
 import logging
+from dataclasses import dataclass
 
 import pytest
 from pytest import raises
@@ -308,21 +309,27 @@ class TestDataStructureDefinition:
         assert 1 * 2 * 1 == len(keys4)
 
 
-def test_dimension():
-    # Constructor
-    Dimension(id="CURRENCY", order=0)
+class TestDimension:
+    def test_init(self):
+        # Constructor
+        Dimension(id="CURRENCY", order=0)
+
+    def test_hash(self):
+        d = Dimension(id="CURRENCY")
+        assert hash("CURRENCY") == hash(d)
 
 
-def test_dimensiondescriptor():
-    # from_key()
-    key1 = Key(foo=1, bar=2, baz=3)
-    dd = DimensionDescriptor.from_key(key1)
+class TestDimensionDescriptor:
+    def test_from_key(self):
+        # from_key()
+        key1 = Key(foo=1, bar=2, baz=3)
+        dd = DimensionDescriptor.from_key(key1)
 
-    # Key in reverse order
-    key2 = Key(baz=3, bar=2, foo=1)
-    assert list(key1.values.keys()) == list(reversed(list(key2.values.keys())))
-    key3 = dd.order_key(key2)
-    assert list(key1.values.keys()) == list(key3.values.keys())
+        # Key in reverse order
+        key2 = Key(baz=3, bar=2, foo=1)
+        assert list(key1.values.keys()) == list(reversed(list(key2.values.keys())))
+        key3 = dd.order_key(key2)
+        assert list(key1.values.keys()) == list(key3.values.keys())
 
 
 class TestIdentifiableArtefact:
@@ -348,6 +355,14 @@ class TestIdentifiableArtefact:
         # Subclass is hashable
         ad = AttributeDescriptor()
         assert hash(ad) == id(ad)
+
+    def test_hash_subclass(self):
+        @dataclass
+        class Foo(IdentifiableArtefact):
+            __hash__ = IdentifiableArtefact.__hash__
+
+        f = Foo(id="FOO")
+        assert hash("FOO") == hash(f)
 
     def test_sort(self):
         """Test IdentifiableArtefact.__lt__."""
@@ -455,13 +470,6 @@ def test_itemscheme_compare(caplog):
         "Not identical: name <en: Foo> != <en: Bar>",
         "…for items with id='foo'",
     ]
-
-
-class TestCode:
-    def test_name(self) -> None:
-        c = model.Code(id="FOO", name=("en", "Foo"))
-
-        assert "Foo" == c.name.localizations["en"]
 
 
 class TestAttributeValue:

@@ -1,4 +1,3 @@
-import pydantic
 import pytest
 
 from sdmx.model.internationalstring import DEFAULT_LOCALE, InternationalString
@@ -60,7 +59,7 @@ class TestInternationalString:
         assert len(i.name.localizations) == 1
 
         # Using some other type is an error
-        with pytest.raises(pydantic.ValidationError):
+        with pytest.raises(ValueError):
             i.name = 123  # type: ignore [assignment]
 
         # Same, but in the constructor

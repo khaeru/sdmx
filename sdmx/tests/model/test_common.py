@@ -3,6 +3,7 @@ import pytest
 from sdmx.model.common import (
     AnnotableArtefact,
     Annotation,
+    Contact,
     Item,
     ItemScheme,
     Representation,
@@ -120,7 +121,7 @@ class TestItemScheme:
         bar1 = is0.setdefault(id="bar1", parent=foo0)
 
         # get_hierarchical()
-        assert is0.get_hierarchical("foo0.bar1") == bar1
+        assert is0.get_hierarchical("foo0.bar1") is bar1
 
 
 class TestRepresentation:
@@ -128,3 +129,13 @@ class TestRepresentation:
         is0: ItemScheme = ItemScheme(id="is0")
         r = Representation(enumerated=is0)
         assert "<Representation: is0, []>" == repr(r)
+
+
+class TestContact:
+    def test_init(self):
+        c1 = Contact()
+        c2 = Contact()
+
+        c2.name = "foo"
+
+        assert repr(c1) != repr(c2)

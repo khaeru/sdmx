@@ -5,10 +5,12 @@ import pytest
 
 from sdmx.model.common import ConstraintRoleType
 from sdmx.model.v21 import (
+    Code,
     ComponentList,
     ConstraintRole,
     ContentConstraint,
     CubeRegion,
+    DataAttribute,
     DataStructureDefinition,
     Dimension,
     DimensionDescriptor,
@@ -76,6 +78,32 @@ class TestComponentList:
 
         # Order is not altered
         assert (3, 2, 1) == tuple(map(attrgetter("order"), components))
+
+
+class TestDataAttribute:
+    def test_hash(self):
+        cl = [DataAttribute(id="FOO"), DataAttribute(id="BAR")]
+        assert "FOO" in cl
+        assert "BAZ" not in cl
+
+
+class TestCode:
+    @pytest.fixture
+    def c(self) -> Code:
+        yield Code(id="FOO", name=("en", "Foo"))
+
+    def test_id(self) -> None:
+        with pytest.raises(TypeError, match="got int"):
+            Code(id=1)
+
+    def test_name(self, c) -> None:
+        assert "Foo" == c.name.localizations["en"]
+
+    def test_str(self, c) -> None:
+        assert "FOO" == str(c) == f"{c}"
+
+    def test_repr(self, c) -> None:
+        assert "<Code FOO: Foo>" == repr(c)
 
 
 class TestKeyValue:
