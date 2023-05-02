@@ -1,7 +1,5 @@
 import logging
 
-from pydantic import PrivateAttr
-
 from . import Source as BaseSource
 
 log = logging.getLogger(__name__)
@@ -12,7 +10,7 @@ class Source(BaseSource):
 
     _id = "BBK"
 
-    _base_url: str = PrivateAttr()
+    _base_url: str = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

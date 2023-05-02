@@ -1,5 +1,6 @@
 import importlib.resources
 import json
+from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
 from io import IOBase
@@ -9,14 +10,14 @@ from requests import Response
 
 from sdmx.model.v21 import DataStructureDefinition
 from sdmx.rest import Resource
-from sdmx.util import BaseModel, validator
 
 sources: Dict[str, "Source"] = {}
 
 DataContentType = Enum("DataContentType", "XML JSON")
 
 
-class Source(BaseModel):
+@dataclass
+class Source:
     """SDMX-IM RESTDatasource.
 
     This class describes the location and features supported by an SDMX data source.
@@ -39,7 +40,13 @@ class Source(BaseModel):
     #: Human-readable name of the data source
     name: str
 
-    headers: Dict[str, Any] = {}
+    #: Documentation URL.
+    documentation: Optional[str] = None
+
+    # TODO handle this
+    resources: Dict[str, Any] = field(default_factory=dict)
+
+    headers: Dict[str, Any] = field(default_factory=dict)
 
     #: :class:`.DataContentType` indicating the type of data returned by the source.
     data_content_type: DataContentType = DataContentType.XML
@@ -55,33 +62,33 @@ class Source(BaseModel):
     #:   See :meth:`.preview_data`.
     #: - ``'structure-specific data'=True`` if the source can return structure-
     #:   specific data messages.
-    supports: Dict[Union[str, Resource], bool] = {
-        Resource.data: True,
-        Resource.attachementconstraint: False,
-        Resource.customtypescheme: False,
-        Resource.metadata: False,
-        Resource.namepersonalisationscheme: False,
-        Resource.organisationunitscheme: False,
-        Resource.process: False,
-        Resource.reportingtaxonomy: False,
-        Resource.rulesetscheme: False,
-        Resource.schema: False,
-        Resource.transformationscheme: False,
-        Resource.userdefinedoperatorscheme: False,
-        Resource.vtlmappingscheme: False,
-    }
+    supports: Dict[Union[str, Resource], bool] = field(
+        default_factory=lambda: {
+            Resource.data: True,
+            Resource.attachementconstraint: False,
+            Resource.customtypescheme: False,
+            Resource.metadata: False,
+            Resource.namepersonalisationscheme: False,
+            Resource.organisationunitscheme: False,
+            Resource.process: False,
+            Resource.reportingtaxonomy: False,
+            Resource.rulesetscheme: False,
+            Resource.schema: False,
+            Resource.transformationscheme: False,
+            Resource.userdefinedoperatorscheme: False,
+            Resource.vtlmappingscheme: False,
+        }
+    )
 
     @classmethod
     def from_dict(cls, info):
         return cls(**info)
 
-    def __init__(self, **kwargs):
-        # Merge supports values with defaults
-        supports = kwargs.pop("supports", dict())
-
-        super().__init__(**kwargs)
-
-        self.supports.update(supports)
+    def __post_init__(self):
+        # TODO merge supports values with defaults
+        # supports = kwargs.pop("supports", dict())
+        # super().__init__(**kwargs)
+        # self.supports.update(supports)
 
         # Set default supported features
         for feature in list(Resource) + ["preview", "structure-specific data"]:
@@ -138,12 +145,14 @@ class Source(BaseModel):
                     "application/vnd.sdmx.structurespecificdata+xml;" "version=2.1",
                 )
 
-    @validator("id")
+    # @validator("id")
+    # TODO use for `id`
     def _validate_id(cls, value):
         assert getattr(cls, "_id", value) == value
         return value
 
-    @validator("data_content_type", pre=True)
+    # @validator("data_content_type", pre=True)
+    # TODO use for .data_content_type
     def _validate_dct(cls, value):
         if isinstance(value, DataContentType):
             return value
@@ -151,6 +160,7 @@ class Source(BaseModel):
             return DataContentType[value]
 
 
+@dataclass
 class _NoSource(Source):
     pass
 
