@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import (
+    ClassVar,
     Dict,
     Generic,
     Iterable,
@@ -474,7 +475,7 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
 
     # The type of the Items in the ItemScheme. This is necessary because the type hint
     # in the class declaration is static; not meant to be available at runtime.
-    _Item: Type = Item
+    _Item: ClassVar[Type] = Item
 
     # was: @validator("items", pre=True)
     # TODO use for .items
