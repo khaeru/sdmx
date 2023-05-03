@@ -354,7 +354,7 @@ def _facet(obj: model.Facet):
 @writer
 def _rep(obj: model.Representation, tag, style="URN"):
     elem = Element(f"str:{tag}")
-    if obj.enumerated:
+    if obj.enumerated is not None:
         elem.append(reference(obj.enumerated, tag="str:Enumeration", style=style))
     if obj.non_enumerated:
         elem.extend(writer.recurse(facet) for facet in obj.non_enumerated)
