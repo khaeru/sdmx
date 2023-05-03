@@ -162,10 +162,7 @@ class DictLikeDescriptor:
         if obj is None:
             return None
 
-        if not hasattr(obj, self._name):
-            setattr(obj, self._name, DictLike())
-
-        return getattr(obj, self._name)
+        return obj.__dict__.setdefault(self._name, DictLike())
 
     def __set__(self, obj, value: DictLike):
         if not isinstance(value, DictLike):

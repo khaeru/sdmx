@@ -1219,8 +1219,6 @@ class Key:
 
     # Convenience access to values by attribute
     def __getattr__(self, name):
-        if name.lstrip("_") == "values":
-            raise AttributeError(name)
         try:
             return self.values[name]
         except KeyError:
