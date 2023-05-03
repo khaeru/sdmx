@@ -609,7 +609,7 @@ class AttributeDescriptor(ComponentList[DataAttribute]):
     _Component = DataAttribute
 
 
-@dataclass
+@dataclass(repr=False)
 class Structure(MaintainableArtefact):
     #:
     grouping: Optional[ComponentList] = None
@@ -701,7 +701,7 @@ class _NullConstraintClass:
 _NullConstraint = _NullConstraintClass()
 
 
-@dataclass
+@dataclass(repr=False)
 class DataStructureDefinition(Structure, ConstrainableArtefact):
     """SDMX 2.1 DataStructureDefinition (‘DSD’)."""
 
