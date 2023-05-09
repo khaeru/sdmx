@@ -27,4 +27,4 @@ class Source(BaseSource):
                     response.status_code = 500
                     response.raise_for_status()
 
-        raise NotImplementedError
+        return super().handle_response(response, content)
