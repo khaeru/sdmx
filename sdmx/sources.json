@@ -2,7 +2,7 @@
   {
     "id": "ABS",
     "data_content_type": "JSON",
-    "url": "http://stat.data.abs.gov.au/sdmx-json",
+    "url": "https://api.data.abs.gov.au",
     "name": "Australian Bureau of Statistics"
   },
   {
