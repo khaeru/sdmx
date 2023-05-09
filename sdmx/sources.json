@@ -1,8 +1,29 @@
 [
   {
     "id": "ABS",
+    "url": "https://api.data.abs.gov.au",
+    "name": "Australian Bureau of Statistics",
+    "supports": {
+      "actualconstraint": false,
+      "agencyscheme": false,
+      "allowedconstraint": false,
+      "categoryscheme": false,
+      "contentconstraint": false,
+      "dataconsumerscheme": false,
+      "dataproviderscheme": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "organisationscheme": false,
+      "provisionagreement": false,
+      "structure": false,
+      "structureset": false
+    }
+  },
+  {
+    "id": "ABS_JSON",
     "data_content_type": "JSON",
-    "url": "http://stat.data.abs.gov.au/sdmx-json",
+    "url": "https://api.data.abs.gov.au",
     "name": "Australian Bureau of Statistics"
   },
   {
