@@ -99,6 +99,25 @@ class DataSourceTest:
 class TestABS(DataSourceTest):
     source_id = "ABS"
 
+    endpoint_args = {
+        "data": dict(
+            resource_id="ABS,ANA_AGG,1.0.0",
+            key="....Q",
+            params=dict(startPeriod="2020-Q1", endPeriod="2022-Q4"),
+        )
+    }
+
+
+class TestABS_JSON(DataSourceTest):
+    source_id = "ABS_JSON"
+
+    endpoint_args = {
+        "data": dict(
+            resource_id="ABS,ANA_AGG,1.0.0",
+            key="....Q",
+        )
+    }
+
 
 class TestBBK(DataSourceTest):
     source_id = "BBK"
