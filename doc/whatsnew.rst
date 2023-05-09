@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Update :ref:`ABS` to support the ABS' recently-added “beta” SDMX-ML API (:pull:`129`).
+- Rename the corresponding SDMX-JSON source :ref:`ABS_JSON`, update web service URL and quirks handling (:class:`.abs_json.Source`) (:pull:`129`).
 
 v2.9.0 (2023-04-30)
 ===================

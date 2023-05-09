@@ -90,15 +90,27 @@ Where data structures are not available, :mod:`sdmx` cannot automatically valida
 For such services, start by browsing the source's website to identify a dataflow of interest.
 Then identify the key format and construct a key for the desired data request.
 
+
 .. _ABS:
 
-``ABS``: Australian Bureau of Statistics
-----------------------------------------
+``ABS``: Australian Bureau of Statistics (SDMX-ML)
+--------------------------------------------------
+
+SDMX-ML —
+`Website <https://www.abs.gov.au/about/data-services/application-programming-interfaces-apis/data-api-user-guide>`__
+
+.. versionadded:: 2.10.0
+
+
+.. _ABS_JSON:
+
+``ABS_JSON``: Australian Bureau of Statistics (SDMX-JSON)
+---------------------------------------------------------
 
 SDMX-JSON —
-`Website <http://www.abs.gov.au/>`__
+`Website <https://www.abs.gov.au/about/data-services/application-programming-interfaces-apis/data-api-user-guide>`__
 
-.. autoclass:: sdmx.source.abs.Source()
+.. autoclass:: sdmx.source.abs_json.Source()
    :members:
 
 
