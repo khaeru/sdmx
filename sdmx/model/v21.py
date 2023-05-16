@@ -46,7 +46,7 @@ from typing import (
 )
 
 from sdmx.rest import Resource
-from sdmx.util import DictLike, DictLikeDescriptor, compare, only
+from sdmx.util import DictLikeDescriptor, compare, only
 
 from .common import (
     ActionType,
@@ -1379,8 +1379,8 @@ class Observation:
 @dataclass
 class DataSet(AnnotableArtefact):
     # SDMX-IM features
+
     #:
-    # TODO add validation
     action: Optional[ActionType] = None
     #:
     attrib: DictLikeDescriptor[str, AttributeValue] = DictLikeDescriptor()
@@ -1400,6 +1400,10 @@ class DataSet(AnnotableArtefact):
     #: Map of group key → list of observations.
     #: :mod:`sdmx` extension not in the IM.
     group: DictLikeDescriptor[GroupKey, List[Observation]] = DictLikeDescriptor()
+
+    def __post_init__(self):
+        if self.action and not isinstance(self.action, ActionType):
+            self.action = ActionType[self.action]
 
     def __len__(self):
         return len(self.obs)
