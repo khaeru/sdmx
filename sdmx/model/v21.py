@@ -963,11 +963,10 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
 
 
 @dataclass(repr=False)
+@IdentifiableArtefact._preserve("hash")
 class DataflowDefinition(StructureUsage, ConstrainableArtefact):
     #:
     structure: DataStructureDefinition = field(default_factory=DataStructureDefinition)
-
-    __hash__ = IdentifiableArtefact.__hash__
 
     def iter_keys(
         self, constraint: Optional[Constraint] = None, dims: List[str] = []
