@@ -1,13 +1,20 @@
+from dataclasses import dataclass
+
 import pytest
 
 from sdmx.model.common import (
+    Agency,
     AnnotableArtefact,
     Annotation,
     Contact,
+    IdentifiableArtefact,
     Item,
     ItemScheme,
+    MaintainableArtefact,
+    NameableArtefact,
     Representation,
 )
+from sdmx.model.v21 import AttributeDescriptor, DataStructureDefinition
 
 
 class TestAnnotableArtefact:
@@ -34,6 +41,101 @@ class TestAnnotableArtefact:
         assert value["foo"] == aa.eval_annotation(
             id="test-anno1", globals=dict(value=value)
         )
+
+
+class TestIdentifiableArtefact:
+    def test_general(self):
+        urn = (
+            "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=IT1:VARIAB_ALL"
+            "(9.6)"
+        )
+        urn_pat = urn.replace("(", r"\(").replace(")", r"\)")
+
+        with pytest.raises(
+            ValueError, match=f"ID BAD_URN does not match URN {urn_pat}"
+        ):
+            IdentifiableArtefact(id="BAD_URN", urn=urn)
+
+        # IdentifiableArtefact is hashable
+        ia = IdentifiableArtefact()
+        assert hash(ia) == id(ia)
+
+        ia = IdentifiableArtefact(id="foo")
+        assert hash(ia) == hash("foo")
+
+        # Subclass is hashable
+        ad = AttributeDescriptor()
+        assert hash(ad) == id(ad)
+
+    def test_hash_subclass(self):
+        @dataclass
+        class Foo(IdentifiableArtefact):
+            __hash__ = IdentifiableArtefact.__hash__
+
+        f = Foo(id="FOO")
+        assert hash("FOO") == hash(f)
+
+    def test_sort(self):
+        """Test IdentifiableArtefact.__lt__."""
+        # Items of the same class can be sorted
+        items = [Item(id="b"), Item(id="a")]
+        assert list(reversed(items)) == sorted(items)
+
+        with pytest.raises(
+            TypeError,
+            match=(
+                "'<' not supported between instances of 'Item' and "
+                "'DataStructureDefinition'"
+            ),
+        ):
+            sorted([DataStructureDefinition(id="c")] + items)
+
+
+class TestNameableArtefact:
+    def test_eq(self):
+        na = NameableArtefact(id="FOO", name="Foo")
+        assert na == "FOO"
+
+    def test_namea(self, caplog) -> None:
+        na1 = NameableArtefact(name=dict(en="Name"), description=dict(en="Description"))
+        na2 = NameableArtefact()
+
+        assert not na1.compare(na2)
+        assert caplog.messages[-1] == "Not identical: name <en: Name> != <>"
+
+        na2.name["en"] = "Name"
+
+        assert not na1.compare(na2)
+        assert (
+            caplog.messages[-1] == "Not identical: description <en: Description> != <>"
+        )
+
+        na2.description["en"] = "Description"
+
+        assert na1.compare(na2)
+
+
+class TestMaintainableArtefact:
+    def test_urn(self):
+        urn = (
+            "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme="
+            "IT1:VARIAB_ALL(9.6)"
+        )
+        ma = MaintainableArtefact(id="VARIAB_ALL", urn=urn)
+
+        # Version is parsed from URN
+        assert ma.version == "9.6"
+
+        # Mismatch raises an exception
+        with pytest.raises(ValueError, match="Version 9.7 does not match URN"):
+            MaintainableArtefact(version="9.7", urn=urn)
+
+        # Maintainer is parsed from URN
+        assert ma.maintainer == Agency(id="IT1")
+
+        # Mismatch raises an exception
+        with pytest.raises(ValueError, match="Maintainer FOO does not match URN"):
+            MaintainableArtefact(maintainer=Agency(id="FOO"), urn=urn)
 
 
 class TestItemScheme:
