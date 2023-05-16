@@ -740,7 +740,7 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
             return lambda value: KeyValue(id=id, value=value, value_for=value_for)
 
         # List of iterables of (dim.id, KeyValues) along each dimension
-        all_kvs: List[Iterable[Tuple[str, KeyValue]]] = []
+        all_kvs: List[Iterable[KeyValue]] = []
 
         # Iterate over dimensions
         for dim in self.dimensions.components:
@@ -1156,9 +1156,10 @@ class Key:
 
         if isinstance(arg, Sequence):
             # Sequence of already-prepared KeyValues; assume already sorted
-            kvs: Iterable[Tuple] = map(lambda kv: (kv.id, kv), arg)
+            kvs = map(lambda kv: (kv.id, kv), arg)
         else:
             # Convert bare keyword arguments to KeyValue
+            _kvs = []
             for order, (id, value) in enumerate(kwargs.items()):
                 args = dict(id=id, value=value)
                 if dd:
@@ -1168,10 +1169,10 @@ class Key:
                     order = args["value_for"].order
 
                 # Store a KeyValue, to be sorted later
-                kvs.append((order, (id, KeyValue(**args))))
+                _kvs.append((order, (id, KeyValue(**args))))
 
             # Sort the values according to *order*, then unwrap
-            kvs = map(itemgetter(1), sorted(kvs))
+            kvs = map(itemgetter(1), sorted(_kvs))
 
         self.values.update(kvs)
 
