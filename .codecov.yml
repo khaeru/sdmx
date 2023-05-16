@@ -1,3 +1,11 @@
+codecov:
+  notify:
+    after_n_builds: 5
+
+comment:
+  # Don't display the large graph
+  layout: "diff, files"
+
 coverage:
   status:
     project:
