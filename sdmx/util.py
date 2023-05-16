@@ -3,7 +3,7 @@ import typing
 from collections.abc import Iterator
 from dataclasses import Field, fields
 from functools import lru_cache
-from typing import Any, Dict, Iterable, Tuple, TypeVar, Union
+from typing import Any, Dict, Iterable, Tuple, TypeVar, Union, get_args, get_origin
 
 import requests
 
@@ -44,18 +44,25 @@ class MaybeCachedSession(type):
 
 
 class DictLike(dict, typing.MutableMapping[KT, VT]):
-    """Container with features of a dict & list, plus attribute access."""
+    """Container with features of :class:`dict`, attribute access, and validation."""
 
-    __slots__ = ("__dict__", "__field")
+    __slots__ = ("__dict__", "_types")
 
     def __init__(self, *args, **kwargs):
+        # (key type, value type) for items
+        self._types = (object, object)
+
         super().__init__(*args, **kwargs)
 
         # Ensures attribute access to dict items
         self.__dict__ = self
 
-        # Reference to the pydantic.field.ModelField for the entries
-        self.__field = None
+    @classmethod
+    def with_types(cls, key_type, value_type):
+        """Construct a new DictLike with the given `key_type` and `value_type`."""
+        result = cls()
+        result._types = (key_type, value_type)
+        return result
 
     def __getitem__(self, key: Union[KT, int]) -> VT:
         """:meth:`dict.__getitem__` with integer access."""
@@ -68,13 +75,9 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
             else:
                 raise
 
-    def __getstate__(self):
-        """Exclude ``__field`` from items to be pickled."""
-        return {"__dict__": self.__dict__}
-
     def __setitem__(self, key: KT, value: VT) -> None:
         """:meth:`dict.__setitem` with validation."""
-        super().__setitem__(*self._validate_entry(key, value))
+        super().__setitem__(*self._validate_entry((key, value)))
 
     def __copy__(self):
         # Construct explicitly to avoid returning the parent class, dict()
@@ -84,27 +87,34 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
         """Return a copy of the DictLike."""
         return self.__copy__()
 
+    def update(self, other):
+        """Update the DictLike with elements from `other`, validating entries."""
+        try:
+            it = other.items()
+        except AttributeError:
+            it = iter(other)
+        super().update(map(self._validate_entry, it))
+
     # Satisfy dataclass(), which otherwise complains when InternationalStringDescriptor
     # is used
     @classmethod
     def __hash__(cls):
         pass
 
-    def _validate_entry(self, key, value):
+    def _validate_entry(self, kv: Tuple):
         """Validate one `key`/`value` pair."""
+        key, value = kv
         try:
-            # Use pydantic's validation machinery
-            v, error = self.__field._validate_mapping_like(
-                ((key, value),), values={}, loc=(), cls=None
-            )
+            kt, vt = self._types
         except AttributeError:
-            # .__field is not populated
-            return key, value
+            pass
         else:
-            if error:
-                raise RuntimeError([error], self.__class__)
-            else:
-                return (key, value)
+            if not isinstance(key, kt):
+                raise TypeError(type(key))
+            elif not isinstance(value, vt):
+                raise TypeError(type(value), vt)
+
+        return key, value
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -155,18 +165,46 @@ def summarize_dictlike(dl, maxwidth=72):
 
 
 class DictLikeDescriptor:
+    """Descriptor for :class:`DictLike` attributes on dataclasses."""
+
     def __set_name__(self, owner, name):
         self._name = "_" + name
+        self._field = None
+        self._types = (object, object)
+
+    def _get_field_types(self, obj):
+        """Record the types of the described field."""
+        if self._field:
+            return  # Already done
+
+        # Identify the field on `obj` that matches self._name
+        self._field = next(filter(lambda f: f.name == self._name[1:], fields(obj)))
+        # The type is DictLike[KeyType, ValueType]; retrieve those arguments
+        kt, vt = get_args(self._field.type)
+        # Store. If ValueType is a generic, e.g. List[int], store only List.
+        self._types = (kt, get_origin(vt) or vt)
 
     def __get__(self, obj, type):
         if obj is None:
             return None
 
-        return obj.__dict__.setdefault(self._name, DictLike())
+        try:
+            return obj.__dict__[self._name]
+        except KeyError:
+            # Construct new DictLike with specified types
+            default = DictLike.with_types(*self._types)
+            return obj.__dict__.setdefault(self._name, default)
 
     def __set__(self, obj, value: DictLike):
+        self._get_field_types(obj)
+
         if not isinstance(value, DictLike):
-            value = DictLike(value or {})
+            # Construct new DictLike with specified types
+            _value = DictLike.with_types(*self._types)
+            # Update with validation
+            _value.update(value or {})
+            value = _value
+
         setattr(obj, self._name, value)
 
 
@@ -226,11 +264,3 @@ def direct_fields(cls) -> Iterable[Field]:
     """
     parent_fields = set(fields(cls.mro()[1]))
     return list(filter(lambda f: f not in parent_fields, fields(cls)))
-
-
-try:
-    from typing import get_args  # type: ignore [attr-defined]
-except ImportError:  # pragma: no cover
-    # For Python <3.8
-    def get_args(tp) -> Tuple[Any, ...]:
-        return tp.__args__
