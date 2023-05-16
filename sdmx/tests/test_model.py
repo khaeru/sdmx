@@ -7,19 +7,16 @@ from pytest import raises
 from sdmx import Resource
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
-    AttributeValue,
     ConstraintRole,
     ConstraintRoleType,
     ContentConstraint,
     CubeRegion,
-    DataAttribute,
     DataflowDefinition,
     DataSet,
     Dimension,
     DimensionDescriptor,
     Item,
     Key,
-    Observation,
 )
 
 
@@ -366,35 +363,6 @@ class TestKey:
 
         # get_values(): preserve ordering
         assert k1.get_values() == (1, 2, 3)
-
-
-def test_observation():
-    obs = Observation()
-
-    # Set by item name
-    obs.attached_attribute["TIME_PERIOD"] = 3
-    # NB the following does not work; see Observation.attrib()
-    # obs.attrib['TIME_PERIOD'] = 3
-
-    obs.attached_attribute["CURRENCY"] = "USD"
-
-    # Access by attribute name
-    assert obs.attrib.TIME_PERIOD == 3
-    assert obs.attrib.CURRENCY == "USD"
-
-    # Access by item index
-    assert obs.attrib[1] == "USD"
-
-    # Add attributes
-    obs.attached_attribute["FOO"] = "1"
-    obs.attached_attribute["BAR"] = "2"
-    assert obs.attrib.FOO == "1" and obs.attrib["BAR"] == "2"
-
-    # Using classes
-    da = DataAttribute(id="FOO")
-    av = AttributeValue(value_for=da, value="baz")
-    obs.attached_attribute[da.id] = av
-    assert obs.attrib[da.id] == "baz"
 
 
 class TestDataKeySet:

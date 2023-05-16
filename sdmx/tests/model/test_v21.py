@@ -5,6 +5,7 @@ import pytest
 
 from sdmx.model.common import ConstraintRoleType
 from sdmx.model.v21 import (
+    AttributeValue,
     Code,
     ComponentList,
     ConstraintRole,
@@ -18,6 +19,7 @@ from sdmx.model.v21 import (
     GroupKey,
     Key,
     KeyValue,
+    Observation,
 )
 
 
@@ -212,3 +214,35 @@ class TestKeyValue:
         kv1 = KeyValue(id="DIM", value="3")
         assert kv1 < KeyValue(id="DIM", value="foo")
         assert kv1 < "foo"
+
+
+class TestObservation:
+    def test_others(self):
+        obs = Observation()
+
+        av = AttributeValue
+
+        # Set by item name
+        obs.attached_attribute["TIME_PERIOD"] = av(3)
+        # NB the following does not work; see Observation.attrib()
+        # obs.attrib['TIME_PERIOD'] = 3
+
+        obs.attached_attribute["CURRENCY"] = av("USD")
+
+        # Access by attribute name
+        assert obs.attrib.TIME_PERIOD == 3
+        assert obs.attrib.CURRENCY == "USD"
+
+        # Access by item index
+        assert obs.attrib[1] == "USD"
+
+        # Add attributes
+        obs.attached_attribute["FOO"] = av("1")
+        obs.attached_attribute["BAR"] = av("2")
+        assert obs.attrib.FOO == "1" and obs.attrib["BAR"] == "2"
+
+        # Using classes
+        da = DataAttribute(id="FOO")
+        av = AttributeValue(value_for=da, value="baz")
+        obs.attached_attribute[da.id] = av
+        assert obs.attrib[da.id] == "baz"
