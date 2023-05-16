@@ -1137,8 +1137,10 @@ class Key:
     values: DictLikeDescriptor[str, KeyValue] = DictLikeDescriptor()
 
     def __init__(self, arg: Union[Mapping, Sequence[KeyValue], None] = None, **kwargs):
+        # Handle kwargs corresponding to attributes
+        self.attrib.update(kwargs.pop("attrib", {}))
+
         # DimensionDescriptor
-        self.attrib = kwargs.pop("attrib", DictLike())
         dd = kwargs.pop("described_by", None)
         self.described_by = dd
 
