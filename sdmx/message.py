@@ -191,8 +191,8 @@ class StructureMessage(Message):
     metadataflow: DictLike[str, model.MetadataflowDefinition] = dictlike_field()
     #: Collection of :class:`.DataStructureDefinition`.
     structure: DictLike[str, model.DataStructureDefinition] = dictlike_field()
-    #: Collection of :class:`.AgencyScheme`.
-    organisation_scheme: DictLike[str, model.AgencyScheme] = dictlike_field()
+    #: Collection of :class:`.OrganisationScheme`.
+    organisation_scheme: DictLike[str, model.OrganisationScheme] = dictlike_field()
     #: Collection of :class:`.ProvisionAgreement`.
     provisionagreement: DictLike[str, model.ProvisionAgreement] = dictlike_field()
 
