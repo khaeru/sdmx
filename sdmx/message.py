@@ -19,8 +19,8 @@ from sdmx.model.internationalstring import (
 )
 from sdmx.util import (
     DictLike,
+    DictLikeDescriptor,
     compare,
-    dictlike_field,
     direct_fields,
     get_args,
     summarize_dictlike,
@@ -176,25 +176,35 @@ class ErrorMessage(Message):
 @dataclass
 class StructureMessage(Message):
     #: Collection of :class:`.Categorisation`.
-    categorisation: DictLike[str, model.Categorisation] = dictlike_field()
+    categorisation: DictLikeDescriptor[str, model.Categorisation] = DictLikeDescriptor()
     #: Collection of :class:`.CategoryScheme`.
-    category_scheme: DictLike[str, model.CategoryScheme] = dictlike_field()
+    category_scheme: DictLikeDescriptor[
+        str, model.CategoryScheme
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.Codelist`.
-    codelist: DictLike[str, model.Codelist] = dictlike_field()
+    codelist: DictLikeDescriptor[str, model.Codelist] = DictLikeDescriptor()
     #: Collection of :class:`.ConceptScheme`.
-    concept_scheme: DictLike[str, model.ConceptScheme] = dictlike_field()
+    concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
     #: Collection of :class:`.ContentConstraint`.
-    constraint: DictLike[str, model.ContentConstraint] = dictlike_field()
+    constraint: DictLikeDescriptor[str, model.ContentConstraint] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
-    dataflow: DictLike[str, model.DataflowDefinition] = dictlike_field()
+    dataflow: DictLikeDescriptor[str, model.DataflowDefinition] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
-    metadataflow: DictLike[str, model.MetadataflowDefinition] = dictlike_field()
+    metadataflow: DictLikeDescriptor[
+        str, model.MetadataflowDefinition
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.DataStructureDefinition`.
-    structure: DictLike[str, model.DataStructureDefinition] = dictlike_field()
+    structure: DictLikeDescriptor[
+        str, model.DataStructureDefinition
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.OrganisationScheme`.
-    organisation_scheme: DictLike[str, model.OrganisationScheme] = dictlike_field()
+    organisation_scheme: DictLikeDescriptor[
+        str, model.OrganisationScheme
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.ProvisionAgreement`.
-    provisionagreement: DictLike[str, model.ProvisionAgreement] = dictlike_field()
+    provisionagreement: DictLikeDescriptor[
+        str, model.ProvisionAgreement
+    ] = DictLikeDescriptor()
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.

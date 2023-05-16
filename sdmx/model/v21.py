@@ -46,7 +46,7 @@ from typing import (
 )
 
 from sdmx.rest import Resource
-from sdmx.util import DictLike, compare, dictlike_field, only
+from sdmx.util import DictLike, DictLikeDescriptor, compare, only
 
 from .common import (
     ActionType,
@@ -706,7 +706,9 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
     measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)
     #: Mapping from  :attr:`.GroupDimensionDescriptor.id` to
     #: :class:`.GroupDimensionDescriptor`.
-    group_dimensions: DictLike[str, GroupDimensionDescriptor] = dictlike_field()
+    group_dimensions: DictLikeDescriptor[
+        str, GroupDimensionDescriptor
+    ] = DictLikeDescriptor()
 
     __hash__ = IdentifiableArtefact.__hash__
 
@@ -1132,11 +1134,11 @@ class Key:
     """
 
     #:
-    attrib: DictLike[str, AttributeValue] = dictlike_field()
+    attrib: DictLikeDescriptor[str, AttributeValue] = DictLikeDescriptor()
     #:
     described_by: Optional[DimensionDescriptor] = None
     #: Individual KeyValues that describe the key.
-    values: DictLike[str, KeyValue] = dictlike_field()
+    values: DictLikeDescriptor[str, KeyValue] = DictLikeDescriptor()
 
     def __init__(self, arg: Union[Mapping, Sequence[KeyValue], None] = None, **kwargs):
         # DimensionDescriptor
@@ -1322,7 +1324,7 @@ class Observation:
     """
 
     #:
-    attached_attribute: DictLike[str, AttributeValue] = dictlike_field()
+    attached_attribute: DictLikeDescriptor[str, AttributeValue] = DictLikeDescriptor()
     #:
     series_key: Optional[SeriesKey] = None
     #: Key for dimension(s) varying at the observation level.
@@ -1391,7 +1393,7 @@ class DataSet(AnnotableArtefact):
     # TODO add validation
     action: Optional[ActionType] = None
     #:
-    attrib: DictLike[str, AttributeValue] = dictlike_field()
+    attrib: DictLikeDescriptor[str, AttributeValue] = DictLikeDescriptor()
     #:
     valid_from: Optional[str] = None
     #:
@@ -1404,10 +1406,10 @@ class DataSet(AnnotableArtefact):
 
     #: Map of series key → list of observations.
     #: :mod:`sdmx` extension not in the IM.
-    series: DictLike[SeriesKey, List[Observation]] = dictlike_field()
+    series: DictLikeDescriptor[SeriesKey, List[Observation]] = DictLikeDescriptor()
     #: Map of group key → list of observations.
     #: :mod:`sdmx` extension not in the IM.
-    group: DictLike[GroupKey, List[Observation]] = dictlike_field()
+    group: DictLikeDescriptor[GroupKey, List[Observation]] = DictLikeDescriptor()
 
     def __len__(self):
         return len(self.obs)

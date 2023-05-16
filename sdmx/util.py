@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import (
     Any,
     Dict,
+    Generic,
     Iterable,
     List,
     Tuple,
@@ -33,7 +34,6 @@ log = logging.getLogger(__name__)
 __all__ = [
     "DictLike",
     "compare",
-    "dictlike_field",
     "only",
     "summarize_dictlike",
 ]
@@ -159,11 +159,6 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
 # "validate".
 
 
-def dictlike_field():
-    """Shorthand for :class:`pydantic.Field` with :class:`.DictLike` default factory."""
-    return DictLikeDescriptor()
-
-
 def summarize_dictlike(dl, maxwidth=72):
     """Return a string summary of the DictLike contents."""
     value_cls = dl[0].__class__.__name__
@@ -178,7 +173,7 @@ def summarize_dictlike(dl, maxwidth=72):
     return result
 
 
-class DictLikeDescriptor:
+class DictLikeDescriptor(Generic[KT, VT]):
     """Descriptor for :class:`DictLike` attributes on dataclasses."""
 
     def __set_name__(self, owner, name):
@@ -198,9 +193,9 @@ class DictLikeDescriptor:
         # Store. If ValueType is a generic, e.g. List[int], store only List.
         self._types = (kt, get_origin(vt) or vt)
 
-    def __get__(self, obj, type):
+    def __get__(self, obj, type) -> DictLike[KT, VT]:
         if obj is None:
-            return None
+            return None  # type: ignore [return-value]
 
         try:
             return obj.__dict__[self._name]
@@ -209,7 +204,7 @@ class DictLikeDescriptor:
             default = DictLike.with_types(*self._types)
             return obj.__dict__.setdefault(self._name, default)
 
-    def __set__(self, obj, value: DictLike):
+    def __set__(self, obj, value):
         self._get_field_types(obj)
 
         if not isinstance(value, DictLike):

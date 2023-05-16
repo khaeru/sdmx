@@ -5,7 +5,7 @@ from typing import Generator, Type
 import pytest
 
 import sdmx
-from sdmx.util import DictLike, dictlike_field, only, parse_content_type
+from sdmx.util import DictLike, DictLikeDescriptor, only, parse_content_type
 
 
 class TestDictLike:
@@ -14,7 +14,7 @@ class TestDictLike:
         # Example class
         @dataclass
         class Foo:
-            items: DictLike[str, int] = dictlike_field()
+            items: DictLikeDescriptor[str, int] = DictLikeDescriptor()
 
         yield Foo
 
