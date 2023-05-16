@@ -55,6 +55,7 @@ class TestDictLike:
     def test_validation(self, Foo) -> None:
         f = Foo()
         assert type(f.items) is DictLike
+        assert (str, int) == f.items._types
 
         # Can be set with DictLike
         f.items = DictLike(a=1, b=2)
@@ -65,30 +66,23 @@ class TestDictLike:
         assert type(f.items) is DictLike
 
         # Type checking on creation
-        pydantic_ValidationError = None
-        with pytest.raises(pydantic_ValidationError):
+        with pytest.raises(TypeError):
             f = Foo(items={1: "a"})
 
         # Type checking on assignment
         f = Foo()
-        with pytest.raises(pydantic_ValidationError):
+        with pytest.raises(TypeError):
             f.items = {1: "a"}
 
         # Type checking on setting elements
         f = Foo(items={"a": 1})
-        with pytest.raises(pydantic_ValidationError):
+        with pytest.raises(TypeError):
             f.items[123] = 456
 
-        # commented: this does not work, since validate_dictlike does not operate
-        # until initial values are assigned to the field
-        # f = Foo()
-        # with pytest.raises(pydantic_ValidationError):
-        #     f.items[123] = 456
-
-        # # Use validate_dictlike() twice
-        # @validate_dictlike
-        # class Bar(BaseModel):
-        #     elems: DictLike[StrictStr, float] = DictLike()
+        # With no initial value set
+        f = Foo()
+        with pytest.raises(TypeError):
+            f.items[123] = 456
 
     def test_compare(self, caplog):
         dl1 = DictLike(a="foo", b="bar")
