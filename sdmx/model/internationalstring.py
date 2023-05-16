@@ -132,12 +132,12 @@ class InternationalStringDescriptor:
     def __set_name__(self, owner, name):
         self._name = "_" + name
 
-    def __get__(self, obj, type):
+    def __get__(self, obj, type) -> InternationalString:
         try:
             return getattr(obj, self._name)
         except AttributeError:
             if obj is None:
-                return None
+                return None  # type: ignore[return-value]
             else:
                 setattr(obj, self._name, InternationalString())
                 return getattr(obj, self._name)
