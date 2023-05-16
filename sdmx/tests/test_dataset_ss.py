@@ -203,7 +203,6 @@ class TestSeriesData_SiblingGroup_TS(StructuredMessageTest):
         assert len(data.series) == 4
         g2 = list(data.group.keys())[2]
         assert g2.CURRENCY == "JPY"
-        print(list(data.group.keys()), g2, g2.attrib, sep="\n")
         assert g2.attrib.TITLE == "ECB reference exchange rate, Japanese yen/Euro"
 
         # Check direct attributes of SeriesKey

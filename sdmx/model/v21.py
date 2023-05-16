@@ -400,9 +400,10 @@ class MemberSelection:
 #   references that class.
 
 
+@dataclass
 class AttachmentConstraint(Constraint):
     #:
-    attachment: Set[ConstrainableArtefact] = set()
+    attachment: Set[ConstrainableArtefact] = field(default_factory=set)
 
 
 # §5.2: Data Structure Definition
@@ -1292,9 +1293,14 @@ class GroupKey(Key):
         self.id = id
 
 
+@dataclass
 class SeriesKey(Key):
     #: :mod:`sdmx` extension not in the IM.
-    group_keys: Set[GroupKey] = set()
+    group_keys: Set[GroupKey] = field(default_factory=set)
+
+    __eq__ = Key.__eq__
+    __hash__ = Key.__hash__
+    __repr__ = Key.__repr__
 
     @property
     def group_attrib(self):
