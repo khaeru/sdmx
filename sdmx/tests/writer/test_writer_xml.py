@@ -177,12 +177,6 @@ def test_ErrorMessage(errormessage):
     sdmx.to_xml(errormessage)
 
 
-_xf_ref = pytest.mark.xfail(
-    raises=NotImplementedError, reason="Cannot write reference to .* without parent"
-)
-_xf_not_equal = pytest.mark.xfail(raises=AssertionError)
-
-
 @pytest.mark.parametrize(
     "data_id, structure_id",
     [
@@ -241,10 +235,10 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         pytest.param(
             "ISTAT/47_850-structure.xml", True, marks=[pytest.mark.skip(reason="Slow")]
         ),
-        pytest.param("IMF/ECOFIN_DSD-structure.xml", True, marks=_xf_ref),
+        ("IMF/ECOFIN_DSD-structure.xml", True),
         ("INSEE/CNA-2010-CONSO-SI-A17-structure.xml", False),
         ("INSEE/IPI-2010-A21-structure.xml", False),
-        pytest.param("INSEE/dataflow.xml", False, marks=_xf_not_equal),
+        ("INSEE/dataflow.xml", False),
         ("SGR/common-structure.xml", True),
         ("UNSD/codelist_partial.xml", True),
     ],
