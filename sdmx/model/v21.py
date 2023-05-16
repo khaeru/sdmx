@@ -1007,7 +1007,7 @@ class KeyValue:
     #:
     value_for: Optional[Dimension] = None
 
-    dsd: InitVar[DataStructureDefinition | None] = None
+    dsd: InitVar[DataStructureDefinition] = None
 
     def __post_init__(self, dsd):
         if dsd:
@@ -1068,7 +1068,7 @@ class AttributeValue:
     #:
     start_date: Optional[date] = None
 
-    dsd: InitVar[DataStructureDefinition | None] = None
+    dsd: InitVar[DataStructureDefinition] = None
 
     def __post_init__(self, dsd):
         if dsd:
