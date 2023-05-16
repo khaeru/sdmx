@@ -3,7 +3,17 @@ import typing
 from collections.abc import Iterator
 from dataclasses import Field, fields
 from functools import lru_cache
-from typing import Any, Dict, Iterable, Tuple, TypeVar, Union, get_args, get_origin
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Tuple,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 
 import requests
 
@@ -255,12 +265,21 @@ def parse_content_type(value: str) -> Tuple[str, Dict[str, Any]]:
     return content_type, params
 
 
-@lru_cache()
+_FIELDS_CACHE: Dict[str, List[Field]] = dict()
+
+
 def direct_fields(cls) -> Iterable[Field]:
     """Return the data class fields defined on `cls` or its class.
 
     This is like the ``__fields__`` attribute, but excludes the fields defined on any
     parent class(es).
     """
-    parent_fields = set(fields(cls.mro()[1]))
-    return list(filter(lambda f: f not in parent_fields, fields(cls)))
+    # Key for `_FIELDS_CACHE`: the fully qualified name
+    cls_name = f"{cls.__module__}.{cls.__name__}"
+
+    try:
+        return _FIELDS_CACHE[cls_name]
+    except KeyError:
+        parent_fields = set(fields(cls.mro()[1]))
+        result = list(filter(lambda f: f not in parent_fields, fields(cls)))
+        return _FIELDS_CACHE.setdefault(cls_name, result)

@@ -480,6 +480,7 @@ def _cr(obj: model.CubeRegion):
 
 @writer
 def _cc(obj: model.ContentConstraint):
+    assert obj.role is not None
     elem = maintainable(
         obj, type=obj.role.role.name.replace("allowable", "allowed").title()
     )

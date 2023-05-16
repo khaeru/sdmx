@@ -427,7 +427,7 @@ class CubeRegion:
     #:
     included: bool = True
     #:
-    member: Dict[Dimension, MemberSelection] = field(default_factory=dict)
+    member: Dict[DimensionComponent, MemberSelection] = field(default_factory=dict)
 
     def __contains__(self, other: Union["Key", "KeyValue"]) -> bool:
         """Membership test.
@@ -1005,7 +1005,7 @@ class KeyValue:
     #: The actual value.
     value: Any
     #:
-    value_for: Optional[Dimension] = None
+    value_for: Optional[DimensionComponent] = None
 
     dsd: InitVar[DataStructureDefinition] = None
 

@@ -29,7 +29,7 @@ from sdmx.util import (
 log = logging.getLogger(__name__)
 
 
-def _summarize(obj, include: List[str] = None):
+def _summarize(obj, include: Optional[List[str]] = None):
     """Helper method for __repr__ on Header and Message (sub)classes."""
     include = include or list(map(attrgetter("name"), fields(obj)))
     for name in include:
