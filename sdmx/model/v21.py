@@ -100,14 +100,13 @@ log = logging.getLogger(__name__)
 # §3.3: Basic Inheritance
 
 
-@dataclass(repr=False)
+@dataclass
+@IdentifiableArtefact._preserve("hash", "repr")
 class Component(IdentifiableArtefact):
     #:
     concept_identity: Optional[Concept] = None
     #:
     local_representation: Optional[Representation] = None
-
-    __hash__ = IdentifiableArtefact.__hash__
 
     def __contains__(self, value):
         for repr in [
@@ -243,15 +242,12 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
 # §4.3: Codelist
 
 
-@dataclass(repr=False)
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
 class Code(Item["Code"]):
     """SDMX 2.1 Code."""
 
-    __hash__ = IdentifiableArtefact.__hash__
-
-    def __post_init__(self):
-        __tracebackhide__ = True
-        super().__post_init__()
+    __post_init__ = Item.__post_init__
 
 
 class Codelist(ItemScheme[Code]):
@@ -412,21 +408,17 @@ class AttachmentConstraint(Constraint):
 # §5.2: Data Structure Definition
 
 
-@dataclass(repr=False)
+@dataclass
+@IdentifiableArtefact._preserve("eq", "hash", "repr")
 class DimensionComponent(Component):
     #:
     order: Optional[int] = None
 
-    __eq__ = IdentifiableArtefact.__eq__
-    __hash__ = IdentifiableArtefact.__hash__
 
-
-@dataclass(repr=False)
+@dataclass
+@IdentifiableArtefact._preserve("eq", "hash", "repr")
 class Dimension(DimensionComponent):
     """SDMX 2.1 Dimension."""
-
-    __eq__ = IdentifiableArtefact.__eq__
-    __hash__ = IdentifiableArtefact.__hash__
 
 
 # (continued from §10.3)
@@ -496,6 +488,7 @@ class CubeRegion:
 
 # (continued from §10.3)
 @dataclass
+@NameableArtefact._preserve("repr")
 class ContentConstraint(Constraint):
     #: :class:`CubeRegions <.CubeRegion>` included in the ContentConstraint.
     data_content_region: List[CubeRegion] = field(default_factory=list)
@@ -591,14 +584,12 @@ class GroupRelationship(AttributeRelationship):
 
 
 @dataclass
+@NameableArtefact._preserve("eq", "hash")
 class DataAttribute(Component):
     #:
     related_to: Optional[AttributeRelationship] = None
     #:
     usage_status: Optional[UsageStatus] = None
-
-    __hash__ = IdentifiableArtefact.__hash__
-    __eq__ = IdentifiableArtefact.__eq__
 
 
 class ReportingYearStartDay(DataAttribute):

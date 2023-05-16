@@ -188,17 +188,26 @@ class IdentifiableArtefact(AnnotableArtefact):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.id}>"
 
+    @classmethod
+    def _preserve(cls, *names: str):
+        """Copy dunder `names` from IdentifiableArtefact to a decorated class."""
+
+        def decorator(other_cls):
+            for name in map(lambda s: f"__{s}__", names):
+                candidates = filter(None, map(lambda k: getattr(k, name), cls.__mro__))
+                setattr(other_cls, name, next(candidates))
+            return other_cls
+
+        return decorator
+
 
 @dataclass
+@IdentifiableArtefact._preserve("eq", "post_init")
 class NameableArtefact(IdentifiableArtefact):
     #: Multi-lingual name of the object.
     name: InternationalStringDescriptor = InternationalStringDescriptor()
     #: Multi-lingual description of the object.
     description: InternationalStringDescriptor = InternationalStringDescriptor()
-
-    def __post_init__(self):
-        __tracebackhide__ = True
-        super().__post_init__()
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -367,7 +376,8 @@ UsageStatus = Enum("UsageStatus", "mandatory conditional")
 IT = TypeVar("IT", bound="Item")
 
 
-@dataclass(repr=False)
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
 class Item(NameableArtefact, Generic[IT]):
     parent: Optional[Union[IT, "ItemScheme"]] = None
     child: List[IT] = field(default_factory=list)
@@ -384,8 +394,6 @@ class Item(NameableArtefact, Generic[IT]):
         # Add this Item as a parent of its children
         for c in self.child:
             c.parent = self
-
-    __hash__ = IdentifiableArtefact.__hash__
 
     def __contains__(self, item):
         """Recursive containment."""
@@ -747,13 +755,11 @@ class Contact:
     uri: List[str] = field(default_factory=list)
 
 
-@dataclass(repr=False)
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
 class Organisation(Item["Organisation"]):
     #:
     contact: List[Contact] = field(default_factory=list)
-
-    __eq__ = IdentifiableArtefact.__eq__
-    __hash__ = IdentifiableArtefact.__hash__
 
 
 class Agency(Organisation):
