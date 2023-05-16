@@ -120,9 +120,13 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
             pass
         else:
             if not isinstance(key, kt):
-                raise TypeError(type(key))
+                raise TypeError(
+                    f"Expected key type {kt.__name__}; got {type(key).__name__}"
+                )
             elif not isinstance(value, vt):
-                raise TypeError(type(value), vt)
+                raise TypeError(
+                    f"Expected value type {vt.__name__}; got {type(value).__name__}"
+                )
 
         return key, value
 
