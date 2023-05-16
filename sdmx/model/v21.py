@@ -752,28 +752,25 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
                 # `dim` is not enumerated by an ItemScheme, or not included in the
                 # `dims` argument and not to be iterated over. Create a placeholder.
                 all_kvs.append(
-                    [(dim.id, KeyValue(id=dim.id, value=f"({dim.id})", value_for=dim))]
+                    [KeyValue(id=dim.id, value=f"({dim.id})", value_for=dim)]
                 )
             else:
                 # Create a KeyValue for each Item in the ItemScheme; filter through any
                 # constraint.
                 all_kvs.append(
-                    map(
-                        lambda kv: (kv.id, kv),
-                        filter(
-                            _constraint.__contains__,
-                            map(
-                                make_factory(id=dim.id, value_for=dim),
-                                dim.local_representation.enumerated,
-                            ),
+                    filter(
+                        _constraint.__contains__,
+                        map(
+                            make_factory(id=dim.id, value_for=dim),
+                            dim.local_representation.enumerated,
                         ),
-                    )
+                    ),
                 )
 
         # Create Key objects from Cartesian product of KeyValues along each dimension
         # NB this does not work with DataKeySet
         # TODO improve to work with DataKeySet
-        yield from filter(_constraint.__contains__, map(Key._fast, product(*all_kvs)))
+        yield from filter(_constraint.__contains__, map(Key, product(*all_kvs)))
 
     def make_constraint(self, key):
         """Return a constraint for `key`.
@@ -1154,12 +1151,13 @@ class Key:
                 )
             kwargs.update(arg)
 
+        kvs: Iterable[Tuple] = []
+
         if isinstance(arg, Sequence):
             # Sequence of already-prepared KeyValues; assume already sorted
             kvs: Iterable[Tuple] = map(lambda kv: (kv.id, kv), arg)
         else:
             # Convert bare keyword arguments to KeyValue
-            kvs = []
             for order, (id, value) in enumerate(kwargs.items()):
                 args = dict(id=id, value=value)
                 if dd:
@@ -1174,16 +1172,7 @@ class Key:
             # Sort the values according to *order*, then unwrap
             kvs = map(itemgetter(1), sorted(kvs))
 
-        for id, kv in kvs:
-            self.values[id] = kv
-
-    @classmethod
-    def _fast(cls, kvs):
-        """Use :meth:`pydantic.BaseModel.construct` for faster construction."""
-        # TODO Obsolete; remove
-        result = cls()
-        result.values.update(kvs)
-        return result
+        self.values.update(kvs)
 
     def __len__(self):
         """The length of the Key is the number of KeyValues it contains."""
