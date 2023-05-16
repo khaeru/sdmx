@@ -15,13 +15,13 @@ def test_list_sources():
 
 def test_source_support():
     # Implicitly supported endpoint
-    assert sources["ILO"].supports["categoryscheme"]
+    assert sources["ILO"].supports["categoryscheme"] is True
 
     # Specifically unsupported endpoint
-    assert not sources["ESTAT"].supports["contentconstraint"]
+    assert sources["ESTAT"].supports["contentconstraint"] is False
 
     # Explicitly supported structure-specific data
-    assert sources["INEGI"].supports["structure-specific data"]
+    assert sources["INEGI"].supports["structure-specific data"] is True
 
 
 def test_add_source():
