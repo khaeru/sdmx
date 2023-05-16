@@ -373,7 +373,7 @@ def _dataset_compat(df, datetime, kwargs):
     return df, datetime, kwargs
 
 
-def _maybe_convert_datetime(df, arg, obj, dsd=None):
+def _maybe_convert_datetime(df, arg, obj, dsd=None):  # noqa: C901
     """Helper for :meth:`.write_dataset` to handle datetime indices.
 
     Parameters
@@ -385,8 +385,7 @@ def _maybe_convert_datetime(df, arg, obj, dsd=None):
         From the `obj` argument to :meth:`write_dataset`.
     dsd: ~.DataStructureDefinition, optional
     """
-    # TODO simplify this method. It has McCabe complexity of 27; the maximum in the rest
-    #      of the code is 17.
+    # TODO Simplify this method to reduce its McCabe complexity from 27 to <= 13
     if not arg:
         # False, None, empty dict: no datetime conversion
         return df

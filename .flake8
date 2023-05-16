@@ -1,4 +1,12 @@
 [flake8]
+# Maximum complexity
+#
+# Exceptions:
+# - .client.Client._request_from_args: 16
+# - .writer.pandas._maybe_convert_datetime: 27
+max-complexity = 13
+
+# For black
 max-line-length = 88
 ignore =
     # line break before binary operator
