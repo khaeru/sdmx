@@ -1305,9 +1305,9 @@ class SeriesKey(Key):
 
     @property
     def group_attrib(self):
-        """Return a view of combined group attributes."""
+        """Return a view of attributes on all :class:`GroupKey` including the series."""
         # Needed to pass existing tests
-        view = self.attrib.copy()
+        view = dict()
         for gk in self.group_keys:
             view.update(gk.attrib)
         return view
