@@ -26,6 +26,8 @@ from sdmx.writer.base import BaseWriter
 #: 'rows'. See the ref:`HOWTO <howto-rtype>`.
 DEFAULT_RTYPE = "rows"
 
+_HAS_PANDAS_2 = pd.__version__.split(".")[0] >= "2"
+
 
 writer = BaseWriter("pandas")
 
@@ -436,7 +438,9 @@ def _maybe_convert_datetime(df, arg, obj, dsd=None):
     # Unstack all but the time dimension and convert
     other_dims = list(filter(lambda d: d != param["dim"], df.index.names))
     df = df.unstack(other_dims)
-    df.index = pd.to_datetime(df.index, format="mixed")
+    # Only provide format in pandas >= 2.0.0
+    kw = dict(format="mixed") if _HAS_PANDAS_2 else {}
+    df.index = pd.to_datetime(df.index, **kw)
 
     if param["freq"]:
         # Determine frequency string, Dimension, or Attribute
