@@ -95,11 +95,11 @@ class TestDataAttribute:
 class TestCode:
     @pytest.fixture
     def c(self) -> Code:
-        yield Code(id="FOO", name=("en", "Foo"))
+        return Code(id="FOO", name=("en", "Foo"))
 
     def test_id(self) -> None:
         with pytest.raises(TypeError, match="got int"):
-            Code(id=1)
+            Code(id=1)  # type: ignore [arg-type]
 
     def test_hash(self, c):
         s = set([c])
