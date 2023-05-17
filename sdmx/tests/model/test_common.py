@@ -164,6 +164,12 @@ class TestItemScheme:
 
         assert bar is is0.get_hierarchical("foo.bar")
 
+        # With non-hierarchical ID
+        assert foo is is0.get_hierarchical("foo")
+
+        with pytest.raises(KeyError):
+            is0.get_hierarchical("foo.baz")
+
     def test_other(self) -> None:
         is0: ItemScheme = ItemScheme(id="is0")
         foo0: Item = Item(id="foo0")

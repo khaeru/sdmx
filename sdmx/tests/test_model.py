@@ -419,3 +419,6 @@ def test_deprecated():
         DeprecationWarning, match=r"DataStructureDefinition from sdmx\.model"
     ):
         from sdmx.model import DataStructureDefinition  # noqa: F401
+
+    with pytest.raises(ImportError):
+        from sdmx.model import Foo  # noqa: F401

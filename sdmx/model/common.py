@@ -29,8 +29,9 @@ class _MissingID(str):
     def __str__(self):
         return "(missing id)"
 
+    # Supplied to allow this as a default value for dataclass fields
     def __hash__(self):
-        return hash(None)
+        return hash(None)  # pragma: no cover
 
     def __eq__(self, other):
         return isinstance(other, self.__class__)
@@ -484,13 +485,6 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     # The type of the Items in the ItemScheme. This is necessary because the type hint
     # in the class declaration is static; not meant to be available at runtime.
     _Item: ClassVar[Type] = Item
-
-    # was: @validator("items", pre=True)
-    # TODO use for .items
-    def convert_to_dict(cls, v):
-        if isinstance(v, dict):
-            return v
-        return {i.id: i for i in v}
 
     # Convenience access to items
     def __getattr__(self, name: str) -> IT:
