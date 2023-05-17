@@ -133,14 +133,10 @@ class InternationalStringDescriptor:
         self._name = "_" + name
 
     def __get__(self, obj, type) -> InternationalString:
-        try:
-            return getattr(obj, self._name)
-        except AttributeError:
-            if obj is None:
-                return None  # type: ignore[return-value]
-            else:
-                setattr(obj, self._name, InternationalString())
-                return getattr(obj, self._name)
+        if obj is None:
+            return None  # type: ignore [return-value]
+
+        return obj.__dict__[self._name]
 
     def __set__(self, obj, value: _TInternationalStringInit):
         if not isinstance(value, InternationalString):
