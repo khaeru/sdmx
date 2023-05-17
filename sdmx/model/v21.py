@@ -110,7 +110,7 @@ class Component(IdentifiableArtefact):
 
     def __contains__(self, value):
         for repr in [
-            self.concept_identity.core_representation,
+            getattr(self.concept_identity, "core_representation", None),
             self.local_representation,
         ]:
             enum = getattr(repr, "enumerated", None)
@@ -173,8 +173,7 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
         try:
             return self.get(id)
         except KeyError:
-            # No match
-            pass
+            pass  # No match
 
         # Create a new object of a class:
         # 1. Given by the cls argument,
@@ -183,14 +182,11 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
         cls = cls or self._Component
         component = cls(id=id, **kwargs)
 
-        if "order" not in kwargs:
-            # For automatically created dimensions, give a serial value to the
-            # order property
-            try:
-                component.order = self.auto_order
-                self.auto_order += 1
-            except ValueError:
-                pass
+        if "order" not in kwargs and hasattr(component, "order"):
+            # For automatically created dimensions, give a serial value to the order
+            # property
+            component.order = self.auto_order
+            self.auto_order += 1
 
         self.components.append(component)
         return component
@@ -1225,10 +1221,14 @@ class Key:
         return result
 
     def __add__(self, other):
-        if not isinstance(other, Key):
+        if other is None:
+            other_values = dict()
+        elif not isinstance(other, Key):
             raise NotImplementedError
+        else:
+            other_values = other.values
         result = copy(self)
-        for id, value in other.values.items():
+        for id, value in other_values.items():
             result[id] = value
         return result
 
@@ -1349,7 +1349,7 @@ class Observation:
     @property
     def key(self):
         """Return the entire key, including KeyValues at the series level."""
-        return self.series_key + self.dimension
+        return (self.series_key or SeriesKey()) + self.dimension
 
     def __len__(self):
         # FIXME this is unintuitive; maybe deprecate/remove?

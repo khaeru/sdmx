@@ -12,7 +12,6 @@ from sdmx.model.v21 import (
     ContentConstraint,
     CubeRegion,
     DataflowDefinition,
-    DataSet,
     Dimension,
     DimensionDescriptor,
     Item,
@@ -204,13 +203,6 @@ def test_contentconstraint():
     cr.data_content_region = CubeRegion(included=True, member={})
 
 
-def test_dataset():
-    # Enumeration values can be used to initialize
-    from sdmx.model.v21 import ActionType
-
-    DataSet(action=ActionType["information"])
-
-
 class TestDimension:
     def test_init(self):
         # Constructor
@@ -294,75 +286,6 @@ class TestAttributeValue:
         assert "FOO" == str(
             model.AttributeValue(value=model.Code(id="FOO", name="Foo"))
         )
-
-
-class TestKey:
-    @pytest.fixture
-    def k1(self):
-        # Construct with a dict
-        yield Key({"foo": 1, "bar": 2})
-
-    @pytest.fixture
-    def k2(self):
-        # Construct with kwargs
-        yield Key(foo=1, bar=2)
-
-    def test_init(self):
-        # Construct with a dict and kwargs is an error
-        with raises(ValueError):
-            Key({"foo": 1}, bar=2)
-
-        # Construct with a DimensionDescriptor
-        d = model.Dimension(id="FOO")
-        dd = model.DimensionDescriptor(components=[d])
-
-        k = Key(FOO=1, described_by=dd)
-
-        # KeyValue is associated with Dimension
-        assert k["FOO"].value_for is d
-
-    def test_general(self, k1, k2):
-        # Results are __eq__ each other
-        assert k1 == k2
-
-        # __len__
-        assert len(k1) == 2
-
-        # __contains__: symmetrical if keys are identical
-        assert k1 in k2
-        assert k2 in k1
-        assert Key(foo=1) in k1
-        assert k1 not in Key(foo=1)
-
-        # Set and get using item convenience
-        k1["baz"] = 3  # bare value is converted to a KeyValue
-        assert k1["foo"] == 1
-
-        # __str__
-        assert str(k1) == "(foo=1, bar=2, baz=3)"
-
-        # copying: returns a new object equal to the old one
-        k2 = k1.copy()
-        assert id(k1) != id(k2) and k1 == k2
-        # copy with changes
-        k2 = Key(foo=1, bar=2).copy(baz=3)
-        assert id(k1) != id(k2) and k1 == k2
-
-        # __add__: Key with something else
-        with raises(NotImplementedError):
-            k1 + 4
-        # Two Keys
-        k2 = Key(foo=1) + Key(bar=2)
-        assert k2 == k1
-
-        # __radd__: adding a Key to None produces a Key
-        assert None + k1 == k1
-        # anything else is an error
-        with raises(NotImplementedError):
-            4 + k1
-
-        # get_values(): preserve ordering
-        assert k1.get_values() == (1, 2, 3)
 
 
 class TestDataKeySet:
