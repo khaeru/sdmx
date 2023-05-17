@@ -167,8 +167,9 @@ class Client:
 
         return cc.to_query_string(dsd), dsd
 
-    def _request_from_args(self, kwargs):
+    def _request_from_args(self, kwargs):  # noqa: C901
         """Validate arguments and prepare pieces for a request."""
+        # TODO Simplify this method to reduce its McCabe complexity from 16 to <= 13
         parameters = kwargs.pop("params", {})
         headers = kwargs.pop("headers", {})
 

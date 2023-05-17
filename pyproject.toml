@@ -1,12 +1,6 @@
 [build-system]
 requires = ["build", "setuptools-scm"]
 
-[tool.setuptools.packages]
-find = {}
-
-[tool.setuptools_scm]
-local_scheme = "no-local-version"
-
 [project]
 name = "sdmx1"
 description = "Statistical Data and Metadata eXchange (SDMX)"
@@ -38,7 +32,6 @@ requires-python = ">=3.8"
 dependencies = [
   "lxml >= 3.6",
   "pandas >= 1.0",
-  "pydantic >= 1.9.2",
   "python-dateutil",
   "requests >= 2.7",
   "typing_extensions",
@@ -47,15 +40,15 @@ dependencies = [
 [project.optional-dependencies]
 cache = ["requests-cache"]
 docs = [
-    "IPython",
-    "sphinx >=4",
-    "sphinx-book-theme",
+  "IPython",
+  "sphinx >=4",
+  "sphinx-book-theme",
 ]
 tests = [
-    "pytest >= 5",
-    "pytest-cov",
-    "pytest-xdist",
-    "requests-mock >= 1.4"
+  "pytest >= 5",
+  "pytest-cov",
+  "pytest-xdist",
+  "requests-mock >= 1.4"
 ]
 
 [project.urls]
@@ -75,7 +68,7 @@ profile = "black"
 
 [tool.mypy]
 exclude = [
-    "^build/",
+  "^build/",
 ]
 
 [[tool.mypy.overrides]]
@@ -88,12 +81,18 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = """
-    sdmx
-    --cov sdmx --cov-report=
-    -m "not experimental and not source"
+  sdmx
+  --cov sdmx --cov-report=
+  -m "not experimental and not source"
 """
 markers = [
-    "experimental: test of experimental features",
-    "network: tests requiring a network connection",
-    "source: slower, network tests of individual SDMX web services",
+  "experimental: test of experimental features",
+  "network: tests requiring a network connection",
+  "source: slower, network tests of individual SDMX web services",
 ]
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools_scm]
+local_scheme = "no-local-version"

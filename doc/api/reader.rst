@@ -30,6 +30,8 @@ SDMX-JSON
 
 .. currentmodule:: sdmx.reader.json
 
+.. automodule:: sdmx.reader.json
+
 .. autoclass:: sdmx.reader.json.Reader
     :members:
     :undoc-members:

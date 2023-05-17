@@ -2,6 +2,8 @@
 import json
 import logging
 
+from dateutil.parser import isoparse
+
 from sdmx.format import list_media_types
 from sdmx.message import DataMessage, Header
 from sdmx.model import v21 as model
@@ -48,7 +50,7 @@ class Reader(BaseReader):
         elem = tree["header"]
         msg.header = Header(
             id=elem["id"],
-            prepared=elem["prepared"],
+            prepared=isoparse(elem["prepared"]),
             sender=model.Agency(**elem["sender"]),
         )
 

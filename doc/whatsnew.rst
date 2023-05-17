@@ -6,13 +6,40 @@ What's new?
 Next release
 ============
 
+- Switch from third-party :mod:`.pydantic` to Python standard library :mod:`dataclasses` (:pull:`128`).
+
+  This is a major change to the :mod:`sdmx` internals, but should come with few API changes and some performance improvements.
+  Specific known changes:
+
+  - Individual classes do not have pydantic-supplied :meth:`copy` methods.
+    Use :func:`copy.copy` or :func:`copy.deepcopy` from the standard library, as appropriate.
+  - :attr:`.Observation.attached_attribute` values should be set explicitly to :class:`.AttributeValue` instances, rather than to arbitrary types.
+    Instead of:
+
+    .. code-block:: python
+
+       from sdmx.model.v21 import Observation
+
+       o = obs()
+       o.attached_attribute["CURRENCY"] = "EUR"
+
+    …do:
+
+    .. code-block:: python
+
+       from sdmx.model.v21 import AttributeValue as available
+
+       o.attached_attribute["CURRENCY"] = av("EUR")
+
+- :mod:`.reader.json` properly parses :attr:`.Header.prepared` as a :class:`~datetime.datetime` object from SDMX-JSON data messages (:pull:`128`).
+- :mod:`.writer.xml` no longer writes objects in a SDMX-ML :class:`.StructureMessage` if :attr:`.MaintainableArtefact.is_external_reference` is :data:`True` (:pull:`128`).
 - Update :ref:`ABS` to support the ABS' recently-added “beta” SDMX-ML API (:pull:`129`).
 - Rename the corresponding SDMX-JSON source :ref:`ABS_JSON`, update web service URL and quirks handling (:class:`.abs_json.Source`) (:pull:`129`).
 
 v2.9.0 (2023-04-30)
 ===================
 
-- Add :func:`.to_csv` (:mod:`.writer.csv`) to generate SDMX-CSV 1.0 (corresponding to SDMX 2.1) representation of :class:`DataSets <.DataSet>` (:issue:`36`, :pull:`125`).
+- Add :func:`sdmx.to_csv` (:mod:`.writer.csv`) to generate SDMX-CSV 1.0 (corresponding to SDMX 2.1) representation of :class:`DataSets <.DataSet>` (:issue:`36`, :pull:`125`).
 - Information Model classes (:pull:`125`):
 
   - Add :meth:`.AnnotableArtefact.eval_annotation`, which can be used to retrieve Python data structures stored using :func:`repr` as :attr:`.Annotation.text` on an object.

@@ -77,14 +77,19 @@ def reference(obj, parent=None, tag=None, style=None):
         ref = Element(":URN", obj.urn)
     elif style == "Ref":
         args = {
+            "agencyID": getattr(ma.maintainer, "id", None),
             "id": obj.id,
             "maintainableParentID": ma.id if parent else None,
             "maintainableParentVersion": ma.version if parent else None,
-            "agencyID": getattr(ma.maintainer, "id", None),
             "version": ma.version,
-            "package": model.PACKAGE[obj.__class__],
-            "class": etree.QName(tag_for_class(obj.__class__)).localname,
+            "package": model.PACKAGE[ma.__class__],
         }
+        for candidate in (obj.__class__, getattr(ma.__class__, "_Item", None)):
+            try:
+                args["class"] = etree.QName(tag_for_class(candidate)).localname
+                break
+            except ValueError:
+                pass
 
         ref = Element(":Ref", **args)
     else:  # pragma: no cover
@@ -167,10 +172,12 @@ def _sm(obj: message.StructureMessage):
         ("constraint", "Constraints"),
         ("provisionagreement", "ProvisionAgreements"),
     ]:
-        if not len(getattr(obj, attr)):
+        coll = getattr(obj, attr)
+        if not len(coll):
             continue
         container = Element(f"str:{tag}")
-        container.extend(writer.recurse(s) for s in getattr(obj, attr).values())
+        for s in filter(lambda s: not s.is_external_reference, coll.values()):
+            container.append(writer.recurse(s))
         structures.append(container)
 
     if obj.footer:
@@ -347,7 +354,7 @@ def _facet(obj: model.Facet):
 @writer
 def _rep(obj: model.Representation, tag, style="URN"):
     elem = Element(f"str:{tag}")
-    if obj.enumerated:
+    if obj.enumerated is not None:
         elem.append(reference(obj.enumerated, tag="str:Enumeration", style=style))
     if obj.non_enumerated:
         elem.extend(writer.recurse(facet) for facet in obj.non_enumerated)
@@ -473,6 +480,7 @@ def _cr(obj: model.CubeRegion):
 
 @writer
 def _cc(obj: model.ContentConstraint):
+    assert obj.role is not None
     elem = maintainable(
         obj, type=obj.role.role.name.replace("allowable", "allowed").title()
     )

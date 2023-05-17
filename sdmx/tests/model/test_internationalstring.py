@@ -1,4 +1,3 @@
-import pydantic
 import pytest
 
 from sdmx.model.internationalstring import DEFAULT_LOCALE, InternationalString
@@ -47,20 +46,20 @@ class TestInternationalString:
         )
 
         # Setting with a string directly sets the value in the default locale
-        i.name = "European Central Bank"  # type: ignore [assignment]
-        assert len(i.name.localizations) == 1
+        i.name = "European Central Bank"
+        assert 1 == len(i.name.localizations)
         assert i.name.localizations[DEFAULT_LOCALE] == "European Central Bank"
 
         # Setting with a (locale, text) tuple
-        i.name = ("FI", "Euroopan keskuspankki")  # type: ignore [assignment]
-        assert len(i.name.localizations) == 1
+        i.name = ("FI", "Euroopan keskuspankki")
+        assert 1 == len(i.name.localizations)
 
         # Setting with a dict()
-        i.name = {"IT": "Banca centrale europea"}  # type: ignore [assignment]
-        assert len(i.name.localizations) == 1
+        i.name = {"IT": "Banca centrale europea"}
+        assert 1 == len(i.name.localizations)
 
         # Using some other type is an error
-        with pytest.raises(pydantic.ValidationError):
+        with pytest.raises(ValueError):
             i.name = 123  # type: ignore [assignment]
 
         # Same, but in the constructor

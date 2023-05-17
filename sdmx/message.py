@@ -7,27 +7,32 @@
 data sources.
 """
 import logging
+from dataclasses import dataclass, field, fields
 from datetime import datetime
+from operator import attrgetter
 from typing import Any, List, Optional, Text, Union
 
 from sdmx.model import v21 as model
+from sdmx.model.internationalstring import (
+    InternationalString,
+    InternationalStringDescriptor,
+)
 from sdmx.util import (
-    BaseModel,
     DictLike,
+    DictLikeDescriptor,
     compare,
-    dictlike_field,
     direct_fields,
     get_args,
     summarize_dictlike,
-    validate_dictlike,
 )
 
 log = logging.getLogger(__name__)
 
 
-def _summarize(obj, fields):
+def _summarize(obj, include: Optional[List[str]] = None):
     """Helper method for __repr__ on Header and Message (sub)classes."""
-    for name in fields:
+    include = include or list(map(attrgetter("name"), fields(obj)))
+    for name in include:
         attr = getattr(obj, name)
         if attr is None:
             continue
@@ -36,7 +41,8 @@ def _summarize(obj, fields):
         yield f"{name}: {repr(attr)}"
 
 
-class Header(BaseModel):
+@dataclass
+class Header:
     """Header of an SDMX-ML message.
 
     SDMX-JSON messages do not have headers.
@@ -60,14 +66,14 @@ class Header(BaseModel):
     #: The :class:`.Agency` associated with the data :class:`~.source.Source`.
     sender: Optional[model.Agency] = None
     #:
-    source: model.InternationalString = model.InternationalString()
+    source: InternationalStringDescriptor = InternationalStringDescriptor()
     #:
     test: bool = False
 
     def __repr__(self):
         """String representation."""
         lines = ["<Header>"]
-        lines.extend(_summarize(self, self.__fields__.keys()))
+        lines.extend(_summarize(self))
         return "\n  ".join(lines)
 
     def compare(self, other, strict=True):
@@ -80,10 +86,14 @@ class Header(BaseModel):
         strict : bool, optional
             Passed to :func:`.compare`.
         """
-        return all(compare(f, self, other, strict) for f in self.__fields__.keys())
+        return all(
+            compare(f, self, other, strict)
+            for f in map(attrgetter("name"), fields(self))
+        )
 
 
-class Footer(BaseModel):
+@dataclass
+class Footer:
     """Footer of an SDMX-ML message.
 
     SDMX-JSON messages do not have footers.
@@ -92,9 +102,16 @@ class Footer(BaseModel):
     #:
     severity: Optional[str] = None
     #: The body text of the Footer contains zero or more blocks of text.
-    text: List[model.InternationalString] = []
+    text: List[model.InternationalString] = field(default_factory=list)
     #:
     code: Optional[int] = None
+
+    def __post_init__(self):
+        # Convert non-IS members to IS
+        self.text = [
+            t if isinstance(t, InternationalString) else InternationalString(t)
+            for t in self.text
+        ]
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -107,16 +124,16 @@ class Footer(BaseModel):
         strict : bool, optional
             Passed to :func:`.compare`.
         """
-        return all(compare(f, self, other, strict) for f in self.__fields__.keys())
+        return all(
+            compare(f, self, other, strict)
+            for f in map(attrgetter("name"), fields(self))
+        )
 
 
-class Message(BaseModel):
-    class Config:
-        # for .response
-        arbitrary_types_allowed = True
-
+@dataclass
+class Message:
     #: :class:`Header` instance.
-    header: Header = Header()
+    header: Header = field(default_factory=Header)
     #: (optional) :class:`Footer` instance.
     footer: Optional[Footer] = None
     #: :class:`requests.Response` instance for the response to the HTTP request that
@@ -156,28 +173,38 @@ class ErrorMessage(Message):
     pass
 
 
-@validate_dictlike
+@dataclass
 class StructureMessage(Message):
     #: Collection of :class:`.Categorisation`.
-    categorisation: DictLike[str, model.Categorisation] = dictlike_field()
+    categorisation: DictLikeDescriptor[str, model.Categorisation] = DictLikeDescriptor()
     #: Collection of :class:`.CategoryScheme`.
-    category_scheme: DictLike[str, model.CategoryScheme] = dictlike_field()
+    category_scheme: DictLikeDescriptor[
+        str, model.CategoryScheme
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.Codelist`.
-    codelist: DictLike[str, model.Codelist] = dictlike_field()
+    codelist: DictLikeDescriptor[str, model.Codelist] = DictLikeDescriptor()
     #: Collection of :class:`.ConceptScheme`.
-    concept_scheme: DictLike[str, model.ConceptScheme] = dictlike_field()
+    concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
     #: Collection of :class:`.ContentConstraint`.
-    constraint: DictLike[str, model.ContentConstraint] = dictlike_field()
+    constraint: DictLikeDescriptor[str, model.ContentConstraint] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
-    dataflow: DictLike[str, model.DataflowDefinition] = dictlike_field()
+    dataflow: DictLikeDescriptor[str, model.DataflowDefinition] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
-    metadataflow: DictLike[str, model.MetadataflowDefinition] = dictlike_field()
+    metadataflow: DictLikeDescriptor[
+        str, model.MetadataflowDefinition
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.DataStructureDefinition`.
-    structure: DictLike[str, model.DataStructureDefinition] = dictlike_field()
-    #: Collection of :class:`.AgencyScheme`.
-    organisation_scheme: DictLike[str, model.AgencyScheme] = dictlike_field()
+    structure: DictLikeDescriptor[
+        str, model.DataStructureDefinition
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.OrganisationScheme`.
+    organisation_scheme: DictLikeDescriptor[
+        str, model.OrganisationScheme
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.ProvisionAgreement`.
-    provisionagreement: DictLike[str, model.ProvisionAgreement] = dictlike_field()
+    provisionagreement: DictLikeDescriptor[
+        str, model.ProvisionAgreement
+    ] = DictLikeDescriptor()
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -191,19 +218,16 @@ class StructureMessage(Message):
             Passed to :meth:`.DictLike.compare`.
         """
         return super().compare(other, strict) and all(
-            getattr(self, f).compare(getattr(other, f), strict)
-            for f in direct_fields(self.__class__).keys()
+            getattr(self, f.name).compare(getattr(other, f.name), strict)
+            for f in direct_fields(self.__class__)
         )
 
     def add(self, obj: model.IdentifiableArtefact):
         """Add `obj` to the StructureMessage."""
-        for field, field_info in direct_fields(self.__class__).items():
+        for f in direct_fields(self.__class__):
             # NB for some reason mypy complains here, but not in __contains__(), below
-            if isinstance(
-                obj,
-                get_args(field_info.outer_type_)[1],  # type: ignore [attr-defined]
-            ):
-                getattr(self, field)[obj.id] = obj
+            if isinstance(obj, get_args(f.type)[1]):
+                getattr(self, f.name)[obj.id] = obj
                 return
         raise TypeError(type(obj))
 
@@ -241,8 +265,8 @@ class StructureMessage(Message):
             filter(
                 None,
                 map(
-                    lambda f: getattr(self, f).get(id),
-                    direct_fields(self.__class__).keys(),
+                    lambda f: getattr(self, f.name).get(id),
+                    direct_fields(self.__class__),
                 ),
             )
         )
@@ -258,16 +282,16 @@ class StructureMessage(Message):
         For example, if `cls` is the class :class:`DataStructureDefinition` (not an
         instance), return a reference to :attr:`structure`.
         """
-        for name, info in direct_fields(self.__class__).items():
-            if issubclass(cls, info.sub_fields[0].type_):
-                return getattr(self, name)
+        for f in direct_fields(self.__class__):
+            if issubclass(cls, get_args(f.type)[1]):
+                return getattr(self, f.name)
         raise TypeError(cls)
 
     def __contains__(self, item):
         """Return :obj:`True` if `item` is in the StructureMessage."""
-        for field, field_info in direct_fields(self.__class__).items():
-            if isinstance(item, get_args(field_info.outer_type_)[1]):
-                return item in getattr(self, field).values()
+        for f in direct_fields(self.__class__):
+            if isinstance(item, get_args(f.type)[1]):
+                return item in getattr(self, f.name).values()
         raise TypeError(f"StructureMessage has no collection of {type(item)}")
 
     def __repr__(self):
@@ -282,6 +306,7 @@ class StructureMessage(Message):
         return "\n  ".join(lines)
 
 
+@dataclass
 class DataMessage(Message):
     """Data Message.
 
@@ -292,9 +317,9 @@ class DataMessage(Message):
     """
 
     #: :class:`list` of :class:`.DataSet`.
-    data: List[model.DataSet] = []
+    data: List[model.DataSet] = field(default_factory=list)
     #: :class:`.DataflowDefinition` that contains the data.
-    dataflow: model.DataflowDefinition = model.DataflowDefinition()
+    dataflow: model.DataflowDefinition = field(default_factory=model.DataflowDefinition)
     #: The "dimension at observation level".
     observation_dimension: Optional[
         Union[

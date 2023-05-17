@@ -1,5 +1,6 @@
 import importlib.resources
 import json
+from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
 from io import IOBase
@@ -9,14 +10,35 @@ from requests import Response
 
 from sdmx.model.v21 import DataStructureDefinition
 from sdmx.rest import Resource
-from sdmx.util import BaseModel, validator
 
+#: Data sources registered with :mod:`sdmx`.
 sources: Dict[str, "Source"] = {}
 
-DataContentType = Enum("DataContentType", "XML JSON")
+#: Valid data content types for SDMX REST API messages.
+DataContentType = Enum("DataContentType", "CSV JSON XML")
+
+#: Default values for :attr:`.Source.supports`. Most of these values indicate REST API
+#: endpoints that are described in the standards but are not implemented by any source
+#: currently in :file:`sources.json`; these all return 404.
+SDMX_ML_SUPPORTS = {
+    Resource.data: True,
+    Resource.attachementconstraint: False,
+    Resource.customtypescheme: False,
+    Resource.metadata: False,
+    Resource.namepersonalisationscheme: False,
+    Resource.organisationunitscheme: False,
+    Resource.process: False,
+    Resource.reportingtaxonomy: False,
+    Resource.rulesetscheme: False,
+    Resource.schema: False,
+    Resource.transformationscheme: False,
+    Resource.userdefinedoperatorscheme: False,
+    Resource.vtlmappingscheme: False,
+}
 
 
-class Source(BaseModel):
+@dataclass
+class Source:
     """SDMX-IM RESTDatasource.
 
     This class describes the location and features supported by an SDMX data source.
@@ -27,7 +49,6 @@ class Source(BaseModel):
        handle_response
        finish_message
        modify_request_args
-
     """
 
     #: ID of the data source
@@ -39,15 +60,19 @@ class Source(BaseModel):
     #: Human-readable name of the data source
     name: str
 
-    headers: Dict[str, Any] = {}
+    #: Documentation URL.
+    documentation: Optional[str] = None
+
+    # TODO handle this
+    resources: Dict[str, Any] = field(default_factory=dict)
+
+    headers: Dict[str, Any] = field(default_factory=dict)
 
     #: :class:`.DataContentType` indicating the type of data returned by the source.
     data_content_type: DataContentType = DataContentType.XML
 
     #: Mapping from :class:`.Resource` values to :class:`bool` indicating support for
-    #: SDMX-REST endpoints and features. Most of these values indicate endpoints that
-    #: are described in the standards but are not implemented by any source currently in
-    #: :file:`sources.json`; these all return 404.
+    #: SDMX-REST endpoints and features.
     #:
     #: Two additional keys are valid:
     #:
@@ -55,38 +80,33 @@ class Source(BaseModel):
     #:   See :meth:`.preview_data`.
     #: - ``'structure-specific data'=True`` if the source can return structure-
     #:   specific data messages.
-    supports: Dict[Union[str, Resource], bool] = {
-        Resource.data: True,
-        Resource.attachementconstraint: False,
-        Resource.customtypescheme: False,
-        Resource.metadata: False,
-        Resource.namepersonalisationscheme: False,
-        Resource.organisationunitscheme: False,
-        Resource.process: False,
-        Resource.reportingtaxonomy: False,
-        Resource.rulesetscheme: False,
-        Resource.schema: False,
-        Resource.transformationscheme: False,
-        Resource.userdefinedoperatorscheme: False,
-        Resource.vtlmappingscheme: False,
-    }
+    supports: Dict[Union[str, Resource], bool] = field(default_factory=dict)
 
-    @classmethod
-    def from_dict(cls, info):
-        return cls(**info)
+    def __post_init__(self):
+        # Sanity check: _id attribute of a subclass matches the loaded ID.
+        assert getattr(self, "_id", self.id) == self.id
 
-    def __init__(self, **kwargs):
-        # Merge supports values with defaults
-        supports = kwargs.pop("supports", dict())
+        # Convert an e.g. string to a DataContentType member
+        if not isinstance(self.data_content_type, DataContentType):
+            self.data_content_type = DataContentType[self.data_content_type]
 
-        super().__init__(**kwargs)
+        # Default feature support: True for sdmx_ml, False otherwise
+        sdmx_ml = self.data_content_type is DataContentType.XML
 
-        self.supports.update(supports)
-
-        # Set default supported features
+        # Update mapping of supported features
         for feature in list(Resource) + ["preview", "structure-specific data"]:
+            # String name of a Resource enumeration member
+            f_name = getattr(feature, "value", feature)
+
+            # In order of precedence:
+            # 1. The value already in `supports`.
+            # 2. A value loaded from sources.json, appearing with a string key `f_name`
+            #    in `supports`.
+            # 3. The value in `SDMX_ML_SUPPORTS`, if any.
+            # 4. The value `sdmx_ml`.
             self.supports.setdefault(
-                feature, self.data_content_type == DataContentType.XML
+                feature,
+                self.supports.pop(f_name, SDMX_ML_SUPPORTS.get(feature, sdmx_ml)),
             )
 
     # Hooks
@@ -138,19 +158,8 @@ class Source(BaseModel):
                     "application/vnd.sdmx.structurespecificdata+xml;" "version=2.1",
                 )
 
-    @validator("id")
-    def _validate_id(cls, value):
-        assert getattr(cls, "_id", value) == value
-        return value
 
-    @validator("data_content_type", pre=True)
-    def _validate_dct(cls, value):
-        if isinstance(value, DataContentType):
-            return value
-        else:
-            return DataContentType[value]
-
-
+@dataclass
 class _NoSource(Source):
     pass
 
@@ -208,7 +217,7 @@ def add_source(
     else:
         SourceClass = getattr(mod, "Source")
 
-    sources[id] = SourceClass.from_dict(_info)
+    sources[id] = SourceClass(**_info)
 
 
 def list_sources():

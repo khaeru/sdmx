@@ -1,7 +1,5 @@
 import logging
 
-from pydantic import PrivateAttr
-
 from . import Source as BaseSource
 
 log = logging.getLogger(__name__)
@@ -11,8 +9,6 @@ class Source(BaseSource):
     """Work around non-standard behaviour of the :ref:`BBK` web service."""
 
     _id = "BBK"
-
-    _base_url: str = PrivateAttr()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
