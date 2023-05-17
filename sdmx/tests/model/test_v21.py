@@ -10,11 +10,15 @@ from sdmx.model.v21 import (
     Code,
     Component,
     ComponentList,
+    ComponentValue,
+    Constraint,
     ConstraintRole,
     ContentConstraint,
     CubeRegion,
     DataAttribute,
     DataflowDefinition,
+    DataKey,
+    DataKeySet,
     DataSet,
     DataStructureDefinition,
     Dimension,
@@ -22,35 +26,11 @@ from sdmx.model.v21 import (
     GroupKey,
     Key,
     KeyValue,
+    MemberSelection,
+    MemberValue,
     Observation,
     value_for_dsd_ref,
 )
-
-
-class TestContentConstraint:
-    @pytest.fixture
-    def dsd(self) -> DataStructureDefinition:
-        return DataStructureDefinition()
-
-    def test_contains(self) -> None:
-        cc = ContentConstraint()
-
-        with pytest.raises(NotImplementedError):
-            "foo" in cc
-
-    def test_to_query_string(self, caplog, dsd) -> None:
-        cc = ContentConstraint(
-            role=ConstraintRole(role=ConstraintRoleType["allowable"])
-        )
-
-        with pytest.raises(RuntimeError, match="does not contain"):
-            cc.to_query_string(dsd)
-
-        cc.data_content_region.extend([CubeRegion(), CubeRegion()])
-
-        cc.to_query_string(dsd)
-
-        assert "first of 2 CubeRegions" in caplog.messages[-1]
 
 
 class TestComponent:
@@ -112,15 +92,6 @@ class TestComponentList:
         assert "<ComponentList: >" == repr(ComponentList(id="Foo"))
 
 
-class TestDataAttribute:
-    def test_hash(self):
-        cl = [DataAttribute(id="FOO"), DataAttribute(id="BAR")]
-        print(cl[0].__eq__)
-        print(f"{'FOO' == cl[0] = }")
-        assert "FOO" in cl
-        assert "BAZ" not in cl
-
-
 class TestCode:
     @pytest.fixture
     def c(self) -> Code:
@@ -144,6 +115,209 @@ class TestCode:
 
     def test_repr(self, c) -> None:
         assert "<Code FOO: Foo>" == repr(c)
+
+
+class TestDataKeySet:
+    @pytest.fixture
+    def dks(self):
+        return DataKeySet(included=True)
+
+    def test_len(self, dks):
+        """__len__() works."""
+        assert 0 == len(dks)
+
+
+class TestConstraint:
+    def test_contains(self):
+        c = Constraint(role=ConstraintRole(role=ConstraintRoleType["allowable"]))
+        d = Dimension(id="FOO")
+        kv = KeyValue(value_for=d, id="FOO", value=1)
+        key = Key([kv])
+
+        with pytest.raises(
+            NotImplementedError, match="Constraint does not contain a DataKeySet"
+        ):
+            key in c
+
+        # Add an empty DKS
+        c.data_content_keys = DataKeySet(included=True)
+
+        # Empty DKS does not contain `key`
+        assert (key in c) is False
+
+        # Add a matching DataKey to the DKS
+        c.data_content_keys.keys.append(
+            DataKey(included=True, key_value={d: ComponentValue(value_for=d, value=1)})
+        )
+
+        # __contains__() returns True
+        assert (key in c) is True
+
+
+class TestMemberValue:
+    def test_repr(self):
+        mv = MemberValue(value="foo")
+        assert "'foo'" == repr(mv)
+        mv.cascade_values = True
+        assert "'foo' + children" == repr(mv)
+
+
+class TestMemberSelection:
+    def test_repr(self):
+        ms = MemberSelection(
+            values_for=Component(id="FOO"),
+            values=[
+                MemberValue(value="foo0", cascade_values=True),
+                MemberValue(value="foo1"),
+            ],
+        )
+        assert "<MemberSelection FOO in {'foo0' + children, 'foo1'}>" == repr(ms)
+        ms.included = False
+        ms.values.pop(0)
+        assert "<MemberSelection FOO not in {'foo1'}>" == repr(ms)
+
+
+class TestCubeRegion:
+    def test_contains(self):
+        FOO = Dimension(id="FOO")
+
+        cr = CubeRegion()
+        cr.member[FOO] = MemberSelection(
+            values_for=FOO, values=[MemberValue(value="1")]
+        )
+
+        # KeyValue, but no value_for to associate with a particular Dimension
+        kv = KeyValue(id="FOO", value="1")
+        # __contains__() returns False
+        assert (kv in cr) is False
+
+        # Containment works with value_for
+        kv.value_for = FOO
+        assert (kv in cr) is True
+
+    def test_contains_excluded(self):
+        # Two dimensions
+        FOO = Dimension(id="FOO")
+        BAR = Dimension(id="BAR")
+
+        # A CubeRegion that *excludes* only FOO=1, BAR=A
+        cr = CubeRegion(included=False)
+        cr.member[FOO] = MemberSelection(
+            values_for=FOO, values=[MemberValue(value="1")]
+        )
+        cr.member[BAR] = MemberSelection(
+            values_for=BAR, values=[MemberValue(value="A")]
+        )
+
+        # Targeted key(s) are excluded
+        assert (Key(FOO="1", BAR="A") in cr) is False
+
+        # Key with more dimensions but fully within this reason
+        assert (Key(FOO="1", BAR="A", BAZ=3) in cr) is False
+
+        # Other key(s) that intersect only partly with the region are not excluded
+        assert (Key(FOO="1", BAR="B") in cr) is True
+        assert (Key(FOO="2", BAR="A", BAZ=3) in cr) is True
+
+        # KeyValues for a subset of the dimensions cannot be excluded, because it
+        # cannot be determined if they are fully within the region
+        assert (KeyValue(value_for=FOO, id="FOO", value="1") in cr) is True
+
+        # KeyValues not associated with a dimension cannot be excluded
+        assert (KeyValue(value_for=None, id="BAR", value="A") in cr) is True
+
+        # New MemberSelections with included=False. This is a CubeRegion that excludes
+        # all values where FOO is other than "1" *and* BAR is other than "A".
+        cr.member[FOO] = MemberSelection(
+            included=False, values_for=FOO, values=[MemberValue(value="1")]
+        )
+        cr.member[BAR] = MemberSelection(
+            included=False, values_for=BAR, values=[MemberValue(value="A")]
+        )
+
+        # FOO is other than 1, BAR is other than A → excluded
+        assert (Key(FOO="2", BAR="B") in cr) is False
+
+        # Other combinations → not excluded
+        assert (Key(FOO="1", BAR="A") in cr) is True
+        assert (Key(FOO="1", BAR="B") in cr) is True
+        assert (Key(FOO="2", BAR="A") in cr) is True
+
+    def test_repr(self):
+        FOO = Dimension(id="FOO")
+
+        cr = CubeRegion()
+        cr.member[FOO] = MemberSelection(
+            values_for=FOO, values=[MemberValue(value="1")]
+        )
+
+        assert "<CubeRegion include <MemberSelection FOO in {'1'}>>" == repr(cr)
+        cr.included = False
+        assert "<CubeRegion exclude <MemberSelection FOO in {'1'}>>" == repr(cr)
+
+
+class TestContentConstraint:
+    @pytest.fixture
+    def dsd(self) -> DataStructureDefinition:
+        return DataStructureDefinition()
+
+    def test_role(self) -> None:
+        crole = ConstraintRole(role=ConstraintRoleType["allowable"])
+        cr = ContentConstraint(role=crole)
+        cr.content = {DataflowDefinition()}
+        cr.data_content_region.append(CubeRegion(included=True, member={}))
+
+    def test_contains(self) -> None:
+        cc = ContentConstraint()
+
+        with pytest.raises(NotImplementedError):
+            "foo" in cc
+
+    def test_to_query_string(self, caplog, dsd) -> None:
+        cc = ContentConstraint(
+            role=ConstraintRole(role=ConstraintRoleType["allowable"])
+        )
+
+        with pytest.raises(RuntimeError, match="does not contain"):
+            cc.to_query_string(dsd)
+
+        cc.data_content_region.extend([CubeRegion(), CubeRegion()])
+
+        cc.to_query_string(dsd)
+
+        assert "first of 2 CubeRegions" in caplog.messages[-1]
+
+
+class TestDataAttribute:
+    def test_hash(self):
+        cl = [DataAttribute(id="FOO"), DataAttribute(id="BAR")]
+        print(cl[0].__eq__)
+        print(f"{'FOO' == cl[0] = }")
+        assert "FOO" in cl
+        assert "BAZ" not in cl
+
+
+class TestDimension:
+    def test_init(self):
+        # Constructor
+        Dimension(id="CURRENCY", order=0)
+
+    def test_hash(self):
+        d = Dimension(id="CURRENCY")
+        assert hash("CURRENCY") == hash(d)
+
+
+class TestDimensionDescriptor:
+    def test_from_key(self):
+        # from_key()
+        key1 = Key(foo=1, bar=2, baz=3)
+        dd = DimensionDescriptor.from_key(key1)
+
+        # Key in reverse order
+        key2 = Key(baz=3, bar=2, foo=1)
+        assert list(key1.values.keys()) == list(reversed(list(key2.values.keys())))
+        key3 = dd.order_key(key2)
+        assert list(key1.values.keys()) == list(key3.values.keys())
 
 
 class TestDataStructureDefinition:
@@ -274,6 +448,12 @@ class TestKeyValue:
     def test_sort(self, kv) -> None:
         assert kv < KeyValue(id="DIM", value="foo")
         assert kv < "foo"
+
+
+class TestAttributeValue:
+    def test_str(self):
+        assert "FOO" == str(AttributeValue(value="FOO"))
+        assert "FOO" == str(AttributeValue(value=Code(id="FOO", name="Foo")))
 
 
 class TestKey:

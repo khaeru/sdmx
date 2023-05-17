@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 import pytest
@@ -17,7 +18,49 @@ from sdmx.model.common import (
 from sdmx.model.v21 import AttributeDescriptor, DataStructureDefinition
 
 
+class TestAnnotation:
+    def test_text(self) -> None:
+        """`text` can be :class:`str`."""
+        a = Annotation(text="Foo")
+
+        assert a.text.localizations["en"] == "Foo"
+
+
 class TestAnnotableArtefact:
+    def test_get_annotation(self):
+        aa = AnnotableArtefact(
+            annotations=[
+                Annotation(id="foo", text="bar"),
+                Annotation(id="baz", title="baz_title", text="baz_text"),
+            ]
+        )
+
+        with pytest.raises(KeyError):
+            aa.get_annotation(id="bar")
+
+        # Retrieve with 1 key
+        assert "bar" == str(aa.get_annotation(id="foo").text)
+
+        # Retrieve with 2 keys
+        assert "baz_text" == str(aa.get_annotation(id="baz", title="baz_title").text)
+
+        # Annotations are not removed
+        assert 2 == len(aa.annotations)
+
+    def test_pop_annotation(self):
+        aa = AnnotableArtefact()
+        anno = Annotation(id="foo", text="bar")
+
+        assert 0 == len(aa.annotations)
+        aa.annotations.append(anno)
+        assert 1 == len(aa.annotations)
+
+        with pytest.raises(KeyError):
+            aa.pop_annotation(id="baz")
+
+        assert anno == aa.pop_annotation(id="foo")
+        assert 0 == len(aa.annotations)
+
     def test_eval_annotation(self, caplog) -> None:
         aa = AnnotableArtefact()
 
@@ -138,8 +181,61 @@ class TestMaintainableArtefact:
             MaintainableArtefact(maintainer=Agency(id="FOO"), urn=urn)
 
 
+class TestItem:
+    def test_name(self) -> None:
+        """`name` can be :class:`str`."""
+        Item(name="Foo")
+
+    def test_general(self):
+        # Add a tree of 10 items
+        items = []
+        for i in range(10):
+            items.append(Item(id="Foo {}".format(i)))
+
+            if i > 0:
+                items[-1].parent = items[-2]
+                items[-2].child.append(items[-1])
+
+        # __init__(parent=...)
+        Item(id="Bar 1", parent=items[0])
+        assert len(items[0].child) == 2
+
+        # __init__(child=)
+        bar2 = Item(id="Bar 2", child=[items[0]])
+
+        # __contains__()
+        assert items[0] in bar2
+        assert items[-1] in items[0]
+
+        # get_child()
+        assert items[0].get_child("Foo 1") == items[1]
+
+        with pytest.raises(ValueError):
+            items[0].get_child("Foo 2")
+
+        # Hierarchical IDs constructed automatically
+        assert items[0].child[0].hierarchical_id == "Bar 2.Foo 0.Foo 1"
+
+
 class TestItemScheme:
-    def test_compare(self) -> None:
+    def test_compare0(self, caplog):
+        caplog.set_level(logging.DEBUG)
+
+        is0 = ItemScheme()
+        is1 = ItemScheme()
+
+        is0.append(Item(id="foo", name="Foo"))
+        is1.append(Item(id="foo", name="Bar"))
+
+        assert not is0.compare(is1)
+
+        # Log shows that items with same ID have different name
+        assert caplog.messages[-2:] == [
+            "Not identical: name <en: Foo> != <en: Bar>",
+            "…for items with id='foo'",
+        ]
+
+    def test_compare1(self) -> None:
         is0: ItemScheme = ItemScheme(id="is0")
         is0.append(Item(id="foo"))
 
@@ -241,6 +337,10 @@ class TestRepresentation:
 
 class TestContact:
     def test_init(self):
+        Contact(
+            name="Jane Smith", org_unit="Statistics Office", responsibility="Director"
+        )
+
         c1 = Contact()
         c2 = Contact()
 
