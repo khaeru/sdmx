@@ -51,13 +51,13 @@ class Source:
        modify_request_args
     """
 
-    #: ID of the data source
+    #: ID of the data source.
     id: str
 
-    #: Base URL for queries
+    #: Base URL for queries.
     url: str
 
-    #: Human-readable name of the data source
+    #: Human-readable name of the data source.
     name: str
 
     #: Documentation URL.
