@@ -76,7 +76,7 @@ jobs:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
         pytest -m "network" -k Test${{ matrix.source }} \
-          --color=yes --durations=30 -ra --verbose \
+          --color=yes --durations=30 -rA --verbose \
           --cov-report=xml \
           --numprocesses=auto
 
