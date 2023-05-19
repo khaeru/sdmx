@@ -65,7 +65,7 @@ tr.result > td.not-implemented {
   <tr>
     <th>Source</td>
     {% for resource in resources %}
-    <th class="rotate"><div>{{ resource.name }}</div></td>
+    <th class="rotate"><div>{{ resource }}</div></td>
     {% endfor %}
   </tr>
 </thead>
