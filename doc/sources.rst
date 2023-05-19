@@ -152,7 +152,7 @@ SDMX-ML —
 ------------------------------
 
 SDMX-ML —
-`Website <http://www.ecb.europa.eu/stats/ecb_statistics/co-operation_and_standards/sdmx/html/index.en.html>`__
+`Website <https://www.ecb.europa.eu/stats/ecb_statistics/co-operation_and_standards/sdmx/html/index.en.html>`__
 
 - Supports categorisations of data-flows.
 - Supports preview_data and series-key based key validation.
@@ -165,7 +165,9 @@ SDMX-ML —
 -------------------
 
 SDMX-ML —
-Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=44165555>`__, `2 <https://ec.europa.eu/eurostat/web/sdmx-web-services/rest-sdmx-2.1>`__
+Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=40708145>`__,
+`2 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=44165555>`__
+
 
 - In some cases, the service can have a long response time, so :mod:`sdmx` will time out.
   Increase the timeout attribute if necessary.
@@ -228,7 +230,8 @@ SDMX-ML —
 -------------------------------------------------------------------------
 
 SDMX-ML —
-`Website <http://www.bdm.insee.fr/bdm2/statique?page=sdmx>`__
+Website `(en) <https://www.insee.fr/en/information/2868055>`__,
+`(fr) <https://www.insee.fr/fr/information/2862759>`__
 
 - French name: Institut national de la statistique et des études économiques.
 
@@ -242,7 +245,8 @@ SDMX-ML —
 ---------------------------------------------------
 
 SDMX-ML —
-Website `(en) <https://www.istat.it/en/methods-and-tools/sdmx-web-service>`__, `(it) <https://www.istat.it/it/metodi-e-strumenti/web-service-sdmx>`__
+Website `(en) <https://www.istat.it/en/methods-and-tools/sdmx-web-service>`__,
+`(it) <https://www.istat.it/it/metodi-e-strumenti/web-service-sdmx>`__
 
 - Italian name: Istituto Nazionale di Statistica.
 - Similar server platform to Eurostat, with similar capabilities.
@@ -302,7 +306,9 @@ API documentation `(en) <https://www.nbb.be/doc/dq/migratie_belgostat/en/nbb_sta
 ---------------------------------------------------------------
 
 SDMX-JSON —
-`Website <http://stats.oecd.org/SDMX-JSON/>`__
+`Website <https://data.oecd.org/api/sdmx-json-documentation/>`__
+
+The OECD website `describes an SDMX-ML API <https://data.oecd.org/api/sdmx-ml-documentation/>`__, but this is an implementation of SDMX 2.0, which is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
 
 
 .. _SGR:
@@ -311,7 +317,7 @@ SDMX-JSON —
 -----------------------------
 
 SDMX-ML —
-`Website <https://registry.sdmx.org/ws/rest>`__
+`Website <https://registry.sdmx.org/overview.html>`__
 
 .. autoclass:: sdmx.source.sgr.Source()
    :members:
@@ -427,7 +433,7 @@ SDMX-ML —
 ----------------------------------------------------------
 
 SDMX-ML —
-`Website <wits.worldbank.org>`__
+`Website <https://wits.worldbank.org>`__
 
 
 .. _WB_WDI:
