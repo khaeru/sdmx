@@ -45,6 +45,7 @@ docs = [
   "sphinx-book-theme",
 ]
 tests = [
+  "Jinja2",
   "pytest >= 5",
   "pytest-cov",
   "pytest-xdist",

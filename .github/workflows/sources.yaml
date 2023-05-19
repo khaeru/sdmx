@@ -1,0 +1,142 @@
+name: Test data sources
+
+on:
+  push:
+    branches: [ main ]
+  # Uncomment to test changes on a PR branch
+  # pull_request:
+  #   branches: [ main ]
+  schedule:  # 05:00 UTC = 06:00 CET = 07:00 CEST
+  - cron: "0 5 * * *"
+
+# Cancel previous runs that have not completed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        source:
+        - ABS
+        - ABS_JSON
+        - BBK
+        - BIS
+        - COMP
+        - ECB
+        - EMPL
+        - ESTAT
+        - ESTAT_COMEXT
+        - GROW
+        - ILO
+        - IMF
+        - INEGI
+        - INSEE
+        - ISTAT
+        - LSD
+        - NB
+        - NBB
+        - OECD
+        - SGR
+        - SPC
+        - STAT_EE
+        - UNESCO
+        - UNICEF
+        - UNSD
+        - WB
+        - WB_WDI
+
+    name: ${{ matrix.source }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # TODO avoid requiring this; it's not used in this workflow
+    - name: Checkout test data
+      uses: actions/checkout@v3
+      with:
+        repository: khaeru/sdmx-test-data
+        path: sdmx-test-data
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+        cache: pip
+        cache-dependency-path: "**/pyproject.toml"
+
+    - name: Install the Python package and dependencies
+      run: pip install .[cache,tests]
+
+    - name: Tests of ${{ matrix.source }} data source
+      continue-on-error: true
+      env:
+        SDMX_TEST_DATA: ./sdmx-test-data/
+      run: |
+        pytest -m "network" -k Test${{ matrix.source }} \
+          --color=yes --durations=30 -ra --verbose \
+          --cov-report=xml \
+          --numprocesses=auto
+
+    - name: Upload ${{ matrix.source }} results as a build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: source-tests
+        path: source-tests/*.json
+
+    - name: Upload test coverage to Codecov.io
+      uses: codecov/codecov-action@v3
+
+  collect:
+    needs: source
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+        cache: pip
+        cache-dependency-path: "**/pyproject.toml"
+
+    - name: Install the Python package and dependencies
+      run: pip install .[cache,tests]
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: source-tests
+        path: source-tests
+
+    - name: Compile report
+      run: python -m sdmx.testing.report
+
+    - name: Upload report as a pages artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: source-tests
+
+  # This job is as described at https://github.com/actions/deploy-pages
+  deploy:
+    needs: collect
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    # Specify runner + deployment step
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
+
+    # Deploy to the gh-pages environment
+    environment:
+      name: gh-pages
+      url: ${{ steps.deployment.outputs.page_url }}

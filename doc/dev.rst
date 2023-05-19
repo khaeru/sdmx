@@ -141,7 +141,7 @@ Internal code reference
 -------------------
 .. automodule:: sdmx.util
    :noindex:
-   :members: BaseModel, summarize_dictlike, validate_dictlike
+   :members: summarize_dictlike
    :undoc-members:
    :show-inheritance:
 

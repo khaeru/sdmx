@@ -82,24 +82,25 @@ class DataSourceTest:
         cache = cache_path.with_suffix(f".{endpoint}.xml")
 
         try:
-            result = client.get(endpoint, tofile=cache, **args)
+            message = client.get(endpoint, tofile=cache, **args)
         except HTTPError as e:  # For debugging/test development
             print(e)
             raise
 
-        if pytestconfig.getoption("verbose") and endpoint == "dataflow":
-            # Display the IDs of data flows; this can be used to identify targets for
-            # tests of the data endpoint for a particular source
-            for dfd in result.dataflow:
-                print(repr(dfd))
+        if pytestconfig.getoption("verbose"):
+            print(repr(message))
+            if endpoint == "dataflow":
+                # Display the IDs of data flows; this can be used to identify targets
+                # for tests of the data endpoint for a particular source
+                for dfd in message.dataflow:
+                    print(repr(dfd))
 
         # For debugging
         # print(cache, cache.read_text(), result, sep="\n\n")
         # assert False
 
-        sdmx.to_pandas(result)
-
-        del result
+        # All parsed contents can also be converted to pandas
+        sdmx.to_pandas(message)
 
 
 class TestABS(DataSourceTest):
