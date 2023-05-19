@@ -20,9 +20,9 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    "sphinx.ext.viewcode",
     "IPython.sphinxext.ipython_console_highlighting",
     "IPython.sphinxext.ipython_directive",
 ]
@@ -61,6 +61,15 @@ intersphinx_mapping = {
     "requests": ("https://requests.readthedocs.io/en/latest/", None),
     "requests-cache": ("https://requests-cache.readthedocs.io/en/latest/", None),
 }
+
+# -- Options for sphinx.ext.linkcode ---------------------------------------------------
+
+
+def linkcode_resolve(domain, info):
+    if domain != "py" or not info["module"]:
+        return None
+    filename = info["module"].replace(".", "/")
+    return f"https://github.com/khaeru/sdmx/tree/main/{filename}.py"
 
 
 # -- Options for sphinx.ext.todo ---------------------------------------------
