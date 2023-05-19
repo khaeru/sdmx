@@ -77,9 +77,12 @@ jobs:
         pytest -m "network" -k "Test${{ matrix.source }} and dataflow" \
           -ra --color=yes --verbose \
           --cov-report=xml
-      shell: bash
 
-    # TODO Upload an artifact with just the results from this data source
+    - name: Upload ${{ matrix.source }} results as a build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: source-tests
+        path: source-tests/*.json
 
     - name: Upload test coverage to Codecov.io
       uses: codecov/codecov-action@v3
@@ -101,7 +104,12 @@ jobs:
     - name: Install the Python package and dependencies
       run: pip install .[cache,tests]
 
-    # TODO Retrieve the artifacts generated in the 'source' jobs
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: source-tests
+        path: source-tests
+
 
     - name: Deploy to GitHub Pages
       # if: success()
