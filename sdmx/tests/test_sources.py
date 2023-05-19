@@ -256,6 +256,41 @@ class TestESTAT(DataSourceTest):
         assert cl4.is_partial and 0 < len(cl4) < len(cl3)
 
 
+class TestESTAT_COMEXT(DataSourceTest):
+    source_id = "ESTAT_COMEXT"
+
+    endpoint_args = {
+        "data": dict(
+            resource_id="DS-059271",
+            params=dict(startPeriod="2023"),
+        ),
+    }
+
+
+class TestCOMP(DataSourceTest):
+    source_id = "COMP"
+
+    endpoint_args = {
+        "data": dict(resource_id="AID_RAIL"),
+    }
+
+
+class TestEMPL(DataSourceTest):
+    source_id = "EMPL"
+
+    endpoint_args = {
+        "data": dict(resource_id="LMP_IND_EXP"),
+    }
+
+
+class TestGROW(DataSourceTest):
+    source_id = "GROW"
+
+    endpoint_args = {
+        "data": dict(resource_id="POST_CUBE1_X"),
+    }
+
+
 class TestILO(DataSourceTest):
     source_id = "ILO"
     xfail = {
