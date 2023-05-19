@@ -48,7 +48,7 @@ jobs:
         - WB
         - WB_WDI
 
-    name: source-py${{ matrix.source }}
+    name: ${{ matrix.source }}
 
     steps:
     - uses: actions/checkout@v3
