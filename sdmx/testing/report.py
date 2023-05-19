@@ -37,24 +37,24 @@ tr.result > td.not-implemented {
 </style>
 </head>
 <body>
-<h1>SDMX web services</h1>
+<h1>SDMX data sources</h1>
 <p>
   This page shows the results of automatic tests run for the <a
   href="https://github.com/khaeru/sdmx"><code>sdmx1</code></a> Python package. The
-  package includes built-in support for the following known SDMX REST web services.
+  package includes built-in support for the following known SDMX REST data sources.
 </p>
 <p>Notes:</p>
 {% set run_url=env["GITHUB_REPOSITORY"] + "/actions/runs/" + env["GITHUB_RUN_ID"] %}
 <ol>
   <li>
-    Services where only the <code>data</code> endpoint is tested are those supporting
+    Sources for which only the <code>data</code> resource is tested are those supporting
     SDMX-JSON only. Although the SDMX-JSON standard <em>does</em> specify formats for
-    JSON structure messages, <code>sdmx1</code>—and most existing SDMX-JSON-only web
-    services—support only data queries.
+    JSON structure messages, <code>sdmx1</code>—and most existing SDMX-JSON-only
+    sources—support only data queries.
   </li>
   <li>
-    If this run was triggered on GitHub Actions, a complete log may be <a
-    href="https://github.com/{{ run_url }}">here</a>; under “Jobs”, select “services”.
+    If this run was triggered on GitHub Actions, complete logs may be available <a
+    href="https://github.com/{{ run_url }}">here</a>.
   </li>
 </ol>
 <table>
@@ -91,20 +91,20 @@ tr.result > td.not-implemented {
   <td class="xfail">✔</td>
   <td style="text-align: left">
     <p>Known/expected failure. See GitHub for any related issue(s).</p>
-    <p>Includes the case where the service is known to not implement this endpoint, but
-    replies with a 4XX (error) HTTP status code instead of 501.</p>
+    <p>Includes the case where the data source is known to not implement this resource,
+    but replies incorrectly with a 4XX (error) HTTP status code instead of a 501.</p>
   </td>
 </tr>
 <tr class="result">
   <td class="not-implemented"></td>
   <td style="text-align: left">
-    Web service does not implement this endpoint and replies correctly to queries with
+    Data source does not implement this resource and replies correctly to queries with
     a 501 HTTP status code and/or message.
   </td>
 </tr>
 <tr class="result">
   <td>—</td>
-  <td style="text-align: left">No test for this service and endpoint.</td>
+  <td style="text-align: left">No test for this source and resource.</td>
 </tr>
 </table>
 </body>
@@ -123,9 +123,7 @@ ABBREV = {
 
 class ServiceReporter:
     def __init__(self, config):
-        self.path = config.invocation_params.dir.joinpath(
-            "service-endpoints", "index.html"
-        )
+        self.path = config.invocation_params.dir.joinpath("sources", "index.html")
         self.path.parent.mkdir(exist_ok=True)
         self.data = {}
         self.resources = set()
