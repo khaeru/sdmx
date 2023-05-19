@@ -115,11 +115,28 @@ jobs:
         python -m sdmx.testing.report
         cat source-tests/index.html
 
-    - name: Deploy to GitHub Pages
-      # if: success()
-      if: false
-      uses: crazy-max/ghaction-github-pages@v3.1.0
+    - name: Upload report as a pages artifact
+      uses: actions/upload-pages-artifact@v1
       with:
-        build_dir: service-endpoints
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        path: source-tests
+
+  # This job is as described at https://github.com/actions/deploy-pages
+  deploy:
+    needs: collect
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    # Specify runner + deployment step
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
+
+    # Deploy to the gh-pages environment
+    environment:
+      name: gh-pages
+      url: ${{ steps.deployment.outputs.page_url }}
