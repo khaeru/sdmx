@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.10.0 (2023-05-20)
+====================
 
 - Switch from third-party :mod:`.pydantic` to Python standard library :mod:`dataclasses` (:pull:`128`).
 
