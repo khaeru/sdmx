@@ -120,7 +120,8 @@ SDMX-JSON —
 ----------------------------
 
 SDMX-ML —
-Website `(en) <https://www.bundesbank.de/en/statistics/time-series-databases/-/help-for-sdmx-web-service-855900>`__, `(de) <https://www.bundesbank.de/de/statistiken/zeitreihen-datenbanken/hilfe-zu-sdmx-webservice>`__
+Website `(en) <https://www.bundesbank.de/en/statistics/time-series-databases/-/help-for-sdmx-web-service-855900>`__,
+`(de) <https://www.bundesbank.de/de/statistiken/zeitreihen-datenbanken/hilfe-zu-sdmx-webservice>`__
 
 .. versionadded:: 2.5.0
 
@@ -152,7 +153,7 @@ SDMX-ML —
 ------------------------------
 
 SDMX-ML —
-`Website <http://www.ecb.europa.eu/stats/ecb_statistics/co-operation_and_standards/sdmx/html/index.en.html>`__
+`Website <https://www.ecb.europa.eu/stats/ecb_statistics/co-operation_and_standards/sdmx/html/index.en.html>`__
 
 - Supports categorisations of data-flows.
 - Supports preview_data and series-key based key validation.
@@ -161,17 +162,53 @@ SDMX-ML —
 
 .. _ESTAT:
 
-``ESTAT``: Eurostat
--------------------
+``ESTAT``: Eurostat and related
+-------------------------------
 
 SDMX-ML —
-Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=44165555>`__, `2 <https://ec.europa.eu/eurostat/web/sdmx-web-services/rest-sdmx-2.1>`__
+Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=40708145>`__,
+`2 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=44165555>`__
+
+- Eurostat also maintains four additional SDMX REST API endpoints, available in :mod:`sdmx` with the IDs below.
+  These are described at URL (2) above.
+
+.. contents::
+    :local:
 
 - In some cases, the service can have a long response time, so :mod:`sdmx` will time out.
   Increase the timeout attribute if necessary.
 
 .. autoclass:: sdmx.source.estat.Source()
    :members:
+
+.. _ESTAT_COMEXT:
+
+``ESTAT_COMEXT``: Eurostat Comext and Prodcom databases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- The :class:`.Agency` ID for data is still ``ESTAT``.
+
+.. _COMP:
+.. _EMPL:
+.. _GROW:
+
+``COMP``, ``EMPL``, ``GROW``: Directorates General of the European Commission
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These are, respectively:
+
+- ``COMP``: Directorate General for Competition.
+- ``EMPL``: Directorate General for Employment, Social Affairs and inclusion.
+- ``GROW``: Directorate General for Internal Market, Industry, Entrepreneurship and SMEs.
+
+No separate online documentation appears to exist for these API endpoints.
+In order to identify available data flows:
+
+.. code-block:: python
+
+   COMP = sdmx.Client("COMP")
+   sm = COMP.dataflow()
+   print(sm.dataflow)
 
 
 .. _ILO:
@@ -228,7 +265,8 @@ SDMX-ML —
 -------------------------------------------------------------------------
 
 SDMX-ML —
-`Website <http://www.bdm.insee.fr/bdm2/statique?page=sdmx>`__
+Website `(en) <https://www.insee.fr/en/information/2868055>`__,
+`(fr) <https://www.insee.fr/fr/information/2862759>`__
 
 - French name: Institut national de la statistique et des études économiques.
 
@@ -242,7 +280,8 @@ SDMX-ML —
 ---------------------------------------------------
 
 SDMX-ML —
-Website `(en) <https://www.istat.it/en/methods-and-tools/sdmx-web-service>`__, `(it) <https://www.istat.it/it/metodi-e-strumenti/web-service-sdmx>`__
+Website `(en) <https://www.istat.it/en/methods-and-tools/sdmx-web-service>`__,
+`(it) <https://www.istat.it/it/metodi-e-strumenti/web-service-sdmx>`__
 
 - Italian name: Istituto Nazionale di Statistica.
 - Similar server platform to Eurostat, with similar capabilities.
@@ -302,7 +341,9 @@ API documentation `(en) <https://www.nbb.be/doc/dq/migratie_belgostat/en/nbb_sta
 ---------------------------------------------------------------
 
 SDMX-JSON —
-`Website <http://stats.oecd.org/SDMX-JSON/>`__
+`Website <https://data.oecd.org/api/sdmx-json-documentation/>`__
+
+The OECD website `describes an SDMX-ML API <https://data.oecd.org/api/sdmx-ml-documentation/>`__, but this is an implementation of SDMX 2.0, which is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
 
 
 .. _SGR:
@@ -311,7 +352,7 @@ SDMX-JSON —
 -----------------------------
 
 SDMX-ML —
-`Website <https://registry.sdmx.org/ws/rest>`__
+`Website <https://registry.sdmx.org/overview.html>`__
 
 .. autoclass:: sdmx.source.sgr.Source()
    :members:
@@ -335,12 +376,19 @@ SDMX-ML —
 -----------------------------------------
 
 SDMX-JSON —
-`Website <http://andmebaas.stat.ee>`__ (et) —
-API documentation `(en) <https://www.stat.ee/sites/default/files/2020-09/API-instructions.pdf>`__, `(et) <https://www.stat.ee/sites/default/files/2020-09/API-juhend.pdf>`__
+`Website <https://andmebaas.stat.ee>`__ (et) —
+API documentation `(en) <https://www.stat.ee/sites/default/files/2020-09/API-instructions.pdf>`__,
+`(et) <https://www.stat.ee/sites/default/files/2020-09/API-juhend.pdf>`__
 
 - Estonian name: Eesti Statistika.
-- As of 2020-12-13, this web service (like NBB) uses server software that serves SDMX-ML 2.0 or SDMX-JSON.
-  Since :mod:`sdmx` does not support SDMX-ML 2.0, the package is configured to use the JSON endpoint.
+- As of 2023-05-19, the site displays a message:
+
+    From March 2023 onwards, data in this database are no longer updated!
+    Official statistics can be found in the database at `andmed.stat.ee <https://andmed.stat.ee>`__.
+
+  The latter URL indicates an API is provided, but it is not an SDMX API, and thus not supported.
+- As of 2020-12-13, this web service (like NBB) uses server software that serves SDMX-JSON or SDMX-ML 2.0.
+  The latter is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
 
 
 .. _UNESCO:
@@ -427,7 +475,7 @@ SDMX-ML —
 ----------------------------------------------------------
 
 SDMX-ML —
-`Website <wits.worldbank.org>`__
+`Website <https://wits.worldbank.org>`__
 
 
 .. _WB_WDI:

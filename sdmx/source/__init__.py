@@ -41,9 +41,11 @@ SDMX_ML_SUPPORTS = {
 class Source:
     """SDMX-IM RESTDatasource.
 
-    This class describes the location and features supported by an SDMX data source.
-    Subclasses may override the hooks in order to handle specific features of different
-    REST web services:
+    This class describes the location and features supported by an SDMX REST API data
+    source/web service.
+
+    It also provides three hooks, with default implementations. Subclasses may override
+    the hooks in order to handle specific features of different REST web services:
 
     .. autosummary::
        handle_response
@@ -51,34 +53,30 @@ class Source:
        modify_request_args
     """
 
-    #: ID of the data source
+    #: :attr:`~.IdentifiableArtefact.id` of the :attr:`DataProvider`.
     id: str
 
-    #: Base URL for queries
+    #: Base URL (API endpoint) for queries.
     url: str
 
-    #: Human-readable name of the data source
+    #: Human-readable name of the data source.
     name: str
 
-    #: Documentation URL.
-    documentation: Optional[str] = None
-
-    # TODO handle this
-    resources: Dict[str, Any] = field(default_factory=dict)
-
+    #: Additional HTTP headers to supply by default with all requests.
     headers: Dict[str, Any] = field(default_factory=dict)
 
     #: :class:`.DataContentType` indicating the type of data returned by the source.
     data_content_type: DataContentType = DataContentType.XML
 
     #: Mapping from :class:`.Resource` values to :class:`bool` indicating support for
-    #: SDMX-REST endpoints and features.
+    #: SDMX-REST endpoints and features. If not supplied, the defaults from
+    #: :data:`SDMX_ML_SUPPORTS` are used.
     #:
     #: Two additional keys are valid:
     #:
-    #: - ``'preview'=True`` if the source supports ``?detail=serieskeysonly``.
+    #: - ``"preview"=True`` if the source supports ``?detail=serieskeysonly``.
     #:   See :meth:`.preview_data`.
-    #: - ``'structure-specific data'=True`` if the source can return structure-
+    #: - ``"structure-specific data"=True`` if the source can return structure-
     #:   specific data messages.
     supports: Dict[Union[str, Resource], bool] = field(default_factory=dict)
 

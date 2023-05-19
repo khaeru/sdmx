@@ -77,7 +77,7 @@ class DataSourceTest:
     #     )
 
     @pytest.mark.network
-    def test_endpoint(self, cache_path, client, endpoint, args):
+    def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
         # See sdmx.testing._generate_endpoint_tests() for values of `endpoint`
         cache = cache_path.with_suffix(f".{endpoint}.xml")
 
@@ -87,8 +87,14 @@ class DataSourceTest:
             print(e)
             raise
 
+        if pytestconfig.getoption("verbose") and endpoint == "dataflow":
+            # Display the IDs of data flows; this can be used to identify targets for
+            # tests of the data endpoint for a particular source
+            for dfd in result.dataflow:
+                print(repr(dfd))
+
         # For debugging
-        # print(cache, cache.read_text(), result, sep='\n\n')
+        # print(cache, cache.read_text(), result, sep="\n\n")
         # assert False
 
         sdmx.to_pandas(result)
@@ -254,6 +260,41 @@ class TestESTAT(DataSourceTest):
         assert not cl3.is_partial and 0 < len(cl3)
         # cl4 is partial, and fewer codes are included than in cl1
         assert cl4.is_partial and 0 < len(cl4) < len(cl3)
+
+
+class TestESTAT_COMEXT(DataSourceTest):
+    source_id = "ESTAT_COMEXT"
+
+    endpoint_args = {
+        "data": dict(
+            resource_id="DS-059271",
+            params=dict(startPeriod="2023"),
+        ),
+    }
+
+
+class TestCOMP(DataSourceTest):
+    source_id = "COMP"
+
+    endpoint_args = {
+        "data": dict(resource_id="AID_RAIL"),
+    }
+
+
+class TestEMPL(DataSourceTest):
+    source_id = "EMPL"
+
+    endpoint_args = {
+        "data": dict(resource_id="LMP_IND_EXP"),
+    }
+
+
+class TestGROW(DataSourceTest):
+    source_id = "GROW"
+
+    endpoint_args = {
+        "data": dict(resource_id="POST_CUBE1_X"),
+    }
 
 
 class TestILO(DataSourceTest):

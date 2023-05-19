@@ -757,7 +757,10 @@ class Organisation(Item["Organisation"]):
 
 
 class Agency(Organisation):
-    pass
+    """SDMX-IM Organization.
+
+    This class is identical to its parent class.
+    """
 
 
 # DataProvider delayed until after ConstrainableArtefact, below
