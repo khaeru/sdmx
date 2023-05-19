@@ -120,7 +120,8 @@ SDMX-JSON —
 ----------------------------
 
 SDMX-ML —
-Website `(en) <https://www.bundesbank.de/en/statistics/time-series-databases/-/help-for-sdmx-web-service-855900>`__, `(de) <https://www.bundesbank.de/de/statistiken/zeitreihen-datenbanken/hilfe-zu-sdmx-webservice>`__
+Website `(en) <https://www.bundesbank.de/en/statistics/time-series-databases/-/help-for-sdmx-web-service-855900>`__,
+`(de) <https://www.bundesbank.de/de/statistiken/zeitreihen-datenbanken/hilfe-zu-sdmx-webservice>`__
 
 .. versionadded:: 2.5.0
 
@@ -376,7 +377,8 @@ SDMX-ML —
 
 SDMX-JSON —
 `Website <https://andmebaas.stat.ee>`__ (et) —
-API documentation `(en) <https://www.stat.ee/sites/default/files/2020-09/API-instructions.pdf>`__, `(et) <https://www.stat.ee/sites/default/files/2020-09/API-juhend.pdf>`__
+API documentation `(en) <https://www.stat.ee/sites/default/files/2020-09/API-instructions.pdf>`__,
+`(et) <https://www.stat.ee/sites/default/files/2020-09/API-juhend.pdf>`__
 
 - Estonian name: Eesti Statistika.
 - As of 2023-05-19, the site displays a message:
