@@ -20,8 +20,9 @@ class InternationalString:
     When used as a type hint with pydantic, InternationalString fields can be assigned
     to in one of four ways::
 
-        class Foo(BaseModel):
-             name: InternationalString = InternationalString()
+        @dataclass
+        class Foo:
+             name: InternationalStringDescriptor() = InternationalStringDescriptor()
 
         # Equivalent: no localizations
         f = Foo()
