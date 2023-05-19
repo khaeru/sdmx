@@ -1,0 +1,106 @@
+name: Test data sources
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:  # 05:00 UTC = 06:00 CET = 07:00 CEST
+  - cron: "0 5 * * *"
+
+# Cancel previous runs that have not completed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        source:
+        - ABS
+        - ABS_JSON
+        - BBK
+        - BIS
+        - COMP
+        - ECB
+        - EMPL
+        - ESTAT
+        - ESTAT_COMEXT
+        - GROW
+        - ILO
+        - IMF
+        - INEGI
+        - INSEE
+        - ISTAT
+        - LSD
+        - NB
+        - NBB
+        - OECD
+        - SGR
+        - SPC
+        - STAT_EE
+        - UNESCO
+        - UNICEF
+        - UNSD
+        - WB
+        - WB_WDI
+
+    name: source-py${{ matrix.source }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+        cache: pip
+        cache-dependency-path: "**/pyproject.toml"
+
+    - name: Install the Python package and dependencies
+      run: pip install .[cache,tests]
+
+    - name: Tests of ${{ matrix.source }} data source
+      continue-on-error: true
+      env:
+        SDMX_TEST_DATA: ./sdmx-test-data/
+      run: |
+        pytest -m "network" -k "Test${{ matrix.source }} and dataflow" \
+          -ra --color=yes --verbose \
+          --cov-report=xml
+      shell: bash
+
+    # TODO Upload an artifact with just the results from this data source
+
+    - name: Upload test coverage to Codecov.io
+      uses: codecov/codecov-action@v3
+
+  collect:
+    needs: source
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+        cache: pip
+        cache-dependency-path: "**/pyproject.toml"
+
+    - name: Install the Python package and dependencies
+      run: pip install .[cache,tests]
+
+    # TODO Retrieve the artifacts generated in the 'source' jobs
+
+    - name: Deploy to GitHub Pages
+      # if: success()
+      if: false
+      uses: crazy-max/ghaction-github-pages@v3.1.0
+      with:
+        build_dir: service-endpoints
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
