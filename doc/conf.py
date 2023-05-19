@@ -1,20 +1,17 @@
 # Configuration file for the Sphinx documentation builder.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
+# For a full list of options, see
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Project information -----------------------------------------------------
+# -- Project information ---------------------------------------------------------------
 
 project = "sdmx"
 copyright = "2014–2023 sdmx1 developers"
 
 
-# -- General configuration ------------------------------------------------
+# -- General configuration -------------------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# Sphinx extension module names
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -27,7 +24,7 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
 ]
 
-# -- Options for HTML output ----------------------------------------------
+# -- Options for HTML output -----------------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.
 html_theme = "sphinx_book_theme"
@@ -43,7 +40,7 @@ html_theme_options = dict(
 )
 
 
-# -- Options for sphinx.ext.extlinks -----------------------------------------
+# -- Options for sphinx.ext.extlinks ---------------------------------------------------
 
 extlinks = {
     "issue": ("https://github.com/khaeru/sdmx/issues/%s", "#%s"),
@@ -52,7 +49,7 @@ extlinks = {
 }
 
 
-# -- Options for sphinx.ext.intersphinx --------------------------------------
+# -- Options for sphinx.ext.intersphinx ------------------------------------------------
 
 intersphinx_mapping = {
     "np": ("https://numpy.org/doc/stable/", None),
@@ -72,14 +69,13 @@ def linkcode_resolve(domain, info):
     return f"https://github.com/khaeru/sdmx/tree/main/{filename}.py"
 
 
-# -- Options for sphinx.ext.todo ---------------------------------------------
+# -- Options for sphinx.ext.todo -------------------------------------------------------
 
-# If True, todo and todolist produce output, else they produce nothing.
+# If True, todo and todolist produce output, else they produce nothing
 todo_include_todos = True
 
 
-# -- Options for IPython.sphinxext.ipython_directive -------------------------
+# -- Options for IPython.sphinxext.ipython_directive -----------------------------------
 
-# Specify if the embedded Sphinx shell should import Matplotlib and set the
-# backend.
+# Specify if the embedded Sphinx shell should import Matplotlib and set the backend
 ipython_mplbackend = ""
