@@ -75,8 +75,9 @@ jobs:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
         pytest -m "network" -k Test${{ matrix.source }} \
-          -ra --color=yes --verbose \
-          --cov-report=xml
+          --color=yes --durations=30 -ra --verbose \
+          --cov-report=xml \
+          --numprocesses=auto
 
     - name: Upload ${{ matrix.source }} results as a build artifact
       uses: actions/upload-artifact@v3
@@ -111,9 +112,7 @@ jobs:
         path: source-tests
 
     - name: Compile report
-      run: |
-        python -m sdmx.testing.report
-        cat source-tests/index.html
+      run: python -m sdmx.testing.report
 
     - name: Upload report as a pages artifact
       uses: actions/upload-pages-artifact@v1
