@@ -341,12 +341,18 @@ SDMX-ML —
 -----------------------------------------
 
 SDMX-JSON —
-`Website <http://andmebaas.stat.ee>`__ (et) —
+`Website <https://andmebaas.stat.ee>`__ (et) —
 API documentation `(en) <https://www.stat.ee/sites/default/files/2020-09/API-instructions.pdf>`__, `(et) <https://www.stat.ee/sites/default/files/2020-09/API-juhend.pdf>`__
 
 - Estonian name: Eesti Statistika.
-- As of 2020-12-13, this web service (like NBB) uses server software that serves SDMX-ML 2.0 or SDMX-JSON.
-  Since :mod:`sdmx` does not support SDMX-ML 2.0, the package is configured to use the JSON endpoint.
+- As of 2023-05-19, the site displays a message:
+
+    From March 2023 onwards, data in this database are no longer updated!
+    Official statistics can be found in the database at `andmed.stat.ee <https://andmed.stat.ee>`__.
+
+  The latter URL indicates an API is provided, but it is not an SDMX API, and thus not supported.
+- As of 2020-12-13, this web service (like NBB) uses server software that serves SDMX-JSON or SDMX-ML 2.0.
+  The latter is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
 
 
 .. _UNESCO:
