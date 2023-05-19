@@ -1,0 +1,2483 @@
+
+<html>
+<head>
+<style>
+body {
+  font-family: sans-serif;
+}
+th.rotate {
+  height: 140px;
+  white-space: nowrap;
+}
+th.rotate > div {
+  transform: translate(10px, 51px) rotate(315deg);
+  width: 30px;
+}
+tr.result > td {
+  height: 30px;
+  text-align: center;
+}
+tr.result > td.pass {
+  background: lightgreen;
+}
+tr.result > td.fail {
+  background: pink;
+}
+tr.result > td.xfail {
+  background: orange;
+}
+tr.result > td.not-implemented {
+  background: lightgrey;
+}
+</style>
+</head>
+<body>
+<h1>SDMX web services</h1>
+<p>
+  This page shows the results of automatic tests run for the <a
+  href="https://github.com/khaeru/sdmx"><code>sdmx1</code></a> Python package. The
+  package includes built-in support for the following known SDMX REST web services.
+</p>
+<p>Notes:</p>
+
+<ol>
+  <li>
+    Services where only the <code>data</code> endpoint is tested are those supporting
+    SDMX-JSON only. Although the SDMX-JSON standard <em>does</em> specify formats for
+    JSON structure messages, <code>sdmx1</code>—and most existing SDMX-JSON-only web
+    services—support only data queries.
+  </li>
+  <li>
+    If this run was triggered on GitHub Actions, a complete log may be <a
+    href="https://github.com/khaeru/sdmx/actions/runs/5020984930">here</a>; under “Jobs”, select “services”.
+  </li>
+</ol>
+<table>
+<thead>
+  <tr>
+    <th>Source</td>
+    
+    <th class="rotate"><div>actualconstraint</div></td>
+    
+    <th class="rotate"><div>agencyscheme</div></td>
+    
+    <th class="rotate"><div>allowedconstraint</div></td>
+    
+    <th class="rotate"><div>attachementconstraint</div></td>
+    
+    <th class="rotate"><div>categorisation</div></td>
+    
+    <th class="rotate"><div>categoryscheme</div></td>
+    
+    <th class="rotate"><div>codelist</div></td>
+    
+    <th class="rotate"><div>conceptscheme</div></td>
+    
+    <th class="rotate"><div>contentconstraint</div></td>
+    
+    <th class="rotate"><div>customtypescheme</div></td>
+    
+    <th class="rotate"><div>data</div></td>
+    
+    <th class="rotate"><div>dataconsumerscheme</div></td>
+    
+    <th class="rotate"><div>dataflow</div></td>
+    
+    <th class="rotate"><div>dataproviderscheme</div></td>
+    
+    <th class="rotate"><div>datastructure</div></td>
+    
+    <th class="rotate"><div>hierarchicalcodelist</div></td>
+    
+    <th class="rotate"><div>metadata</div></td>
+    
+    <th class="rotate"><div>metadataflow</div></td>
+    
+    <th class="rotate"><div>metadatastructure</div></td>
+    
+    <th class="rotate"><div>namepersonalisationscheme</div></td>
+    
+    <th class="rotate"><div>organisationscheme</div></td>
+    
+    <th class="rotate"><div>organisationunitscheme</div></td>
+    
+    <th class="rotate"><div>process</div></td>
+    
+    <th class="rotate"><div>provisionagreement</div></td>
+    
+    <th class="rotate"><div>reportingtaxonomy</div></td>
+    
+    <th class="rotate"><div>rulesetscheme</div></td>
+    
+    <th class="rotate"><div>schema</div></td>
+    
+    <th class="rotate"><div>structure</div></td>
+    
+    <th class="rotate"><div>structureset</div></td>
+    
+    <th class="rotate"><div>transformationscheme</div></td>
+    
+    <th class="rotate"><div>userdefinedoperatorscheme</div></td>
+    
+    <th class="rotate"><div>vtlmappingscheme</div></td>
+    
+  </tr>
+</thead>
+
+<tr class="result">
+  <td><strong>ABS</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>ABS_JSON</strong></td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="<class 'TypeError'>">None</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>BBK</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>BIS</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>ECB</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>ESTAT</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>ILO</strong></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>IMF</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>INEGI</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="<class 'requests.exceptions.HTTPError'>">None</td>
+  
+  
+  <td class="<class 'requests.exceptions.HTTPError'>">None</td>
+  
+  
+  <td class="<class 'requests.exceptions.HTTPError'>">None</td>
+  
+  
+  <td class="<class 'requests.exceptions.HTTPError'>">None</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="<class 'requests.exceptions.HTTPError'>">None</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="<class 'requests.exceptions.HTTPError'>">None</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>INSEE</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="<class 'requests.exceptions.ConnectTimeout'>">None</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>ISTAT</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>LSD</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>NB</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>NBB</strong></td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>OECD</strong></td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>SGR</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>SPC</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>STAT_EE</strong></td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="None">—</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>UNESCO</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>UNICEF</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>UNSD</strong></td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="<class 'requests.exceptions.SSLError'>">None</td>
+  
+  
+  <td class="<class 'requests.exceptions.SSLError'>">None</td>
+  
+  
+  <td class="<class 'requests.exceptions.SSLError'>">None</td>
+  
+  
+  <td class="<class 'requests.exceptions.SSLError'>">None</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="<class 'requests.exceptions.SSLError'>">None</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="<class 'requests.exceptions.SSLError'>">None</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+  
+  <td class="fail">✘</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>WB</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="None">—</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="not-implemented"></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+<tr class="result">
+  <td><strong>WB_WDI</strong></td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="pass">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+  
+  <td class="xfail">✔</td>
+  
+</tr>
+
+</table>
+
+<p>Table key:</p>
+<table>
+<tr class="result">
+  <td class="pass">✔</td>
+  <td style="text-align: left">Pass.</td>
+</tr>
+<tr class="result">
+  <td class="fail">✘</td>
+  <td style="text-align: left">Unexpected failure.</td>
+</tr>
+<tr class="result">
+  <td class="xfail">✔</td>
+  <td style="text-align: left">
+    <p>Known/expected failure. See GitHub for any related issue(s).</p>
+    <p>Includes the case where the service is known to not implement this endpoint, but
+    replies with a 4XX (error) HTTP status code instead of 501.</p>
+  </td>
+</tr>
+<tr class="result">
+  <td class="not-implemented"></td>
+  <td style="text-align: left">
+    Web service does not implement this endpoint and replies correctly to queries with
+    a 501 HTTP status code and/or message.
+  </td>
+</tr>
+<tr class="result">
+  <td>—</td>
+  <td style="text-align: left">No test for this service and endpoint.</td>
+</tr>
+</table>
+</body>
+</html>
