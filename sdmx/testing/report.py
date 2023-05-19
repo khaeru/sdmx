@@ -1,5 +1,6 @@
 import json
 import os
+from itertools import chain
 from pathlib import Path
 
 from jinja2 import Template
@@ -176,12 +177,24 @@ class ServiceReporter:
 
 if __name__ == "__main__":
     """Collate results from multiple JSON files."""
-    path = Path(".", "sources", "index.html")
-    # TODO locate, read, and merge JSON files
+    base_path = Path.cwd().joinpath("source-tests")
+
+    # Locate, read, and merge JSON files
     data = {}
-    # TODO infer from data or from .rest.Resource
-    resources = set()
-    with open(path, "w") as f:
+    for path in base_path.glob("**/*.json"):
+        # Update `data` with the file contents
+        with open(path) as f:
+            data.update(json.load(f))
+
+        # Remove the JSON file so it is not published
+        path.unlink()
+
+    # Compile list of resources that were tested
+    resources = set(chain(*[v.keys() for v in data.values()]))
+
+    # Render and write report
+    path_out = base_path.joinpath("index.html")
+    with open(path_out, "w") as f:
         f.write(
             TEMPLATE.render(
                 data=data,

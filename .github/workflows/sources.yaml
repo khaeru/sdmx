@@ -110,6 +110,10 @@ jobs:
         name: source-tests
         path: source-tests
 
+    - name: Compile report
+      run: |
+        python -m sdmx.testing.report
+        cat source-tests/index.html
 
     - name: Deploy to GitHub Pages
       # if: success()
