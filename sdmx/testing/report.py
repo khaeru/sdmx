@@ -1,4 +1,6 @@
+import json
 import os
+from pathlib import Path
 
 from jinja2 import Template
 
@@ -122,9 +124,9 @@ ABBREV = {
 
 
 class ServiceReporter:
+    """Report tests of individual data sources."""
+
     def __init__(self, config):
-        self.path = config.invocation_params.dir.joinpath("sources", "index.html")
-        self.path.parent.mkdir(exist_ok=True)
         self.data = {}
         self.resources = set()
 
@@ -156,18 +158,35 @@ class ServiceReporter:
         except AttributeError:
             result = "pass"
 
-        self.resources.add(endpoint)
         self.data[source_id][endpoint] = result
 
     def pytest_sessionfinish(self, session, exitstatus):
-        if not self.data:
-            return
-        with open(self.path, "w") as f:
-            f.write(
-                TEMPLATE.render(
-                    data=self.data,
-                    abbrev=ABBREV,
-                    resources=sorted(self.resources),
-                    env=dict(GITHUB_REPOSITORY="", GITHUB_RUN_ID="") | os.environ,
-                )
+        """Write results for each source to a separate JSON file."""
+        # Base path for all output
+        base_path = session.config.invocation_params.dir.joinpath("source-tests")
+        base_path.mkdir(exist_ok=True)
+
+        for source_id, data in self.data.items():
+            # File path for this particular source
+            path = base_path.joinpath(source_id).with_suffix(".json")
+            # Dump the data for this source only
+            with open(path, "w") as f:
+                json.dump({source_id: data}, f)
+
+
+if __name__ == "__main__":
+    """Collate results from multiple JSON files."""
+    path = Path(".", "sources", "index.html")
+    # TODO locate, read, and merge JSON files
+    data = {}
+    # TODO infer from data or from .rest.Resource
+    resources = set()
+    with open(path, "w") as f:
+        f.write(
+            TEMPLATE.render(
+                data=data,
+                abbrev=ABBREV,
+                resources=sorted(resources),
+                env=dict(GITHUB_REPOSITORY="", GITHUB_RUN_ID="") | os.environ,
             )
+        )
