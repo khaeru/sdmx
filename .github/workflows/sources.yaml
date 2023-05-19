@@ -74,7 +74,7 @@ jobs:
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
-        pytest -m "network" -k "Test${{ matrix.source }} and dataflow" \
+        pytest -m "network" -k Test${{ matrix.source }} \
           -ra --color=yes --verbose \
           --cov-report=xml
 
