@@ -77,7 +77,7 @@ class DataSourceTest:
     #     )
 
     @pytest.mark.network
-    def test_endpoint(self, cache_path, client, endpoint, args):
+    def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
         # See sdmx.testing._generate_endpoint_tests() for values of `endpoint`
         cache = cache_path.with_suffix(f".{endpoint}.xml")
 
@@ -87,8 +87,14 @@ class DataSourceTest:
             print(e)
             raise
 
+        if pytestconfig.getoption("verbose") and endpoint == "dataflow":
+            # Display the IDs of data flows; this can be used to identify targets for
+            # tests of the data endpoint for a particular source
+            for dfd in result.dataflow:
+                print(repr(dfd))
+
         # For debugging
-        # print(cache, cache.read_text(), result, sep='\n\n')
+        # print(cache, cache.read_text(), result, sep="\n\n")
         # assert False
 
         sdmx.to_pandas(result)
