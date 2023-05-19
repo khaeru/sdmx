@@ -161,19 +161,53 @@ SDMX-ML —
 
 .. _ESTAT:
 
-``ESTAT``: Eurostat
--------------------
+``ESTAT``: Eurostat and related
+-------------------------------
 
 SDMX-ML —
 Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=40708145>`__,
 `2 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=44165555>`__
 
+- Eurostat also maintains four additional SDMX REST API endpoints, available in :mod:`sdmx` with the IDs below.
+  These are described at URL (2) above.
+
+.. contents::
+    :local:
 
 - In some cases, the service can have a long response time, so :mod:`sdmx` will time out.
   Increase the timeout attribute if necessary.
 
 .. autoclass:: sdmx.source.estat.Source()
    :members:
+
+.. _ESTAT_COMEXT:
+
+``ESTAT_COMEXT``: Eurostat Comext and Prodcom databases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- The :class:`.Agency` ID for data is still ``ESTAT``.
+
+.. _COMP:
+.. _EMPL:
+.. _GROW:
+
+``COMP``, ``EMPL``, ``GROW``: Directorates General of the European Commission
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These are, respectively:
+
+- ``COMP``: Directorate General for Competition.
+- ``EMPL``: Directorate General for Employment, Social Affairs and inclusion.
+- ``GROW``: Directorate General for Internal Market, Industry, Entrepreneurship and SMEs.
+
+No separate online documentation appears to exist for these API endpoints.
+In order to identify available data flows:
+
+.. code-block:: python
+
+   COMP = sdmx.Client("COMP")
+   sm = COMP.dataflow()
+   print(sm.dataflow)
 
 
 .. _ILO:

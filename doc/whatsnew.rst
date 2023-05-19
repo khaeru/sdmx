@@ -33,6 +33,8 @@ Next release
 
 - :mod:`.reader.json` properly parses :attr:`.Header.prepared` as a :class:`~datetime.datetime` object from SDMX-JSON data messages (:pull:`128`).
 - :mod:`.writer.xml` no longer writes objects in a SDMX-ML :class:`.StructureMessage` if :attr:`.MaintainableArtefact.is_external_reference` is :data:`True` (:pull:`128`).
+- Add four new :ref:`ESTAT <ESTAT>`-related data sources: :ref:`ESTAT_COMEXT` and :ref:`COMP` (:pull:`130`).
+- Update broken links and other information for some :doc:`sources` (:pull:`130`).
 - Update :ref:`ABS` to support the ABS' recently-added “beta” SDMX-ML API (:pull:`129`).
 - Rename the corresponding SDMX-JSON source :ref:`ABS_JSON`, update web service URL and quirks handling (:class:`.abs_json.Source`) (:pull:`129`, :pull:`130`).
 
