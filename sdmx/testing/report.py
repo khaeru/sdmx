@@ -175,7 +175,8 @@ class ServiceReporter:
                 json.dump({source_id: data}, f)
 
 
-if __name__ == "__main__":
+# TODO add a test of this
+if __name__ == "__main__":  # pragma: no cover
     """Collate results from multiple JSON files."""
     base_path = Path.cwd().joinpath("source-tests")
 
