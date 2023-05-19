@@ -29,7 +29,6 @@
   {
     "id": "BBK",
     "url": "https://api.statistiken.bundesbank.de/rest",
-    "documentation": "https://www.bundesbank.de/en/statistics/time-series-databases/-/help-for-sdmx-web-service-855900",
     "name": "German Federal Bank",
     "supports": {
       "actualconstraint": false,
@@ -54,7 +53,6 @@
     "id": "BIS",
     "name": "Bank for International Settlements",
     "url": "https://stats.bis.org/api/v1",
-    "documentation": "https://www.bis.org/statistics/sdmx_techspec.htm",
     "supports": {
       "agencyscheme": false,
       "allowedconstraint": false,
@@ -75,11 +73,6 @@
   },
   {
     "id": "ECB",
-    "resources": {
-      "data": {
-        "headers": {}
-      }
-    },
     "url": "https://sdw-wsrest.ecb.europa.eu/service",
     "name": "European Central Bank",
     "supports": {
@@ -101,7 +94,6 @@
   },
   {
     "id": "ESTAT",
-    "documentation": "https://wikis.ec.europa.eu/pages/viewpage.action?pageId=44165555",
     "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1",
     "name": "Eurostat",
     "supports": {
@@ -135,7 +127,9 @@
     "name": "International Labor Organization",
     "url": "http://www.ilo.org/sdmx/rest",
     "headers": {
-      "accept": "application/vnd.sdmx.structurespecificdata+xml;version=2.1"
+      "data": {
+        "Accept": "application/vnd.sdmx.structurespecificdata+xml;version=2.1"
+      }
     },
     "supports": {
       "actualconstraint": false,
@@ -216,7 +210,6 @@
   },
   {
     "id": "LSD",
-    "documentation": "https://osp.stat.gov.lt/rdb-rest",
     "url": "https://osp-rs.stat.gov.lt/rest_xml",
     "name": "Statistics Lithuania",
     "supports": {
@@ -259,14 +252,13 @@
     },
     "headers": {
       "data": {
-        "accept": "application/vnd.sdmx.genericdata+xml;version=2.1"
+        "Accept": "application/vnd.sdmx.genericdata+xml;version=2.1"
       }
     }
   },
   {
     "id": "NBB",
     "data_content_type": "JSON",
-    "documentation": "https://www.nbb.be/doc/dq/migratie_belgostat/en/nbb_stat-technical-manual.pdf",
     "url": "https://stat.nbb.be/sdmx-json",
     "name": "National Bank of Belgium"
   },
@@ -290,7 +282,6 @@
     "id": "SPC",
     "name": "Pacific Data Hub DotStat by The Pacific Community (SPC)",
     "url": "https://stats-nsi-stable.pacificdata.org/rest",
-    "documentation": "https://docs.pacificdata.org/dotstat",
     "supports": {
       "dataconsumerscheme": false,
       "dataproviderscheme": false,
@@ -303,7 +294,6 @@
   {
     "id": "STAT_EE",
     "data_content_type": "JSON",
-    "documentation": "https://www.stat.ee/sites/default/files/2020-09/API-instructions.pdf",
     "url": "http://andmebaas.stat.ee/sdmx-json",
     "name": "Statistics Estonia"
   },
@@ -311,9 +301,6 @@
     "id": "UNESCO",
     "name": "UN Educational, Scientific and Cultural Organization",
     "url": "http://api.uis.unesco.org/sdmx",
-    "headers": {
-      "accept": "application/vnd.sdmx.structure+xml;version=2.1"
-    },
     "supports": {
       "actualconstraint": false,
       "agencyscheme": false,
