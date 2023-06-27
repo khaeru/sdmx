@@ -3,8 +3,10 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Update the :ref:`ECB` data source URL per a recent change in the service (:pull:`134`).
 
 v2.10.0 (2023-05-20)
 ====================
