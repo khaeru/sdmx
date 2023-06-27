@@ -73,7 +73,7 @@
   },
   {
     "id": "ECB",
-    "url": "https://sdw-wsrest.ecb.europa.eu/service",
+    "url": "https://data-api.ecb.europa.eu/service",
     "name": "European Central Bank",
     "supports": {
       "actualconstraint": false,
