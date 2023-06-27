@@ -153,12 +153,15 @@ SDMX-ML —
 ------------------------------
 
 SDMX-ML —
-`Website <https://www.ecb.europa.eu/stats/ecb_statistics/co-operation_and_standards/sdmx/html/index.en.html>`__
+`Website <https://data.ecb.europa.eu/help/api/overview>`__
 
 - Supports categorisations of data-flows.
 - Supports preview_data and series-key based key validation.
-- In general short response times.
 
+.. versionchanged:: 2.10.1
+   `As of 2023-06-23 <https://data.ecb.europa.eu/blog/blog-posts/ecb-data-portal-live-now>`__ the ECB source is part of an “ECB Data Portal” that replaces an earlier “ECB Statistical Data Warehouse (SDW)” (`documentation <https://www.ecb.europa.eu/stats/ecb_statistics/co-operation_and_standards/sdmx/html/index.en.html>`__ still available).
+   The URL in :mod:`sdmx` is updated.
+   Text on the ECB website (above) states that the previous URL (in :mod:`sdmx` ≤ 2.10.0) should continue to work until about 2024-06-23.
 
 .. _ESTAT:
 
