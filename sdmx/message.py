@@ -12,7 +12,9 @@ from datetime import datetime
 from operator import attrgetter
 from typing import Any, List, Optional, Text, Union
 
-from sdmx.model import v21 as model
+from sdmx import model
+from sdmx.format import Version
+from sdmx.model import v21, v30
 from sdmx.model.internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
@@ -132,6 +134,9 @@ class Footer:
 
 @dataclass
 class Message:
+    #: SDMX version.
+    version: Version = Version["2.1"]
+
     #: :class:`Header` instance.
     header: Header = field(default_factory=Header)
     #: (optional) :class:`Footer` instance.
