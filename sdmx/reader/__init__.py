@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sdmx.reader import json, xml
+from . import json, xml
 
 #: Reader classes
 READERS = [json.Reader, xml.Reader]
