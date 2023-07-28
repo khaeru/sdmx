@@ -83,7 +83,7 @@ def reference(obj, parent=None, tag=None, style=None):
             "maintainableParentID": ma.id if parent else None,
             "maintainableParentVersion": ma.version if parent else None,
             "version": ma.version,
-            "package": model.PACKAGE[ma.__class__],
+            "package": model.PACKAGE[ma.__class__.__name__],
         }
         for candidate in (obj.__class__, getattr(ma.__class__, "_Item", None)):
             try:
