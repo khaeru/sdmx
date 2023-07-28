@@ -1,17 +1,20 @@
 """SDMX-JSON v2.1 reader"""
 import json
 import logging
+from typing import Mapping, MutableMapping
 
 from dateutil.parser import isoparse
 
-from sdmx.format import list_media_types
+from sdmx.format import Version, list_media_types
 from sdmx.message import DataMessage, Header
+from sdmx.model import common
 from sdmx.model import v21 as model
+from sdmx.model.common import Concept
+from sdmx.model.internationalstring import InternationalString
 from sdmx.model.v21 import (
     ActionType,
     AllDimensions,
     AttributeValue,
-    Concept,
     DataSet,
     Key,
     KeyValue,
@@ -51,7 +54,7 @@ class Reader(BaseReader):
         msg.header = Header(
             id=elem["id"],
             prepared=isoparse(elem["prepared"]),
-            sender=model.Agency(**elem["sender"]),
+            sender=_org(elem["sender"]),
         )
 
         # pre-fetch some structures for efficient use in series and obs
@@ -213,3 +216,55 @@ class Reader(BaseReader):
             av = self._attr_values[attr][index]
             result[av.value_for.id] = av
         return result
+
+
+def _org(elem: MutableMapping) -> common.Organisation:
+    try:
+        elem["contact"] = list(map(_contact, elem.pop("contacts")))
+    except KeyError:
+        pass
+    return common.Organisation(**maybe_parse_is(elem, "name"))
+
+
+def _contact(elem: Mapping) -> common.Contact:
+    data = depluralize(
+        maybe_parse_is(elem, "department name role"),
+        "email fax|faxe telephone uri x400",
+    )
+    if "id" in data:
+        log.debug(f"Discard unsupported Contact(id={data.pop('id')!r})")
+    try:
+        data["org_unit"] = data.pop("department")
+    except KeyError:
+        pass
+    try:
+        data["responsibility"] = data.pop("role")
+    except KeyError:
+        pass
+    return common.Contact(**data)
+
+
+def depluralize(elem: Mapping, names: str) -> MutableMapping:
+    """Map plural `names` in `elem` to singular.
+
+    `names` is a whitespace-separated sequence of strings; each string is either the
+    singular form and base for the plural form ("cat" → "cat" and "cats") or a pipe (|)
+    separating the singular and plural base ("fox|foxe" → "fox", "foxes").
+    """
+    result = dict(elem)
+    for name in names.split():
+        info = name.split("|")
+        try:
+            result[info[0]] = result.pop(f"{info[-1]}s")
+        except KeyError:
+            pass
+    return result
+
+
+def maybe_parse_is(elem: Mapping, names: str) -> Mapping:
+    """Parse international string(s) with given `names` appearing on `elem`, if any."""
+    result = dict(elem)
+    for name in names.split():
+        if name in result and f"{name}s" in result:
+            result[name] = InternationalString(result.pop(f"{name}s"))
+    return result
