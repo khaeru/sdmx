@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 class Reader(BaseReader):
     """Read SDMX-JSON and expose it as instances from :mod:`sdmx.model`."""
 
-    media_types = list_media_types(base="json", version="1.0.0")
+    media_types = list_media_types(base="json", version=Version["1.0.0"])
     suffixes = [".json"]
 
     @classmethod
@@ -50,7 +50,13 @@ class Reader(BaseReader):
 
         # Read the header
         # TODO handle KeyError here
-        elem = tree["header"]
+        try:
+            # SDMX-JSON 1.0 (SDMX 2.1)
+            elem = tree["header"]
+        except KeyError:
+            # SDMX-JSON 2.0 (SDMX 3.0.0)
+            elem = tree["meta"]
+
         msg.header = Header(
             id=elem["id"],
             prepared=isoparse(elem["prepared"]),
@@ -58,7 +64,12 @@ class Reader(BaseReader):
         )
 
         # pre-fetch some structures for efficient use in series and obs
-        structure = tree["structure"]
+        try:
+            # SDMX-JSON 1.0 (SDMX 2.1)
+            structure = tree["structure"]
+        except KeyError:
+            # SDMX-JSON 2.0 (SDMX 3.0.0)
+            structure = tree["data"]["structures"]
 
         # Read dimensions and values
         self._dim_level = dict()
