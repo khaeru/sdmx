@@ -191,16 +191,20 @@ class StructureMessage(Message):
     #: Collection of :class:`.ConceptScheme`.
     concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
     #: Collection of :class:`.ContentConstraint`.
-    constraint: DictLikeDescriptor[str, model.ContentConstraint] = DictLikeDescriptor()
+    constraint: DictLikeDescriptor[
+        str, model.BaseContentConstraint
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
-    dataflow: DictLikeDescriptor[str, model.DataflowDefinition] = DictLikeDescriptor()
+    dataflow: DictLikeDescriptor[
+        str, model.BaseDataflowDefinition
+    ] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
     metadataflow: DictLikeDescriptor[
-        str, model.MetadataflowDefinition
+        str, model.BaseMetadataflowDefinition
     ] = DictLikeDescriptor()
     #: Collection of :class:`.DataStructureDefinition`.
     structure: DictLikeDescriptor[
-        str, model.DataStructureDefinition
+        str, model.BaseDataStructureDefinition
     ] = DictLikeDescriptor()
     #: Collection of :class:`.OrganisationScheme`.
     organisation_scheme: DictLikeDescriptor[
@@ -208,7 +212,7 @@ class StructureMessage(Message):
     ] = DictLikeDescriptor()
     #: Collection of :class:`.ProvisionAgreement`.
     provisionagreement: DictLikeDescriptor[
-        str, model.ProvisionAgreement
+        str, model.BaseProvisionAgreement
     ] = DictLikeDescriptor()
 
     def compare(self, other, strict=True):
