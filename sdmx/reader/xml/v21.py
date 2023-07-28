@@ -17,6 +17,7 @@ from typing import (
     Dict,
     Iterable,
     Iterator,
+    List,
     Mapping,
     Optional,
     Tuple,
@@ -32,14 +33,16 @@ from lxml.etree import QName
 import sdmx.urn
 from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
-from sdmx.format import list_media_types
-from sdmx.format.xml import NS, class_for_tag, qname
+from sdmx.format import Version, list_media_types
+from sdmx.model import common
 from sdmx.model import v21 as model
+from sdmx.model import v30
 from sdmx.reader.base import BaseReader
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+_VERSION = Version["2.1"]
 
 PARSE = {}
 
@@ -86,11 +89,11 @@ def to_snake(value):
     return TO_SNAKE_RE.sub(r"_\1", value).lower()
 
 
-def start(*args, only=True):
+def start(names: str, only: bool = True):
     """Decorator for a function that parses "start" events for XML elements."""
 
     def decorator(func):
-        for tag in to_tags(*args):
+        for tag in to_tags(names):
             PARSE[tag, "start"] = func
             if only:
                 PARSE[tag, "end"] = None
@@ -99,11 +102,11 @@ def start(*args, only=True):
     return decorator
 
 
-def end(*args, only=True):
+def end(names: str, only: bool = True):
     """Decorator for a function that parses "end" events for XML elements."""
 
     def decorator(func):
-        for tag in to_tags(*args):
+        for tag in to_tags(names):
             PARSE[tag, "end"] = func
             if only:
                 PARSE[tag, "start"] = None
@@ -112,8 +115,20 @@ def end(*args, only=True):
     return decorator
 
 
-def to_tags(*args):
-    return chain(*[[qname(tag) for tag in arg.split()] for arg in args])
+def to_tags(names: str) -> List[QName]:
+    """Convert `args` to a list of qualified names."""
+    from sdmx.format.xml import v21, v30
+
+    result: List[QName] = []
+    try:
+        result.extend(v21.qname(name) for name in names.split())
+    except KeyError:
+        pass
+    try:
+        result.extend(v30.qname(name) for name in names.split())
+    except KeyError:
+        pass
+    return result
 
 
 PARSE.update({k: None for k in product(to_tags(SKIP), ["start", "end"])})
@@ -147,9 +162,47 @@ class Reference:
     specific override for `cls`/`target_cls`.
     """
 
-    def __init__(self, elem, cls_hint=None):
+    def __init__(self, elem, format, cls_hint=None):
         parent_tag = elem.tag
 
+        info = self.info_from_element(elem)
+
+        # Find the target class
+        target_cls = model.get_class(info["class"], info["package"])
+
+        if target_cls is None:
+            # Try the parent tag name
+            target_cls = format.class_for_tag(parent_tag)
+
+        if cls_hint and (target_cls is None or issubclass(cls_hint, target_cls)):
+            # Hinted class is more specific than target_cls, or failed to find a target
+            # class above
+            target_cls = cls_hint
+
+        if target_cls is None:
+            print(f"{info = }")
+
+        self.maintainable = issubclass(target_cls, model.MaintainableArtefact)
+
+        if self.maintainable:
+            # MaintainableArtefact is the same as the target
+            cls, info["id"] = target_cls, info["target_id"]
+        else:
+            # Get the class for the parent MaintainableArtefact
+            cls = model.parent_class(target_cls)
+
+        # Store
+        self.cls = cls
+        self.agency = (
+            model.Agency(id=info["agency"]) if info.get("agency", None) else _NO_AGENCY
+        )
+        self.id = info["id"]
+        self.version = info.get("version", None)
+        self.target_cls = target_cls
+        self.target_id = info["target_id"]
+
+    @classmethod
+    def info_from_element(cls, elem):
         try:
             # Use the first child
             elem = elem[0]
@@ -159,58 +212,26 @@ class Reference:
         # Extract information from the XML element
         if elem.tag == "Ref":
             # Element attributes give target_id, id, and version
-            target_id = elem.attrib["id"]
-            agency_id = elem.attrib.get("agencyID", None)
-            id = elem.attrib.get("maintainableParentID", target_id)
-            version = elem.attrib.get(
-                "maintainableParentVersion", None
-            ) or elem.attrib.get("version", None)
+            result = dict(
+                target_id=elem.attrib["id"],
+                agency=elem.attrib.get("agencyID", None),
+                id=elem.attrib.get("maintainableParentID", elem.attrib["id"]),
+                version=elem.attrib.get("maintainableParentVersion", None)
+                or elem.attrib.get("version", None),
+            )
 
             # Attributes of the element itself, if any
-            args = (elem.attrib.get("class", None), elem.attrib.get("package", None))
+            for k in ("class", "package"):
+                result[k] = elem.attrib.get(k, None)
         elif elem.tag == "URN":
-            match = sdmx.urn.match(elem.text)
-
+            result = sdmx.urn.match(elem.text)
             # If the URN doesn't specify an item ID, it is probably a reference to a
             # MaintainableArtefact, so target_id and id are the same
-            target_id = match["item_id"] or match["id"]
-
-            agency_id = match["agency"]
-            id = match["id"]
-            version = match["version"]
-
-            args = (match["class"], match["package"])
+            result.update(target_id=result["item_id"] or result["id"])
         else:
             raise NotReference
 
-        # Find the target class
-        target_cls = model.get_class(*args)
-
-        if target_cls is None:
-            # Try the parent tag name
-            target_cls = class_for_tag(parent_tag)
-
-        if cls_hint and (target_cls is None or issubclass(cls_hint, target_cls)):
-            # Hinted class is more specific than target_cls, or failed to find a target
-            # class above
-            target_cls = cls_hint
-
-        self.maintainable = issubclass(target_cls, model.MaintainableArtefact)
-
-        if self.maintainable:
-            # MaintainableArtefact is the same as the target
-            cls, id = target_cls, target_id
-        else:
-            # Get the class for the parent MaintainableArtefact
-            cls = model.parent_class(target_cls)
-
-        # Store
-        self.cls = cls
-        self.agency = model.Agency(id=agency_id) if agency_id else _NO_AGENCY
-        self.id = id
-        self.version = version
-        self.target_cls = target_cls
-        self.target_id = target_id
+        return result
 
     def __str__(self):  # pragma: no cover
         return (
@@ -220,8 +241,10 @@ class Reference:
 
 
 class Reader(BaseReader):
-    media_types = list_media_types(base="xml", version="2.1")
+    media_types = list_media_types(base="xml", version=_VERSION)
     suffixes = [".xml"]
+    xml_version = _VERSION
+    Reference = Reference
 
     # One-way counter for use in stacks
     _count = None
@@ -229,13 +252,21 @@ class Reader(BaseReader):
     def __init__(self):
         # Initialize counter
         self._count = count()
+        # Reference to the module defining the format read
+        self.format = getattr(
+            sdmx.format.xml,
+            {Version["2.1"]: "v21", Version["3.0.0"]: "v30"}[self.xml_version],
+        )
 
     @classmethod
     def detect(cls, content):
         return content.startswith(b"<")
 
     def read_message(
-        self, source, dsd: Optional[model.DataStructureDefinition] = None
+        self,
+        source,
+        dsd: Optional[model.DataStructureDefinition] = None,
+        _events=None,
     ) -> message.Message:
         # Initialize stacks
         self.stack: Dict[Union[Type, str], Dict[Union[str, int], Any]] = defaultdict(
@@ -250,16 +281,21 @@ class Reader(BaseReader):
         self.push(dsd)
         self.ignore.add(id(dsd))
 
+        if _events is None:
+            events = cast(
+                Iterator[Tuple[str, etree._Element]],
+                etree.iterparse(source, events=("start", "end")),
+            )
+        else:
+            events = _events
+
         try:
             # Use the etree event-driven parser
             # NB (typing) iterparse() returns tuples. For "start" and "end", the second
             #    item is etree._Element, but for other events, e.g. "start-ns", it is
             #    not. types-lxml accurately reflects this. Narrow the type here for the
             #    following code.
-            for event, element in cast(
-                Iterator[Tuple[str, etree._Element]],
-                etree.iterparse(source, events=("start", "end")),
-            ):
+            for event, element in events:
                 try:
                     # Retrieve the parsing function for this element & event
                     func = PARSE[element.tag, event]
@@ -319,7 +355,13 @@ class Reader(BaseReader):
         self._clean()
         print("\n\n")
         for key, values in self.stack.items():
-            print(f"--- {key} ---", values, sep="\n", end="\n\n")
+            print(
+                f"--- {key} ---",
+                *map(lambda v: f"{repr(v)} ({id(v)})", values),
+                sep="\n",
+                end="\n\n",
+            )
+        print("\nIgnore:\n", self.ignore)
 
     def push(self, stack_or_obj, obj=None):
         """Push an object onto a stack."""
@@ -362,6 +404,16 @@ class Reader(BaseReader):
         """
         for s, values in (self.pop_single("_stash") or {}).items():
             self.stack[s].update(values)
+
+    # Delegate to version-specific module
+    def NS(self):
+        return self.format.NS
+
+    def class_for_tag(self, tag: str) -> type:
+        return self.format.class_for_tag(tag)
+
+    def qname(self, ns_or_name, name=None) -> QName:
+        return self.format.qname(ns_or_name, name)
 
     def get_single(
         self,
@@ -437,6 +489,9 @@ class Reader(BaseReader):
     def pop_resolved_ref(self, cls_or_name: Union[Type, str]):
         """Pop a reference to `cls_or_name` and resolve it."""
         return self.resolve(self.pop_single(cls_or_name))
+
+    def reference(self, elem, cls_hint=None):
+        return self.Reference(elem, format=self.format, cls_hint=cls_hint)
 
     def resolve(self, ref):
         """Resolve the Reference instance `ref`, returning the referred object."""
@@ -586,7 +641,7 @@ def _message(reader, elem):
     """Start of a Message."""
     # <mes:Structure> within <mes:Header> of a data message is handled by
     # _header_structure() below.
-    if getattr(elem.getparent(), "tag", None) == qname("mes", "Header"):
+    if getattr(elem.getparent(), "tag", None) == reader.qname("mes", "Header"):
         return
 
     ss_without_dsd = False
@@ -610,17 +665,16 @@ def _message(reader, elem):
 
     # Handle namespaces mapped on `elem` but not part of the standard set
     for key, value in filter(
-        lambda kv: kv[1] not in set(NS.values()), elem.nsmap.items()
+        lambda kv: kv[1] not in set(reader.NS().values()), elem.nsmap.items()
     ):
         # Register the namespace
-        NS[key] = value
+        reader.NS().update({key: value})
         # Use _ds_start() and _ds_end() to handle <{key}:DataSet> elements
         start(f"{key}:DataSet", only=False)(_ds_start)
         end(f"{key}:DataSet", only=False)(_ds_end)
 
     # Instantiate the message object
-    cls = class_for_tag(elem.tag)
-    return cls()
+    return reader.class_for_tag(elem.tag)()
 
 
 @end("mes:Header")
@@ -653,7 +707,7 @@ def _header_org(reader, elem):
     reader.push(
         elem,
         reader.nameable(
-            class_for_tag(elem.tag), elem, contact=reader.pop_all(model.Contact)
+            reader.class_for_tag(elem.tag), elem, contact=reader.pop_all(model.Contact)
         ),
     )
 
@@ -766,7 +820,8 @@ def _structures(reader, elem):
         ("metadataflow", model.MetadataflowDefinition),
         ("organisation_scheme", model.OrganisationScheme),
         ("provisionagreement", model.ProvisionAgreement),
-        ("structure", model.DataStructureDefinition),
+        ("structure", reader.class_for_tag("str:DataStructure")),
+        ("valuelist", v30.ValueList),
     ):
         target = getattr(msg, attr)
 
@@ -820,7 +875,8 @@ def _datetime(reader, elem):
 )
 def _localization(reader, elem):
     reader.push(
-        elem, (elem.attrib.get(qname("xml:lang"), model.DEFAULT_LOCALE), elem.text)
+        elem,
+        (elem.attrib.get(reader.qname("xml:lang"), model.DEFAULT_LOCALE), elem.text),
     )
 
 
@@ -833,9 +889,9 @@ def _ref(reader, elem):
     cls_hint = None
     if "Parent" in elem.tag:
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
-        cls_hint = class_for_tag(elem.getparent().tag)
+        cls_hint = reader.class_for_tag(elem.getparent().tag)
 
-    reader.push(QName(elem).localname, Reference(elem, cls_hint))
+    reader.push(QName(elem).localname, reader.reference(elem, cls_hint))
 
 
 @end("com:Annotation")
@@ -882,7 +938,7 @@ def _item_start(reader, elem):
 def _item(reader, elem):
     try:
         # <str:DataProvider> may be a reference, e.g. in <str:ConstraintAttachment>
-        item = Reference(elem)
+        item = reader.reference(elem)
     except NotReference:
         pass
     else:
@@ -890,7 +946,7 @@ def _item(reader, elem):
         reader.unstash()
         return item
 
-    cls = class_for_tag(elem.tag)
+    cls = reader.class_for_tag(elem.tag)
     item = reader.nameable(cls, elem)
 
     # Hierarchy is stored in two ways
@@ -922,7 +978,7 @@ def _item(reader, elem):
     "str:DataConsumerScheme str:DataProviderScheme"
 )
 def _itemscheme(reader, elem):
-    cls = class_for_tag(elem.tag)
+    cls = reader.class_for_tag(elem.tag)
 
     is_ = reader.maintainable(cls, elem, is_partial=elem.attrib.get("isPartial"))
 
@@ -968,7 +1024,7 @@ def _facet(reader, elem):
 
 @end("str:CoreRepresentation str:LocalRepresentation")
 def _rep(reader, elem):
-    return model.Representation(
+    return common.Representation(
         enumerated=reader.pop_resolved_ref("Enumeration"),
         non_enumerated=list(
             chain(reader.pop_all("EnumerationFormat"), reader.pop_all("TextFormat"))
@@ -982,7 +1038,7 @@ def _rep(reader, elem):
 @end("str:Concept", only=False)
 def _concept(reader, elem):
     concept = _item(reader, elem)
-    concept.core_representation = reader.pop_single(model.Representation)
+    concept.core_representation = reader.pop_single(common.Representation)
     return concept
 
 
@@ -996,16 +1052,16 @@ def _concept(reader, elem):
 def _component(reader, elem):
     try:
         # May be a reference
-        return Reference(elem)
+        return reader.reference(elem)
     except NotReference:
         pass
 
     # Object class: {,Measure,Time}Dimension or DataAttribute
-    cls = class_for_tag(elem.tag)
+    cls = reader.class_for_tag(elem.tag)
 
     args = dict(
         concept_identity=reader.pop_resolved_ref("ConceptIdentity"),
-        local_representation=reader.pop_single(model.Representation),
+        local_representation=reader.pop_single(common.Representation),
     )
     try:
         args["order"] = int(elem.attrib["position"])
@@ -1032,7 +1088,7 @@ def _component(reader, elem):
 def _cl(reader, elem):
     try:
         # <str:Group> may be a reference
-        return Reference(elem, cls_hint=model.GroupDimensionDescriptor)
+        return reader.reference(elem, cls_hint=model.GroupDimensionDescriptor)
     except NotReference:
         pass
 
@@ -1057,7 +1113,7 @@ def _cl(reader, elem):
         # SDMX-ML spec for, e.g. DimensionList: "The id attribute is
         # provided in this case for completeness. However, its value is
         # fixed to 'DimensionDescriptor'."
-        cls = class_for_tag(elem.tag)
+        cls = reader.class_for_tag(elem.tag)
         args["id"] = elem.attrib.get("id", cls.__name__)
 
     cl = reader.identifiable(cls, elem, **args)
@@ -1303,17 +1359,17 @@ def _ar(reader, elem):
         args["group_key"] = dsd.group_dimensions[ref.target_id]
 
     if len(args["dimensions"]):
-        return model.DimensionRelationship(**args)
+        return common.DimensionRelationship(**args)
     else:
         args.pop("dimensions")
-        return model.GroupRelationship(**args)
+        return common.GroupRelationship(**args)
 
 
 @start("str:DataStructure", only=False)
 def _dsd_start(reader, elem):
     try:
         # <str:DataStructure> may be a reference, e.g. in <str:ConstraintAttachment>
-        return Reference(elem)
+        return reader.reference(elem)
     except NotReference:
         pass
 
@@ -1343,7 +1399,7 @@ def _dsd_end(reader, elem):
 def _dfd(reader, elem):
     try:
         # <str:Dataflow> may be a reference, e.g. in <str:ConstraintAttachment>
-        return Reference(elem)
+        return reader.reference(elem)
     except NotReference:
         pass
 
@@ -1377,7 +1433,7 @@ def _avs(reader, elem):
 
 @end("gen:ObsKey gen:GroupKey gen:SeriesKey")
 def _key(reader, elem):
-    cls = class_for_tag(elem.tag)
+    cls = reader.class_for_tag(elem.tag)
 
     kv = {e.attrib["id"]: e.attrib["value"] for e in elem.iterchildren()}
 
@@ -1421,7 +1477,7 @@ def _group_ss(reader, elem):
     ds = reader.get_single("DataSet")
     attrib = copy(elem.attrib)
 
-    group_id = attrib.pop(qname("xsi", "type"), None)
+    group_id = attrib.pop(reader.qname("xsi", "type"), None)
 
     gk = ds.structured_by.make_key(
         model.GroupKey, attrib, extend=reader.peek("SS without DSD")
@@ -1515,7 +1571,7 @@ def _ds_start(reader, elem):
 
     # Retrieve the (message-local) ID referencing a data structure definition
     id = elem.attrib.get("structureRef", None) or elem.attrib.get(
-        qname("data:structureRef"), None
+        reader.qname("data:structureRef"), None
     )
 
     # Get a reference to the DSD that structures the data set
