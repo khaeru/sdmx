@@ -1,8 +1,8 @@
 import logging
-from dataclasses import dataclass
-from enum import IntFlag
+from dataclasses import InitVar, dataclass, field
+from enum import Enum, IntFlag
 from functools import lru_cache
-from typing import List, Optional
+from typing import List, Optional, Union
 
 try:
     from typing import Literal
@@ -27,6 +27,9 @@ Flag = IntFlag("Flag", "data meta ss ts")
 f = Flag
 
 
+Version = Enum("Version", "1.0.0 2.0.0 2.1 3.0.0 unknown")
+
+
 @dataclass(frozen=True)
 class MediaType:
     """Structure of elements in :data:`MEDIA_TYPES`.
@@ -45,18 +48,22 @@ class MediaType:
     base: Literal["csv", "json", "xml"]
 
     #: Format version.
-    version: Literal["1.0.0", "2.0.0", "2.1", "3.0.0", "unknown"]
+    version: Version = field(init=False)
+    _version: InitVar[Union[str, Version]]
 
     flags: Flag = Flag(0)
 
     #: Specify the full media type string.
     full: Optional[str] = None
 
+    def __post_init__(self, _version):
+        self.__dict__["version"] = Version[_version]
+
     def __repr__(self):
         """Full media type string."""
         return (
             self.full or f"application/vnd.sdmx.{self.label}+{self.base}"
-        ) + f"; version={self.version}"
+        ) + f"; version={self.version.name}"
 
     @lru_cache()
     def match(self, value: str, strict: bool = False) -> bool:
