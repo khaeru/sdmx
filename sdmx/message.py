@@ -214,6 +214,8 @@ class StructureMessage(Message):
     provisionagreement: DictLikeDescriptor[
         str, model.BaseProvisionAgreement
     ] = DictLikeDescriptor()
+    #: Collection of :class:`.ValueList` (SDMX 3.0 only).
+    valuelist: DictLikeDescriptor[str, v30.ValueList] = DictLikeDescriptor()
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
