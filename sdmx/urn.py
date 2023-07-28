@@ -1,7 +1,7 @@
 import re
 from typing import Dict
 
-from sdmx.model.v21 import PACKAGE, MaintainableArtefact
+from sdmx.model import PACKAGE, MaintainableArtefact
 
 #: Regular expression for URNs.
 URN = re.compile(
@@ -41,7 +41,7 @@ def make(obj, maintainable_parent=None, strict=False):
         raise ValueError(f"Cannot construct URN for {repr(ma)} without version")
 
     return _BASE.format(
-        package=PACKAGE[obj.__class__], obj=obj, ma=ma, extra_id=extra_id
+        package=PACKAGE[obj.__class__.__name__], obj=obj, ma=ma, extra_id=extra_id
     )
 
 
