@@ -3,7 +3,7 @@ import os
 from collections import ChainMap
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -221,10 +221,13 @@ class MessageTest:
 class SpecimenCollection:
     """Collection of test specimens."""
 
+    # Path to specimen; file format; data/structure
+    # TODO add version
+    specimens: List[Tuple[Path, str, str]]
+
     def __init__(self, base_path):
         self.base_path = base_path
-
-        specimens = []
+        self.specimens = []
 
         # XML data files for the ECB exchange rate data flow
         for source_id in ("ECB_EXR",):
@@ -232,17 +235,17 @@ class SpecimenCollection:
                 kind = "data"
                 if "structure" in path.name or "common" in path.name:
                     kind = "structure"
-                specimens.append((path, "xml", kind))
+                self.specimens.append((path, "xml", kind))
 
         # JSON data files for ECB and OECD data flows
         for source_id in ("ECB_EXR", "OECD"):
-            specimens.extend(
+            self.specimens.extend(
                 (fp, "json", "data")
                 for fp in base_path.joinpath(source_id).rglob("*.json")
             )
 
         # Miscellaneous XML data files
-        specimens.extend(
+        self.specimens.extend(
             (base_path.joinpath(*parts), "xml", "data")
             for parts in [
                 ("INSEE", "CNA-2010-CONSO-SI-A17.xml"),
@@ -253,7 +256,7 @@ class SpecimenCollection:
         )
 
         # Miscellaneous XML structure files
-        specimens.extend(
+        self.specimens.extend(
             (base_path.joinpath(*parts), "xml", "structure")
             for parts in [
                 ("ECB", "orgscheme.xml"),
@@ -273,7 +276,22 @@ class SpecimenCollection:
             ]
         )
 
-        self.specimens = specimens
+        # Add files from the SDMX 3.0 specification
+        v3 = base_path.joinpath("v3")
+
+        # commented: SDMX-JSON 2.0 is not yet implemented
+        # # SDMX-JSON
+        # self.specimens.extend(
+        #     (p, "json", "data") for p in v3.joinpath("json", "data").glob("*.json")
+        # )
+        # for dir in ("metadata", "structure"):
+        #     self.specimens.extend(
+        #         (p, "json", "structure")
+        #         for p in v3.joinpath("json", dir).glob("*.json")
+        #     )
+
+        # SDMX-ML
+        self.specimens.extend((p, "xml", None) for p in v3.glob("xml/*.xml"))
 
     @contextmanager
     def __call__(self, pattern="", opened=True):
