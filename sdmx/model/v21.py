@@ -24,15 +24,12 @@ from copy import copy
 #      for {Generic,StructureSpecific} TimeSeriesDataSet.
 from dataclasses import InitVar, dataclass, field
 from datetime import date, datetime
-from functools import lru_cache
 from itertools import product
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 from typing import (
     Any,
-    ClassVar,
     Dict,
     Generator,
-    Generic,
     Iterable,
     List,
     Mapping,
@@ -40,246 +37,83 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    Type,
-    TypeVar,
     Union,
 )
 
-from sdmx.rest import Resource
-from sdmx.util import DictLikeDescriptor, compare, only
+from sdmx.util import DictLikeDescriptor, compare
 
+from . import common
 from .common import (
     ActionType,
-    Agency,
-    AgencyScheme,
-    AnnotableArtefact,
-    Annotation,
-    Categorisation,
-    Category,
-    CategoryScheme,
-    Concept,
-    ConceptScheme,
+    AttributeDescriptor,
+    AttributeRelationship,
+    BaseKeyValue,
+    Code,
+    Component,
+    ComponentList,
+    ConstrainableArtefact,
+    ConstraintRole,
     ConstraintRoleType,
-    Contact,
-    Facet,
-    FacetType,
-    FacetValueType,
+    DataAttribute,
+    DataProvider,
+    DimensionComponent,
+    DimensionDescriptor,
+    GroupDimensionDescriptor,
     IdentifiableArtefact,
-    ISOConceptReference,
-    Item,
-    ItemScheme,
     MaintainableArtefact,
+    MemberValue,
     NameableArtefact,
-    Organisation,
-    OrganisationScheme,
-    Representation,
-    UsageStatus,
-    VersionableArtefact,
+    SelectionValue,
+    Structure,
+    StructureUsage,
+    TimeDimension,
+    TimeRangeValue,
 )
-from .internationalstring import DEFAULT_LOCALE, InternationalString
 
+# Classes defined directly in the current file, in the order they appear
 __all__ = [
-    # The following are not used in this file, but expected by sdmx code that imports
-    # sdmx.model.v21 as model
-    "DEFAULT_LOCALE",
-    "Annotation",
-    "Contact",
-    "Facet",
-    "FacetType",
-    "FacetValueType",
-    "InternationalString",
-    "NameableArtefact",
-    # The following are not used in sdmx code, but included for backwards compatibility
-    "ISOConceptReference",
-    "VersionableArtefact",
+    "ComponentValue",
+    "DataKey",
+    "DataKeySet",
+    "Constraint",
+    "Period",
+    "RangePeriod",
+    "MemberSelection",
+    "CubeRegion",
+    "ContentConstraint",
+    "MeasureDimension",
+    "PrimaryMeasure",
+    "MeasureDescriptor",
+    "NoSpecifiedRelationship",
+    "PrimaryMeasureRelationship",
+    "ReportingYearStartDay",
+    "DataStructureDefinition",
+    "DataflowDefinition",
+    "KeyValue",
+    "TimeKeyValue",
+    "AttributeValue",
+    "Key",
+    "GroupKey",
+    "SeriesKey",
+    "Observation",
+    "DataSet",
+    "StructureSpecificDataSet",
+    "GenericDataSet",
+    "GenericTimeSeriesDataSet",
+    "StructureSpecificTimeSeriesDataSet",
+    "MetadataflowDefinition",
+    "MetadataStructureDefinition",
+    "Datasource",
+    "SimpleDatasource",
+    "QueryDatasource",
+    "RESTDatasource",
+    "ProvisionAgreement",
 ]
 
 log = logging.getLogger(__name__)
 
 
-# §3.3: Basic Inheritance
-
-
-@dataclass
-@IdentifiableArtefact._preserve("hash", "repr")
-class Component(IdentifiableArtefact):
-    #:
-    concept_identity: Optional[Concept] = None
-    #:
-    local_representation: Optional[Representation] = None
-
-    def __contains__(self, value):
-        for repr in [
-            getattr(self.concept_identity, "core_representation", None),
-            self.local_representation,
-        ]:
-            enum = getattr(repr, "enumerated", None)
-            if enum is not None:
-                return value in enum
-        raise TypeError("membership not defined for non-enumerated representations")
-
-
-CT = TypeVar("CT", bound=Component)
-
-
-@dataclass
-class ComponentList(IdentifiableArtefact, Generic[CT]):
-    #:
-    components: List[CT] = field(default_factory=list)
-    #: Counter used to automatically populate :attr:`.DimensionComponent.order` values.
-    auto_order = 1
-
-    # The default type of the Components in the ComponentList. See comment on
-    # ItemScheme._Item
-    _Component: ClassVar[Type] = Component
-
-    # Convenience access to the components
-    def append(self, value: CT) -> None:
-        """Append *value* to :attr:`components`."""
-        if hasattr(value, "order") and value.order is None:
-            value.order = max(self.auto_order, len(self.components) + 1)
-            self.auto_order = value.order + 1
-        self.components.append(value)
-
-    def extend(self, values: Iterable[CT]) -> None:
-        """Extend :attr:`components` with *values*."""
-        for value in values:
-            self.append(value)
-
-    def get(self, id) -> CT:
-        """Return the component with the given *id*."""
-        # Search for an existing Component
-        for c in self.components:
-            if c.id == id:
-                return c
-        raise KeyError(id)
-
-    def getdefault(self, id, cls=None, **kwargs) -> CT:
-        """Return or create the component with the given *id*.
-
-        If the component is automatically created, its :attr:`.Dimension.order`
-        attribute is set to the value of :attr:`auto_order`, which is then incremented.
-
-        Parameters
-        ----------
-        id : str
-            Component ID.
-        cls : type, optional
-            Hint for the class of a new object.
-        kwargs
-            Passed to the constructor of :class:`.Component`, or a Component subclass if
-            :attr:`.components` is overridden in a subclass of ComponentList.
-        """
-        try:
-            return self.get(id)
-        except KeyError:
-            pass  # No match
-
-        # Create a new object of a class:
-        # 1. Given by the cls argument,
-        # 2. Specified by a subclass' _default_type attribute, or
-        # 3. Hinted for a subclass' components attribute.
-        cls = cls or self._Component
-        component = cls(id=id, **kwargs)
-
-        if "order" not in kwargs and hasattr(component, "order"):
-            # For automatically created dimensions, give a serial value to the order
-            # property
-            component.order = self.auto_order
-            self.auto_order += 1
-
-        self.components.append(component)
-        return component
-
-    # Properties of components
-    def __getitem__(self, key) -> CT:
-        """Convenience access to components."""
-        return self.components[key]
-
-    def __len__(self):
-        return len(self.components)
-
-    def __iter__(self):
-        return iter(self.components)
-
-    def __repr__(self):
-        return "<{}: {}>".format(
-            self.__class__.__name__, "; ".join(map(repr, self.components))
-        )
-
-    def __eq__(self, other):
-        """ID equal and same components occur in same order."""
-        return super().__eq__(other) and all(
-            s == o for s, o in zip(self.components, other.components)
-        )
-
-    # Must be reset because __eq__ is defined
-    def __hash__(self):
-        return super().__hash__()
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two ComponentLists are the same if:
-
-        - :meth:`.IdentifiableArtefact.compare` is :obj:`True`, and
-        - corresponding :attr:`components` compare equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare` and :meth:`.IdentifiableArtefact.compare`.
-        """
-        return super().compare(other, strict) and all(
-            c.compare(other.get(c.id), strict) for c in self.components
-        )
-
-
-# §4.3: Codelist
-
-
-@dataclass
-@NameableArtefact._preserve("eq", "hash", "repr")
-class Code(Item["Code"]):
-    """SDMX 2.1 Code."""
-
-    __post_init__ = Item.__post_init__
-
-
-class Codelist(ItemScheme[Code]):
-    _Item = Code
-
-
-# §10.2: Constraint inheritance
-
-
-class ConstrainableArtefact:
-    """SDMX 2.1 ConstrainableArtefact."""
-
-
-class DataConsumer(Organisation, ConstrainableArtefact):
-    """SDMX 2.1 DataConsumer."""
-
-
-class DataProvider(Organisation, ConstrainableArtefact):
-    """SDMX 2.1 DataProvider."""
-
-
-class DataConsumerScheme(ItemScheme[DataConsumer], OrganisationScheme):
-    _Item = DataConsumer
-
-
-class DataProviderScheme(ItemScheme[DataProvider], OrganisationScheme):
-    _Item = DataProvider
-
-
 # §10.3: Constraints
-
-
-@dataclass
-class ConstraintRole:
-    #:
-    role: ConstraintRoleType
 
 
 @dataclass
@@ -317,6 +151,11 @@ class DataKeySet:
 
 @dataclass
 class Constraint(MaintainableArtefact):
+    """SDMX 2.1 Constraint.
+
+    For SDMX 3.0, see :class:`.v30.Constraint`.
+    """
+
     # NB the spec gives 1..* for this attribute, but this implementation allows only 1
     role: Optional[ConstraintRole] = None
     #: :class:`.DataKeySet` included in the Constraint.
@@ -328,31 +167,6 @@ class Constraint(MaintainableArtefact):
             raise NotImplementedError("Constraint does not contain a DataKeySet")
 
         return value in self.data_content_keys
-
-
-class SelectionValue:
-    """SDMX 2.1 SelectionValue."""
-
-
-@dataclass
-class MemberValue(SelectionValue):
-    #:
-    value: str
-    #:
-    cascade_values: Optional[bool] = None
-
-    def __hash__(self):
-        return hash(self.value)
-
-    def __eq__(self, other):
-        return self.value == (other.value if isinstance(other, KeyValue) else other)
-
-    def __repr__(self):
-        return f"{repr(self.value)}" + (" + children" if self.cascade_values else "")
-
-
-class TimeRangeValue(SelectionValue):
-    """SDMX 2.1 TimeRangeValue."""
 
 
 @dataclass
@@ -394,28 +208,6 @@ class MemberSelection:
 
 # NB CubeRegion and ContentConstraint are moved below, after Dimension, since CubeRegion
 #   references that class.
-
-
-@dataclass
-class AttachmentConstraint(Constraint):
-    #:
-    attachment: Set[ConstrainableArtefact] = field(default_factory=set)
-
-
-# §5.2: Data Structure Definition
-
-
-@dataclass
-@IdentifiableArtefact._preserve("eq", "hash", "repr")
-class DimensionComponent(Component):
-    #:
-    order: Optional[int] = None
-
-
-@dataclass
-@IdentifiableArtefact._preserve("eq", "hash", "repr")
-class Dimension(DimensionComponent):
-    """SDMX 2.1 Dimension."""
 
 
 # (continued from §10.3)
@@ -486,7 +278,7 @@ class CubeRegion:
 # (continued from §10.3)
 @dataclass
 @NameableArtefact._preserve("repr")
-class ContentConstraint(Constraint):
+class ContentConstraint(Constraint, common.BaseContentConstraint):
     #: :class:`CubeRegions <.CubeRegion>` included in the ContentConstraint.
     data_content_region: List[CubeRegion] = field(default_factory=list)
     #:
@@ -529,24 +321,27 @@ class ContentConstraint(Constraint):
         yield from obj.iter_keys(constraint=self, dims=dims)
 
 
-class TimeDimension(DimensionComponent):
-    """SDMX 2.1 TimeDimension."""
-
-
 class MeasureDimension(DimensionComponent):
-    """SDMX 2.1 MeasureDimension."""
+    """SDMX 2.1 MeasureDimension.
+
+    This class is not present in SDMX 3.0.
+    """
 
 
 class PrimaryMeasure(Component):
-    """SDMX 2.1 PrimaryMeasure."""
+    """SDMX 2.1 PrimaryMeasure.
+
+    This class is not present in SDMX 3.0; see instead :class:`.v30.Measure`.
+    """
 
 
 class MeasureDescriptor(ComponentList[PrimaryMeasure]):
+    """SDMX 2.1 MeasureDescriptor.
+
+    For SDMX 3.0; see instead :class:`.v30.MeasureDescriptor`.
+    """
+
     _Component = PrimaryMeasure
-
-
-class AttributeRelationship:
-    pass
 
 
 class _NoSpecifiedRelationship(AttributeRelationship):
@@ -565,118 +360,8 @@ class _PrimaryMeasureRelationship(AttributeRelationship):
 PrimaryMeasureRelationship = _PrimaryMeasureRelationship()
 
 
-@dataclass
-class DimensionRelationship(AttributeRelationship):
-    #:
-    dimensions: List[DimensionComponent] = field(default_factory=list)
-    #: NB the IM says "0..*" here in a diagram, but the text does not match.
-    group_key: Optional["GroupDimensionDescriptor"] = None
-
-
-@dataclass
-class GroupRelationship(AttributeRelationship):
-    #: “Retained for compatibility reasons” in SDMX 2.1 versus 2.0; not used by
-    #: :mod:`sdmx`.
-    group_key: Optional["GroupDimensionDescriptor"] = None
-
-
-@dataclass
-@NameableArtefact._preserve("eq", "hash")
-class DataAttribute(Component):
-    #:
-    related_to: Optional[AttributeRelationship] = None
-    #:
-    usage_status: Optional[UsageStatus] = None
-
-
 class ReportingYearStartDay(DataAttribute):
     pass
-
-
-class AttributeDescriptor(ComponentList[DataAttribute]):
-    _Component = DataAttribute
-
-
-@dataclass(repr=False)
-class Structure(MaintainableArtefact):
-    #:
-    grouping: Optional[ComponentList] = None
-
-
-class StructureUsage(MaintainableArtefact):
-    #:
-    structure: Optional[Structure] = None
-
-
-@dataclass
-class DimensionDescriptor(ComponentList[DimensionComponent]):
-    """Describes a set of dimensions.
-
-    IM: “An ordered set of metadata concepts that, combined, classify a statistical
-    series, and whose values, when combined (the key) in an instance such as a data set,
-    uniquely identify a specific observation.”
-
-    :attr:`.components` is a :class:`list` (ordered) of :class:`Dimension`,
-    :class:`MeasureDimension`, and/or :class:`TimeDimension`.
-    """
-
-    _Component = Dimension
-
-    def assign_order(self):
-        """Assign the :attr:`.DimensionComponent.order` attribute.
-
-        The Dimensions in :attr:`components` are numbered, starting from 1.
-        """
-        for i, component in enumerate(self.components):
-            component.order = i + 1
-
-    def order_key(self, key):
-        """Return a key ordered according to the DSD."""
-        result = key.__class__()
-        for dim in sorted(self.components, key=attrgetter("order")):
-            try:
-                result[dim.id] = key[dim.id]
-            except KeyError:
-                continue
-        return result
-
-    @classmethod
-    def from_key(cls, key):
-        """Create a new DimensionDescriptor from a *key*.
-
-        For each :class:`KeyValue` in the *key*:
-
-        - A new :class:`Dimension` is created.
-        - A new :class:`Codelist` is created, containing the
-          :attr:`KeyValue.value`.
-
-        Parameters
-        ----------
-        key : :class:`Key` or :class:`GroupKey` or :class:`SeriesKey`
-        """
-        dd = cls()
-        for order, (id, kv) in enumerate(key.values.items()):
-            cl = Codelist(id=id)
-            cl.append(Code(id=str(kv.value)))
-            dd.components.append(
-                Dimension(
-                    id=id,
-                    local_representation=Representation(enumerated=cl),
-                    order=order,
-                )
-            )
-        return dd
-
-
-class GroupDimensionDescriptor(DimensionDescriptor):
-    #:
-    attachment_constraint: Optional[bool] = None
-    #:
-    constraint: Optional[AttachmentConstraint] = None
-
-    def assign_order(self):
-        """:meth:`assign_order` has no effect for GroupDimensionDescriptor."""
-        pass
 
 
 class _NullConstraintClass:
@@ -690,7 +375,9 @@ _NullConstraint = _NullConstraintClass()
 
 
 @dataclass(repr=False)
-class DataStructureDefinition(Structure, ConstrainableArtefact):
+class DataStructureDefinition(
+    Structure, ConstrainableArtefact, common.BaseDataStructureDefinition
+):
     """SDMX 2.1 DataStructureDefinition (‘DSD’)."""
 
     #: A :class:`AttributeDescriptor` that describes the attributes of the data
@@ -941,27 +628,10 @@ class DataStructureDefinition(Structure, ConstrainableArtefact):
 
         return key
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two DataStructureDefinitions are the same if each of :attr:`attributes`,
-        :attr:`dimensions`, :attr:`measures`, and :attr:`group_dimensions` compares
-        equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :meth:`.ComponentList.compare`.
-        """
-        return all(
-            getattr(self, attr).compare(getattr(other, attr), strict)
-            for attr in ("attributes", "dimensions", "measures", "group_dimensions")
-        )
-
 
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
-class DataflowDefinition(StructureUsage, ConstrainableArtefact):
+class DataflowDefinition(common.BaseDataflowDefinition, ConstrainableArtefact):
     #:
     structure: DataStructureDefinition = field(default_factory=DataStructureDefinition)
 
@@ -992,7 +662,7 @@ def value_for_dsd_ref(kind, args, kwargs):
 
 
 @dataclass
-class KeyValue:
+class KeyValue(BaseKeyValue):
     """One value in a multi-dimensional :class:`Key`."""
 
     #:
@@ -1384,7 +1054,7 @@ class Observation:
 
 
 @dataclass
-class DataSet(AnnotableArtefact):
+class DataSet(common.BaseDataSet):
     # SDMX-IM features
 
     #:
@@ -1514,18 +1184,10 @@ class StructureSpecificTimeSeriesDataSet(DataSet):
     """
 
 
-class _AllDimensions:
-    pass
-
-
-#: A singleton.
-AllDimensions = _AllDimensions()
-
-
 # §7.3 Metadata Structure Definition
 
 
-class MetadataflowDefinition(StructureUsage, ConstrainableArtefact):
+class MetadataflowDefinition(common.BaseMetadataflowDefinition, ConstrainableArtefact):
     """SDMX 2.1 MetadataflowDefinition."""
 
 
@@ -1555,57 +1217,11 @@ class RESTDatasource(QueryDatasource):
 
 
 @dataclass
-class ProvisionAgreement(MaintainableArtefact, ConstrainableArtefact):
+class ProvisionAgreement(common.BaseProvisionAgreement, ConstrainableArtefact):
     #:
     structure_usage: Optional[StructureUsage] = None
     #:
     data_provider: Optional[DataProvider] = None
-
-
-#: The SDMX-IM defines 'packages'; these are used in URNs.
-PACKAGE = dict()
-
-_PACKAGE_CLASS: Dict[str, set] = {
-    "base": {Agency, AgencyScheme, DataProvider, DataProviderScheme},
-    "categoryscheme": {Category, Categorisation, CategoryScheme},
-    "codelist": {Code, Codelist},
-    "conceptscheme": {Concept, ConceptScheme},
-    "datastructure": {DataflowDefinition, DataStructureDefinition, StructureUsage},
-    "metadatastructure": {MetadataflowDefinition, MetadataStructureDefinition},
-    "registry": {ContentConstraint, ProvisionAgreement},
-}
-
-for package, classes in _PACKAGE_CLASS.items():
-    PACKAGE.update({cls: package for cls in classes})
-
-
-@lru_cache()
-def get_class(name: Union[str, Resource], package=None) -> Optional[Type]:
-    """Return a class for `name` and (optional) `package` names."""
-    if isinstance(name, Resource):
-        # Convert a Resource enumeration value to a string
-
-        # Expected class name in lower case; maybe just the enumeration value
-        match = Resource.class_name(name).lower()
-
-        # Match class names in lower case. If no match or >2, only() returns None, and
-        # KeyError occurs below
-        name = only(filter(lambda g: g.lower() == match, globals().keys()))
-
-    name = {
-        "Dataflow": "DataflowDefinition",
-        "Metadataflow": "MetadataflowDefinition",
-    }.get(name, name)
-
-    try:
-        cls = globals()[name]
-    except KeyError:
-        return None
-
-    if package and package != PACKAGE[cls]:
-        raise ValueError(f"Package {repr(package)} invalid for {name}")
-
-    return cls
 
 
 def parent_class(cls):
@@ -1614,12 +1230,23 @@ def parent_class(cls):
     E.g. if `cls` is :class:`.PrimaryMeasure`, returns :class:`.MeasureDescriptor`.
     """
     return {
-        Agency: AgencyScheme,
-        Category: CategoryScheme,
-        Code: Codelist,
-        Concept: ConceptScheme,
-        Dimension: DimensionDescriptor,
-        DataProvider: DataProviderScheme,
+        common.Agency: common.AgencyScheme,
+        common.Category: common.CategoryScheme,
+        Code: common.Codelist,
+        common.Concept: common.ConceptScheme,
+        common.Dimension: DimensionDescriptor,
+        DataProvider: common.DataProviderScheme,
         GroupDimensionDescriptor: DataStructureDefinition,
         PrimaryMeasure: MeasureDescriptor,
     }[cls]
+
+
+def __dir__():
+    return sorted(__all__ + common.__all__)
+
+
+def __getattr__(name):
+    return getattr(common, name)
+
+
+get_class = common.ClassFinder(__name__)

@@ -1,54 +1,19 @@
 from warnings import warn
 
-from . import v21
-from .common import (
-    ActionType,
-    Agency,
-    AgencyScheme,
-    AnnotableArtefact,
-    Categorisation,
-    Category,
-    CategoryScheme,
-    Concept,
-    ConceptScheme,
-    ConstraintRoleType,
-    Contact,
-    IdentifiableArtefact,
-    Item,
-    ItemScheme,
-    MaintainableArtefact,
-    Organisation,
-    OrganisationScheme,
-    Representation,
-    UsageStatus,
-)
-from .internationalstring import InternationalString
+from . import common, v21
 
-__all__ = [
-    "ActionType",
-    "Agency",
-    "AgencyScheme",
-    "AnnotableArtefact",
-    "Categorisation",
-    "Category",
-    "CategoryScheme",
-    "Concept",
-    "ConceptScheme",
-    "ConstraintRoleType",
-    "Contact",
-    "IdentifiableArtefact",
-    "InternationalString",
-    "Item",
-    "ItemScheme",
-    "MaintainableArtefact",
-    "Organisation",
-    "OrganisationScheme",
-    "Representation",
-    "UsageStatus",
-]
+
+def __dir__():
+    return dir(common)
 
 
 def __getattr__(name):
+    # Common classes are available directly
+    try:
+        return getattr(common, name)
+    except AttributeError:
+        pass
+
     try:
         result = getattr(v21, name)
     except AttributeError:
