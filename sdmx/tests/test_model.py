@@ -1,11 +1,105 @@
 import pytest
 
-from sdmx import Resource
-from sdmx.model import v21 as model
+from sdmx import Resource, model
+from sdmx.model import v21, v30
+
+CLASSES = [
+    # Appearing in .model.common
+    "Annotation",
+    "AnnotableArtefact",
+    "IdentifiableArtefact",
+    "NameableArtefact",
+    "VersionableArtefact",
+    "MaintainableArtefact",
+    "Item",
+    "ItemScheme",
+    "FacetType",
+    "Facet",
+    "Representation",
+    "Code",
+    "Codelist",
+    "ISOConceptReference",
+    "Concept",
+    "ConceptScheme",
+    "Component",
+    "ComponentList",
+    "Category",
+    "CategoryScheme",
+    "Categorisation",
+    "Contact",
+    "Organisation",
+    "Agency",
+    "OrganisationScheme",
+    "AgencyScheme",
+    "Structure",
+    "StructureUsage",
+    "DimensionComponent",
+    "Dimension",
+    "TimeDimension",
+    "DimensionDescriptor",
+    "GroupDimensionDescriptor",
+    "AttributeRelationship",
+    "DimensionRelationship",
+    "GroupRelationship",
+    "DataAttribute",
+    "AttributeDescriptor",
+    "ConstraintRole",
+    "ConstrainableArtefact",
+    "SelectionValue",
+    "MemberValue",
+    "TimeRangeValue",
+    "DataConsumer",
+    "DataProvider",
+    "DataConsumerScheme",
+    "DataProviderScheme",
+    # Appearing in model.InternationalString
+    "DEFAULT_LOCALE",
+    "InternationalString",
+    # Classes that are distinct in .model.v21 versus .model.v30
+    "MeasureDescriptor",
+    "DataStructureDefinition",
+]
+
+V21_ONLY = [
+    "PrimaryMeasure",
+]
+
+V30_ONLY = [
+    "CodelistExtension",
+    "GeoRefCode",
+    "GeoGridCode",
+    "GeoFeatureSetCode",
+    "GeoCodelist",
+    "GeographicCodelist",
+    "GeoGridCodelist",
+    "ValueItem",
+    "ValueList",
+    "MetadataProvider",
+    "MetadataProviderScheme",
+    "Measure",
+    "CodingFormat",
+    "Level",
+    "HierarchicalCode",
+    "Hierarchy",
+    "HierarchyAssociation",
+    "Constraint",
+    "DataConstraint",
+    "MetadataConstraint",
+]
+
+
+@pytest.mark.parametrize("module, extra", [(v21, V21_ONLY), (v30, V30_ONLY)])
+def test_complete(module, extra):
+    """:mod:`.model.v21` and :mod:`model.v30` each expose a complete set of classes."""
+    # Each class is available using module.__getattr__
+    for name in CLASSES:
+        getattr(module, name)
+
+    assert set(CLASSES + extra) == set(dir(module))
 
 
 @pytest.mark.parametrize(
-    "args,expected",
+    "args, expected",
     [
         pytest.param(
             dict(name="Category", package="codelist"),
@@ -20,13 +114,13 @@ from sdmx.model import v21 as model
         (dict(name=Resource.categoryscheme), model.CategoryScheme),
         (dict(name=Resource.codelist), model.Codelist),
         (dict(name=Resource.conceptscheme), model.ConceptScheme),
-        (dict(name=Resource.contentconstraint), model.ContentConstraint),
-        (dict(name=Resource.dataflow), model.DataflowDefinition),
+        (dict(name=Resource.contentconstraint), v21.ContentConstraint),
+        (dict(name=Resource.dataflow), v21.DataflowDefinition),
         (dict(name=Resource.organisationscheme), model.OrganisationScheme),
-        (dict(name=Resource.provisionagreement), model.ProvisionAgreement),
+        (dict(name=Resource.provisionagreement), v21.ProvisionAgreement),
         pytest.param(
             dict(name=Resource.structure),
-            model.DataStructureDefinition,
+            v21.DataStructureDefinition,
             marks=pytest.mark.skip(reason="Ambiguous value, not implemented"),
         ),
     ],
