@@ -328,9 +328,9 @@ class DataMessage(Message):
     """
 
     #: :class:`list` of :class:`.DataSet`.
-    data: List[model.DataSet] = field(default_factory=list)
+    data: List[model.BaseDataSet] = field(default_factory=list)
     #: :class:`.DataflowDefinition` that contains the data.
-    dataflow: model.DataflowDefinition = field(default_factory=model.DataflowDefinition)
+    dataflow: Optional[model.BaseDataflowDefinition] = None
     #: The "dimension at observation level".
     observation_dimension: Optional[
         Union[
@@ -339,6 +339,13 @@ class DataMessage(Message):
             List[model.DimensionComponent],
         ]
     ] = None
+
+    def __post_init__(self):
+        if self.dataflow is None:
+            # Create a default of the appropriate class
+            self.dataflow = {Version["2.1"]: v21, Version["3.0.0"]: v30}[
+                self.version
+            ].get_class("DataflowDefinition")()
 
     # Convenience access
     @property
