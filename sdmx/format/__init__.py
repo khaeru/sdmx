@@ -99,24 +99,30 @@ class MediaType:
 
 #: SDMX formats. Each record is an instance of :class:`Format`.
 MEDIA_TYPES = [
+    # SDMX-ML
+    # Version 2.1
     MediaType("generic", "xml", "2.1", f.data),
     MediaType("genericdata", "xml", "2.1", f.data),
-    MediaType("structurespecificdata", "xml", "2.1", f.data | f.ss),
-    MediaType("generictimeseriesdata", "xml", "2.1", f.data | f.ts),
-    MediaType("structurespecifictimeseriesdata", "xml", "2.1", f.data | f.ss | f.ts),
-    MediaType("structure", "xml", "2.1"),
-    MediaType("data", "xml", "3.0.0", f.data),
-    MediaType("structure", "xml", "3.0.0"),
-    MediaType("metadata", "xml", "2.0.0", f.data),
-    MediaType("schema", "xml", "2.1", f.meta),
     MediaType("genericmetadata", "xml", "2.1", f.data | f.meta),
+    MediaType("generictimeseriesdata", "xml", "2.1", f.data | f.ts),
+    MediaType("schema", "xml", "2.1", f.meta),
+    MediaType("structure", "xml", "2.1"),
+    MediaType("structurespecificdata", "xml", "2.1", f.data | f.ss),
     MediaType("structurespecificmetadata", "xml", "2.1", f.data | f.meta | f.ss),
+    MediaType("structurespecifictimeseriesdata", "xml", "2.1", f.data | f.ss | f.ts),
     # Non-standard: returned by e.g. BIS, IMF, INSEE, LSD, NB, SGR, UNICEF
     MediaType("", "xml", "2.1", full="application/xml"),
     # Non-standard
     MediaType("", "xml", "2.1", full="text/xml"),
-    # JSON formats
+    # Version 3.0.0
+    MediaType("data", "xml", "3.0.0", f.data),
+    MediaType("structure", "xml", "3.0.0"),
+    MediaType("metadata", "xml", "2.0.0", f.data),
+    #
+    # SDMX-JSON
+    # Version 1.0.0
     MediaType("data", "json", "1.0.0", f.data),
+    # Version 2.0.0
     MediaType("data", "json", "2.0.0", f.data),
     MediaType("structure", "json", "1.0.0"),
     MediaType("structure", "json", "2.0.0"),
@@ -127,8 +133,11 @@ MEDIA_TYPES = [
     MediaType("", "json", "1.0.0", f.data, full="draft-sdmx-json"),
     # Non-standard
     MediaType("", "json", "1.0.0", f.data, full="text/json"),
-    # CSV formats
+    #
+    # SDMX-CSV
+    # Version 1.0.0
     MediaType("data", "csv", "1.0.0", f.data),
+    # Version 2.0.0
     MediaType("metadata", "csv", "2.0.0", f.data),
 ]
 
