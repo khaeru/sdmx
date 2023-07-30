@@ -164,6 +164,10 @@ class MeasureDescriptor(ComponentList[Measure]):
     _Component = Measure
 
 
+class ObservationRelationship(common.AttributeRelationship):
+    """SDMX 3.0 ObservationRelationship."""
+
+
 @dataclass(repr=False)
 class DataStructureDefinition(Structure, common.BaseDataStructureDefinition):
     """SDMX 3.0 DataStructureDefinition (‘DSD’)."""
