@@ -7,6 +7,8 @@ from lxml.etree import QName
 
 from sdmx.model import common as model
 
+# Tags common to SDMX-ML 2.1 and 3.0
+# XML tag name and class name are the same
 CT1 = [
     "Agency",
     "AgencyScheme",
@@ -17,13 +19,22 @@ CT1 = [
     "Codelist",
     "Concept",
     "ConceptScheme",
+    "CustomType",
+    "CustomTypeScheme",
     "DataConsumer",
     "DataConsumerScheme",
     "DataProvider",
     "DataProviderScheme",
+    "NamePersonalisation",
+    "NamePersonalisationScheme",
+    "Ruleset",
+    "RulesetScheme",
     "TimeDimension",
+    "TransformationScheme",
+    "UserDefinedOperatorScheme",
 ]
 
+# XML tag name and class name differ
 CT2 = [
     (model.Agency, "mes:Receiver"),
     (model.Agency, "mes:Sender"),
@@ -31,6 +42,7 @@ CT2 = [
     (model.Dimension, "str:DimensionReference"),
     (model.Dimension, "str:GroupDimension"),
     (model.StructureUsage, "com:StructureUsage"),
+    (model.VTLMappingScheme, "str:VtlMappingScheme"),
 ]
 
 NS = {
