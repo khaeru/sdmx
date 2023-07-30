@@ -182,7 +182,7 @@ class Reference:
         if target_cls is None:
             print(f"{info = }")
 
-        self.maintainable = issubclass(target_cls, model.MaintainableArtefact)
+        self.maintainable = issubclass(target_cls, common.MaintainableArtefact)
 
         if self.maintainable:
             # MaintainableArtefact is the same as the target
@@ -194,7 +194,7 @@ class Reference:
         # Store
         self.cls = cls
         self.agency = (
-            model.Agency(id=info["agency"]) if info.get("agency", None) else _NO_AGENCY
+            common.Agency(id=info["agency"]) if info.get("agency", None) else _NO_AGENCY
         )
         self.id = info["id"]
         self.version = info.get("version", None)
@@ -265,7 +265,7 @@ class Reader(BaseReader):
     def read_message(
         self,
         source,
-        dsd: Optional[model.DataStructureDefinition] = None,
+        dsd: Optional[common.BaseDataStructureDefinition] = None,
         _events=None,
     ) -> message.Message:
         # Initialize stacks
@@ -649,12 +649,12 @@ def _message(reader, elem):
     # With 'dsd' argument, the message should be structure-specific
     if (
         "StructureSpecific" in elem.tag
-        and reader.get_single(model.DataStructureDefinition) is None
+        and reader.get_single(common.BaseDataStructureDefinition) is None
     ):
         log.warning(f"xml.Reader got no dsd=… argument for {QName(elem).localname}")
         ss_without_dsd = True
     elif "StructureSpecific" not in elem.tag and reader.get_single(
-        model.DataStructureDefinition
+        common.BaseDataStructureDefinition
     ):
         log.info("Use supplied dsd=… argument for non–structure-specific message")
 
@@ -722,7 +722,7 @@ def _header_structure(reader, elem):
     msg = reader.get_single(message.DataMessage)
 
     # Retrieve a DSD supplied to the parser, e.g. for a structure specific message
-    provided_dsd = reader.get_single(model.DataStructureDefinition)
+    provided_dsd = reader.get_single(common.BaseDataStructureDefinition)
 
     # Resolve the <com:Structure> child to a DSD, maybe is_external_reference=True
     header_dsd = reader.pop_resolved_ref("Structure")
