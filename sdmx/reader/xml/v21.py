@@ -1000,7 +1000,7 @@ def _itemscheme(reader: Reader, elem):
     iter_all = chain(*[iter(item) for item in reader.pop_all(cls._Item, subclass=True)])
 
     # Set of objects already added to `items`
-    seen = dict()
+    seen: Dict[Any, Any] = dict()
 
     # Flatten the list, with each item appearing only once
     for i in filter(lambda i: i not in seen, iter_all):
@@ -1725,7 +1725,7 @@ def _udo(reader: Reader, elem):
 @end("str:VtlMapping")
 def _vtlm(reader: Reader, elem):
     ref = reader.resolve(reader.pop_single(reader.Reference))
-    args = dict()
+    args: Dict[str, Any] = dict()
     if isinstance(ref, common.BaseDataflowDefinition):
         cls = model.VTLDataflowMapping
         args["dataflow_alias"] = ref
