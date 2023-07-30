@@ -214,6 +214,30 @@ class StructureMessage(Message):
     provisionagreement: DictLikeDescriptor[
         str, model.BaseProvisionAgreement
     ] = DictLikeDescriptor()
+
+    #: Collection of :class:`.CustomTypeScheme`.
+    custom_type_scheme: DictLikeDescriptor[
+        str, model.CustomTypeScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.NamePersonalisationScheme`.
+    name_personalisation_scheme: DictLikeDescriptor[
+        str, model.NamePersonalisationScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.RulesetScheme`.
+    ruleset_scheme: DictLikeDescriptor[str, model.RulesetScheme] = DictLikeDescriptor()
+    #: Collection of :class:`.VTLMappingScheme`.
+    vtl_mapping_scheme: DictLikeDescriptor[
+        str, model.VTLMappingScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.TransformationScheme`.
+    transformation_scheme: DictLikeDescriptor[
+        str, model.TransformationScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.UserDefinedOperatorScheme`.
+    user_defined_operator_scheme: DictLikeDescriptor[
+        str, model.UserDefinedOperatorScheme
+    ] = DictLikeDescriptor()
+
     #: Collection of :class:`.ValueList` (SDMX 3.0 only).
     valuelist: DictLikeDescriptor[str, v30.ValueList] = DictLikeDescriptor()
 
