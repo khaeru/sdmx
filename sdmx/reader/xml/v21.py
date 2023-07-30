@@ -162,17 +162,17 @@ class Reference:
     specific override for `cls`/`target_cls`.
     """
 
-    def __init__(self, elem, format, cls_hint=None):
+    def __init__(self, reader, elem, cls_hint=None):
         parent_tag = elem.tag
 
         info = self.info_from_element(elem)
 
         # Find the target class
-        target_cls = model.get_class(info["class"], info["package"])
+        target_cls = reader.model.get_class(info["class"], info["package"])
 
         if target_cls is None:
             # Try the parent tag name
-            target_cls = format.class_for_tag(parent_tag)
+            target_cls = reader.format.class_for_tag(parent_tag)
 
         if cls_hint and (target_cls is None or issubclass(cls_hint, target_cls)):
             # Hinted class is more specific than target_cls, or failed to find a target
@@ -189,7 +189,7 @@ class Reference:
             cls, info["id"] = target_cls, info["target_id"]
         else:
             # Get the class for the parent MaintainableArtefact
-            cls = model.parent_class(target_cls)
+            cls = reader.model.parent_class(target_cls)
 
         # Store
         self.cls = cls
@@ -491,7 +491,7 @@ class Reader(BaseReader):
         return self.resolve(self.pop_single(cls_or_name))
 
     def reference(self, elem, cls_hint=None):
-        return self.Reference(elem, format=self.format, cls_hint=cls_hint)
+        return self.Reference(self, elem, cls_hint=cls_hint)
 
     def resolve(self, ref):
         """Resolve the Reference instance `ref`, returning the referred object."""
@@ -737,7 +737,7 @@ def _header_structure(reader, elem):
         if header_su:
             # The header gives a StructureUsage object, but it really refers to a DSD
             su_dsd = reader.maintainable(
-                model.DataStructureDefinition,
+                reader.model.DataStructureDefinition,
                 None,
                 id=header_su.id,
                 maintainer=header_su.maintainer,
@@ -1128,11 +1128,11 @@ def _cl(reader, elem):
     # ComponentList e.g. so that AttributeRelationship can reference the
     # DimensionDescriptor
     attr = {
-        model.DimensionDescriptor: "dimensions",
-        model.AttributeDescriptor: "attributes",
-        model.MeasureDescriptor: "measures",
-        model.GroupDimensionDescriptor: "group_dimensions",
-    }.get(cl.__class__)
+        common.DimensionDescriptor: "dimensions",
+        common.AttributeDescriptor: "attributes",
+        reader.model.MeasureDescriptor: "measures",
+        common.GroupDimensionDescriptor: "group_dimensions",
+    }[cl.__class__]
     if attr == "group_dimensions":
         getattr(dsd, attr)[cl.id] = cl
     else:
@@ -1374,9 +1374,9 @@ def _dsd_start(reader, elem):
         pass
 
     # Get any external reference created earlier, or instantiate a new object.
-    dsd = reader.maintainable(model.DataStructureDefinition, elem)
+    dsd = reader.maintainable(reader.model.DataStructureDefinition, elem)
 
-    if dsd not in reader.stack[model.DataStructureDefinition]:
+    if dsd not in reader.stack[reader.model.DataStructureDefinition]:
         # A new object was created
         reader.push(dsd)
 
@@ -1413,7 +1413,7 @@ def _dfd(reader, elem):
         arg = dict(structure=structure)
 
     # Create first to collect names
-    return reader.maintainable(model.DataflowDefinition, elem, **arg)
+    return reader.maintainable(reader.model.DataflowDefinition, elem, **arg)
 
 
 # §5.4: Data Set
@@ -1579,7 +1579,7 @@ def _ds_start(reader, elem):
     dsd = reader.get_single(id)
     if not dsd:
         # Fall back to a DSD provided as an argument to read_message()
-        dsd = reader.get_single(model.DataStructureDefinition)
+        dsd = reader.get_single(reader.model.DataStructureDefinition)
 
         if not dsd:  # pragma: no cover
             raise RuntimeError("No DSD when creating DataSet")
