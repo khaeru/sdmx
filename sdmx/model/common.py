@@ -15,13 +15,14 @@ from typing import (
     List,
     MutableMapping,
     Optional,
+    Sequence,
     Type,
     TypeVar,
     Union,
 )
 
 from sdmx.rest import Resource
-from sdmx.util import compare, only
+from sdmx.util import compare, direct_fields, get_args, only
 
 from .internationalstring import (
     DEFAULT_LOCALE,
@@ -80,6 +81,20 @@ __all__ = [
     "DataProvider",
     "DataConsumerScheme",
     "DataProviderScheme",
+    "CustomType",
+    "CustomTypeScheme",
+    "NamePersonalisation",
+    "NamePersonalisationScheme",
+    "Ruleset",
+    "RulesetScheme",
+    "Transformation",
+    "UserDefinedOperator",
+    "UserDefinedOperatorScheme",
+    "FromVTLSpaceKey",
+    "ToVTLSpaceKey",
+    "VTLConceptMapping",
+    "VTLDataflowMapping",
+    "TransformationScheme",
 ]
 
 log = logging.getLogger(__name__)
@@ -1235,6 +1250,122 @@ class DataProviderScheme(OrganisationScheme[DataProvider]):
     _Item = DataProvider
 
 
+# SDMX 3.0 §15: Validation and Transformation Language
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
+class CustomType(Item["CustomType"]):
+    data_type: Optional[str] = None
+    null_value: Optional[str] = None
+    output_format: Optional[str] = None
+    vtl_literal_format: Optional[str] = None
+    vtl_scalar_type: Optional[str] = None
+
+
+class CustomTypeScheme(ItemScheme[CustomType]):
+    _Item = CustomType
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
+class NamePersonalisation(Item["NamePersonalisation"]):
+    vtl_default_name: Optional[str] = None
+
+
+class NamePersonalisationScheme(ItemScheme[NamePersonalisation]):
+    _Item = NamePersonalisation
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
+class Ruleset(Item["Ruleset"]):
+    definition: Optional[str] = None
+    scope: Optional[str] = None
+    type: Optional[str] = None
+
+
+class RulesetScheme(ItemScheme[Ruleset]):
+    _Item = Ruleset
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
+class Transformation(Item["Transformation"]):
+    expression: Optional[str] = None
+    result: Optional[str] = None
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
+class UserDefinedOperator(Item["UserDefinedOperator"]):
+    definition: Optional[str] = None
+
+
+class UserDefinedOperatorScheme(ItemScheme[UserDefinedOperator]):
+    _Item = UserDefinedOperator
+
+
+@dataclass
+class VTLSpaceKey:
+    key: str
+
+
+class FromVTLSpaceKey(VTLSpaceKey):
+    pass
+
+
+class ToVTLSpaceKey(VTLSpaceKey):
+    pass
+
+
+class VTLMapping(Item["VTLMapping"]):
+    pass
+
+
+# Mapping methods
+VTLtoSDMX = Enum("VTLtoSDMX", "basic unpivot m2a")
+SDMXtoVTL = Enum("SDMXtoVTL", "basic pivot basic-a2m pivot-a2m")
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
+class VTLConceptMapping(VTLMapping):
+    concept_alias: Optional[Concept] = None
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
+class VTLDataflowMapping(VTLMapping):
+    dataflow_alias: Optional["BaseDataflowDefinition"] = None
+    from_vtl_method: Sequence[VTLSpaceKey] = field(default_factory=list)
+    from_vtl_superspace: Optional[VTLSpaceKey] = None
+    to_vtl_method: Optional[SDMXtoVTL] = None
+    to_vtl_subspace: Sequence[VTLSpaceKey] = field(default_factory=list)
+
+
+class VTLMappingScheme(ItemScheme[VTLMapping]):
+    _Item = VTLMapping
+
+
+@dataclass
+class TransformationScheme(ItemScheme[Transformation]):
+    _Item = Transformation
+
+    custom_type_scheme: Optional[CustomTypeScheme] = None
+    name_personalisation_scheme: Optional[NamePersonalisationScheme] = None
+    ruleset_scheme: Optional[RulesetScheme] = None
+    user_defined_operator_scheme: Optional[UserDefinedOperatorScheme] = None
+    vtl_mapping_scheme: Optional[VTLMappingScheme] = None
+
+    def update_ref(self, ref):
+        for f in direct_fields(self.__class__):
+            if isinstance(ref, get_args(f.type)[0]):
+                setattr(self, f.name, ref)
+                return
+        raise TypeError(type(ref))
+
+
 # Abstract base classes
 # - In the order they appear in .v21
 class BaseContentConstraint:
@@ -1274,6 +1405,12 @@ _PACKAGE_CLASS: Dict[str, set] = {
     },
     "metadatastructure": {"MetadataflowDefinition", "MetadataStructureDefinition"},
     "registry": {"ContentConstraint", "ProvisionAgreement"},
+    "transformation": {
+        "CustomTypeScheme",
+        "NamePersonalisationScheme",
+        "RulesetScheme",
+        "UserDefinedOperatorScheme",
+    },
 }
 
 for package, classes in _PACKAGE_CLASS.items():
