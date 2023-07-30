@@ -10,10 +10,14 @@ from . import v21
 
 _VERSION = Version["3.0.0"]
 
-SKIP = (
-    "str:AgencySchemes str:ConceptSchemes str:GeographicCodelists str:GeoGridCodelists "
-    "str:ValueLists"
-)
+# In SDMX-ML 3.0, individual classes of ItemScheme are collected in separate XML
+# container elements. Skip all of these.
+SKIP = """
+    str:AgencySchemes str:ConceptSchemes str:CustomTypeSchemes str:GeographicCodelists
+    str:GeoGridCodelists str:NamePersonalisationSchemes str:RulesetSchemes
+    str:TransformationSchemes str:UserDefinedOperatorSchemes str:ValueLists
+    str:VtlMappingSchemes
+"""
 
 
 class Reference(v21.Reference):

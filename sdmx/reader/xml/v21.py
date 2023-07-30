@@ -51,11 +51,15 @@ SKIP = (
     # Key and observation values
     "gen:ObsDimension gen:ObsValue gen:Value "
     # Tags that are bare containers for other XML elements
-    "str:Categorisations str:CategorySchemes str:Codelists str:Concepts "
-    "str:ConstraintAttachment str:Constraints str:Dataflows "
-    "str:DataStructureComponents str:DataStructures str:HierarchicalCodelists "
-    "str:Metadataflows str:MetadataStructures str:None str:OrganisationSchemes "
-    "str:ProvisionAgreements str:StructureSets "
+    """
+    str:Categorisations str:CategorySchemes str:Codelists str:Concepts
+    str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
+    str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
+    str:HierarchicalCodelists str:Metadataflows str:MetadataStructures
+    str:NamePersonalisations str:None str:OrganisationSchemes str:ProvisionAgreements
+    str:Rulesets str:StructureSets str:ToVtlSubSpace str:Transformations
+    str:UserDefinedOperators str:VtlMappings
+    """
     # Contents of references
     ":Ref :URN"
 )
