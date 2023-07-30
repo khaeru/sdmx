@@ -631,7 +631,7 @@ class DataStructureDefinition(
 
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
-class DataflowDefinition(common.BaseDataflowDefinition, ConstrainableArtefact):
+class DataflowDefinition(common.BaseDataflowDefinition):
     #:
     structure: DataStructureDefinition = field(default_factory=DataStructureDefinition)
 

@@ -1245,7 +1245,7 @@ class BaseDataSet(AnnotableArtefact):
     pass
 
 
-class BaseDataflowDefinition(StructureUsage):
+class BaseDataflowDefinition(StructureUsage, ConstrainableArtefact):
     pass
 
 
