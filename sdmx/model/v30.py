@@ -185,6 +185,18 @@ class DataStructureDefinition(Structure, common.BaseDataStructureDefinition):
     __hash__ = IdentifiableArtefact.__hash__
 
 
+@dataclass(repr=False)
+@IdentifiableArtefact._preserve("hash")
+class DataflowDefinition(common.BaseDataflowDefinition):
+    #:
+    structure: DataStructureDefinition = field(default_factory=DataStructureDefinition)
+
+
+@dataclass
+class Observation:
+    pass
+
+
 # §8: Hierarchy
 
 
