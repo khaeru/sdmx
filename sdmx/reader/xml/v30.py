@@ -1,5 +1,6 @@
 """SDMX-ML 3.0.0 reader."""
 from itertools import product
+from typing import Any, Dict
 
 import sdmx.urn
 from sdmx.format import Version, list_media_types
@@ -42,13 +43,16 @@ class Reader(v21.Reader):
 
 v21.PARSE.update({k: None for k in product(v21.to_tags(SKIP), ["start", "end"])})
 
-
+# New qnames in SDMX-ML 3.0 parsed using existing methods from .reader.xml.v21
 v21.end("str:GeoCell str:GridDefinition")(v21._text)
 v21.end("str:GeographicCodelist str:ValueList")(v21._itemscheme)
 v21.start("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(
     v21._item_start
 )
-v21.end("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(v21._item)
+v21.end("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(
+    v21._item_end
+)
+v21.end("str:Measure")(v21._component)
 
 
 @v21.end("str:Codelist")

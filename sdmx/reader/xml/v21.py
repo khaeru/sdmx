@@ -843,9 +843,13 @@ def _structures(reader, elem):
 
 
 @end(
-    "com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN "
-    "com:Value mes:DataSetAction mes:DataSetID mes:Email mes:ID mes:Test mes:Timezone "
-    "str:Email str:Telephone str:URI"
+    """
+    com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN
+    com:Value mes:DataSetAction mes:DataSetID mes:Email mes:ID mes:Test mes:Timezone
+    str:DataType str:Email str:Expression str:NullValue str:OperatorDefinition
+    str:PersonalisedName str:Result str:RulesetDefinition str:Telephone str:URI
+    str:VtlDefaultName str:VtlScalarType
+    """
 )
 def _text(reader, elem):
     # If elem.text is None, push a sentinel value
@@ -908,7 +912,10 @@ def _a(reader, elem):
 
 
 @start(
-    "str:Agency str:Code str:Category str:Concept str:DataConsumer str:DataProvider",
+    """
+    str:Agency str:Code str:Category str:Concept str:CustomType str:DataConsumer
+    str:DataProvider
+    """,
     only=False,
 )
 def _item_start(reader, elem):
@@ -926,8 +933,13 @@ def _item_start(reader, elem):
     reader.stash("Name", "Description")
 
 
-@end("str:Agency str:Code str:Category str:DataConsumer str:DataProvider", only=False)
-def _item(reader, elem):
+@end(
+    """
+    str:Agency str:Code str:Category str:Concept str:DataConsumer str:DataProvider
+    """,
+    only=False,
+)
+def _item_end(reader: Reader, elem):
     try:
         # <str:DataProvider> may be a reference, e.g. in <str:ConstraintAttachment>
         item = reader.reference(elem, cls_hint=reader.class_for_tag(elem.tag))
@@ -966,11 +978,21 @@ def _item(reader, elem):
 
 
 @end(
-    "str:AgencyScheme str:Codelist str:ConceptScheme str:CategoryScheme "
-    "str:DataConsumerScheme str:DataProviderScheme"
+    """
+    str:AgencyScheme str:Codelist str:ConceptScheme str:CategoryScheme
+    str:CustomTypeScheme str:DataConsumerScheme str:DataProviderScheme
+    str:NamePersonalisationScheme str:RulesetScheme str:UserDefinedOperatorScheme
+    str:VtlMappingScheme
+    """
 )
-def _itemscheme(reader, elem):
-    cls = reader.class_for_tag(elem.tag)
+def _itemscheme(reader: Reader, elem):
+    try:
+        # <str:CustomTypeScheme> may be a reference, e.g. in <str:Transformation>
+        return reader.reference(elem, cls_hint=reader.class_for_tag(elem.tag))
+    except NotReference:
+        pass
+
+    cls: Type[common.ItemScheme] = reader.class_for_tag(elem.tag)
 
     is_ = reader.maintainable(cls, elem, is_partial=elem.attrib.get("isPartial"))
 
@@ -1029,7 +1051,7 @@ def _rep(reader, elem):
 
 @end("str:Concept", only=False)
 def _concept(reader, elem):
-    concept = _item(reader, elem)
+    concept = _item_end(reader, elem)
     concept.core_representation = reader.pop_single(common.Representation)
     return concept
 
@@ -1614,3 +1636,105 @@ def _pa(reader, elem):
         structure_usage=reader.pop_resolved_ref("StructureUsage"),
         data_provider=reader.pop_resolved_ref(Reference),
     )
+
+
+# §??: Validation and Transformation Language
+
+
+@end("str:CustomType", only=False)
+def _ct(reader: Reader, elem):
+    ct = _item_end(reader, elem)
+    ct.data_type = reader.pop_single("DataType")
+    ct.null_value = reader.pop_single("NullValue")
+    ct.vtl_scalar_type = reader.pop_single("VtlScalarType")
+    return ct
+
+
+@end("str:NamePersonalisation")
+def _np(reader: Reader, elem):
+    np = _item_end(reader, elem)
+    np.personalised_name = reader.pop_single("PersonalisedName")
+    np.vtl_default_name = reader.pop_single("VtlDefaultName")
+    return np
+
+
+@end("str:FromVtlMapping")
+def _vtlm_from(reader: Reader, elem):
+    return common.VTLtoSDMX[elem.attrib.get("method", "basic").lower()]
+
+
+@end("str:ToVtlMapping")
+def _vtlm_to(reader: Reader, elem):
+    return common.SDMXtoVTL[elem.attrib.get("method", "basic").lower()]
+
+
+@start("str:Key")
+def _vtl_sk(reader: Reader, elem):
+    cls = {
+        "FromVtlSuperSpace": model.FromVTLSpaceKey,
+        "ToVtlSubSpace": model.ToVTLSpaceKey,
+    }[QName(elem.getparent()).localname]
+
+    return cls(key=elem.text)
+
+
+@end("str:Ruleset")
+def _rs(reader: Reader, elem):
+    # TODO handle .scope, .type
+    return reader.nameable(
+        model.Ruleset, elem, definition=reader.pop_single("RulesetDefinition")
+    )
+
+
+@end("str:Transformation")
+def _trans(reader: Reader, elem):
+    # TODO handle .is_persistent
+    return reader.nameable(
+        model.Transformation,
+        elem,
+        expression=reader.pop_single("Expression"),
+        result=reader.pop_single("Result"),
+    )
+
+
+@end("str:TransformationScheme")
+def _ts(reader: Reader, elem):
+    ts = _itemscheme(reader, elem)
+
+    while True:
+        ref = reader.pop_single(reader.Reference)
+        try:
+            resolved = reader.resolve(ref)
+            ts.update_ref(resolved)
+        except TypeError:
+            reader.push(ref)
+            break
+
+    return ts
+
+
+@end("str:UserDefinedOperator")
+def _udo(reader: Reader, elem):
+    return reader.nameable(
+        model.UserDefinedOperator,
+        elem,
+        definition=reader.pop_single("OperatorDefinition"),
+    )
+
+
+@end("str:VtlMapping")
+def _vtlm(reader: Reader, elem):
+    ref = reader.resolve(reader.pop_single(reader.Reference))
+    args = dict()
+    if isinstance(ref, common.BaseDataflowDefinition):
+        cls = model.VTLDataflowMapping
+        args["dataflow_alias"] = ref
+        args["to_vtl_method"] = reader.pop_single(common.SDMXtoVTL)
+        args["to_vtl_subspace"] = reader.pop_all(common.ToVTLSpaceKey)
+        args["from_vtl_method"] = reader.pop_single(common.VTLtoSDMX)
+        args["from_vtl_superspace"] = reader.pop_all(common.FromVTLSpaceKey)
+    else:
+        cls = model.VTLConceptMapping
+        args["concept_alias"] = ref
+
+    return reader.nameable(cls, elem, **args)

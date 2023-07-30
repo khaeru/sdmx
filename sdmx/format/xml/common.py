@@ -38,6 +38,8 @@ CT1 = [
 CT2 = [
     (model.Agency, "mes:Receiver"),
     (model.Agency, "mes:Sender"),
+    (model.Concept, "str:ConceptIdentity"),
+    (model.Codelist, "str:Enumeration"),  # This could possibly be ItemScheme
     (model.Dimension, "str:Dimension"),  # Order matters
     (model.Dimension, "str:DimensionReference"),
     (model.Dimension, "str:GroupDimension"),
