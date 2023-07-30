@@ -311,6 +311,11 @@ class StructureMessage(Message):
 
         return candidates[0] if len(candidates) == 1 else None
 
+    def iter_collections(self):
+        """Iterate over collections."""
+        for f in direct_fields(self.__class__):
+            yield f.name, get_args(f.type)[1]
+
     def objects(self, cls):
         """Get a reference to the attribute for objects of type `cls`.
 
