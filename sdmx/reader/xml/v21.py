@@ -20,6 +20,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
     Tuple,
     Type,
     Union,
@@ -36,7 +37,6 @@ from sdmx.exceptions import XMLParseError  # noqa: F401
 from sdmx.format import Version, list_media_types
 from sdmx.model import common
 from sdmx.model import v21 as model
-from sdmx.model import v30
 from sdmx.reader.base import BaseReader
 
 log = logging.getLogger(__name__)
@@ -454,7 +454,7 @@ class Reader(BaseReader):
         else:
             return next(iter(results.values()))
 
-    def pop_all(self, cls_or_name: Union[Type, str], subclass=False) -> Iterable:
+    def pop_all(self, cls_or_name: Union[Type, str], subclass=False) -> Sequence:
         """Pop all objects from stack *cls_or_name* and return.
 
         If `cls_or_name` is a class and `subclass` is :obj:`True`; return all objects in
@@ -885,7 +885,7 @@ def _localization(reader, elem):
     "str:DimensionReference str:Parent str:Source str:Structure str:StructureUsage "
     "str:Target str:Enumeration"
 )
-def _ref(reader, elem):
+def _ref(reader: Reader, elem):
     cls_hint = None
     if "Parent" in elem.tag:
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
@@ -938,7 +938,7 @@ def _item_start(reader, elem):
 def _item(reader, elem):
     try:
         # <str:DataProvider> may be a reference, e.g. in <str:ConstraintAttachment>
-        item = reader.reference(elem)
+        item = reader.reference(elem, cls_hint=reader.class_for_tag(elem.tag))
     except NotReference:
         pass
     else:
@@ -983,7 +983,7 @@ def _itemscheme(reader, elem):
     is_ = reader.maintainable(cls, elem, is_partial=elem.attrib.get("isPartial"))
 
     # Iterate over all Item objects *and* their children
-    iter_all = chain(*[iter(item) for item in reader.pop_all(cls._Item)])
+    iter_all = chain(*[iter(item) for item in reader.pop_all(cls._Item, subclass=True)])
 
     # Set of objects already added to `items`
     seen = dict()
@@ -1049,7 +1049,7 @@ def _concept(reader, elem):
     "str:Attribute str:Dimension str:GroupDimension str:MeasureDimension "
     "str:PrimaryMeasure str:TimeDimension"
 )
-def _component(reader, elem):
+def _component(reader: Reader, elem):
     try:
         # May be a reference
         return reader.reference(elem)
@@ -1071,7 +1071,7 @@ def _component(reader, elem):
     # DataAttribute only
     ar = reader.pop_all(model.AttributeRelationship, subclass=True)
     if len(ar):
-        assert len(ar) == 1
+        assert len(ar) == 1, ar
         args["related_to"] = ar[0]
 
     if cls is model.PrimaryMeasure and "id" not in elem.attrib:
@@ -1085,7 +1085,7 @@ def _component(reader, elem):
 
 
 @end("str:AttributeList str:DimensionList str:Group str:MeasureList")
-def _cl(reader, elem):
+def _cl(reader: Reader, elem):
     try:
         # <str:Group> may be a reference
         return reader.reference(elem, cls_hint=model.GroupDimensionDescriptor)
@@ -1102,7 +1102,7 @@ def _cl(reader, elem):
     # Determine the class
     localname = QName(elem).localname
     if localname == "Group":
-        cls = model.GroupDimensionDescriptor
+        cls: Type = model.GroupDimensionDescriptor
 
         # Replace components with references
         args["components"] = [
@@ -1366,7 +1366,7 @@ def _ar(reader, elem):
 
 
 @start("str:DataStructure", only=False)
-def _dsd_start(reader, elem):
+def _dsd_start(reader: Reader, elem):
     try:
         # <str:DataStructure> may be a reference, e.g. in <str:ConstraintAttachment>
         return reader.reference(elem)
@@ -1396,7 +1396,7 @@ def _dsd_end(reader, elem):
 
 
 @end("str:Dataflow str:Metadataflow")
-def _dfd(reader, elem):
+def _dfd(reader: Reader, elem):
     try:
         # <str:Dataflow> may be a reference, e.g. in <str:ConstraintAttachment>
         return reader.reference(elem)
