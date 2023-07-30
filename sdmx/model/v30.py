@@ -269,6 +269,24 @@ class MetadataConstraint(Constraint):
     pass
 
 
+def parent_class(cls):
+    """Return the class that contains objects of type `cls`.
+
+    E.g. if `cls` is :class:`.PrimaryMeasure`, returns :class:`.MeasureDescriptor`.
+    """
+    # TODO reduce duplication with v21.parent_class()
+    return {
+        common.Agency: common.AgencyScheme,
+        common.Category: common.CategoryScheme,
+        Code: common.Codelist,
+        common.Concept: common.ConceptScheme,
+        common.Dimension: DimensionDescriptor,
+        common.DataProvider: common.DataProviderScheme,
+        GroupDimensionDescriptor: DataStructureDefinition,
+        # PrimaryMeasure: MeasureDescriptor,
+    }[cls]
+
+
 def __dir__():
     return sorted(__all__ + common.__all__)
 
