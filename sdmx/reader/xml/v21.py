@@ -253,10 +253,10 @@ class Reader(BaseReader):
         # Initialize counter
         self._count = count()
         # Reference to the module defining the format read
-        self.format = getattr(
-            sdmx.format.xml,
-            {Version["2.1"]: "v21", Version["3.0.0"]: "v30"}[self.xml_version],
-        )
+        name = {Version["2.1"]: "v21", Version["3.0.0"]: "v30"}[self.xml_version]
+        self.format = getattr(sdmx.format.xml, name)
+        # Reference to the module defining the model read
+        self.model = getattr(sdmx.model, name)
 
     @classmethod
     def detect(cls, content):
