@@ -810,19 +810,7 @@ def _structures(reader, elem):
     msg = reader.get_single(message.StructureMessage)
 
     # Populate dictionaries by ID
-    for attr, name in (
-        ("categorisation", model.Categorisation),
-        ("category_scheme", model.CategoryScheme),
-        ("codelist", model.Codelist),
-        ("concept_scheme", model.ConceptScheme),
-        ("constraint", model.ContentConstraint),
-        ("dataflow", model.DataflowDefinition),
-        ("metadataflow", model.MetadataflowDefinition),
-        ("organisation_scheme", model.OrganisationScheme),
-        ("provisionagreement", model.ProvisionAgreement),
-        ("structure", reader.class_for_tag("str:DataStructure")),
-        ("valuelist", v30.ValueList),
-    ):
+    for attr, name in msg.iter_collections():
         target = getattr(msg, attr)
 
         # Store using maintainer, ID, and version
