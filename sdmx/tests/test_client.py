@@ -139,6 +139,8 @@ class TestClient:
         ):
             client.get("datastructure", validate=False, dry_run=True)
 
+    # TODO update or remove
+    @pytest.mark.skip(reason="SDMX 3.0.0 now supported")
     def test_v3_unsupported(self, testsource, client):
         """Client raises an exception when an SDMX 3.0 message is returned."""
         mock = requests_mock.Mocker()
