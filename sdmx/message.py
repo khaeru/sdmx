@@ -195,13 +195,9 @@ class StructureMessage(Message):
         str, model.BaseContentConstraint
     ] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
-    dataflow: DictLikeDescriptor[
-        str, model.BaseDataflowDefinition
-    ] = DictLikeDescriptor()
+    dataflow: DictLikeDescriptor[str, model.BaseDataflow] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
-    metadataflow: DictLikeDescriptor[
-        str, model.BaseMetadataflowDefinition
-    ] = DictLikeDescriptor()
+    metadataflow: DictLikeDescriptor[str, model.BaseMetadataflow] = DictLikeDescriptor()
     #: Collection of :class:`.DataStructureDefinition`.
     structure: DictLikeDescriptor[
         str, model.BaseDataStructureDefinition
@@ -212,7 +208,7 @@ class StructureMessage(Message):
     ] = DictLikeDescriptor()
     #: Collection of :class:`.ProvisionAgreement`.
     provisionagreement: DictLikeDescriptor[
-        str, model.BaseProvisionAgreement
+        str, model.ProvisionAgreement
     ] = DictLikeDescriptor()
 
     #: Collection of :class:`.CustomTypeScheme`.
@@ -359,7 +355,7 @@ class DataMessage(Message):
     #: :class:`list` of :class:`.DataSet`.
     data: List[model.BaseDataSet] = field(default_factory=list)
     #: :class:`.DataflowDefinition` that contains the data.
-    dataflow: Optional[model.BaseDataflowDefinition] = None
+    dataflow: Optional[model.BaseDataflow] = None
     #: The "dimension at observation level".
     observation_dimension: Optional[
         Union[
@@ -372,9 +368,10 @@ class DataMessage(Message):
     def __post_init__(self):
         if self.dataflow is None:
             # Create a default of the appropriate class
-            self.dataflow = {Version["2.1"]: v21, Version["3.0.0"]: v30}[
-                self.version
-            ].get_class("DataflowDefinition")()
+            self.dataflow = {
+                Version["2.1"]: v21.DataflowDefinition,
+                Version["3.0.0"]: v30.Dataflow,
+            }[self.version]()
 
     # Convenience access
     @property
