@@ -58,13 +58,15 @@ start(
 )(None)
 
 # New qnames in SDMX-ML 3.0 parsed using existing methods from .reader.xml.v21
-end("str:GeoCell str:GridDefinition")(v21._text)
+end("str:GeoCell str:GridDefinition str:Value")(v21._text)
 end("str:GeographicCodelist str:ValueList")(v21._itemscheme)
 start("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(
     v21._item_start
 )
 end("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(v21._item_end)
 end("str:Measure")(v21._component)
+end("str:DataConstraint")(v21._cc)
+end("str:KeyValue")(v21._ms)
 
 
 @end("str:Codelist")
@@ -94,7 +96,7 @@ def _code_selection(reader, elem):
 
 @end("str:MemberValue")
 def _mv(reader, elem):
-    return common.MemberValue(value=elem.text)
+    return reader.model.MemberValue(value=elem.text)
 
 
 @end("str:GeoGridCodelist")
