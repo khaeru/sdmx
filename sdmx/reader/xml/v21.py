@@ -5,19 +5,19 @@
 # - Reference and Reader classes.
 # - Parser functions for sdmx.message classes, in the same order as message.py
 # - Parser functions for sdmx.model classes, in the same order as model.py
-
 import logging
 import re
 from collections import ChainMap, defaultdict
 from copy import copy
-from itertools import chain, count, product
+from importlib import import_module
+from itertools import chain, count
 from sys import maxsize
 from typing import (
     Any,
+    ClassVar,
     Dict,
     Iterable,
     Iterator,
-    List,
     Mapping,
     Optional,
     Sequence,
@@ -31,6 +31,7 @@ from dateutil.parser import isoparse
 from lxml import etree
 from lxml.etree import QName
 
+import sdmx.format.xml
 import sdmx.urn
 from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
@@ -41,28 +42,6 @@ from sdmx.reader.base import BaseReader
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-_VERSION = Version["2.1"]
-
-PARSE = {}
-
-SKIP = (
-    "com:Annotations com:Footer footer:Message "
-    # Key and observation values
-    "gen:ObsDimension gen:ObsValue gen:Value "
-    # Tags that are bare containers for other XML elements
-    """
-    str:Categorisations str:CategorySchemes str:Codelists str:Concepts
-    str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
-    str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
-    str:HierarchicalCodelists str:Metadataflows str:MetadataStructures
-    str:NamePersonalisations str:None str:OrganisationSchemes str:ProvisionAgreements
-    str:Rulesets str:StructureSets str:ToVtlSubSpace str:Transformations
-    str:UserDefinedOperators str:VtlMappings
-    """
-    # Contents of references
-    ":Ref :URN"
-)
 
 TO_SNAKE_RE = re.compile("([A-Z]+)")
 
@@ -91,51 +70,6 @@ def setdefault_attrib(target, elem, *names):
 def to_snake(value):
     """Convert *value* from lowerCamelCase to snake_case."""
     return TO_SNAKE_RE.sub(r"_\1", value).lower()
-
-
-def start(names: str, only: bool = True):
-    """Decorator for a function that parses "start" events for XML elements."""
-
-    def decorator(func):
-        for tag in to_tags(names):
-            PARSE[tag, "start"] = func
-            if only:
-                PARSE[tag, "end"] = None
-        return func
-
-    return decorator
-
-
-def end(names: str, only: bool = True):
-    """Decorator for a function that parses "end" events for XML elements."""
-
-    def decorator(func):
-        for tag in to_tags(names):
-            PARSE[tag, "end"] = func
-            if only:
-                PARSE[tag, "start"] = None
-        return func
-
-    return decorator
-
-
-def to_tags(names: str) -> List[QName]:
-    """Convert `args` to a list of qualified names."""
-    from sdmx.format.xml import v21, v30
-
-    result: List[QName] = []
-    try:
-        result.extend(v21.qname(name) for name in names.split())
-    except KeyError:
-        pass
-    try:
-        result.extend(v30.qname(name) for name in names.split())
-    except KeyError:
-        pass
-    return result
-
-
-PARSE.update({k: None for k in product(to_tags(SKIP), ["start", "end"])})
 
 
 class NotReference(Exception):
@@ -244,11 +178,38 @@ class Reference:
         )
 
 
-class Reader(BaseReader):
-    media_types = list_media_types(base="xml", version=_VERSION)
-    suffixes = [".xml"]
-    xml_version = _VERSION
-    Reference = Reference
+class DispatchingReader(type, BaseReader):
+    """Populate the parser, format, and model attributes of :class:`.Reader."""
+
+    def __new__(cls, name, bases, dct):
+        x = super().__new__(cls, name, bases, dct)
+
+        # Empty dictionary
+        x.parser = {}
+
+        name = {Version["2.1"]: "v21", Version["3.0.0"]: "v30"}[x.xml_version]
+        x.format = import_module(f"sdmx.format.xml.{name}")
+        x.model = import_module(f"sdmx.model.{name}")
+
+        return x
+
+
+class Reader(metaclass=DispatchingReader):
+    # SDMX-ML version handled by this reader
+    xml_version: ClassVar = Version["2.1"]
+    media_types: ClassVar = list_media_types(base="xml", version=xml_version)
+    suffixes: ClassVar = [".xml"]
+
+    # Reference to the module defining the format read
+    format: ClassVar
+    # Reference to the module defining the model read
+    model: ClassVar
+
+    # Mapping from (QName, ["start", "end"]) to a function that parses the element/event
+    # or else None
+    parser: ClassVar
+
+    Reference: ClassVar = Reference
 
     # One-way counter for use in stacks
     _count = None
@@ -256,11 +217,8 @@ class Reader(BaseReader):
     def __init__(self):
         # Initialize counter
         self._count = count()
-        # Reference to the module defining the format read
-        name = {Version["2.1"]: "v21", Version["3.0.0"]: "v30"}[self.xml_version]
-        self.format = getattr(sdmx.format.xml, name)
-        # Reference to the module defining the model read
-        self.model = getattr(sdmx.model, name)
+
+    # BaseReader methods
 
     @classmethod
     def detect(cls, content):
@@ -302,7 +260,7 @@ class Reader(BaseReader):
             for event, element in events:
                 try:
                     # Retrieve the parsing function for this element & event
-                    func = PARSE[element.tag, event]
+                    func = self.parser[element.tag, event]
                 except KeyError:  # pragma: no cover
                     # Don't know what to do for this (element, event)
                     raise NotImplementedError(element.tag, event) from None
@@ -347,6 +305,34 @@ class Reader(BaseReader):
             raise RuntimeError(f"{uncollected} uncollected items")
 
         return cast(message.Message, self.get_single(message.Message, subclass=True))
+
+    @classmethod
+    def start(cls, names: str, only: bool = True):
+        """Decorator for a function that parses "start" events for XML elements."""
+
+        def decorator(func):
+            for tag in map(cls.format.qname, names.split()):
+                cls.parser[tag, "start"] = func
+                if only:
+                    cls.parser[tag, "end"] = None
+            return func
+
+        return decorator
+
+    @classmethod
+    def end(cls, names: str, only: bool = True):
+        """Decorator for a function that parses "end" events for XML elements."""
+
+        def decorator(func):
+            for tag in map(cls.format.qname, names.split()):
+                cls.parser[tag, "end"] = func
+                if only:
+                    cls.parser[tag, "start"] = None
+            return func
+
+        return decorator
+
+    # Stack handling
 
     def _clean(self):  # pragma: no cover
         """Remove empty stacks."""
@@ -410,14 +396,17 @@ class Reader(BaseReader):
             self.stack[s].update(values)
 
     # Delegate to version-specific module
-    def NS(self):
-        return self.format.NS
+    @classmethod
+    def NS(cls):
+        return cls.format.NS
 
-    def class_for_tag(self, tag: str) -> type:
-        return self.format.class_for_tag(tag)
+    @classmethod
+    def class_for_tag(cls, tag: str) -> type:
+        return cls.format.class_for_tag(tag)
 
-    def qname(self, ns_or_name, name=None) -> QName:
-        return self.format.qname(ns_or_name, name)
+    @classmethod
+    def qname(cls, ns_or_name, name=None) -> QName:
+        return cls.format.qname(ns_or_name, name)
 
     def get_single(
         self,
@@ -631,6 +620,30 @@ class Reader(BaseReader):
             self.push(obj)
 
         return obj
+
+
+# Shorthand
+start = Reader.start
+end = Reader.end
+
+# Tags to skip entirely
+start(
+    "com:Annotations com:Footer footer:Message "
+    # Key and observation values
+    "gen:ObsDimension gen:ObsValue gen:Value "
+    # Tags that are bare containers for other XML elements
+    """
+    str:Categorisations str:CategorySchemes str:Codelists str:Concepts
+    str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
+    str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
+    str:HierarchicalCodelists str:Metadataflows str:MetadataStructures
+    str:NamePersonalisations str:None str:OrganisationSchemes str:ProvisionAgreements
+    str:Rulesets str:StructureSets str:ToVtlSubSpace str:Transformations
+    str:UserDefinedOperators str:VtlMappings
+    """
+    # Contents of references
+    ":Ref :URN"
+)(None)
 
 
 # Parsers for sdmx.message classes
@@ -1353,7 +1366,7 @@ def _ar(reader, elem):
 
     # Iterate over parsed references to Components
     args = dict(dimensions=list())
-    for ref in reader.pop_all(Reference):
+    for ref in reader.pop_all(reader.Reference):
         # Use the <Ref id="..."> to retrieve a Component from the DSD
         if issubclass(ref.target_cls, model.DimensionComponent):
             component = dsd.dimensions.get(ref.target_id)
