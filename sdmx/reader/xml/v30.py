@@ -109,3 +109,50 @@ def _ggc_end(reader, elem):
     result = v21._item_end(reader, elem)
     result.geo_cell = reader.pop_single("GeoCell")
     return result
+
+
+# §5.3: Data Structure Definition
+
+
+@end("str:Observation")
+def _ar_obs(reader: Reader, elem):
+    return reader.class_for_tag(elem.tag)()
+
+
+@end("str:AttributeRelationship")
+def _ar(reader: Reader, elem):
+    dsd = reader.peek("current DSD")
+
+    if "None" in elem[0].tag:
+        return model.NoSpecifiedRelationship
+    elif elem[0].tag == "ObservationRelationship":
+        return reader.model.ObservationRelationship()
+
+    # Iterate over parsed references to Components
+    args: Dict[str, Any] = dict(dimensions=list())
+    for ref in reader.pop_all(Reference):
+        # Use the <Ref id="..."> to retrieve a Component from the DSD
+        if issubclass(ref.target_cls, model.DimensionComponent):
+            component = dsd.dimensions.get(ref.target_id)
+            args["dimensions"].append(component)
+        elif ref.target_cls is model.PrimaryMeasure:
+            # Since <str:AttributeList> occurs before <str:MeasureList>, this is
+            # usually a forward reference. We *could* eventually resolve it to confirm
+            # consistency (the referenced ID is same as the PrimaryMeasure.id), but
+            # that doesn't affect the returned value, since PrimaryMeasureRelationship
+            # has no attributes.
+            return model.PrimaryMeasureRelationship
+        elif ref.target_cls is model.GroupDimensionDescriptor:
+            args["group_key"] = dsd.group_dimensions[ref.target_id]
+
+    ref = reader.pop_single("AttachmentGroup")
+    if ref:
+        args["group_key"] = dsd.group_dimensions[ref.target_id]
+
+    if len(args["dimensions"]):
+        return common.DimensionRelationship(**args)
+    else:
+        # NB differs from .v21._ar()
+        pass
+        # args.pop("dimensions")
+        # return common.GroupRelationship(**args)
