@@ -3,7 +3,6 @@ from typing import List
 
 import pytest
 
-from sdmx.model.common import ConstraintRoleType
 from sdmx.model.v21 import (
     AttributeDescriptor,
     AttributeValue,
@@ -13,6 +12,7 @@ from sdmx.model.v21 import (
     ComponentValue,
     Constraint,
     ConstraintRole,
+    ConstraintRoleType,
     ContentConstraint,
     CubeRegion,
     DataAttribute,
