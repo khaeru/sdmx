@@ -60,7 +60,7 @@ class Reader(BaseReader):
         msg.header = Header(
             id=elem["id"],
             prepared=isoparse(elem["prepared"]),
-            sender=_org(elem["sender"]),
+            sender=_org(elem["sender"], cls=common.Agency),
         )
 
         # pre-fetch some structures for efficient use in series and obs
@@ -229,12 +229,12 @@ class Reader(BaseReader):
         return result
 
 
-def _org(elem: MutableMapping) -> common.Organisation:
+def _org(elem: MutableMapping, cls=common.Organisation) -> common.Organisation:
     try:
         elem["contact"] = list(map(_contact, elem.pop("contacts")))
     except KeyError:
         pass
-    return common.Organisation(**maybe_parse_is(elem, "name"))
+    return cls(**maybe_parse_is(elem, "name"))
 
 
 def _contact(elem: Mapping) -> common.Contact:
