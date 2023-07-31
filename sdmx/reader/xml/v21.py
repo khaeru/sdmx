@@ -739,7 +739,7 @@ def _header_structure(reader, elem):
     msg = reader.get_single(message.DataMessage)
 
     # Retrieve a DSD supplied to the parser, e.g. for a structure specific message
-    provided_dsd = reader.get_single(common.BaseDataStructureDefinition)
+    provided_dsd = reader.get_single(common.BaseDataStructureDefinition, subclass=True)
 
     # Resolve the <com:Structure> child to a DSD, maybe is_external_reference=True
     header_dsd = reader.pop_resolved_ref("Structure")
@@ -1198,6 +1198,8 @@ def _contact(reader, elem):
 # §10.3: Constraints
 
 
+# TODO this tag does not appear in any of the specimens, though may occur "in the wild";
+#      add a specimen
 @end("str:Key")
 def _dk(reader, elem):
     return model.DataKey(
@@ -1333,19 +1335,20 @@ def _cr(reader, elem):
 
 @end("str:ContentConstraint")
 def _cc(reader, elem):
+    cls = reader.class_for_tag(elem.tag)
     cr_str = elem.attrib["type"].lower().replace("allowed", "allowable")
 
     content = set()
     for ref in reader.pop_all(Reference):
         resolved = reader.resolve(ref)
         if resolved is None:
-            log.warning(f"Unable to resolve ContentConstraint.content ref:\n  {ref}")
+            log.warning(f"Unable to resolve {cls.__name__}.content ref:\n  {ref}")
         else:
             content.add(resolved)
 
     # return reader.nameable(
     return reader.maintainable(
-        model.ContentConstraint,
+        cls,
         elem,
         role=model.ConstraintRole(role=model.ConstraintRoleType[cr_str]),
         content=content,
@@ -1362,7 +1365,7 @@ def _ar(reader, elem):
     dsd = reader.peek("current DSD")
 
     if "None" in elem[0].tag:
-        return model.NoSpecifiedRelationship
+        return model.NoSpecifiedRelationship()
 
     # Iterate over parsed references to Components
     args = dict(dimensions=list())
@@ -1377,7 +1380,7 @@ def _ar(reader, elem):
             # consistency (the referenced ID is same as the PrimaryMeasure.id), but
             # that doesn't affect the returned value, since PrimaryMeasureRelationship
             # has no attributes.
-            return model.PrimaryMeasureRelationship
+            return model.PrimaryMeasureRelationship()
         elif ref.target_cls is model.GroupDimensionDescriptor:
             args["group_key"] = dsd.group_dimensions[ref.target_id]
 
@@ -1440,7 +1443,7 @@ def _dfd(reader: Reader, elem):
         arg = dict(structure=structure)
 
     # Create first to collect names
-    return reader.maintainable(reader.model.DataflowDefinition, elem, **arg)
+    return reader.maintainable(reader.class_for_tag(elem.tag), elem, **arg)
 
 
 # §5.4: Data Set
@@ -1739,7 +1742,7 @@ def _udo(reader: Reader, elem):
 def _vtlm(reader: Reader, elem):
     ref = reader.resolve(reader.pop_single(reader.Reference))
     args: Dict[str, Any] = dict()
-    if isinstance(ref, common.BaseDataflowDefinition):
+    if isinstance(ref, common.BaseDataflow):
         cls = model.VTLDataflowMapping
         args["dataflow_alias"] = ref
         args["to_vtl_method"] = reader.pop_single(common.SDMXtoVTL)
