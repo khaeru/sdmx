@@ -85,6 +85,14 @@ class XMLFormat:
         return hash(self.base_ns)
 
     @lru_cache()
+    def ns_prefix(self, url) -> str:
+        """Return the namespace prefix from :attr:`.NS` given its full `url`."""
+        for prefix, _url in self.NS.items():
+            if url == _url:
+                return prefix
+        raise ValueError(url)
+
+    @lru_cache()
     def qname(self, ns_or_name, name=None) -> QName:
         """Return a fully-qualified tag `name` in namespace `ns`."""
         if isinstance(ns_or_name, QName):
