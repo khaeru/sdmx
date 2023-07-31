@@ -1,12 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import ClassVar, List, Optional
-
-from sdmx.util import DictLikeDescriptor
+from typing import Any, ClassVar, List, Optional
 
 from . import common
 from .common import (
-    AttributeDescriptor,
     Code,
     Codelist,
     Component,
@@ -20,11 +17,9 @@ from .common import (
     Item,
     ItemScheme,
     MaintainableArtefact,
-    MemberValue,
     NameableArtefact,
     Organisation,
     OrganisationScheme,
-    Structure,
 )
 
 # Classes defined directly in the current file, in the order they appear
@@ -42,13 +37,30 @@ __all__ = [
     "MetadataProviderScheme",
     "Measure",
     "MeasureDescriptor",
+    "DataflowRelationship",
+    "MeasureRelationship",
+    "ObservationRelationship",
     "DataStructureDefinition",
+    "Dataflow",
+    "Observation",
+    "StructureSpecificDataSet",
+    "MetadataStructureDefinition",
+    "Metadataflow",
     "CodingFormat",
     "Level",
     "HierarchicalCode",
     "Hierarchy",
     "HierarchyAssociation",
+    "SelectionValue",
+    "MemberValue",
+    "TimeRangeValue",
+    "BeforePeriod",
+    "AfterPeriod",
+    "RangePeriod",
+    "DataKey",
+    "DataKeySet",
     "Constraint",
+    "MemberSelection",
     "DataConstraint",
     "MetadataConstraint",
 ]
@@ -62,7 +74,7 @@ class CodelistExtension:
     prefix: Optional[str] = None
     sequence: Optional[int] = None
 
-    mv: List[MemberValue] = field(default_factory=list)
+    mv: List["MemberValue"] = field(default_factory=list)
 
 
 class GeoRefCode(Code):
@@ -145,7 +157,89 @@ class MetadataProviderScheme(OrganisationScheme[MetadataProvider]):
     _Item = MetadataProvider
 
 
-# §5: Data Structure Definition and Dataset
+# §12.3: Constraints
+
+
+@dataclass
+class SelectionValue(common.BaseSelectionValue):
+    #: Date from which the DataKey is valid.
+    valid_from: Optional[str] = None
+    #: Date from which the DataKey is superseded.
+    valid_to: Optional[str] = None
+
+
+class MemberValue(common.BaseMemberValue, SelectionValue):
+    """SDMX 3.0 MemberValue."""
+
+
+class TimeRangeValue(SelectionValue):
+    """SDMX 3.0 TimeRangeValue."""
+
+
+class BeforePeriod(TimeRangeValue, common.Period):
+    pass
+
+
+class AfterPeriod(TimeRangeValue, common.Period):
+    pass
+
+
+@dataclass
+class RangePeriod(TimeRangeValue):
+    start: Optional[common.StartPeriod] = None
+    end: Optional[common.EndPeriod] = None
+
+
+@dataclass
+class DataKey(common.BaseDataKey):
+    #: Date from which the DataKey is valid.
+    valid_from: Optional[str] = None
+    #: Date from which the DataKey is superseded.
+    valid_to: Optional[str] = None
+
+
+@dataclass
+class DataKeySet(common.BaseDataKeySet):
+    #: TODO the SDMX 3.0 spec is ambiguous about this: the diagram shows "member" as an
+    #: attribute of :class:`.DataKey`, but the table lists it as an attribute of
+    #: DataKeySet.
+    member: Any = None
+
+
+@dataclass
+class Constraint(common.BaseConstraint):
+    """SDMX 3.0 Constraint (abstract class).
+
+    For SDMX 2.1, see :class:`.v21.Constraint`.
+    """
+
+    role: Optional[ConstraintRole] = None
+
+    def __post_init__(self):
+        if isinstance(self.role, str):
+            self.role = ConstraintRole(role=ConstraintRoleType[self.role])
+
+
+@dataclass
+class MemberSelection(common.BaseMemberSelection):
+    """SDMX 3.0 MemberSelection."""
+
+    #: Whether Codes should retain the prefix specified in a code list extension.
+    remove_prefix: bool = False
+
+
+@dataclass
+@NameableArtefact._preserve("repr")
+class DataConstraint(Constraint):
+    data_content_keys: Optional[DataKeySet] = None
+    data_content_region: Optional[common.CubeRegion] = None
+
+
+class MetadataConstraint(Constraint):
+    metadata_content_region: Optional[common.MetadataTargetRegion] = None
+
+
+# §5.3: Data Structure Definition
 
 
 class Measure(Component):
@@ -164,41 +258,75 @@ class MeasureDescriptor(ComponentList[Measure]):
     _Component = Measure
 
 
+class DataflowRelationship(common.AttributeRelationship):
+    """SDMX 3.0 DataflowRelationship.
+
+    Indicates that the attribute is attached to the entire data set. Compare with
+    :class:`.v21.NoSpecifiedRelationship.
+    """
+
+
+class MeasureRelationship(common.AttributeRelationship):
+    """SDMX 3.0 MeasureRelationship."""
+
+
 class ObservationRelationship(common.AttributeRelationship):
-    """SDMX 3.0 ObservationRelationship."""
+    """SDMX 3.0 ObservationRelationship.
 
-
-@dataclass(repr=False)
-class DataStructureDefinition(Structure, common.BaseDataStructureDefinition):
-    """SDMX 3.0 DataStructureDefinition (‘DSD’)."""
-
-    #: A :class:`AttributeDescriptor` that describes the attributes of the data
-    #: structure.
-    attributes: AttributeDescriptor = field(default_factory=AttributeDescriptor)
-    #: A :class:`DimensionDescriptor` that describes the dimensions of the data
-    #: structure.
-    dimensions: DimensionDescriptor = field(default_factory=DimensionDescriptor)
-    #: A :class:`.MeasureDescriptor`.
-    measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)
-    #: Mapping from  :attr:`.GroupDimensionDescriptor.id` to
-    #: :class:`.GroupDimensionDescriptor`.
-    group_dimensions: DictLikeDescriptor[
-        str, GroupDimensionDescriptor
-    ] = DictLikeDescriptor()
-
-    __hash__ = IdentifiableArtefact.__hash__
+    Indicates that the attribute is attached to a particular observation. Compare with
+    :class:`.v21.PrimaryMeasureRelationship.`
+    """
 
 
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
-class DataflowDefinition(common.BaseDataflowDefinition):
+class DataStructureDefinition(common.BaseDataStructureDefinition):
+    """SDMX 3.0 DataStructureDefinition (‘DSD’)."""
+
+    MemberValue = MemberValue
+    MemberSelection = MemberSelection
+    ConstraintType = DataConstraint
+
+    #: A :class:`.MeasureDescriptor`.
+    measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)
+
+
+@dataclass(repr=False)
+@IdentifiableArtefact._preserve("hash")
+class Dataflow(common.BaseDataflow):
     #:
     structure: DataStructureDefinition = field(default_factory=DataStructureDefinition)
 
 
+# §5.4: Data Set
+
+
 @dataclass
-class Observation:
-    pass
+class Observation(common.BaseObservation):
+    #:
+    value_for: Optional[Measure] = None
+
+
+class DataSet(common.BaseDataSet):
+    """SDMX 3.0 Data Set."""
+
+
+class StructureSpecificDataSet(DataSet):
+    """SDMX 3.0 StructureSpecificDataSet.
+
+    This subclass has no additional functionality compared to DataSet.
+    """
+
+
+# §7.3 Metadata Structure Definition
+
+
+class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
+    """SDMX 3.0 MetadataStructureDefinition."""
+
+
+class Metadataflow(common.BaseMetadataflow):
+    """SDMX 3.0 MetadataflowDefinition."""
 
 
 # §8: Hierarchy
@@ -259,32 +387,6 @@ class HierarchyAssociation(MaintainableArtefact):
     linked_hierarchy: Optional[Hierarchy] = None
 
 
-# §12.3: Constraints
-
-
-@dataclass
-class Constraint(MaintainableArtefact):
-    """SDMX 3.0 Constraint (abstract class).
-
-    For SDMX 2.1, see :class:`.v21.Constraint`.
-    """
-
-    # NB the spec gives 1..* for this attribute, but this implementation allows only 1
-    role: Optional[ConstraintRole] = None
-
-    def __post_init__(self):
-        if isinstance(self.role, str):
-            self.role = ConstraintRole(role=ConstraintRoleType[self.role])
-
-
-class DataConstraint(Constraint):
-    pass
-
-
-class MetadataConstraint(Constraint):
-    pass
-
-
 def parent_class(cls):
     """Return the class that contains objects of type `cls`.
 
@@ -299,7 +401,7 @@ def parent_class(cls):
         common.Dimension: DimensionDescriptor,
         common.DataProvider: common.DataProviderScheme,
         GroupDimensionDescriptor: DataStructureDefinition,
-        # PrimaryMeasure: MeasureDescriptor,
+        Measure: MeasureDescriptor,
     }[cls]
 
 
