@@ -1224,20 +1224,31 @@ def _contact(reader, elem):
 # §10.3: Constraints
 
 
-# TODO this tag does not appear in any of the specimens, though may occur "in the wild";
-#      add a specimen
 @end("str:Key")
-def _dk(reader, elem):
-    return model.DataKey(
-        included=elem.attrib.get("isIncluded", True),
-        # Convert MemberSelection/MemberValue from _ms() to ComponentValue
-        key_value={
-            ms.values_for: model.ComponentValue(
-                value_for=ms.values_for, value=ms.values.pop().value
-            )
-            for ms in reader.pop_all(model.MemberSelection)
-        },
-    )
+def _key0(reader, elem):
+    # NB this method handles two different usages of an identical tag
+    parent = QName(elem.getparent()).localname
+
+    if parent == "DataKeySet":
+        # DataKey within DataKeySet
+        return model.DataKey(
+            included=elem.attrib.get("isIncluded", True),
+            # Convert MemberSelection/MemberValue from _ms() to ComponentValue
+            key_value={
+                ms.values_for: model.ComponentValue(
+                    value_for=ms.values_for, value=ms.values.pop().value
+                )
+                for ms in reader.pop_all(model.MemberSelection)
+            },
+        )
+    else:
+        # VTLSpaceKey within VTLMapping
+        cls = {
+            "FromVtlSuperSpace": model.FromVTLSpaceKey,
+            "ToVtlSubSpace": model.ToVTLSpaceKey,
+        }[parent]
+
+        return cls(key=elem.text)
 
 
 @end("str:DataKeySet")
@@ -1500,7 +1511,7 @@ def _avs(reader, elem):
 
 
 @end("gen:ObsKey gen:GroupKey gen:SeriesKey")
-def _key(reader, elem):
+def _key1(reader, elem):
     cls = reader.class_for_tag(elem.tag)
 
     kv = {e.attrib["id"]: e.attrib["value"] for e in elem.iterchildren()}
@@ -1737,14 +1748,8 @@ def _vtlm_to(reader: Reader, elem):
     return common.SDMXtoVTL[elem.attrib.get("method", "basic").lower()]
 
 
-@start("str:Key")
-def _vtl_sk(reader: Reader, elem):
-    cls = {
-        "FromVtlSuperSpace": model.FromVTLSpaceKey,
-        "ToVtlSubSpace": model.ToVTLSpaceKey,
-    }[QName(elem.getparent()).localname]
-
-    return cls(key=elem.text)
+# @start("str:Key")
+# def _vtl_sk(reader: Reader, elem):
 
 
 @end("str:Ruleset")
