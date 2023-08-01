@@ -1,55 +1,36 @@
 """Information about the SDMX-ML 3.0 file format."""
-from sdmx import message
-from sdmx.model import v30 as model
+from sdmx.model import v30
 
-from . import common
+from .common import XMLFormat
 
-_CLS_TAG = []
-
-for c, t in (
-    (message.DataMessage, "mes:StructureSpecificData"),
-    (message.ErrorMessage, "mes:Error"),
-    (message.StructureMessage, "mes:Structure"),
-    (model.AttributeDescriptor, "str:AttributeList"),
-    (model.DataAttribute, "str:Attribute"),
-    (model.ObservationRelationship, "str:Observation"),
-    (model.Dataflow, "str:Dataflow"),
-    (model.DataStructureDefinition, "str:DataStructure"),
-    (model.DataStructureDefinition, "com:Structure"),
-    (model.DataStructureDefinition, "str:Structure"),
-    (model.DimensionDescriptor, "str:DimensionList"),
-    (model.GroupDimensionDescriptor, "str:Group"),
-    (model.GroupDimensionDescriptor, "str:AttachmentGroup"),
-    (model.GroupKey, "gen:GroupKey"),
-    (model.Key, "gen:ObsKey"),
-    (model.MeasureDescriptor, "str:MeasureList"),
-    (model.Metadataflow, "str:Metadataflow"),
-    (model.MetadataStructureDefinition, "str:MetadataStructure"),
-    (model.SeriesKey, "gen:SeriesKey"),
-    (model.StructureUsage, "com:StructureUsage"),
-):
-    _CLS_TAG.append((c, t))
-
-
-for name in (
-    "CodelistExtension",
-    "DataConstraint",
-    "GeoFeatureSetCode",
-    "GeographicCodelist",
-    "GeoGridCode",
-    "GeoGridCodelist",
-    "Measure",
-    "MetadataConstraint",
-    "ValueItem",
-    "ValueList",
-):
-    _CLS_TAG.append((getattr(model, name), f"str:{name}"))
-
-
-_FORMAT = common.XMLFormat(
-    base_ns="http://www.sdmx.org/resources/sdmxml/schemas/v3_0", class_tag=_CLS_TAG
+FORMAT = XMLFormat(
+    model=v30,
+    base_ns="http://www.sdmx.org/resources/sdmxml/schemas/v3_0",
+    class_tag=[
+        ("model.DataflowRelationship", "str:None"),
+        ("model.ObservationRelationship", "str:Observation"),
+        ("model.Dataflow", "str:Dataflow"),
+        ("model.Metadataflow", "str:Metadataflow"),
+    ]
+    + [
+        (f"model.{name}", f"str:{name}")
+        for name in """
+            ExclusiveCodeSelection
+            InclusiveCodeSelection
+            CodelistExtension
+            DataConstraint
+            GeoFeatureSetCode
+            GeographicCodelist
+            GeoGridCode
+            GeoGridCodelist
+            Measure
+            MetadataConstraint
+            ValueItem
+            ValueList
+        """.split()
+    ],
 )
 
 
 def __getattr__(name):
-    return getattr(_FORMAT, name)
+    return getattr(FORMAT, name)
