@@ -892,9 +892,11 @@ def _localization(reader, elem):
 
 
 @end(
-    "com:Structure com:StructureUsage str:AttachmentGroup str:ConceptIdentity "
-    "str:DimensionReference str:Parent str:Source str:Structure str:StructureUsage "
-    "str:Target str:Enumeration"
+    """
+    com:Structure com:StructureUsage str:AttachmentGroup str:ConceptIdentity
+    str:ConceptRole str:DimensionReference str:Parent str:Source str:Structure
+    str:StructureUsage str:Target str:Enumeration
+    """
 )
 def _ref(reader: Reader, elem):
     cls_hint = None
