@@ -69,12 +69,25 @@ __all__ = [
 
 
 @dataclass
+class CodeSelection:
+    mv: List["MemberValue"] = field(default_factory=list)
+
+
+class ExclusiveCodeSelection(CodeSelection):
+    pass
+
+
+class InclusiveCodeSelection(CodeSelection):
+    pass
+
+
+@dataclass
 class CodelistExtension:
-    codelist: Codelist
+    extends: Codelist
     prefix: Optional[str] = None
     sequence: Optional[int] = None
 
-    mv: List["MemberValue"] = field(default_factory=list)
+    selection: Optional[CodeSelection] = None
 
 
 class GeoRefCode(Code):
@@ -90,6 +103,7 @@ class GeoGridCode(GeoRefCode):
 
 
 @dataclass
+@NameableArtefact._preserve("eq", "hash", "repr")
 class GeoFeatureSetCode(GeoRefCode):
     """SDMX 3.0 GeoFeatureSetCode."""
 
@@ -262,6 +276,9 @@ class MemberSelection(common.BaseMemberSelection):
 @dataclass
 @NameableArtefact._preserve("repr")
 class DataConstraint(Constraint):
+    #:
+    content: Set[ConstrainableArtefact] = field(default_factory=set)
+
     data_content_keys: Optional[DataKeySet] = None
     data_content_region: Optional[common.CubeRegion] = None
 
