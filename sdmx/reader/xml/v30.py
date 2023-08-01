@@ -67,6 +67,7 @@ end("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(v21._item
 end("str:Measure")(v21._component)
 end("str:DataConstraint")(v21._cc)
 end("str:KeyValue")(v21._ms)
+end("str:Observation")(v21._ar_kind)
 
 
 @end("str:Codelist")
@@ -119,34 +120,28 @@ def _ggc_end(reader, elem):
 # §5.3: Data Structure Definition
 
 
-@end("str:Observation")
-def _ar_obs(reader: Reader, elem):
-    return reader.class_for_tag(elem.tag)()
-
-
 @end("str:AttributeRelationship")
 def _ar(reader: Reader, elem):
     dsd = reader.peek("current DSD")
 
-    if "None" in elem[0].tag:
-        return model.NoSpecifiedRelationship
-    elif elem[0].tag == "ObservationRelationship":
-        return reader.model.ObservationRelationship()
+    refs = reader.pop_all(reader.Reference)
+    if not len(refs):
+        return
 
     # Iterate over parsed references to Components
     args: Dict[str, Any] = dict(dimensions=list())
-    for ref in reader.pop_all(Reference):
+    for ref in refs:
         # Use the <Ref id="..."> to retrieve a Component from the DSD
         if issubclass(ref.target_cls, model.DimensionComponent):
             component = dsd.dimensions.get(ref.target_id)
             args["dimensions"].append(component)
-        elif ref.target_cls is model.PrimaryMeasure:
+        elif ref.target_cls is model.Measure:
             # Since <str:AttributeList> occurs before <str:MeasureList>, this is
             # usually a forward reference. We *could* eventually resolve it to confirm
             # consistency (the referenced ID is same as the PrimaryMeasure.id), but
             # that doesn't affect the returned value, since PrimaryMeasureRelationship
             # has no attributes.
-            return model.PrimaryMeasureRelationship
+            return model.ObservationRelationship()
         elif ref.target_cls is model.GroupDimensionDescriptor:
             args["group_key"] = dsd.group_dimensions[ref.target_id]
 
@@ -156,8 +151,4 @@ def _ar(reader: Reader, elem):
 
     if len(args["dimensions"]):
         return common.DimensionRelationship(**args)
-    else:
-        # NB differs from .v21._ar()
-        pass
-        # args.pop("dimensions")
-        # return common.GroupRelationship(**args)
+
