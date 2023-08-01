@@ -345,12 +345,13 @@ class Reader(metaclass=DispatchingReader):
         self._clean()
         print("\n\n")
         for key, values in self.stack.items():
-            print(
-                f"--- {key} ---",
-                *map(lambda v: f"{repr(v)} ({id(v)})", values),
-                sep="\n",
-                end="\n\n",
-            )
+            print(f"--- {key} ---")
+            if isinstance(values, Mapping):
+                print(
+                    *map(lambda kv: f"{kv[0]} ({id(kv[1])}) {kv[1]!s}", values.items()),
+                    sep="\n",
+                    end="\n\n",
+                )
         print("\nIgnore:\n", self.ignore)
 
     def push(self, stack_or_obj, obj=None):
