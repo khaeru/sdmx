@@ -159,8 +159,8 @@ ELEMENTS = [
         E(qname("str:TextFormat"), invalidFacetTypeAttr="foo"),
         re.compile("unexpected keyword argument 'invalid_facet_type_attr'"),
     ),
-    # xml._dk
-    (E(qname("str:Key")), None),
+    # xml._key0: Create the necessary parent element to test the parsing of its child
+    (E(qname("str:DataKeySet"), E(qname("str:Key")), isIncluded="True"), None),
     # xml._dks
     (E(qname("str:DataKeySet"), isIncluded="true"), None),
     # xml._pa
