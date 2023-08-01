@@ -1011,7 +1011,12 @@ def _itemscheme(reader: Reader, elem):
 
     cls: Type[common.ItemScheme] = reader.class_for_tag(elem.tag)
 
-    is_ = reader.maintainable(cls, elem, is_partial=elem.attrib.get("isPartial"))
+    try:
+        args = dict(is_partial=elem.attrib["isPartial"])
+    except KeyError:  # e.g. ValueList in .v30
+        args = {}
+
+    is_ = reader.maintainable(cls, elem, **args)
 
     # Iterate over all Item objects *and* their children
     iter_all = chain(*[iter(item) for item in reader.pop_all(cls._Item, subclass=True)])
