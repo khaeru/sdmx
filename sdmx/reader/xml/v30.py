@@ -152,3 +152,27 @@ def _ar(reader: Reader, elem):
     if len(args["dimensions"]):
         return common.DimensionRelationship(**args)
 
+
+# §5.4: Data Set
+
+
+@end(":Value")
+def _complex_value(reader: Reader, elem):
+    try:
+        reader.push("ComplexValue", model.InternationalString(reader.pop_all("Text")))
+    except Exception:
+        raise NotImplementedError
+
+
+@end(":Comp")
+def _complex(reader: Reader, elem):
+    ds = reader.get_single("DataSet")
+
+    assert ds is not None
+    da = ds.structured_by.attributes.getdefault(elem.attrib["id"])
+
+    reader.stack.setdefault("Attributes", {-1: {}})
+
+    reader.stack["Attributes"][-1][da.id] = model.AttributeValue(
+        value=reader.pop_all("ComplexValue"), value_for=da
+    )
