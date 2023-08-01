@@ -1679,6 +1679,21 @@ def _ds_end(reader, elem):
     reader.get_single(message.DataMessage).data.append(ds)
 
 
+# §7.3: Metadata Structure Definition
+
+
+@end("str:MetadataTarget")
+def _mdt(reader: Reader, elem):
+    raise NotImplementedError
+
+
+@end("str:MetadataStructure")
+def _msd(reader: Reader, elem):
+    cls = reader.class_for_tag(elem)
+    log.warning("Not parsed: f{elem.tag}")
+    return cls()
+
+
 # §11: Data Provisioning
 
 
