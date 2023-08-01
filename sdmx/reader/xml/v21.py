@@ -1101,6 +1101,7 @@ def _component(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
 
     args = dict(
+        id=elem.attrib.get("id", common.MissingID),
         concept_identity=reader.pop_resolved_ref("ConceptIdentity"),
         local_representation=reader.pop_single(common.Representation),
     )
@@ -1118,12 +1119,15 @@ def _component(reader: Reader, elem):
         assert len(ar) == 1, ar
         args["related_to"] = ar[0]
 
-    if cls is model.PrimaryMeasure and "id" not in elem.attrib:
-        # SDMX spec §3A, part III, p.140: “The id attribute holds an explicit
-        # identification of the component. If this identifier is not supplied, then it
-        # is assumed to be the same as the identifier of the concept referenced from
-        # the concept identity.”
-        args["id"] = args["concept_identity"].id
+    # SDMX 2.1 spec §3A, part III, p.140: “The id attribute holds an explicit
+    # identification of the component. If this identifier is not supplied, then it is
+    # assumed to be the same as the identifier of the concept referenced from the
+    # concept identity.”
+    if args["id"] is common.MissingID:
+        try:
+            args["id"] = args["concept_identity"].id
+        except AttributeError:
+            pass
 
     return reader.identifiable(cls, elem, **args)
 
