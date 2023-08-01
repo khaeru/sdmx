@@ -276,6 +276,10 @@ class SpecimenCollection:
             ]
         )
 
+        # Add files from the SDMX 2.1 specification
+        v21 = base_path.joinpath("v21", "xml")
+        self.specimens.extend((p, "xml", None) for p in v21.glob("**/*.xml"))
+
         # Add files from the SDMX 3.0 specification
         v3 = base_path.joinpath("v3")
 
