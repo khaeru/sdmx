@@ -1264,7 +1264,7 @@ def _ms_component(reader, elem, kind):
     """Identify the Component for a ValueSelection."""
     try:
         # Navigate from the current ContentConstraint to a ConstrainableArtefact
-        cc_content = reader.stack[Reference]
+        cc_content = reader.stack[reader.Reference]
         assert len(cc_content) == 1, (cc_content, reader.stack, elem.attrib)
         obj = reader.resolve(next(iter(cc_content.values())))
 
