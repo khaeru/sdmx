@@ -746,41 +746,46 @@ def _header_structure(reader, elem):
     # Resolve the <com:Structure> child to a DSD, maybe is_external_reference=True
     header_dsd = reader.pop_resolved_ref("Structure")
 
-    # Resolve the <str:StructureUsage> child, if any, and remove it from the stack
+    # The header may give either a StructureUsage, or a specific reference to a subclass
+    # like BaseDataflow. Resolve the <str:StructureUsage> child, if any, and remove it
+    # from the stack.
     header_su = reader.pop_resolved_ref("StructureUsage")
-    reader.pop_single(model.StructureUsage)
+    reader.pop_single(type(header_su))
 
-    if provided_dsd:
-        dsd = provided_dsd
-    else:
-        if header_su:
-            # The header gives a StructureUsage object, but it really refers to a DSD
-            su_dsd = reader.maintainable(
-                reader.model.DataStructureDefinition,
-                None,
-                id=header_su.id,
-                maintainer=header_su.maintainer,
-                version=header_su.version,
-            )
+    # Store a specific reference to a data flow specifically
+    if isinstance(header_su, reader.class_for_tag("str:Dataflow")):
+        msg.dataflow = header_su
 
-        if header_dsd:
-            if header_su:
-                assert header_dsd == su_dsd
-            dsd = header_dsd
-        elif header_su:
-            reader.push(su_dsd)
-            dsd = su_dsd
-        else:
-            raise RuntimeError
+    # DSD to use: the provided one; the one referenced by <com:Structure>; or a
+    # candidate constructed using the information contained in `header_su` (if any)
+    dsd = provided_dsd or (
+        reader.maintainable(
+            reader.model.DataStructureDefinition,
+            None,
+            id=header_su.id,
+            maintainer=header_su.maintainer,
+            version=header_su.version,  # NB this may not always be the case
+        )
+        if header_su
+        else header_dsd
+    )
 
-        # Store as an object that won't cause a parsing error if it is left over
-        reader.ignore.add(id(dsd))
+    if header_dsd and header_su:
+        # Ensure the constructed candidate and the one given directly are equivalent
+        assert header_dsd == dsd
+    elif header_su and not provided_dsd:
+        reader.push(dsd)
+    elif dsd is None:
+        raise RuntimeError
 
-    # Store
+    # Store on the data flow
     msg.dataflow.structure = dsd
 
     # Store under the structure ID, so it can be looked up by that ID
     reader.push(elem.attrib["structureID"], dsd)
+
+    # Store as an object that won't cause a parsing error if it is left over
+    reader.ignore.add(id(dsd))
 
     try:
         # Information about the 'dimension at observation level'
