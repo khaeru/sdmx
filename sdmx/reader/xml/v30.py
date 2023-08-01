@@ -18,7 +18,12 @@ class Reference(v21.Reference):
             # MaintainableArtefact, so target_id and id are the same
             result.update(target_id=result["item_id"] or result["id"])
         except ValueError:
-            raise v21.NotReference
+            # Bare string that is the ID of e.g. a component (dimension)
+            id = elem.text.strip()
+            if id:
+                result = {"id": id, "target_id": id, "class": None, "package": None}
+            else:
+                raise v21.NotReference
 
         return result
 
