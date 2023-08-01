@@ -1042,20 +1042,25 @@ def _itemscheme(reader: Reader, elem):
 
 @end("str:EnumerationFormat str:TextFormat")
 def _facet(reader, elem):
-    attrib = copy(elem.attrib)
+    # Convert attribute names from camelCase to snake_case
+    args = {to_snake(key): val for key, val in elem.items()}
 
-    # Parse facet value type; SDMX-ML default is 'String'
-    fvt = attrib.pop("textType", "String")
+    # FacetValueType is given by the "textType" attribute. Convert case of the value:
+    # in XML, first letter is uppercase; in the spec and Python enum, lowercase. SDMX-ML
+    # default is "String".
+    tt = args.pop("text_type", "String")
+    fvt = model.FacetValueType[f"{tt[0].lower()}{tt[1:]}"]
 
-    f = model.Facet(
-        # Convert case of the value. In XML, first letter is uppercase; in
-        # the spec and Python enum, lowercase.
-        value_type=model.FacetValueType[fvt[0].lower() + fvt[1:]],
-        # Other attributes are for Facet.type, an instance of FacetType. Convert the
-        # attribute name from camelCase to snake_case
-        type=model.FacetType(**{to_snake(key): val for key, val in attrib.items()}),
-    )
-    reader.push(elem, f)
+    # NB Erratum: "isMultiLingual" appears in XSD schemas ("The isMultiLingual attribute
+    #    indicates for a text format of type 'string', whether the value should allow
+    #    for multiple values in different languages") and in samples, but is not
+    #    mentioned anywhere in the information model. Discard.
+    args.pop("is_multi_lingual", None)
+
+    # All other attributes are for FacetType
+    ft = model.FacetType(**args)
+
+    reader.push(elem, model.Facet(type=ft, value_type=fvt))
 
 
 @end("str:CoreRepresentation str:LocalRepresentation")
