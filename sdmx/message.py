@@ -191,9 +191,7 @@ class StructureMessage(Message):
     #: Collection of :class:`.ConceptScheme`.
     concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
     #: Collection of :class:`.ContentConstraint`.
-    constraint: DictLikeDescriptor[
-        str, model.BaseContentConstraint
-    ] = DictLikeDescriptor()
+    constraint: DictLikeDescriptor[str, model.BaseConstraint] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
     dataflow: DictLikeDescriptor[str, model.BaseDataflow] = DictLikeDescriptor()
     #: Collection of :class:`.DataflowDefinition`.
