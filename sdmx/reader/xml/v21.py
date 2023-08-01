@@ -655,7 +655,7 @@ start(
     "mes:StructureSpecificTimeSeriesData"
 )
 @start("mes:Structure", only=False)
-def _message(reader, elem):
+def _message(reader: Reader, elem):
     """Start of a Message."""
     # <mes:Structure> within <mes:Header> of a data message is handled by
     # _header_structure() below.
@@ -688,8 +688,8 @@ def _message(reader, elem):
         # Register the namespace
         reader.NS().update({key: value})
         # Use _ds_start() and _ds_end() to handle <{key}:DataSet> elements
-        start(f"{key}:DataSet", only=False)(_ds_start)
-        end(f"{key}:DataSet", only=False)(_ds_end)
+        reader.start(f"{key}:DataSet", only=False)(_ds_start)
+        reader.end(f"{key}:DataSet", only=False)(_ds_end)
 
     # Instantiate the message object
     return reader.class_for_tag(elem.tag)()
