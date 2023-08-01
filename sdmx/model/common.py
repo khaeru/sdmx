@@ -474,7 +474,9 @@ FacetValueType = Enum(
     gregorianYear gregorianMonth gregorianYearMonth gregorianDay reportingTimePeriod
     reportingYear reportingSemester reportingTrimester reportingQuarter reportingMonth
     reportingWeek reportingDay dateTime timesRange month monthDay day time duration
-    keyValues identifiableReference dataSetReference""",
+    keyValues identifiableReference dataSetReference """
+    # SDMX 3.0 only
+    "geospatialInformation",
 )
 
 UsageStatus = Enum("UsageStatus", "mandatory conditional")
