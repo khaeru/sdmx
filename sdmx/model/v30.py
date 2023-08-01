@@ -132,16 +132,47 @@ class GeoGridCodelist(GeoCodelist):
 # §4.4: ValueList
 
 
-class ValueItem(Item):
+@dataclass
+@IdentifiableArtefact._preserve("hash")
+class EnumeratedItem(common.AnnotableArtefact):
+    """SDMX 3.0 EnumeratedItem.
+
+    This class is similar to :meth:`.Item`, but with a only subset of its features; i.e.
+    no :attr:`IdentifiableArtefact.urn`.
+    """
+
+    #: Identifier of the item.
+    id: str = common.MissingID
+
+    #: Multi-lingual name of the object. Analogous to :attr:`NameableArtefact.name`.
+    name: InternationalStringDescriptor = InternationalStringDescriptor()
+    #: Multi-lingual description of the object. Analogous to
+    #: :attr:`NameableArtefact.description`.
+    description: InternationalStringDescriptor = InternationalStringDescriptor()
+
+    def __iter__(self, recurse=True):
+        # Mirrors Item.__iter__
+        yield self
+
+
+class ValueItem(EnumeratedItem):
     """SDMX 3.0 ValueItem."""
 
-    # FIXME should inherit from EnumeratedItem
+
+class EnumeratedList(common.MaintainableArtefact):
+    pass
 
 
-class ValueList(ItemScheme[ValueItem]):
+@dataclass
+class ValueList(EnumeratedList):
     """SDMX 3.0 ValueList."""
 
     _Item = ValueItem
+
+    items: List[ValueItem] = field(default_factory=list)
+
+    def append(self, item: ValueItem) -> None:
+        self.items.append(item)
 
 
 # §4.7: OrganisationScheme
