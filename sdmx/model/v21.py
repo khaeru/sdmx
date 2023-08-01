@@ -29,16 +29,12 @@ from sdmx.util import DictLikeDescriptor
 from . import common
 from .common import (
     AttributeRelationship,
-    Code,
     Component,
     ComponentList,
     ConstrainableArtefact,
     ConstraintRole,
     DataAttribute,
-    DataProvider,
     DimensionComponent,
-    DimensionDescriptor,
-    GroupDimensionDescriptor,
     IdentifiableArtefact,
     Key,
     NameableArtefact,
@@ -300,29 +296,17 @@ class MetadataflowDefinition(common.BaseMetadataflow):
     """SDMX 2.1 MetadataflowDefinition."""
 
 
-def parent_class(cls):
-    """Return the class that contains objects of type `cls`.
-
-    E.g. if `cls` is :class:`.PrimaryMeasure`, returns :class:`.MeasureDescriptor`.
-    """
-    return {
-        common.Agency: common.AgencyScheme,
-        common.Category: common.CategoryScheme,
-        Code: common.Codelist,
-        common.Concept: common.ConceptScheme,
-        common.Dimension: DimensionDescriptor,
-        DataProvider: common.DataProviderScheme,
-        GroupDimensionDescriptor: DataStructureDefinition,
+CF = common.ClassFinder(
+    __name__,
+    name_map={
+        "Dataflow": "DataflowDefinition",
+        "Metadataflow": "MetadataflowDefinition",
+    },
+    parent_map={
         PrimaryMeasure: MeasureDescriptor,
-    }[cls]
-
-
-def __dir__():
-    return sorted(__all__ + common.__all__)
-
-
-def __getattr__(name):
-    return getattr(common, name)
-
-
-get_class = common.ClassFinder(__name__)
+    },
+)
+get_class = CF.get_class
+parent_class = CF.parent_class
+__dir__ = CF.dir
+__getattr__ = CF.getattr

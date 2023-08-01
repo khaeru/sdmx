@@ -2392,16 +2392,31 @@ _PACKAGE_CLASS: Dict[str, set] = {
 for package, classes in _PACKAGE_CLASS.items():
     PACKAGE.update({cls: package for cls in classes})
 
+PARENT = {
+    Agency: AgencyScheme,
+    Category: CategoryScheme,
+    Code: Codelist,
+    Concept: ConceptScheme,
+    Dimension: DimensionDescriptor,
+    TimeDimension: DimensionDescriptor,
+    DataProvider: DataProviderScheme,
+    GroupDimensionDescriptor: BaseDataStructureDefinition,
+}
+
 
 @dataclass
 class ClassFinder:
     module_name: str
+    name_map: Dict[str, str] = field(default_factory=dict)
+    parent_map: Dict[type, type] = field(default_factory=dict)
+
+    def __post_init__(self):
+        self._module = sys.modules[self.module_name]
+        self._parent = ChainMap(PARENT, self.parent_map)
 
     @lru_cache()
-    def __call__(self, name: Union[str, Resource], package=None) -> Optional[Type]:
+    def get_class(self, name: Union[str, Resource], package=None) -> Optional[Type]:
         """Return a class for `name` and (optional) `package` names."""
-        mod = sys.modules[self.module_name]
-
         if isinstance(name, Resource):
             # Convert a Resource enumeration value to a string
 
@@ -2410,16 +2425,13 @@ class ClassFinder:
 
             # Match class names in lower case. If no match or >2, only() returns None,
             # and KeyError occurs below
-            name = only(filter(lambda g: g.lower() == match, dir(mod)))
+            name = only(filter(lambda g: g.lower() == match, dir(self._module)))
 
         # Change names that differ between URNs and full class names
-        name = {
-            "Dataflow": "DataflowDefinition",
-            "Metadataflow": "MetadataflowDefinition",
-        }.get(name, name)
+        name = self.name_map.get(name, name)
 
         try:
-            cls = getattr(mod, name)
+            cls = getattr(self._module, name)
         except (AttributeError, TypeError):
             return None
 
@@ -2427,6 +2439,24 @@ class ClassFinder:
             raise ValueError(f"Package {repr(package)} invalid for {name}")
 
         return cls
+
+    def parent_class(self, cls):
+        """Return the class that contains objects of type `cls`.
+
+        E.g. if `cls` is :class:`.PrimaryMeasure`, returns :class:`.MeasureDescriptor`.
+        """
+        return self._parent[cls]
+
+    def dir(self):
+        """For module.__dir__."""
+        return sorted(self._module.__all__ + __all__)
+
+    def getattr(self, name):
+        """For module.__getattr__."""
+        try:
+            return globals()[name]
+        except KeyError:
+            raise AttributeError(name)
 
     # To allow lru_cache() above
     def __hash__(self):

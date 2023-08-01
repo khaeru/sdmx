@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, ClassVar, List, Optional
+from typing import Any, ClassVar, List, Optional, Set
 
 from . import common
 from .common import (
@@ -8,19 +8,17 @@ from .common import (
     Codelist,
     Component,
     ComponentList,
+    ConstrainableArtefact,
     ConstraintRole,
     ConstraintRoleType,
-    DimensionDescriptor,
     Facet,
-    GroupDimensionDescriptor,
     IdentifiableArtefact,
-    Item,
-    ItemScheme,
     MaintainableArtefact,
     NameableArtefact,
     Organisation,
     OrganisationScheme,
 )
+from .internationalstring import InternationalStringDescriptor
 
 # Classes defined directly in the current file, in the order they appear
 __all__ = [
@@ -439,30 +437,8 @@ class HierarchyAssociation(MaintainableArtefact):
     linked_hierarchy: Optional[Hierarchy] = None
 
 
-def parent_class(cls):
-    """Return the class that contains objects of type `cls`.
-
-    E.g. if `cls` is :class:`.PrimaryMeasure`, returns :class:`.MeasureDescriptor`.
-    """
-    # TODO reduce duplication with v21.parent_class()
-    return {
-        common.Agency: common.AgencyScheme,
-        common.Category: common.CategoryScheme,
-        Code: common.Codelist,
-        common.Concept: common.ConceptScheme,
-        common.Dimension: DimensionDescriptor,
-        common.DataProvider: common.DataProviderScheme,
-        GroupDimensionDescriptor: DataStructureDefinition,
-        Measure: MeasureDescriptor,
-    }[cls]
-
-
-def __dir__():
-    return sorted(__all__ + common.__all__)
-
-
-def __getattr__(name):
-    return getattr(common, name)
-
-
-get_class = common.ClassFinder(__name__)
+CF = common.ClassFinder(__name__, parent_map={Measure: MeasureDescriptor})
+get_class = CF.get_class
+parent_class = CF.parent_class
+__dir__ = CF.dir
+__getattr__ = CF.getattr
