@@ -1420,7 +1420,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
                 args = dict(id=group_id, described_by=gdd)
 
                 # Dimensions to be retrieved from the GDD
-                def dim(id):
+                def dim(id):  # noqa: F811
                     # Get from the DimensionDescriptor
                     new_dim = self.dimensions.getdefault(id)
                     # Add to the GDD
