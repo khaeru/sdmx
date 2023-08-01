@@ -1108,6 +1108,9 @@ def _component(reader: Reader, elem):
         args["order"] = int(elem.attrib["position"])
     except KeyError:
         pass
+    cr = reader.pop_resolved_ref("ConceptRole")
+    if cr:
+        args["concept_role"] = cr
 
     # DataAttribute only
     ar = reader.pop_all(model.AttributeRelationship, subclass=True)
