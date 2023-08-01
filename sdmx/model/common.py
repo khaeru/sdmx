@@ -1092,6 +1092,9 @@ class DimensionComponent(Component):
 class Dimension(DimensionComponent):
     """SDMX Dimension."""
 
+    #:
+    concept_role: Optional[Concept] = None
+
 
 class TimeDimension(DimensionComponent):
     """SDMX TimeDimension."""
@@ -1194,6 +1197,8 @@ class DataAttribute(Component):
     related_to: Optional[AttributeRelationship] = None
     #:
     usage_status: Optional[UsageStatus] = None
+    #:
+    concept_role: Optional[Concept] = None
 
 
 class AttributeDescriptor(ComponentList[DataAttribute]):

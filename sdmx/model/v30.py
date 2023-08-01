@@ -242,11 +242,15 @@ class MetadataConstraint(Constraint):
 # §5.3: Data Structure Definition
 
 
+@dataclass
 class Measure(Component):
     """SDMX 3.0 Measure.
 
     This class is not present in SDMX 2.1; see instead :class:`.v21.PrimaryMeasure`.
     """
+
+    #:
+    concept_role: Optional[common.Concept] = None
 
 
 class MeasureDescriptor(ComponentList[Measure]):

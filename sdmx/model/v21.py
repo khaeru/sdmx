@@ -182,11 +182,15 @@ class ContentConstraint(Constraint, common.BaseContentConstraint):
 # §5.3: Data Structure Definition
 
 
+@dataclass
 class MeasureDimension(DimensionComponent):
     """SDMX 2.1 MeasureDimension.
 
     This class is not present in SDMX 3.0.
     """
+
+    #:
+    concept_role: Optional[common.Concept] = None
 
 
 class PrimaryMeasure(Component):
