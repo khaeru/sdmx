@@ -83,15 +83,18 @@ def _cl(reader, elem):
 
 @end("str:CodelistExtension")
 def _cl_ext(reader, elem):
+    cs = reader.pop_all(model.CodeSelection, subclass=True) or [None]
+    assert 1 == len(cs)
     return model.CodelistExtension(
-        codelist=reader.pop_resolved_ref("Codelist"),
-        mv=reader.pop_all(model.MemberValue),
+        extends=reader.pop_resolved_ref("Codelist"),
+        prefix=elem.attrib.get("prefix", None),
+        selection=cs[0],
     )
 
 
 @end("str:ExclusiveCodeSelection str:InclusiveCodeSelection")
 def _code_selection(reader, elem):
-    raise NotImplementedError
+    return reader.class_for_tag(elem.tag)(mv=reader.pop_all(model.MemberValue))
 
 
 @end("str:MemberValue")
