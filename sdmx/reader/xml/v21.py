@@ -1387,16 +1387,22 @@ def _cc(reader, elem):
 # §5.2: Data Structure Definition
 
 
+@end("str:None")
+def _ar_kind(reader: Reader, elem):
+    return reader.class_for_tag(elem.tag)()
+
+
 @end("str:AttributeRelationship")
 def _ar(reader, elem):
     dsd = reader.peek("current DSD")
 
-    if "None" in elem[0].tag:
-        return model.NoSpecifiedRelationship()
+    refs = reader.pop_all(reader.Reference)
+    if not len(refs):
+        return
 
     # Iterate over parsed references to Components
     args = dict(dimensions=list())
-    for ref in reader.pop_all(reader.Reference):
+    for ref in refs:
         # Use the <Ref id="..."> to retrieve a Component from the DSD
         if issubclass(ref.target_cls, model.DimensionComponent):
             component = dsd.dimensions.get(ref.target_id)
