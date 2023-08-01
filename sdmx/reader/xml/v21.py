@@ -900,7 +900,7 @@ def _localization(reader, elem):
 )
 def _ref(reader: Reader, elem):
     cls_hint = None
-    if "Parent" in elem.tag:
+    if QName(elem).localname in ("Parent", "Target"):
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
         cls_hint = reader.class_for_tag(elem.getparent().tag)
 
