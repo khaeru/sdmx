@@ -271,6 +271,7 @@ class SpecimenCollection:
                 ("INSEE", "IPI-2010-A21-structure.xml"),
                 ("ISTAT", "22_289-structure.xml"),
                 ("ISTAT", "47_850-structure.xml"),
+                ("UNICEF", "GLOBAL_DATAFLOW-structure.xml"),
                 ("UNSD", "codelist_partial.xml"),
                 ("SGR", "common-structure.xml"),
             ]
