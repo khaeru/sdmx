@@ -1597,7 +1597,11 @@ class AttributeValue:
 
     def __str__(self):
         # self.value directly for UncodedAttributeValue
-        return self.value if isinstance(self.value, str) else self.value.id
+        return getattr(
+            self.value,
+            "id",
+            self.value if isinstance(self.value, str) else repr(self.value),
+        )
 
     def __repr__(self):
         return "<{}: {}={}>".format(self.__class__.__name__, self.value_for, self.value)
