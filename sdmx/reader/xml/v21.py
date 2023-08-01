@@ -1357,10 +1357,16 @@ def _cr(reader, elem):
 @end("str:ContentConstraint")
 def _cc(reader, elem):
     cls = reader.class_for_tag(elem.tag)
-    cr_str = elem.attrib["type"].lower().replace("allowed", "allowable")
+
+    # The attribute is called "type" in SDMX-ML 2.1; "role" in 3.0
+    for name in "type", "role":
+        try:
+            cr_str = elem.attrib[name].lower().replace("allowed", "allowable")
+        except KeyError:
+            pass
 
     content = set()
-    for ref in reader.pop_all(Reference):
+    for ref in reader.pop_all(reader.Reference):
         resolved = reader.resolve(ref)
         if resolved is None:
             log.warning(f"Unable to resolve {cls.__name__}.content ref:\n  {ref}")
