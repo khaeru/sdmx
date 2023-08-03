@@ -186,7 +186,7 @@ def test_complete(module, extra):
     ],
 )
 def test_get_class(args, expected):
-    assert expected is model.get_class(**args)
+    assert expected is model.v21.get_class(**args)
 
 
 def test_deprecated_import():
