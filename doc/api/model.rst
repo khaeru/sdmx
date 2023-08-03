@@ -30,7 +30,8 @@ Common to SDMX 2.1 and 3.0
 
 .. automodule:: sdmx.model.common
    :members:
-   :exclude-members: InternationalString
+   :ignore-module-all:
+   :exclude-members: InternationalString, SDMXtoVTL, VTLtoSDMX
    :undoc-members:
    :show-inheritance:
 

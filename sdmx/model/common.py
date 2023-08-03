@@ -466,7 +466,7 @@ class MaintainableArtefact(VersionableArtefact):
 
 
 class BaseConstraint(ABC, MaintainableArtefact):
-    """ABC for Constraint."""
+    """ABC for SDMX 2.1 and 3.0 Constraint."""
 
     @abstractmethod
     def __contains__(self, name):
@@ -480,11 +480,13 @@ ActionType = Enum("ActionType", "delete replace append information")
 
 ConstraintRoleType = Enum("ConstraintRoleType", "allowable actual")
 
-# NB three diagrams in the spec show this enumeration containing 'gregorianYearMonth'
-#    but not 'gregorianYear' or 'gregorianMonth'. The table in §3.6.3.3 Representation
-#    Constructs does the opposite. One ESTAT query (via SGR) shows a real-world usage
-#    of 'gregorianYear'; while one query shows usage of 'gregorianYearMonth'; so all
-#    three are included.
+#: SDMX FacetValueType.
+#:
+#: In the SDMX 2.0 IM, three diagrams in the spec show this enumeration containing
+#: 'gregorianYearMonth' but not 'gregorianYear' or 'gregorianMonth'. The table in
+#: §3.6.3.3 Representation Constructs does the opposite. One ESTAT query (via SGR) shows
+#: a real-world usage of 'gregorianYear'; while one query shows usage of
+#: 'gregorianYearMonth'; so all three are included.
 FacetValueType = Enum(
     "FacetValueType",
     """string bigInteger integer long short decimal float double boolean uri count
@@ -1253,7 +1255,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
 
         Parameters
         ----------
-        constraint : Constraint, optional
+        constraint : :class:`Constraint <.BaseConstraint>`, optional
             If given, only yield Keys that are within the constraint.
         dims : list of str, optional
             If given, only iterate over allowable values for the Dimensions with these
@@ -1498,6 +1500,8 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
 
 
 class BaseDataflow(StructureUsage, ConstrainableArtefact):
+    """Common features of SDMX 2.1 DataflowDefinition and 3.0 Dataflow."""
+
     structure: BaseDataStructureDefinition
 
     def iter_keys(
@@ -1864,7 +1868,7 @@ class SeriesKey(Key):
 
 @dataclass
 class BaseObservation:
-    """SDMX Observation.
+    """Common features of SDMX 2.1 and 3.0 Observation.
 
     This class also implements the IM classes ObservationValue, UncodedObservationValue,
     and CodedObservation.
@@ -1933,7 +1937,7 @@ class BaseObservation:
 
 @dataclass
 class BaseDataSet(AnnotableArtefact):
-    """ABC for DataSet."""
+    """Common features of SDMX 2.1 and 3.0 DataSet."""
 
     #:
     action: Optional[ActionType] = None
@@ -2036,11 +2040,11 @@ class BaseDataSet(AnnotableArtefact):
 
 
 class BaseMetadataStructureDefinition(Structure, ConstrainableArtefact):
-    """ABC for MetadataStructureDefinition."""
+    """ABC for SDMX 2.1 and 3.0 MetadataStructureDefinition."""
 
 
 class BaseMetadataflow(StructureUsage, ConstrainableArtefact):
-    """ABC for Metadataflow{,Definition}."""
+    """ABC for SDMX 2.1 MetadataflowDefinition and SDMX 3.0 Metadataflow."""
 
 
 # SDMX 2.1 §10.2: Constraint inheritance
@@ -2068,11 +2072,13 @@ class TimeDimensionValue(ComponentValue):
 
 
 class BaseSelectionValue:
-    """SDMX SelectionValue."""
+    """ABC for SDMX 2.1 and 3.0 SelectionValue."""
 
 
 @dataclass
 class BaseMemberValue:
+    """Common features of SDMX 2.1 and 3.0 MemberValue."""
+
     #:
     value: str
     #:
@@ -2106,6 +2112,8 @@ class EndPeriod(Period):
 
 @dataclass
 class BaseDataKey:
+    """Common features of SDMX 2.1 and 3.0 DataKey."""
+
     #: :obj:`True` if the :attr:`keys` are included in the :class:`.Constraint`;
     # :obj:`False` if they are excluded.
     included: bool
@@ -2115,10 +2123,12 @@ class BaseDataKey:
 
 @dataclass
 class BaseDataKeySet:
-    #: :obj:`True` if the :attr:`keys` are included in the :class:`.Constraint`;
-    #: :obj:`False` if they are excluded.
+    """Common features of SDMX 2.1 and 3.0 DataKeySet."""
+
+    #: :obj:`True` if the :attr:`keys` are included in the
+    #: :class:`Constraint <.BaseConstraint>`; :obj:`False` if they are excluded.
     included: bool
-    #: :class:`DataKeys <.DataKey>` appearing in the set.
+    #: :class:`DataKeys <.BaseDataKey>` appearing in the set.
     keys: List[BaseDataKey] = field(default_factory=list)
 
     def __len__(self):
@@ -2131,6 +2141,8 @@ class BaseDataKeySet:
 
 @dataclass
 class BaseMemberSelection:
+    """Common features of SDMX 2.1 and 3.0 MemberSelection."""
+
     #:
     values_for: Component
     #:
@@ -2336,9 +2348,11 @@ class VTLMapping(Item["VTLMapping"]):
     pass
 
 
-# Mapping methods
-VTLtoSDMX = Enum("VTLtoSDMX", "basic unpivot m2a")
+#: Mappings from SDMX to VTL.
 SDMXtoVTL = Enum("SDMXtoVTL", "basic pivot basic-a2m pivot-a2m")
+
+#: Mappings from VTL to SDMX.
+VTLtoSDMX = Enum("VTLtoSDMX", "basic unpivot m2a")
 
 
 @dataclass
@@ -2380,7 +2394,7 @@ class TransformationScheme(ItemScheme[Transformation]):
 
 
 class BaseContentConstraint:
-    """ABC for ContentConstraint."""
+    """ABC for SDMX 2.1 and 3.0 ContentConstraint."""
 
 
 # Internal
@@ -2467,7 +2481,8 @@ class ClassFinder:
     def parent_class(self, cls):
         """Return the class that contains objects of type `cls`.
 
-        E.g. if `cls` is :class:`.PrimaryMeasure`, returns :class:`.MeasureDescriptor`.
+        For example, if `cls` is :class:`.PrimaryMeasure`, returns
+        :class:`.v21.MeasureDescriptor`.
         """
         return self._parent[cls]
 
