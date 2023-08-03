@@ -5,11 +5,9 @@ requires = ["build", "setuptools-scm"]
 name = "sdmx1"
 description = "Statistical Data and Metadata eXchange (SDMX)"
 dynamic = ["version"]
-authors = [
-  {name = "SDMX Python developers"}
-]
+authors = [{ name = "SDMX Python developers" }]
 maintainers = [
-  {name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name"}
+  { name = "Paul Natsuo Kishimoto", email = "mail@paul.kishimoto.name" },
 ]
 readme = "README.rst"
 keywords = ["statistics", "SDMX", "pandas", "data", "economics", "science"]
@@ -39,17 +37,13 @@ dependencies = [
 
 [project.optional-dependencies]
 cache = ["requests-cache"]
-docs = [
-  "IPython",
-  "sphinx >=4",
-  "sphinx-book-theme",
-]
+docs = ["IPython", "sphinx >=4", "sphinx-book-theme"]
 tests = [
   "Jinja2",
   "pytest >= 5",
   "pytest-cov",
   "pytest-xdist",
-  "requests-mock >= 1.4"
+  "requests-mock >= 1.4",
 ]
 
 [project.urls]
@@ -75,9 +69,7 @@ exclude_also = [
 profile = "black"
 
 [tool.mypy]
-exclude = [
-  "^build/",
-]
+exclude = ["^build/"]
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available.
