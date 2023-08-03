@@ -102,6 +102,49 @@ Quick links to classes specific to the SDMX 2.1 implementation:
 :class:`~.v21.RESTDatasource`
 :class:`~.v21.ProvisionAgreement`
 
+Quick links to classes specific to the SDMX 3.0 implementation:
+
+:class:`~.v30.CodelistExtension`
+:class:`~.v30.GeoRefCode`
+:class:`~.v30.GeoGridCode`
+:class:`~.v30.GeoFeatureSetCode`
+:class:`~.v30.GeoCodelist`
+:class:`~.v30.GeographicCodelist`
+:class:`~.v30.GeoGridCodelist`
+:class:`~.v30.ValueItem`
+:class:`~.v30.ValueList`
+:class:`~.v30.MetadataProvider`
+:class:`~.v30.MetadataProviderScheme`
+:class:`~.v30.Measure`
+:class:`~.v30.MeasureDescriptor`
+:class:`~.v30.DataflowRelationship`
+:class:`~.v30.MeasureRelationship`
+:class:`~.v30.ObservationRelationship`
+:class:`~.v30.DataStructureDefinition`
+:class:`~.v30.Dataflow`
+:class:`~.v30.Observation`
+:class:`~.v30.StructureSpecificDataSet`
+:class:`~.v30.MetadataStructureDefinition`
+:class:`~.v30.Metadataflow`
+:class:`~.v30.CodingFormat`
+:class:`~.v30.Level`
+:class:`~.v30.HierarchicalCode`
+:class:`~.v30.Hierarchy`
+:class:`~.v30.HierarchyAssociation`
+:class:`~.v30.SelectionValue`
+:class:`~.v30.MemberValue`
+:class:`~.v30.TimeRangeValue`
+:class:`~.v30.BeforePeriod`
+:class:`~.v30.AfterPeriod`
+:class:`~.v30.RangePeriod`
+:class:`~.v30.DataKey`
+:class:`~.v30.DataKeySet`
+:class:`~.v30.Constraint`
+:class:`~.v30.MemberSelection`
+:class:`~.v30.DataConstraint`
+:class:`~.v30.MetadataConstraint`
+
+
 Common to SDMX 2.1 and 3.0
 --------------------------
 
@@ -116,13 +159,30 @@ Common to SDMX 2.1 and 3.0
    :undoc-members:
    :show-inheritance:
 
+.. currentmodule:: sdmx.model.v21
+
 SDMX 2.1
 --------
 
 .. automodule:: sdmx.model.v21
    :members:
    :ignore-module-all:
-   :exclude-members: ActionType, Agency, AgencyScheme, AnnotableArtefact, Annotation, Categorisation, Category, CategoryScheme, Concept, ConceptScheme, ConstraintRoleType, Contact, Facet, FacetType, FacetValueType, IdentifiableArtefact, ISOConceptReference, Item, ItemScheme, MaintainableArtefact, NameableArtefact, Organisation, OrganisationScheme, Representation, UsageStatus, VersionableArtefact, KeyValue
+   :undoc-members:
+   :show-inheritance:
+
+   .. autoclass:: KeyValue
+      :members:
+      :special-members: __eq__
+
+
+.. currentmodule:: sdmx.model.v30
+
+SDMX 3.0
+--------
+
+.. automodule:: sdmx.model.v30
+   :members:
+   :ignore-module-all:
    :undoc-members:
    :show-inheritance:
 
