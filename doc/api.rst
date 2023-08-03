@@ -41,6 +41,7 @@ Top-level methods and classes
 
 .. automodule:: sdmx.format
    :members:
+   :exclude-members: Version
    :undoc-members:
    :show-inheritance:
 
