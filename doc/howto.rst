@@ -143,7 +143,7 @@ Limitations:
 
 - :mod:`sdmx` can only obey `rtype` = 'compat' when reading or converting an entire :class:`.DataMessage`; not a :class:`.DataSet`.
   While the concept of “dimension at observation level” is *mentioned* in the IM in relation to data sets, it is not formally included as an attribute of any class, or with any default value.
-  (For instance, it is not included in the :class:`.DimensionDescriptor` of a :class:`.DataStructureDefinition`.)
+  (For instance, it is not included in the :class:`.DimensionDescriptor` of a :class:`DataStructureDefinition <.BaseDataStructureDefinition>`.)
   It can *only* be determined from the header of a SDMX-ML or -JSON data message.
 - Except for :data:`.AllDimensions`, each row and column of the returned data frame contains multiple observations, so attributes cannot be included without ambiguity about which observation(s) have the attribute.
   In these cases, attributes are omitted; use `rtype` = 'rows' to retrieve them.

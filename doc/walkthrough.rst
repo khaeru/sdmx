@@ -183,7 +183,7 @@ The ECB SDMX service responds by returning all metadata related to the dataflow:
 
     exr_flow = exr_msg.dataflow.EXR
 
-The :attr:`.DataflowDefinition.structure` attribute refers to the data structure definition (DSD, an instance of :class:`.DataStructureDefinition`).
+The :attr:`.v21.DataflowDefinition.structure` attribute refers to the data structure definition (DSD, an instance of :class:`DataStructureDefinition <.BaseDataStructureDefinition>`).
 As the name implies, this object contains metadata that describes the structure of data in the 'EXR' flow:
 
 .. ipython:: python
