@@ -3,6 +3,7 @@ from typing import Dict, Iterable, Mapping, Optional, Sequence, Tuple, Union
 
 # TODO read this from the environment, or use any value set in the SDMX-ML spec.
 #      Currently set to 'en' because test_dsd.py expects it.
+#: Default locale for :class:`InternationalString`.
 DEFAULT_LOCALE = "en"
 
 # §3.2: Base structures

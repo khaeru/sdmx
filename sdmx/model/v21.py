@@ -58,7 +58,11 @@ log = logging.getLogger(__name__)
 # §10.3: Constraints
 
 
-SelectionValue = common.BaseSelectionValue
+class SelectionValue(common.BaseSelectionValue):
+    """SDMX 2.1 SelectionValue.
+
+    Identical to its parent class.
+    """
 
 
 class MemberValue(common.BaseMemberValue, SelectionValue):
@@ -83,9 +87,18 @@ class RangePeriod(TimeRangeValue):
     end: common.EndPeriod
 
 
-DataKey = common.BaseDataKey
+class DataKey(common.BaseDataKey):
+    """SDMX 2.1 DataKey.
 
-DataKeySet = common.BaseDataKeySet
+    Identical to its parent class.
+    """
+
+
+class DataKeySet(common.BaseDataKeySet):
+    """SDMX 2.1 DataKeySet.
+
+    Identical to its parent class.
+    """
 
 
 @dataclass

@@ -1586,8 +1586,11 @@ class KeyValue:
         return hash(self.id + str(self.value))
 
 
-#: Synonym for :class:`.KeyValue`.
-TimeKeyValue = KeyValue
+class TimeKeyValue(KeyValue):
+    """SDMX TimeKeyValue.
+
+    Identical to its parent class.
+    """
 
 
 @dataclass
