@@ -1,4 +1,21 @@
-"""Information Model classes common to SDMX 2.1 and 3.0.0."""
+"""Information Model classes common to SDMX 2.1 and 3.0.
+
+This module implements many of the classes described in the SDMX-IM specification
+('spec'), which is available from:
+
+- https://sdmx.org/?page_id=5008
+- https://sdmx.org/wp-content/uploads/SDMX_2-1-1_SECTION_2_InformationModel_201108.pdf
+
+Details of the implementation:
+
+- Python dataclasses and type hinting are used to enforce the types of attributes that
+  reference instances of other classes.
+- Some classes have convenience attributes not mentioned in the spec, to ease navigation
+  between related objects. These are marked “:mod:`sdmx` extension not in the IM.”
+- Class definitions are grouped by section of the spec, but these sections occassionally
+  appear out of order so that classes are defined before they are referenced by others.
+
+"""
 import logging
 import sys
 from collections import ChainMap
@@ -1208,6 +1225,8 @@ class AttributeDescriptor(ComponentList[DataAttribute]):
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
 class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
+    """Common features of SDMX 2.1 and 3.0 DataStructureDefinition (**DSD**)."""
+
     #: A :class:`AttributeDescriptor` that describes the attributes of the data
     #: structure.
     attributes: AttributeDescriptor = field(default_factory=AttributeDescriptor)
@@ -1639,14 +1658,14 @@ class Key:
 
     Parameters
     ----------
-    dsd : DataStructureDefinition
-        If supplied, the :attr:`~.DataStructureDefinition.dimensions` and
-        :attr:`~.DataStructureDefinition.attributes` are used to separate the `kwargs`
-        into :class:`KeyValues <.KeyValue>` and
+    dsd : DataStructureDefinition <.BaseDataStructureDefinition>
+        If supplied, the :attr:`~.BaseDataStructureDefinition.dimensions` and
+        :attr:`~.BaseDataStructureDefinition.attributes` are used to separate the
+        `kwargs` into :class:`KeyValues <.KeyValue>` and
         :class:`AttributeValues <.AttributeValue>`. The `kwargs` for
         :attr:`described_by`, if any, must be
-        :attr:`~.DataStructureDefinition.dimensions` or appear in
-        :attr:`~.DataStructureDefinition.group_dimensions`.
+        :attr:`~.BaseDataStructureDefinition.dimensions` or appear in
+        :attr:`~.BaseDataStructureDefinition.group_dimensions`.
     kwargs
         Dimension and Attribute IDs, and/or the class properties.
 
