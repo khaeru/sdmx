@@ -18,6 +18,7 @@ Details of the implementation:
 """
 import logging
 import sys
+from abc import ABC, abstractmethod
 from collections import ChainMap
 from copy import copy
 from dataclasses import InitVar, dataclass, field
@@ -464,11 +465,12 @@ class MaintainableArtefact(VersionableArtefact):
         return "<{cls} {maint}{id}{version}{name}>".format(**self._repr_kw())
 
 
-class BaseConstraint(MaintainableArtefact):
+class BaseConstraint(ABC, MaintainableArtefact):
     """ABC for Constraint."""
 
+    @abstractmethod
     def __contains__(self, name):
-        raise NotImplementedError
+        ...
 
 
 # §3.4: Data Types

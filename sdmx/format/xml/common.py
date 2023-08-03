@@ -158,7 +158,7 @@ class XMLFormat:
 
     # __eq__ and __hash__ to enable lru_cache()
     def __eq__(self, other):
-        return self.base_ns == other.base_ns
+        return self.base_ns == other.base_ns  # pragma: no cover
 
     def __hash__(self):
         return hash(self.base_ns)

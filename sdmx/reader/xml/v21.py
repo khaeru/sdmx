@@ -171,8 +171,9 @@ class Reference:
 
         return result
 
-    def __str__(self):  # pragma: no cover
-        return (
+    def __str__(self):
+        # NB for debugging only
+        return (  # pragma: no cover
             f"{self.cls.__name__}={self.agency.id}:{self.id}({self.version}) → "
             f"{self.target_cls.__name__}={self.target_id}"
         )
@@ -224,7 +225,8 @@ class Reader(metaclass=DispatchingReader):
 
     @classmethod
     def detect(cls, content):
-        return content.startswith(b"<")
+        # NB this should not ever be used directly; rather the .reader.xml.Reader method
+        return content.startswith(b"<")  # pragma: no cover
 
     def read_message(
         self,
@@ -1696,15 +1698,15 @@ def _ds_end(reader, elem):
 
 
 @end("str:MetadataTarget")
-def _mdt(reader: Reader, elem):
+def _mdt(reader: Reader, elem):  # pragma: no cover
     raise NotImplementedError
 
 
 @end("str:MetadataStructure")
-def _msd(reader: Reader, elem):
+def _msd(reader: Reader, elem):  # pragma: no cover
     cls = reader.class_for_tag(elem)
-    log.warning("Not parsed: f{elem.tag}")
-    return cls()
+    log.warning(f"Not parsed: {elem.tag} -> {cls}")
+    return NotImplemented
 
 
 # §11: Data Provisioning

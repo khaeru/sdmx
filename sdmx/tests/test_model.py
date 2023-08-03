@@ -194,7 +194,13 @@ def test_deprecated_import():
     with pytest.warns(
         DeprecationWarning, match=r"DataStructureDefinition from sdmx\.model"
     ):
-        from sdmx.model import DataStructureDefinition  # noqa: F401
+        model.DataStructureDefinition
 
     with pytest.raises(ImportError):
         from sdmx.model import Foo  # noqa: F401
+
+
+def test_dir():
+    """:func:`dir` gives only classes in :mod:`.model.common`."""
+    assert "CategoryScheme" in dir(model)
+    assert "DataStructureDefinition" not in dir(model)

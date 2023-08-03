@@ -64,6 +64,13 @@ omit = [
   "sdmx/writer/protobuf.py",
 ]
 
+[tool.coverage.report]
+exclude_also = [
+  # Don't complain about abstract methods, they aren't run
+  "@(abc\\.)?abstractmethod",
+]
+
+
 [tool.isort]
 profile = "black"
 

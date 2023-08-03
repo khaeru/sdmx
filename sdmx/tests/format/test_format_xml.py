@@ -1,5 +1,12 @@
+import pytest
+
 from sdmx.format import xml
 from sdmx.model import v21
+
+
+def test_ns_prefix():
+    with pytest.raises(ValueError):
+        xml.v21.ns_prefix("https://example.com")
 
 
 def test_qname():

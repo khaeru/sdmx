@@ -247,11 +247,11 @@ def _contact(elem: Mapping) -> common.Contact:
         log.debug(f"Discard unsupported Contact(id={data.pop('id')!r})")
     try:
         data["org_unit"] = data.pop("department")
-    except KeyError:
+    except KeyError:  # pragma: no cover
         pass
     try:
         data["responsibility"] = data.pop("role")
-    except KeyError:
+    except KeyError:  # pragma: no cover
         pass
     return common.Contact(**data)
 
@@ -268,7 +268,7 @@ def depluralize(elem: Mapping, names: str) -> MutableMapping:
         info = name.split("|")
         try:
             result[info[0]] = result.pop(f"{info[-1]}s")
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
     return result
 

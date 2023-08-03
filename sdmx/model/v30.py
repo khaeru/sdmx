@@ -282,9 +282,15 @@ class DataConstraint(Constraint):
     data_content_keys: Optional[DataKeySet] = None
     data_content_region: Optional[common.CubeRegion] = None
 
+    def __contains__(self, name):
+        raise NotImplementedError  # pragma: no cover
+
 
 class MetadataConstraint(Constraint):
     metadata_content_region: Optional[common.MetadataTargetRegion] = None
+
+    def __contains__(self, name):
+        raise NotImplementedError  # pragma: no cover
 
 
 # §5.3: Data Structure Definition

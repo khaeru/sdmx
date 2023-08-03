@@ -167,7 +167,7 @@ def _ar(reader: Reader, elem):
 def _complex_value(reader: Reader, elem):
     try:
         reader.push("ComplexValue", model.InternationalString(reader.pop_all("Text")))
-    except Exception:
+    except Exception:  # pragma: no cover
         raise NotImplementedError
 
 
