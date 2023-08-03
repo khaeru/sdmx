@@ -1511,7 +1511,7 @@ class BaseDataflow(StructureUsage, ConstrainableArtefact):
 
         See also
         --------
-        .DataStructureDefinition.iter_keys
+        .BaseDataStructureDefinition.iter_keys
         """
         yield from self.structure.iter_keys(constraint=constraint, dims=dims)
 
