@@ -36,7 +36,8 @@ class Reader(BaseReader):
     def detect(cls, content):
         return content.startswith(b"{")
 
-    def read_message(self, source, dsd=None):
+    # FIXME Reduce complexity from 17 → 13
+    def read_message(self, source, dsd=None):  # noqa: C901
         # Initialize message instance
         msg = DataMessage()
 
