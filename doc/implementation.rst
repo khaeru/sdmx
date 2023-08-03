@@ -2,7 +2,7 @@ Implementation notes
 ********************
 
 :mod:`sdmx.model` implements the SDMX :term:`information model`.
-This page gives brief explanations of **how** :mod:`sdmx` **implements the standards**, focusing on additional features, conveniences, or interpretations/naming choices that are not strictly determined by the standards.
+This page gives brief explanations of **how** :mod:`sdmx` **implements the standards**, focusing on additional features, conveniences, errata, and interpretations/naming choices that are not strictly determined by the standards.
 
 Although this page is organized to correspond to the standards, it **does not recapitulate them** (:ref:`as stated <not-the-standard>`)—nor does it set out to teach all their details.
 For those purposes, see :doc:`resources`; or the :doc:`walkthrough`, which includes some incidental explanations.
@@ -15,7 +15,7 @@ SDMX versions 2.0, 2.1, and 3.0
 Multiple versions of the SDMX standards have been published:
 
 - 2.0 in November 2005.
-- 2.1 in August 2011; published at the ISO in January 2013; and revised multiple times since.
+- 2.1 in August 2011; published at the International Standards Organization (ISO) in January 2013; and revised multiple times since.
 - 3.0 in October 2022.
 
 For the current package, :mod:`sdmx`:
@@ -29,13 +29,23 @@ For the current package, :mod:`sdmx`:
 
 - SDMX 2.1 is implemented, as described on this page.
 - SDMX 3.0 is partly implemented, and a full implementation is planned.
+  As of v2.11.0, :mod:`sdmx` implements:
 
-  - As of v2.8.0, this means that :mod:`sdmx` recognizes SDMX-ML 3.0 and SDMX 3.0 REST web services as distinct from their 2.1 versions, and will clearly indicate (e.g. with standard Python :class:`NotImplementedError`) where support is not yet implemented.
-  - Some parts of the Information Model, file formats, and REST web services are unchanged from SDMX 2.1 to 3.0, so in effect these are already implemented by :mod:`sdmx`.
-  - Support for SDMX 3.0 will be expanded incrementally.
-    Follow the :doc:`whatsnew`; :issue:`87`; and other GitHub issues and pull requests for details.
-  - As of 2023-03-10, none of the :doc:`data sources <sources>` pre-packaged with :mod:`sdmx` are known operate a SDMX 3.0 web service or provide SDMX-{ML,JSON} 3.0 data and metadata.
-    Please `open an issue <https://github.com/khaeru/sdmx/issues>`__ on GitHub to report “live” examples and specimens of real-world SDMX 3.0 data and services that can be added.
+  - The SDMX 3.0 information model (:mod:`.model.v30`) to the same extent as SDMX 2.1.
+  - Reading of SDMX-ML 3.0 (:mod:`.reader.xml.v30`).
+
+  Also:
+
+  - :mod:`sdmx` recognizes web services implementing the SDMX 3.0 REST API as distinct from 2.1 versions, and will clearly indicate (e.g. with standard Python :class:`NotImplementedError`) where support is not yet implemented.
+  - Writing SDMX-ML 3.0 is not yet supported.
+  - Reading and writing SDMX-JSON 2.0 is not yet supported. [1]_
+
+- Support for SDMX 3.0 will be expanded incrementally.
+  Follow the :doc:`whatsnew`; :issue:`87`; and other GitHub issues and pull requests for details.
+- As of 2023-03-10, none of the :doc:`data sources <sources>` pre-packaged with :mod:`sdmx` are known operate a SDMX 3.0 web service or provide SDMX-{ML,JSON} 3.0 data and metadata.
+  Please `open an issue <https://github.com/khaeru/sdmx/issues>`__ on GitHub to report “live” examples and specimens of real-world SDMX 3.0 data and services that can be added.
+
+.. [1] See :ref:`sdmx-json`.
 
 .. _im-base-classes:
 
@@ -43,7 +53,7 @@ Abstract classes and data types
 ===============================
 
 Many classes inherit from one of the following.
-For example, every :class:`.Code` is a ``NameableArtefact``; [1]_ this means it has `name` and `description` attributes. Because every ``NameableArtefact`` is an ``IdentifiableArtefact``, a Code also has `id`, `URI`, and `URN` attributes.
+For example, every :class:`.Code` is a ``NameableArtefact``; [2]_ this means it has `name` and `description` attributes. Because every ``NameableArtefact`` is an ``IdentifiableArtefact``, a Code also has `id`, `URI`, and `URN` attributes.
 
 :class:`.AnnotableArtefact`
    - has a list of :attr:`~.AnnotableArtefact.annotations`
@@ -75,7 +85,7 @@ The API reference for :mod:`sdmx.model` shows the parent classes for each class,
 
 Because SDMX is used worldwide, an :class:`.InternationalString` type is used in the IM—for instance, the `name` of a Nameable object is an InternationalString, with zero or more :attr:`localizations <.InternationalString.localizations>` in different locales.
 
-.. [1] Indirectly, through :class:`Item`.
+.. [2] Indirectly, through :class:`Item`.
 
 Items and schemes
 =================
@@ -90,10 +100,10 @@ Items and schemes
 Data
 ====
 
-:class:`.Observation`
+:class:`Observation <.BaseObservation>`
    A single data point/datum.
 
-   The value is stored as the :attr:`~.Observation.value` attribute.
+   The value is stored as the :attr:`Observation.value <.BaseObservation.value>` attribute.
 
 :class:`.DataSet`
    A collection of Observations, SeriesKeys, and/or GroupKeys.
@@ -156,15 +166,15 @@ Data structures
    - as a value of a certain type (e.g. 'Canada', a :class:`str`), called a Facet;
    - using a Code from a specific CodeList (e.g. 'CA'); multiple lists of codes are possible (e.g. 'CAN'). See below.
 
-:class:`.DataStructureDefinition` (DSD)
+:class:`DataStructureDefinition <.BaseDataStructureDefinition>` (DSD)
    Collects structures used in data sets and data flows.
    These are stored as
-   :attr:`~.DataStructureDefinition.dimensions`,
-   :attr:`~.DataStructureDefinition.attributes`,
-   :attr:`~.DataStructureDefinition.group_dimensions`, and
-   :attr:`~.DataStructureDefinition.measures`.
+   :attr:`~.BaseDataStructureDefinition.dimensions`,
+   :attr:`~.BaseDataStructureDefinition.attributes`,
+   :attr:`~.BaseDataStructureDefinition.group_dimensions`, and
+   :attr:`DataStructureDefinition.measures <.v21.DataStructureDefinition.measures>`.
 
-   For example, :attr:`~.DataStructureDefinition.dimensions` is a :class:`.DimensionDescriptor` object that collects a number of Dimensions in a particular order.
+   For example, :attr:`~.BaseDataStructureDefinition.dimensions` is a :class:`.DimensionDescriptor` object that collects a number of Dimensions in a particular order.
    Data that is "structured by" this DSD must have all the described dimensions.
 
    See the API documentation for details.
@@ -182,16 +192,16 @@ Metadata
 Constraints
 ===========
 
-:class:`.Constraint`, :class:`.ContentConstraint`
+:class:`.v21.Constraint`, :class:`.ContentConstraint`
    Classes that specify a subset of data or metadata to, for example, limit the contents of a data flow.
 
    A ContentConstraint may have:
 
-   1. Zero or more :class:`.CubeRegion` stored at :attr:`.data_content_region`.
-   2. Zero or one :class:`.DataKeySet` stored at :attr:`.Constraint.data_content_keys`.
+   1. Zero or more :class:`.CubeRegion` stored at :attr:`~v21.Constraint.data_content_region`.
+   2. Zero or one :class:`.DataKeySet` stored at :attr:`~.v21.Constraint.data_content_keys`.
 
-   Currently, :meth:`.ContentConstraint.to_query_string`, used by :meth:`.Client.get` to validate keys based on a data flow definition, only uses :attr:`.data_content_region`, if any.
-   :attr:`.data_content_keys` are ignored.
+   Currently, :meth:`.ContentConstraint.to_query_string`, used by :meth:`.Client.get` to validate keys based on a data flow definition, only uses :attr:`~v21.Constraint.data_content_region`, if any.
+   :attr:`~v21.Constraint.data_content_keys` are ignored.
    None of the data sources supported by :mod:`sdmx` appears to use this latter form.
 
 
@@ -213,9 +223,13 @@ SDMX-ML
       See :mod:`sdmx.message` for the different types of Messages and their component parts.
     - See :mod:`.reader.xml`.
 
+.. _sdmx-json:
+
 SDMX-JSON
     Based on JavaScript Object Notation (JSON).
-    The SDMX-JSON format is only defined for data, not metadata.
+    The SDMX-JSON *format* is versioned differently from the overall SDMX *standard*: SDMX-JSON 1.0 corresponds to SDMX 2.1, and SDMX-JSON 2.0 corresponds to SDMX 3.0.
+
+    SDMX-JSON 1.0 supports only data and not structures or metadata; SDMX-JSON 2.0 adds support for structure information.
 
     Reference: https://github.com/sdmx-twg/sdmx-json
 
@@ -227,7 +241,7 @@ SDMX-JSON
 
 SDMX-CSV
     Based on Comma-Separated Value (CSV).
-    Like SDMX-JSON, the SDMX-CSV format are only defined for data, not metadata.
+    Like SDMX-JSON, the SDMX-CSV format supports only data, not structures or metadata.
 
     Reference: https://github.com/sdmx-twg/sdmx-csv
 
