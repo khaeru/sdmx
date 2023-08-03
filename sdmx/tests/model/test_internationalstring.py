@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 
 from sdmx.model.internationalstring import DEFAULT_LOCALE, InternationalString
@@ -46,16 +48,18 @@ class TestInternationalString:
         )
 
         # Setting with a string directly sets the value in the default locale
-        i.name = "European Central Bank"
+        # NB User code that uses mypy should avoid these shorthands, as they interfere
+        #    with type inference
+        i.name = cast(InternationalString, "European Central Bank")
         assert 1 == len(i.name.localizations)
         assert i.name.localizations[DEFAULT_LOCALE] == "European Central Bank"
 
         # Setting with a (locale, text) tuple
-        i.name = ("FI", "Euroopan keskuspankki")
+        i.name = cast(InternationalString, ("FI", "Euroopan keskuspankki"))
         assert 1 == len(i.name.localizations)
 
         # Setting with a dict()
-        i.name = {"IT": "Banca centrale europea"}
+        i.name = cast(InternationalString, {"IT": "Banca centrale europea"})
         assert 1 == len(i.name.localizations)
 
         # Using some other type is an error
