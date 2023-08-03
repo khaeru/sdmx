@@ -6,9 +6,7 @@ SDMX-ML
 
 .. currentmodule:: sdmx.reader.xml
 
-:mod:`sdmx` supports the several types of SDMX-ML messages.
-
-.. automodule:: sdmx.reader.xml
+:mod:`sdmx.reader.xml` supports the several types of SDMX-ML messages.
 
 Implementation details:
 
@@ -21,9 +19,20 @@ Implementation details:
 
   This ensures that all objects in a parsed message are accessible.
 
-.. autoclass:: sdmx.reader.xml.Reader
-    :members:
-    :undoc-members:
+.. automodule:: sdmx.reader.xml
+   :members:
+
+.. currentmodule:: sdmx.reader.xml.v21
+
+.. automodule:: sdmx.reader.xml.v21
+   :members:
+
+.. currentmodule:: sdmx.reader.xml.v30
+
+.. automodule:: sdmx.reader.xml.v30
+   :members:
+
+
 
 SDMX-JSON
 =========

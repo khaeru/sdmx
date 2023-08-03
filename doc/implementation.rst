@@ -211,7 +211,13 @@ Formats
 =======
 
 The IM provides terms and concepts for data and metadata, but does not specify *how that (meta)data is stored or represented*.
-The SDMX standards include multiple ways to store data, in the following formats:
+The SDMX standards include multiple ways to store data, in the following formats.
+In general, :mod:`sdmx`:
+
+- reads most SDMX-ML 2.1 and 3.0 and SDMX-JSON 1.0 messages.
+- uses, via `sdmx-test-data <https://github.com/khaeru/sdmx-test-data/>`_, specimens of messages in both data formats.
+  These are used by the test suite to check that the code functions as intended, but can also be viewed to understand the data formats.
+
 
 SDMX-ML
     Based on eXtensible Markup Language (XML).
@@ -239,19 +245,22 @@ SDMX-JSON
 
        Support for SDMX-JSON.
 
+.. _sdmx-csv:
+
 SDMX-CSV
     Based on Comma-Separated Value (CSV).
-    Like SDMX-JSON, the SDMX-CSV format supports only data, not structures or metadata.
+    The SDMX-CSV *format* is versioned differently from the overall SDMX *standard*: `SDMX-CSV 1.0 <https://github.com/sdmx-twg/sdmx-csv/tree/v1.0>`__ corresponds to SDMX 2.1, and SDMX-CSV 2.0 corresponds to SDMX 3.0.
+
+    SDMX-CSV format supports only data and metadata, not structures.
 
     Reference: https://github.com/sdmx-twg/sdmx-csv
 
-    :mod:`sdmx` **does not** currently support SDMX-CSV; see :issue:`34`, :issue:`36`.
+    .. versionadded:: 2.9.0
 
-:mod:`sdmx`:
+       Support for SDMX-CSV 1.0.
 
-- reads all kinds of SDMX-ML and SDMX-JSON messages.
-- uses, via `sdmx-test-data <https://github.com/khaeru/sdmx-test-data/>`_, specimens of messages in both data formats.
-  These are used by the test suite to check that the code functions as intended, but can also be viewed to understand the data formats.
+    :mod:`sdmx` does not currently support *writing* SDMX-CSV.
+    See :issue:`34`.
 
 
 .. _web-service:
@@ -265,7 +274,7 @@ The Eurostat and ECB help materials provide descriptions and examples of HTTP us
 
 :mod:`sdmx` supports:
 
-- REST web services, i.e. not SOAP services;
+- REST web services but not SOAP web services;
 - Data retrieved in SDMX version 2.1 :ref:`formats <formats>`.
   Some existing services offer a parameter to select SDMX 2.1 *or* 2.0 format; :mod:`sdmx` does not support the latter.
   Other services *only* provide SDMX 2.0-formatted data; these cannot be used with :mod:`sdmx` (:ref:`see here <sdmx-version-policy>`).

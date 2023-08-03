@@ -10,6 +10,8 @@ from . import v21
 
 
 class Reference(v21.Reference):
+    """Parse SDMX-ML 3.0 references."""
+
     @classmethod
     def info_from_element(cls, elem):
         try:

@@ -1,7 +1,6 @@
 """SDMX-CSV 1.0 writer.
 
-SDMX-CSV version 1.0 corresponds to SDMX version 2.1.
-See `the specification <https://github.com/sdmx-twg/sdmx-csv/tree/v1.0>`__ on GitHub.
+See :ref:`sdmx-csv`.
 """
 from os import PathLike
 from typing import Literal, Optional, Type, Union
