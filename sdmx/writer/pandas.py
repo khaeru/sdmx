@@ -220,12 +220,12 @@ def write_dataset(
 
     Parameters
     ----------
-    obj : :class:`~.DataSet` or iterable of :class:`~.Observation`
+    obj : :class:`~.DataSet` or iterable of :class:`Observation <.BaseObservation>`
     attributes : str
         Types of attributes to return with the data. A string containing zero or more
         of:
 
-        - ``'o'``: attributes attached to each :class:`~.Observation` .
+        - ``'o'``: attributes attached to each :class:`Observation <.BaseObservation>` .
         - ``'s'``: attributes attached to any (0 or 1) :class:`~.SeriesKey` associated
           with each Observation.
         - ``'g'``: attributes attached to any (0 or more) :class:`~.GroupKey` associated

@@ -179,7 +179,7 @@ class Reference:
 
 
 class DispatchingReader(type, BaseReader):
-    """Populate the parser, format, and model attributes of :class:`.Reader."""
+    """Populate the parser, format, and model attributes of :class:`Reader`."""
 
     def __new__(cls, name, bases, dct):
         x = super().__new__(cls, name, bases, dct)
@@ -195,6 +195,8 @@ class DispatchingReader(type, BaseReader):
 
 
 class Reader(metaclass=DispatchingReader):
+    """SDMX-ML 2.1 reader."""
+
     # SDMX-ML version handled by this reader
     xml_version: ClassVar = Version["2.1"]
     media_types: ClassVar = list_media_types(base="xml", version=xml_version)

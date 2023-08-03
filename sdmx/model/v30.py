@@ -1,3 +1,5 @@
+"""SDMX 3.0 Information Model."""
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, ClassVar, List, Optional, Set
@@ -302,7 +304,7 @@ class Measure(Component):
 class MeasureDescriptor(ComponentList[Measure]):
     """SDMX 3.0 MeasureDescriptor.
 
-    For SDMX 2.1; see instead :class:`.v21.MeasureDescriptor`.
+    For SDMX 2.1 see instead :class:`.v21.MeasureDescriptor`.
     """
 
     _Component = Measure
@@ -312,7 +314,7 @@ class DataflowRelationship(common.AttributeRelationship):
     """SDMX 3.0 DataflowRelationship.
 
     Indicates that the attribute is attached to the entire data set. Compare with
-    :class:`.v21.NoSpecifiedRelationship.
+    :class:`.v21.NoSpecifiedRelationship`.
     """
 
 

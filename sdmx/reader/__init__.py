@@ -78,7 +78,7 @@ def read_sdmx(filename_or_obj, format=None, **kwargs):
 
     Other Parameters
     ----------------
-    dsd : :class:`~.DataStructureDefinition`
+    dsd : :class:`DataStructureDefinition <.BaseDataStructureDefinition>`
         For “structure-specific” `format`=``XML`` messages only.
     """
     reader = None

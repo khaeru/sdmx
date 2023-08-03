@@ -199,7 +199,7 @@ class PrimaryMeasure(Component):
 class MeasureDescriptor(ComponentList[PrimaryMeasure]):
     """SDMX 2.1 MeasureDescriptor.
 
-    For SDMX 3.0; see instead :class:`.v30.MeasureDescriptor`.
+    For SDMX 3.0 see instead :class:`.v30.MeasureDescriptor`.
     """
 
     _Component = PrimaryMeasure

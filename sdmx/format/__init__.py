@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 Flag = IntFlag("Flag", "data meta ss ts")
 f = Flag
 
-
+#: SDMX standard versions.
 Version = Enum("Version", "1.0.0 2.0.0 2.1 3.0.0 unknown")
 
 
