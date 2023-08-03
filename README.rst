@@ -20,12 +20,12 @@ sdmx: Statistical data and metadata exchange
 `Source code @ Github <https://github.com/khaeru/sdmx/>`_ —
 `Authors <https://github.com/khaeru/sdmx/graphs/contributors>`_
 
-`sdmx` is an `Apache 2.0-licensed <LICENSE>`_ Python package that implements `SDMX <http://www.sdmx.org>`_ 2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0, a format for exchange of **statistical data and metadata** used by national statistical agencies, central banks, and international organisations.
+`sdmx` is a Python package that implements `SDMX <http://www.sdmx.org>`_ 2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0, which are standards and formats for exchange of **statistical data and metadata** that are developed and used by national statistical agencies, central banks, and international organisations.
 
 `sdmx` can be used to:
 
 - explore the data available from `data providers <https://sdmx1.rtfd.io/en/latest/sources.html>`_ such as the World Bank, International Monetary Fund, Eurostat, OECD, and United Nations;
-- parse data and metadata in SDMX-ML (XML) or SDMX-JSON formats—either:
+- read and write data and metadata in SDMX formats including SDMX-ML (XML) and SDMX-JSON, either:
 
   - from local files, or
   - retrieved from SDMX web services, with query validation and caching;
@@ -47,17 +47,14 @@ License
 
 Copyright 2014–2023, `sdmx1 developers <https://github.com/khaeru/sdmx/graphs/contributors>`_
 
-Licensed under the Apache License, Version 2.0 (the “License”); you may not use
-these files except in compliance with the License. You may obtain a copy of the
-License:
+Licensed under the Apache License, Version 2.0 (the “License”); you may not use these files except in compliance with the License.
+You may obtain a copy of the License:
 
 - from the file LICENSE included with the source code, or
 - at http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software distributed
-under the License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
-CONDITIONS OF ANY KIND, either express or implied. See the License for the
-specific language governing permissions and limitations under the License.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
 
 
 History

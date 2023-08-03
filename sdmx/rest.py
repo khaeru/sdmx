@@ -49,12 +49,12 @@ class Resource(str, Enum):
     ``conceptscheme``             :class:`.ConceptScheme`
     ``contentconstraint``         :class:`.ContentConstraint`
     ``data``                      :class:`.DataSet`
-    ``dataflow``                  :class:`.DataflowDefinition`
+    ``dataflow``                  :class:`Dataflow(Definition) <.BaseDataflow>`
     ``dataconsumerscheme``        :class:`.DataConsumerScheme`
     ``dataproviderscheme``        :class:`.DataProviderScheme`
-    ``datastructure``             :class:`.DataStructureDefinition`
-    ``metadataflow``              :class:`.MetadataflowDefinition`
-    ``metadatastructure``         :class:`.MetadataStructureDefinition`
+    ``datastructure``             :class:`DataStructureDefinition <.BaseDataStructureDefinition>`
+    ``metadataflow``              :class:`Metadataflow(Definition) <.Metadataflow>`
+    ``metadatastructure``         :class:`MetadataStructureDefinition <.BaseMetadataStructureDefinition>`
     ``organisationscheme``        :class:`.OrganisationScheme`
     ``provisionagreement``        :class:`.ProvisionAgreement`
     ``structure``                 Mixed.
@@ -74,7 +74,7 @@ class Resource(str, Enum):
     ``vtlmappingscheme``          Not implemented.
     ============================= ======================================================
 
-    """
+    """  # noqa: E501
 
     actualconstraint = "actualconstraint"
     agencyscheme = "agencyscheme"

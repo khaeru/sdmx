@@ -9,7 +9,6 @@ from sdmx.reader import get_reader_for_media_type
     "value",
     [
         "application/x-pdf",
-        "application/vnd.sdmx.data+xml; version=3.0.0",
     ],
 )
 def test_get_reader_for_media_type0(value):
@@ -22,6 +21,7 @@ def test_get_reader_for_media_type0(value):
 @pytest.mark.parametrize(
     "value",
     [
+        "application/vnd.sdmx.data+xml; version=3.0.0",
         "application/xml;charset=UTF-8",
         "draft-sdmx-json;charset=UTF-8",
     ],

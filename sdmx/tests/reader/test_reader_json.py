@@ -9,6 +9,13 @@ def test_json_read(path):
     sdmx.read_sdmx(path)
 
 
+@pytest.mark.xfail(reason="Test some code for the incomplete SDMX-JSON 2.0 reader")
+def test_json_read_v2(specimen):
+    sdmx.read_sdmx(
+        specimen.base_path.joinpath("v3", "json", "structure", "generated-sample.json")
+    )
+
+
 def test_header(specimen):
     with specimen("flat.json") as f:
         resp = sdmx.read_sdmx(f)

@@ -6,6 +6,22 @@ What's new?
 Next release
 ============
 
+Migration notes
+---------------
+
+- As advertised in :ref:`v2.8-migrate`, user code should import either :mod:`sdmx.model.v21` or :mod:`sdmx.model.v30`.
+  When working with data or structures queried from an SDMX 2.1 or 3.0 data source, be sure to use the corresponding information model (IM).
+  Mixing classes from the two IMs is not supported and may lead to unexpected behaviour.
+- There are several differences between the SDMX 2.1 and 3.0 IMs:
+  the new standards delete some classes, change the name or behaviour of others, and add entirely new classes.
+  (The `“Standards” page of the SDMX website <https://sdmx.org/?page_id=5008>`_ includes a link to a document with a “Summary of Changes and New Functionalities”.)
+  User code that functions against :mod:`.model.v21` **must** be updated if it uses deleted or renamed classes; it **may** need updating if it depends on behaviour that changes in SDMX 3.0.
+
+
+All changes
+-----------
+
+- Implement the SDMX 3.0 Information Model (:mod:`.model.v30`) and a SDMX-ML 3.0 reader (:mod:`.reader.xml.v30`) (:pull:`135`).
 - Update the :ref:`ECB` data source URL per a recent change in the service (:pull:`134`).
 
 v2.10.0 (2023-05-20)
@@ -70,6 +86,8 @@ v2.9.0 (2023-04-30)
 v2.8.0 (2023-03-31)
 ===================
 
+.. _v2.8-migrate:
+
 Migration notes
 ---------------
 
@@ -82,10 +100,10 @@ In order to prepare for future support of SDMX 3.0, code such as the following w
 
    dsd = model.DataStructureDefinition(...)
 
-This occurs for :mod:`sdmx.model` classes (e.g. :class:`.DataStructureDefinition`) which may have a different implementation in SDMX 3.0 than in SDMX 2.1.
+This occurs for :mod:`sdmx.model` classes (e.g. :class:`.v21.DataStructureDefinition`) which may have a different implementation in SDMX 3.0 than in SDMX 2.1.
 It does *not* occur for classes (e.g. :class:`.InternationalString`) that are unchanged from SDMX 2.1 to 3.0.
 
-Code can be adjusted by importing explicitly from the new :mod:`.v21` submodule:
+Code can be adjusted by importing explicitly from the new :mod:`.model.v21` submodule:
 
 .. code-block:: python
 
@@ -100,7 +118,7 @@ All changes
 - Outline and prepare for for SDMX 3.0 support (:pull:`120`).
   Read :ref:`sdmx-version-policy` for details.
 - The internal :class:`Format` is replaced by a :class:`.MediaType`, allowing to distinguish the “, version=3.0.0” parameters in the HTTP ``Content-Type`` header.
-- :attr:`.xml.Reader.media_types` and :attr:`.json.Reader.media_types` explicitly indicated supported media types.
+- :attr:`.xml.v21.Reader.media_types` and :attr:`.json.Reader.media_types` explicitly indicate supported media types.
 - :attr:`.ItemScheme.is_partial` defaults to :data:`None`.
 - Add empty/stub :mod:`.format.csv`, :mod:`.reader.csv` (cf. :issue:`34`), and :mod:`.model.v30`.
 - Improve readability in :doc:`implementation` (:pull:`121`).
@@ -122,7 +140,7 @@ v2.7.0 (2022-11-14)
   - :ref:`IMF`: work around :issue:`102` (thanks :gh-user:`zymon`), an error in some structure messages (:pull:`103`).
   - :ref:`ISTAT`: update web service URL (:pull:`105`; thanks :gh-user:`miccoli` for :issue:`104`).
 
-- Add :class:`.MetadataflowDefinition`, :class:`.MetadataStructureDefinition`, and handle references to these in :mod:`.reader.xml` (:pull:`105`).
+- Add :class:`~.v21.MetadataflowDefinition`, :class:`~.v21.MetadataStructureDefinition`, and handle references to these in :mod:`.reader.xml` (:pull:`105`).
 - Correctly parse "." in item IDs in URNs (:data:`~sdmx.urn.URN`, :pull:`109`).
 - Handle SDMX-ML observed in the wild (:pull:`109`):
 
@@ -178,7 +196,7 @@ v2.6.0 (2021-07-11)
 - Information Model pieces (:pull:`84`):
 
   - Classes :class:`.DataConsumer` and :class:`.DataProvider`, including reading these from SDMX-ML.
-  - Attribute :attr:`.DataSet.described_by`, referencing a :class:`DFD <.DataflowDefinition>` in the same way :attr:`~.DataSet.structured_by` references a :class:`DSD <.DataStructureDefinition>`.
+  - Attribute :attr:`.DataSet.described_by`, referencing a :class:`DFD <.DataflowDefinition>` in the same way :attr:`~.DataSet.structured_by` references a :class:`DSD <.v21.DataStructureDefinition>`.
 
 - :mod:`sdmx.writer.xml` (:pull:`84`):
 
@@ -189,7 +207,7 @@ v2.6.0 (2021-07-11)
 - Convenience methods and functionality (:pull:`84`):
 
   - :meth:`.StructureMessage.objects` to access collections of structures using a class reference.
-  - :func:`len` on :class:`.MemberSelection`.
+  - :func:`len` on :class:`~.v21.MemberSelection`.
   - :func:`.model.get_class` now works with :class:`.Resource` enumeration values as arguments.
 
 - Internal (:pull:`84`):
@@ -217,17 +235,17 @@ v2.4.1 (2021-04-12)
 ===================
 
 - Fix small bugs in :meth:`.DataStructureDefinition.iter_keys` and related behaviour (:pull:`74`):
-  - :meth:`.CubeRegion.__contains__` cannot definitively exclude  :class:`.KeyValue` when the cube region specifies ≥2 dimensions.
+  - :meth:`.CubeRegion.__contains__` cannot definitively exclude  :class:`~.v21.KeyValue` when the cube region specifies ≥2 dimensions.
   - :meth:`.MemberSelection.__contains__` is consistent with the sense of :attr:`~.MemberSelection.included`.
 
 v2.4.0 (2021-03-28)
 ===================
 
 - :class:`.IdentifiableArtefact` can be :func:`.sorted` (:pull:`71`).
-- Add :meth:`.DataStructureDefinition.iter_keys` to iterate over valid keys, optionally with a :class:`.Constraint` (:pull:`72`)
+- Add :meth:`.DataStructureDefinition.iter_keys` to iterate over valid keys, optionally with a :class:`.v21.Constraint` (:pull:`72`)
 
   - Also add :meth:`.ContentConstraint.iter_keys`, :meth:`.DataflowDefinition.iter_keys`.
-  - Implement or improve :meth:`.Constraint.__contains__`, :meth:`.CubeRegion.__contains__`, :meth:`.ContentConstraint.__contains__`, :meth:`.KeyValue.__eq__`, and :meth:`.Key.__eq__`.
+  - Implement or improve :meth:`.Constraint.__contains__`, :meth:`.CubeRegion.__contains__`, :meth:`.ContentConstraint.__contains__`, :meth:`.v21.KeyValue.__eq__`, and :meth:`.Key.__eq__`.
 
 - Speed up creation of :class:`.Key` objects by improving :mod:`pydantic` usage, updating :meth:`.Key.__init__`, and adding :meth:`.Key._fast`.
 - Simplify :func:`.validate_dictlike`; add :func:`.dictlike_field`, and simplify :mod:`pydantic` validation of :class:`.DictLike` objects, keys, and values.
@@ -329,7 +347,7 @@ New features
 ~~~~~~~~~~~~
 
 - Add :ref:`The Pacific Community's Pacific Data Hub <SPC>` as a data source (:pull:`30`).
-- Add classes to :mod:`sdmx.model`: :class:`.TimeRangeValue`, :class:`.Period`, :class:`RangePeriod`, and parse ``<com:TimeRange>`` and related tags in SDMX-ML (:pull:`30`).
+- Add classes to :mod:`sdmx.model`: :class:`.v21.TimeRangeValue`, :class:`.Period`, :class:`RangePeriod`, and parse ``<com:TimeRange>`` and related tags in SDMX-ML (:pull:`30`).
 
 Bug fixes
 ~~~~~~~~~
@@ -411,8 +429,8 @@ Data model changes
 - :class:`.Facet`, :class:`.Representation`, and :class:`.ISOConceptReference` are strictly validated, i.e. cannot be assigned non-IM attributes.
 - Add :class:`.OrganisationScheme`, :class:`.NoSpecifiedRelationship`, :class:`.PrimaryMeasureRelationship`, :class:`.DimensionRelationship`, and :class:`.GroupRelationship` as distinct classes.
 - Type of :attr:`.DimensionRelationship.dimensions` is :class:`.DimensionComponent`, not the narrower :class:`.Dimension`.
-- :attr:`.DataStructureDefinition.measures` is an empty :class:`.MeasureDescriptor` by default, not :obj:`None`.
-- :meth:`.DataSet.add_obs` now accepts :class:`Observations <.Observation>` with no :class:`.SeriesKey` association, and sets this association to the one provided as an argument.
+- :attr:`.v21.DataStructureDefinition.measures` is an empty :class:`.v21.MeasureDescriptor` by default, not :obj:`None`.
+- :meth:`.DataSet.add_obs` now accepts :class:`Observations <.v21.Observation>` with no :class:`.SeriesKey` association, and sets this association to the one provided as an argument.
 - String representations are simplified but contain more information.
 
 New features

@@ -48,7 +48,7 @@ class BaseReader(ABC):
         ----------
         source : file-like
             Message content.
-        dsd : DataStructureDefinition, optional
+        dsd : :class:`DataStructureDefinition <.BaseDataStructureDefinition>`, optional
             DSD for aid in reading `source`.
 
         Returns

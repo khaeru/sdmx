@@ -62,7 +62,7 @@ Other objects are converted as follows:
 :class:`list`
    For the following *obj*, returns Series instead of a :class:`list`:
 
-   - a list of :class:`.Observation`: the Observations are written using :meth:`write_dataset`.
+   - a list of :class:`Observation <.BaseObservation>`: the Observations are written using :meth:`write_dataset`.
    - a list with only 1 :class:`.DataSet` (e.g. the :attr:`~.DataMessage.data` attribute of :class:`.DataMessage`): the Series for the single element is returned.
    - a list of :class:`.SeriesKey`: the key values (but no data) are returned.
 

@@ -1,11 +1,165 @@
 import pytest
 
-from sdmx import Resource
-from sdmx.model import v21 as model
+from sdmx import Resource, model
+from sdmx.model import v21, v30
+
+CLASSES = [
+    # Appearing in .model.common
+    "Annotation",
+    "AnnotableArtefact",
+    "IdentifiableArtefact",
+    "NameableArtefact",
+    "VersionableArtefact",
+    "MaintainableArtefact",
+    "Item",
+    "ItemScheme",
+    "FacetType",
+    "Facet",
+    "Representation",
+    "Code",
+    "Codelist",
+    "ISOConceptReference",
+    "Concept",
+    "ConceptScheme",
+    "Component",
+    "ComponentList",
+    "Category",
+    "CategoryScheme",
+    "Categorisation",
+    "Contact",
+    "Organisation",
+    "Agency",
+    "OrganisationScheme",
+    "AgencyScheme",
+    "Structure",
+    "StructureUsage",
+    "DimensionComponent",
+    "Dimension",
+    "TimeDimension",
+    "DimensionDescriptor",
+    "GroupDimensionDescriptor",
+    "AttributeRelationship",
+    "DimensionRelationship",
+    "GroupRelationship",
+    "DataAttribute",
+    "AttributeDescriptor",
+    "KeyValue",
+    "TimeKeyValue",
+    "AttributeValue",
+    "Key",
+    "GroupKey",
+    "SeriesKey",
+    "ConstraintRole",
+    "ConstrainableArtefact",
+    "SelectionValue",
+    "MemberValue",
+    "TimeRangeValue",
+    "BeforePeriod",
+    "AfterPeriod",
+    "StartPeriod",
+    "EndPeriod",
+    "RangePeriod",
+    "CubeRegion",
+    "MetadataTargetRegion",
+    "DataConsumer",
+    "DataProvider",
+    "DataConsumerScheme",
+    "DataProviderScheme",
+    "Datasource",
+    "SimpleDatasource",
+    "QueryDatasource",
+    "RESTDatasource",
+    "ProvisionAgreement",
+    "CustomType",
+    "CustomTypeScheme",
+    "NamePersonalisation",
+    "NamePersonalisationScheme",
+    "Ruleset",
+    "RulesetScheme",
+    "Transformation",
+    "UserDefinedOperator",
+    "UserDefinedOperatorScheme",
+    "FromVTLSpaceKey",
+    "ToVTLSpaceKey",
+    "VTLConceptMapping",
+    "VTLDataflowMapping",
+    "VTLMappingScheme",
+    "TransformationScheme",
+    # Appearing in model.InternationalString
+    "DEFAULT_LOCALE",
+    "InternationalString",
+    # Classes that are distinct in .model.v21 versus .model.v30
+    "SelectionValue",
+    "MemberValue",
+    "TimeRangeValue",
+    "BeforePeriod",
+    "AfterPeriod",
+    "RangePeriod",
+    "DataKey",
+    "DataKeySet",
+    "Constraint",
+    "MemberSelection",
+    "MeasureDescriptor",
+    "DataStructureDefinition",
+    "Observation",
+    "StructureSpecificDataSet",
+    "MetadataStructureDefinition",
+]
+
+V21_ONLY = [
+    "ContentConstraint",
+    "PrimaryMeasure",
+    "NoSpecifiedRelationship",
+    "PrimaryMeasureRelationship",
+    "ReportingYearStartDay",
+    "MeasureDimension",
+    "DataflowDefinition",
+    "GenericDataSet",
+    "GenericTimeSeriesDataSet",
+    "StructureSpecificTimeSeriesDataSet",
+    "MetadataflowDefinition",
+]
+
+V30_ONLY = [
+    "CodelistExtension",
+    "GeoRefCode",
+    "GeoGridCode",
+    "GeoFeatureSetCode",
+    "GeoCodelist",
+    "GeographicCodelist",
+    "GeoGridCodelist",
+    "ValueItem",
+    "ValueList",
+    "MetadataProvider",
+    "MetadataProviderScheme",
+    "Measure",
+    "Dataflow",  # Instead of DataflowDefinition
+    "CodingFormat",
+    "Level",
+    "HierarchicalCode",
+    "Hierarchy",
+    "HierarchyAssociation",
+    "DataflowRelationship",
+    "MeasureRelationship",
+    "ObservationRelationship",
+    "DataConstraint",
+    "MetadataConstraint",
+    "Metadataflow",  # Instead of MetadataflowDefinition
+]
+
+
+@pytest.mark.parametrize("module, extra", [(v21, V21_ONLY), (v30, V30_ONLY)])
+def test_complete(module, extra):
+    """:mod:`.model.v21` and :mod:`model.v30` each expose a complete set of classes."""
+    # Each class is available using module.__getattr__
+    for name in CLASSES:
+        getattr(module, name)
+
+    assert set(CLASSES + extra) == set(dir(module))
 
 
 @pytest.mark.parametrize(
-    "args,expected",
+    "args, expected",
     [
         pytest.param(
             dict(name="Category", package="codelist"),
@@ -20,19 +174,19 @@ from sdmx.model import v21 as model
         (dict(name=Resource.categoryscheme), model.CategoryScheme),
         (dict(name=Resource.codelist), model.Codelist),
         (dict(name=Resource.conceptscheme), model.ConceptScheme),
-        (dict(name=Resource.contentconstraint), model.ContentConstraint),
-        (dict(name=Resource.dataflow), model.DataflowDefinition),
+        (dict(name=Resource.contentconstraint), v21.ContentConstraint),
+        (dict(name=Resource.dataflow), v21.DataflowDefinition),
         (dict(name=Resource.organisationscheme), model.OrganisationScheme),
-        (dict(name=Resource.provisionagreement), model.ProvisionAgreement),
+        (dict(name=Resource.provisionagreement), v21.ProvisionAgreement),
         pytest.param(
             dict(name=Resource.structure),
-            model.DataStructureDefinition,
+            v21.DataStructureDefinition,
             marks=pytest.mark.skip(reason="Ambiguous value, not implemented"),
         ),
     ],
 )
 def test_get_class(args, expected):
-    assert expected is model.get_class(**args)
+    assert expected is model.v21.get_class(**args)
 
 
 def test_deprecated_import():
@@ -40,7 +194,13 @@ def test_deprecated_import():
     with pytest.warns(
         DeprecationWarning, match=r"DataStructureDefinition from sdmx\.model"
     ):
-        from sdmx.model import DataStructureDefinition  # noqa: F401
+        model.DataStructureDefinition
 
     with pytest.raises(ImportError):
         from sdmx.model import Foo  # noqa: F401
+
+
+def test_dir():
+    """:func:`dir` gives only classes in :mod:`.model.common`."""
+    assert "CategoryScheme" in dir(model)
+    assert "DataStructureDefinition" not in dir(model)

@@ -344,8 +344,8 @@ class Client:
            create properly formatted strings.
 
         For formats 1 and 2, but not 3, the `key` argument is validated against the
-        relevant :class:`.DataStructureDefinition`, either given with the `dsd` keyword
-        argument, or retrieved from the web service before the main query.
+        relevant :class:`DSD <.BaseDataStructureDefinition>`, either given with the
+        `dsd` keyword argument, or retrieved from the web service before the main query.
 
         For the optional `param` keyword argument, some useful parameters are:
 
@@ -373,7 +373,7 @@ class Client:
 
         Other Parameters
         ----------------
-        dsd : :class:`~.DataStructureDefinition`
+        dsd : :class:`DataStructureDefinition <.BaseDataStructureDefinition>`
             Existing object used to validate the `key` argument. If not provided, an
             additional query executed to retrieve a DSD in order to validate the `key`.
         force : bool
@@ -502,7 +502,8 @@ class Client:
 
         For the Dataflow `flow_id`, return all series keys matching `key`. Uses a
         feature supported by some data providers that returns :class:`SeriesKeys
-        <.SeriesKey>` without the corresponding :class:`Observations <.Observation>`.
+        <.SeriesKey>` without the corresponding
+        :class:`Observations <.BaseObservation>`.
 
         To count the number of series::
 

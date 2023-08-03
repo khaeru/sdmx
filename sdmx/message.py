@@ -12,7 +12,9 @@ from datetime import datetime
 from operator import attrgetter
 from typing import Any, List, Optional, Text, Union
 
-from sdmx.model import v21 as model
+from sdmx import model
+from sdmx.format import Version
+from sdmx.model import v21, v30
 from sdmx.model.internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
@@ -132,6 +134,9 @@ class Footer:
 
 @dataclass
 class Message:
+    #: SDMX version.
+    version: Version = Version["2.1"]
+
     #: :class:`Header` instance.
     header: Header = field(default_factory=Header)
     #: (optional) :class:`Footer` instance.
@@ -186,16 +191,14 @@ class StructureMessage(Message):
     #: Collection of :class:`.ConceptScheme`.
     concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
     #: Collection of :class:`.ContentConstraint`.
-    constraint: DictLikeDescriptor[str, model.ContentConstraint] = DictLikeDescriptor()
-    #: Collection of :class:`.DataflowDefinition`.
-    dataflow: DictLikeDescriptor[str, model.DataflowDefinition] = DictLikeDescriptor()
-    #: Collection of :class:`.DataflowDefinition`.
-    metadataflow: DictLikeDescriptor[
-        str, model.MetadataflowDefinition
-    ] = DictLikeDescriptor()
-    #: Collection of :class:`.DataStructureDefinition`.
+    constraint: DictLikeDescriptor[str, model.BaseConstraint] = DictLikeDescriptor()
+    #: Collection of :class:`Dataflow(Definition) <.BaseDataflow>`.
+    dataflow: DictLikeDescriptor[str, model.BaseDataflow] = DictLikeDescriptor()
+    #: Collection of :class:`MetaDataflow(Definition) <.BaseMetaDataflow>`.
+    metadataflow: DictLikeDescriptor[str, model.BaseMetadataflow] = DictLikeDescriptor()
+    #: Collection of :class:`DataStructureDefinition <.BaseDataStructureDefinition>`.
     structure: DictLikeDescriptor[
-        str, model.DataStructureDefinition
+        str, model.BaseDataStructureDefinition
     ] = DictLikeDescriptor()
     #: Collection of :class:`.OrganisationScheme`.
     organisation_scheme: DictLikeDescriptor[
@@ -205,6 +208,32 @@ class StructureMessage(Message):
     provisionagreement: DictLikeDescriptor[
         str, model.ProvisionAgreement
     ] = DictLikeDescriptor()
+
+    #: Collection of :class:`.CustomTypeScheme`.
+    custom_type_scheme: DictLikeDescriptor[
+        str, model.CustomTypeScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.NamePersonalisationScheme`.
+    name_personalisation_scheme: DictLikeDescriptor[
+        str, model.NamePersonalisationScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.RulesetScheme`.
+    ruleset_scheme: DictLikeDescriptor[str, model.RulesetScheme] = DictLikeDescriptor()
+    #: Collection of :class:`.VTLMappingScheme`.
+    vtl_mapping_scheme: DictLikeDescriptor[
+        str, model.VTLMappingScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.TransformationScheme`.
+    transformation_scheme: DictLikeDescriptor[
+        str, model.TransformationScheme
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.UserDefinedOperatorScheme`.
+    user_defined_operator_scheme: DictLikeDescriptor[
+        str, model.UserDefinedOperatorScheme
+    ] = DictLikeDescriptor()
+
+    #: Collection of :class:`.ValueList` (SDMX 3.0 only).
+    valuelist: DictLikeDescriptor[str, v30.ValueList] = DictLikeDescriptor()
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -276,6 +305,11 @@ class StructureMessage(Message):
 
         return candidates[0] if len(candidates) == 1 else None
 
+    def iter_collections(self):
+        """Iterate over collections."""
+        for f in direct_fields(self.__class__):
+            yield f.name, get_args(f.type)[1]
+
     def objects(self, cls):
         """Get a reference to the attribute for objects of type `cls`.
 
@@ -317,9 +351,9 @@ class DataMessage(Message):
     """
 
     #: :class:`list` of :class:`.DataSet`.
-    data: List[model.DataSet] = field(default_factory=list)
+    data: List[model.BaseDataSet] = field(default_factory=list)
     #: :class:`.DataflowDefinition` that contains the data.
-    dataflow: model.DataflowDefinition = field(default_factory=model.DataflowDefinition)
+    dataflow: Optional[model.BaseDataflow] = None
     #: The "dimension at observation level".
     observation_dimension: Optional[
         Union[
@@ -328,6 +362,14 @@ class DataMessage(Message):
             List[model.DimensionComponent],
         ]
     ] = None
+
+    def __post_init__(self):
+        if self.dataflow is None:
+            # Create a default of the appropriate class
+            self.dataflow = {
+                Version["2.1"]: v21.DataflowDefinition,
+                Version["3.0.0"]: v30.Dataflow,
+            }[self.version]()
 
     # Convenience access
     @property

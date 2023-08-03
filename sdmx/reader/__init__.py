@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sdmx.reader import json, xml
+from . import json, xml
 
 #: Reader classes
 READERS = [json.Reader, xml.Reader]
@@ -78,7 +78,7 @@ def read_sdmx(filename_or_obj, format=None, **kwargs):
 
     Other Parameters
     ----------------
-    dsd : :class:`~.DataStructureDefinition`
+    dsd : :class:`DataStructureDefinition <.BaseDataStructureDefinition>`
         For “structure-specific” `format`=``XML`` messages only.
     """
     reader = None

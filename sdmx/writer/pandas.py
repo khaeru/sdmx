@@ -75,7 +75,7 @@ def _dict(obj: dict, *args, **kwargs):
             return DictLike(result)
     elif result_type == {str}:
         return pd.Series(result)
-    elif result_type == {DictLike}:
+    elif result_type < {dict, DictLike}:
         return result
     elif result_type == set():
         # No results
@@ -112,6 +112,7 @@ def write_datamessage(obj: message.DataMessage, *args, rtype=None, **kwargs):
         if `obj` has more than one data set.
     """
     # Pass the message's DSD to assist datetime handling
+    assert obj.dataflow
     kwargs.setdefault("dsd", obj.dataflow.structure)
 
     # Pass the return type and associated information
@@ -186,10 +187,9 @@ def _c(obj: model.Component):
 @writer
 def _cc(obj: model.ContentConstraint, **kwargs):
     """Convert :class:`.ContentConstraint`."""
-    if len(obj.data_content_region) != 1:
-        raise NotImplementedError
-
-    return writer.recurse(obj.data_content_region[0], **kwargs)
+    return {
+        i: writer.recurse(cr, **kwargs) for i, cr in enumerate(obj.data_content_region)
+    }
 
 
 @writer
@@ -220,12 +220,12 @@ def write_dataset(
 
     Parameters
     ----------
-    obj : :class:`~.DataSet` or iterable of :class:`~.Observation`
+    obj : :class:`~.DataSet` or iterable of :class:`Observation <.BaseObservation>`
     attributes : str
         Types of attributes to return with the data. A string containing zero or more
         of:
 
-        - ``'o'``: attributes attached to each :class:`~.Observation` .
+        - ``'o'``: attributes attached to each :class:`Observation <.BaseObservation>` .
         - ``'s'``: attributes attached to any (0 or 1) :class:`~.SeriesKey` associated
           with each Observation.
         - ``'g'``: attributes attached to any (0 or more) :class:`~.GroupKey` associated

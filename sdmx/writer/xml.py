@@ -12,7 +12,8 @@ from lxml.builder import ElementMaker
 
 import sdmx.urn
 from sdmx import message
-from sdmx.format.xml import NS, qname, tag_for_class
+from sdmx.format.xml.v21 import NS, qname, tag_for_class
+from sdmx.model import common
 from sdmx.model import v21 as model
 from sdmx.writer.base import BaseWriter
 
@@ -82,7 +83,7 @@ def reference(obj, parent=None, tag=None, style=None):
             "maintainableParentID": ma.id if parent else None,
             "maintainableParentVersion": ma.version if parent else None,
             "version": ma.version,
-            "package": model.PACKAGE[ma.__class__],
+            "package": model.PACKAGE[ma.__class__.__name__],
         }
         for candidate in (obj.__class__, getattr(ma.__class__, "_Item", None)):
             try:
@@ -326,7 +327,7 @@ def _item(obj: model.Item, **kwargs):
         e_parent.append(Element(":Ref", id=obj.parent.id, style="Ref"))
         elem.append(e_parent)
 
-    if isinstance(obj, model.Organisation):
+    if isinstance(obj, common.Organisation):
         elem.extend(writer.recurse(c) for c in obj.contact)
 
     return elem
@@ -352,7 +353,7 @@ def _facet(obj: model.Facet):
 
 
 @writer
-def _rep(obj: model.Representation, tag, style="URN"):
+def _rep(obj: common.Representation, tag, style="URN"):
     elem = Element(f"str:{tag}")
     if obj.enumerated is not None:
         elem.append(reference(obj.enumerated, tag="str:Enumeration", style=style))
@@ -504,14 +505,14 @@ def _cc(obj: model.ContentConstraint):
 
 
 @writer
-def _nsr(obj: model._NoSpecifiedRelationship):
+def _nsr(obj: model.NoSpecifiedRelationship):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:None"))
     return elem
 
 
 @writer
-def _pmr(obj: model._PrimaryMeasureRelationship):
+def _pmr(obj: model.PrimaryMeasureRelationship):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:PrimaryMeasure"))
     elem[-1].append(Element(":Ref", id="(not implemented)"))
@@ -519,7 +520,7 @@ def _pmr(obj: model._PrimaryMeasureRelationship):
 
 
 @writer
-def _dr(obj: model.DimensionRelationship):
+def _dr(obj: common.DimensionRelationship):
     elem = Element("str:AttributeRelationship")
     for dim in obj.dimensions:
         elem.append(Element("str:Dimension"))
@@ -528,7 +529,7 @@ def _dr(obj: model.DimensionRelationship):
 
 
 @writer
-def _gr(obj: model.GroupRelationship):
+def _gr(obj: common.GroupRelationship):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:Group"))
     elem[-1].append(Element(":Ref", id=getattr(obj.group_key, "id", None)))

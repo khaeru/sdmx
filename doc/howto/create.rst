@@ -96,7 +96,7 @@ There are different classes to describe dimensions, measures, and attributes.
 Populate a data set with observations
 =====================================
 
-The next step is to convert the data frame to :class:`.Observation` objects.
+The next step is to convert the data frame to :class:`Observation <.BaseObservation>` objects.
 We define a new function, ``make_obs``, that operates on one row of the data frame.
 The function generates a single Observation object by using the different columns as key values (for dimensions), attributes, or the observation value, as appropriate.
 

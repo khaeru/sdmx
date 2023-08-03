@@ -222,7 +222,7 @@ class TestSeriesData_RateGroup_TS(StructuredMessageTest):
     def test_dsd(self, dsd):
         ad = dsd.attributes
         for id in ("CONF_STATUS_OBS", "OBS_STATUS"):
-            assert isinstance(ad.get(id).related_to, model._PrimaryMeasureRelationship)
+            assert isinstance(ad.get(id).related_to, model.PrimaryMeasureRelationship)
         for id in ("COLL_METHOD", "TITLE"):
             assert isinstance(ad.get(id).related_to, model.GroupRelationship)
         for id in ("DECIMALS", "UNIT_MEASURE", "UNIT_MULT"):
