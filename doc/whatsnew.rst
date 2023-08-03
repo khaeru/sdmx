@@ -6,6 +6,22 @@ What's new?
 Next release
 ============
 
+Migration notes
+---------------
+
+- As advertised in :ref:`v2.8-migrate`, user code should import either :mod:`sdmx.model.v21` or :mod:`sdmx.model.v30`.
+  When working with data or structures queried from an SDMX 2.1 or 3.0 data source, be sure to use the corresponding information model (IM).
+  Mixing classes from the two IMs is not supported and may lead to unexpected behaviour.
+- There are several differences between the SDMX 2.1 and 3.0 IMs:
+  the new standards delete some classes, change the name or behaviour of others, and add entirely new classes.
+  (The `“Standards” page of the SDMX website <https://sdmx.org/?page_id=5008>`_ includes a link to a document with a “Summary of Changes and New Functionalities”.)
+  User code that functions against :mod:`.model.v21` **must** be updated if it uses deleted or renamed classes; it **may** need updating if it depends on behaviour that changes in SDMX 3.0.
+
+
+All changes
+-----------
+
+- Implement the SDMX 3.0 Information Model (:mod:`.model.v30`) and a SDMX-ML 3.0 reader (:mod:`.reader.xml.v30`) (:pull:`135`).
 - Update the :ref:`ECB` data source URL per a recent change in the service (:pull:`134`).
 
 v2.10.0 (2023-05-20)
@@ -70,6 +86,8 @@ v2.9.0 (2023-04-30)
 v2.8.0 (2023-03-31)
 ===================
 
+.. _v2.8-migrate:
+
 Migration notes
 ---------------
 
@@ -85,7 +103,7 @@ In order to prepare for future support of SDMX 3.0, code such as the following w
 This occurs for :mod:`sdmx.model` classes (e.g. :class:`.v21.DataStructureDefinition`) which may have a different implementation in SDMX 3.0 than in SDMX 2.1.
 It does *not* occur for classes (e.g. :class:`.InternationalString`) that are unchanged from SDMX 2.1 to 3.0.
 
-Code can be adjusted by importing explicitly from the new :mod:`.v21` submodule:
+Code can be adjusted by importing explicitly from the new :mod:`.model.v21` submodule:
 
 .. code-block:: python
 
@@ -100,7 +118,7 @@ All changes
 - Outline and prepare for for SDMX 3.0 support (:pull:`120`).
   Read :ref:`sdmx-version-policy` for details.
 - The internal :class:`Format` is replaced by a :class:`.MediaType`, allowing to distinguish the “, version=3.0.0” parameters in the HTTP ``Content-Type`` header.
-- :attr:`.xml.Reader.media_types` and :attr:`.json.Reader.media_types` explicitly indicated supported media types.
+- :attr:`.xml.v21.Reader.media_types` and :attr:`.json.Reader.media_types` explicitly indicate supported media types.
 - :attr:`.ItemScheme.is_partial` defaults to :data:`None`.
 - Add empty/stub :mod:`.format.csv`, :mod:`.reader.csv` (cf. :issue:`34`), and :mod:`.model.v30`.
 - Improve readability in :doc:`implementation` (:pull:`121`).
