@@ -14,13 +14,17 @@ def test_parse(specimen):
     result = parse_all(cl)
 
     # Result has one element per item in the scheme
-    assert len(result) == len(cl)
+    assert 901 == len(result) == len(cl)
 
-    # Specific expressions are available
+    # 185 items have parseable expressions in their descriptions
+    assert 185 == sum(1 if len(v) else 0 for v in result.values())
+
+    # Specific expressions are available and refer to other items in the scheme
     assert [(add, cl["1A"]), (sub, cl["1C"]), (sub, cl["5B"])] == result["9B"]
 
 
 def test_localizations(caplog):
+    """Selection of locale of description for parsing works."""
     i = Item(
         id="FOO",
         description={DEFAULT_LOCALE: "", "zh": "FOO = B + C - D", "ru": ""},
