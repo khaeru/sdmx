@@ -554,7 +554,7 @@ v0.7.0 (2017-06-10)
 * new :meth:`pandasdmx.api.Request.preview_data` providing a powerful fine-grain key validation algorithm by downloading all series-keys of a dataset and exposing them as a pandas DataFrame which is then mapped to the cartesian product of the given dimension values.
   Works only with data providers such as ECB and UNSD which support "series-keys-only" requests.
   This feature could be wrapped by a browser-based UI for building queries.
-* sdjxjson reader: add support for flat and cross-sectional datasets, preserve dimension order where possible
+* SDMX-JSON reader: add support for flat and cross-sectional datasets, preserve dimension order where possible
 * structure2pd writer: in codelists, output Concept rather than Code attributes in the first line of each code-list.
   This may provide more information.
 
@@ -573,7 +573,7 @@ Bug fixes
 ~~~~~~~~~
 
 * JSON data from OECD is now properly downloaded
-* The data writer tries to gleen a frequency value for a time series from its attributes.
+* The data writer tries to glean a frequency value for a time series from its attributes.
   This is helpful when exporting data sets, e.g., from INSEE (`Issue 41 <https://github.com/dr-leo/pandaSDMX/issues/41>`_).
 
 Known issues
@@ -604,7 +604,7 @@ API changes
 Bug fixes
 ~~~~~~~~~
 
-* sdmxml reader: fix AttributeError in write_source method, thanks to Topas
+* SDMX-ML reader: fix AttributeError in write_source method, thanks to Topas
 * correctly distinguish between categories with same ID while belonging to different category schemes
 
 v0.4 (2016-04-11)
@@ -638,7 +638,7 @@ API changes
 * sdmxml reader: return strings or unicode strings instead of LXML smart strings
 * sdmxml reader: remove most of the specialized read methods.
   Adapt model to use generalized methods. This makes code more maintainable.
-* :class:`pandasdmx.model.Representation` for DSD attributes and dimensions now supports text not just codelists.
+* :class:`sdmx.model.Representation` for DSD attributes and dimensions now supports text not just code lists.
 
 Other changes and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -662,7 +662,7 @@ v0.3.0 (2015-09-22)
   In this case, the dataflow definition and datastructure definition, and content-constraint are downloaded on the fly, cached in memory and used to validate the keys.
   The dotted key string needed to construct the URL will be generated automatically.
 * The Response.write method takes a ``parse_time`` keyword arg. Set it to False to avoid parsing of dates, times and time periods as exotic formats may cause crashes.
-* The Request.get method takes a ``memcache`` keyward argument.
+* The Request.get method takes a ``memcache`` keyword argument.
   If set to a string, the received Response instance will be stored in the dict ``Request.cache`` for later use.
   This is useful when, e.g., a DSD is needed multiple times to validate keys.
 * fixed base URL for Eurostat

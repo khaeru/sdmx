@@ -4,7 +4,7 @@ Ten-line usage example
 Suppose we want to analyze annual unemployment data for some European countries.
 All we need to know in advance is the data provider: Eurostat.
 
-:mod:`sdmx` makes it easy to search the directory of dataflows, and the complete structural metadata about the datasets available through the selected dataflow.
+:mod:`sdmx` makes it easy to search the directory of data flows, and the complete structural metadata about the datasets available through the selected dataflow.
 (This example skips these steps; see :doc:`the walkthrough <walkthrough>`.)
 
 The data we want is in a **data flow** with the identifier ‘UNE_RT_A’.

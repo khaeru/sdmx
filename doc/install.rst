@@ -46,7 +46,7 @@ From source
 
    - `from PyPI <https://pypi.org/project/sdmx1/#files>`_,
    - `from Github <https://github.com/khaeru/sdmx>`_ as a zip archive, or
-   - by cloning the Github respository::
+   - by cloning the Github repository::
 
      $ git clone git@github.com:khaeru/sdmx.git
 

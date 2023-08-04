@@ -15,14 +15,14 @@ Working with statistical data often includes some or all of the following steps.
 2. Investigate *what data is available*.
       Using :mod:`sdmx`, download the catalogue of data flows available from the data provider and select a data flow for further inspection.
 3. Understand *what form* the data comes in.
-      Using :mod:`sdmx`, download structure and metadata on the selected data flow and the data it contains, including the data structure definition, concepts, codelists and content constraints.
+      Using :mod:`sdmx`, download structure and metadata on the selected data flow and the data it contains, including the data structure definition, concepts, code lists and content constraints.
 4. Decide *what data is required*.
       Using :mod:`sdmx`, analyze the structural metadata, by directly inspecting objects or converting them to :mod:`pandas` types.
 5. Download the actual data.
       Using :mod:`sdmx`, specify the needed portions of the data from the data flow by constructing a selection ('key') of series and a period/time range.
       Then, retrieve the data using :meth:`Client.get`.
 6. Analyze or manipulate the data.
-      Convert to :mod:`pandas` types using :func:`pandasmdx.to_pandas` and use the result in further Python code and scripts.
+      Convert to :mod:`pandas` types using :func:`sdmx.to_pandas` and use the result in further Python code and scripts.
 
 
 Choose and connect to an SDMX web service
@@ -98,7 +98,7 @@ Suppose we are looking for time-series on exchange rates, and we know that the E
    When using SDMX web services, a request for data from a data flow with a certain ID will yield one or more data sets with observations that match the query parameters.
 
 We *could* search the Internet for the dataflow ID or browse the ECB's website.
-However, we can also use :mod:`sdmx` to retrieve metadata and get a complete overview of the dataflows the ECB provides.
+However, we can also use :mod:`sdmx` to retrieve metadata and get a complete overview of the data flows the ECB provides.
 
 Get information about the source's data flows
 ---------------------------------------------
@@ -208,7 +208,7 @@ Among other things, the DSD defines:
     dsd.attributes.components
     dsd.measures.components
 
-Chosing just the ``FREQ`` dimension, we can explore the :class:`.Codelist` that contains valid values for this dimension in the data flow:
+Choosing just the ``FREQ`` dimension, we can explore the :class:`.Codelist` that contains valid values for this dimension in the data flow:
 
 .. ipython:: python
 
@@ -234,7 +234,7 @@ In order to be reusable for as many data sets as possible, this code list is ext
 
     len(exr_msg.codelist.CL_CURRENCY)
 
-However, the *European* Central Bank does not, in its 'EXR' data flow, commit to providing exchange rates between—for instance—the Congolose franc ('CDF') and Peruvian sol ('PEN').
+However, the *European* Central Bank does not, in its 'EXR' data flow, commit to providing exchange rates between—for instance—the Congolese franc ('CDF') and Peruvian sol ('PEN').
 In other words, the values of (``CURRENCY``, ``CURRENCY_DENOM``) that we can expect to find in 'EXR' is much smaller than the 359 × 359 possible combinations of two values from ``CL_CURRENCY``.
 
 How much smaller?
@@ -278,7 +278,7 @@ Select and query data from a dataflow
 Next, we will query for some data.
 The step is simple: call :meth:`.Client.get` with `resource_type="data"` as the first argument, or the alias :meth:`.Client.data`.
 
-First, however, we describe some of the many options offered by SDMX and :mod:`pandSDMX` for data queries.
+First, however, we describe some of the many options offered by SDMX and :mod:`sdmx` for data queries.
 
 Choose a data format
 --------------------

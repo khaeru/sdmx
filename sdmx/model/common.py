@@ -12,7 +12,7 @@ Details of the implementation:
   reference instances of other classes.
 - Some classes have convenience attributes not mentioned in the spec, to ease navigation
   between related objects. These are marked “:mod:`sdmx` extension not in the IM.”
-- Class definitions are grouped by section of the spec, but these sections occassionally
+- Class definitions are grouped by section of the spec, but these sections occasionally
   appear out of order so that classes are defined before they are referenced by others.
 
 """
