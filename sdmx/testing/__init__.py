@@ -263,6 +263,7 @@ class SpecimenCollection:
                 ("ESTAT", "apro_mk_cola-structure.xml"),
                 ("ESTAT", "GOV_10Q_GGNFA.xml"),
                 ("IMF", "1PI-structure.xml"),
+                ("IMF", "CL_AREA-structure.xml"),
                 # Manually reduced subset of the response for this DSD. Test for
                 # <str:CubeRegion> containing both <com:KeyValue> and <com:Attribute>
                 ("IMF", "ECOFIN_DSD-structure.xml"),

@@ -44,10 +44,12 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    get_args,
 )
 
+from sdmx.dictlike import DictLikeDescriptor
 from sdmx.rest import Resource
-from sdmx.util import DictLikeDescriptor, compare, direct_fields, get_args, only
+from sdmx.util import compare, direct_fields, only
 
 from .internationalstring import (
     DEFAULT_LOCALE,

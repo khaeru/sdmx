@@ -16,6 +16,7 @@ from typing import Optional, Text
 
 import pandas as pd
 
+from sdmx.dictlike import DictLike
 from sdmx.model.v21 import (
     ActionType,
     AnnotableArtefact,
@@ -25,7 +26,6 @@ from sdmx.model.v21 import (
     Key,
     Observation,
 )
-from sdmx.util import DictLike
 
 
 class DataSet(AnnotableArtefact):

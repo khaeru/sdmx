@@ -1,5 +1,5 @@
 API reference
-=============
+*************
 
 Some parts of the API are described on separate pages:
 
@@ -18,7 +18,7 @@ Some parts of the API are described on separate pages:
 See also the :doc:`implementation`.
 
 Top-level methods and classes
------------------------------
+=============================
 
 .. automodule:: sdmx
    :members:
@@ -37,7 +37,7 @@ Top-level methods and classes
       to_xml
 
 ``format``: SDMX file formats
------------------------------
+=============================
 
 .. automodule:: sdmx.format
    :members:
@@ -49,19 +49,19 @@ Top-level methods and classes
    :mod:`sdmx.client`, and :mod:`sdmx.writer`.
 
 SDMX-JSON
-:::::::::
+---------
 
 .. automodule:: sdmx.format.json
    :members:
 
 SDMX-ML
-:::::::
+-------
 
 .. automodule:: sdmx.format.xml
    :members:
 
 ``message``: SDMX messages
---------------------------
+==========================
 
 .. automodule:: sdmx.message
    :members:
@@ -69,7 +69,7 @@ SDMX-ML
    :show-inheritance:
 
 ``rest``: SDMX-REST standard
-----------------------------
+============================
 
 .. automodule:: sdmx.rest
    :members:
@@ -78,20 +78,53 @@ SDMX-ML
 
 
 ``session``: Access SDMX REST web services
-------------------------------------------
+==========================================
 .. autoclass:: sdmx.session.Session
 .. autoclass:: sdmx.session.ResponseIO
 
 
 ``urn``: Uniform Resource Names (URNs) for SDMX objects
--------------------------------------------------------
+=======================================================
 .. automodule:: sdmx.urn
    :members:
 
 
-``util``: Utilities
--------------------
+Utilities and internals
+=======================
+
+.. currentmodule:: sdmx.util
+
 .. automodule:: sdmx.util
    :members:
-   :exclude-members: summarize_dictlike
    :show-inheritance:
+
+
+:class:`.DictLike` collections
+------------------------------
+
+.. currentmodule:: sdmx.dictlike
+
+.. automodule:: sdmx.dictlike
+   :members:
+   :show-inheritance:
+
+
+Structure expressions in :class:`.Item` descriptions
+----------------------------------------------------
+
+.. currentmodule:: sdmx.util.item_structure
+
+.. automodule:: sdmx.util.item_structure
+   :members:
+   :show-inheritance:
+
+   .. autosummary::
+
+      parse_item_description
+      parse_item
+      parse_all
+
+   .. note::
+
+      The code in this module does *not* perform calculations or operations on data using the parsed structure expressions.
+      User code **should** use the returned information to determine which operations should be performed.
