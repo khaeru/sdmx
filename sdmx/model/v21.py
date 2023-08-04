@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Generator, List, Optional, Set, Union
 
-from sdmx.util import DictLikeDescriptor
+from sdmx.dictlike import DictLikeDescriptor
 
 from . import common
 from .common import (

@@ -10,23 +10,17 @@ import logging
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from operator import attrgetter
-from typing import Any, List, Optional, Text, Union
+from typing import Any, List, Optional, Text, Union, get_args
 
 from sdmx import model
+from sdmx.dictlike import DictLike, DictLikeDescriptor, summarize_dictlike
 from sdmx.format import Version
 from sdmx.model import v21, v30
 from sdmx.model.internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
 )
-from sdmx.util import (
-    DictLike,
-    DictLikeDescriptor,
-    compare,
-    direct_fields,
-    get_args,
-    summarize_dictlike,
-)
+from sdmx.util import compare, direct_fields
 
 log = logging.getLogger(__name__)
 

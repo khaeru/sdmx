@@ -6,6 +6,7 @@ import pandas as pd
 from pandas.core.indexes.datetimes import prefix_mapping  # type: ignore [attr-defined]
 
 from sdmx import message
+from sdmx.dictlike import DictLike
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
     DEFAULT_LOCALE,
@@ -19,7 +20,6 @@ from sdmx.model.v21 import (
     SeriesKey,
     TimeDimension,
 )
-from sdmx.util import DictLike
 from sdmx.writer.base import BaseWriter
 
 #: Default return type for :func:`write_dataset` and similar methods. Either 'compat' or

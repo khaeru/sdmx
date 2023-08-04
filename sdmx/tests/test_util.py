@@ -5,7 +5,8 @@ from typing import Generator, Type
 import pytest
 
 import sdmx
-from sdmx.util import DictLike, DictLikeDescriptor, only, parse_content_type
+from sdmx.dictlike import DictLike, DictLikeDescriptor
+from sdmx.util import only, parse_content_type
 
 
 class TestDictLike:
