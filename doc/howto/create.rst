@@ -181,7 +181,7 @@ We create a DFD as well.
 
 We also write the DFD and DSD to file.
 This step is not required: :mod:`sdmx` could infer these when reading :file:`data-message.xml`.
-However, the very purpose of the SDMX standard is to enable good practice, to be explicit and unambigious about how data is structured and what it means.
+However, the very purpose of the SDMX standard is to enable good practice, to be explicit and unambiguous about how data is structured and what it means.
 
 .. ipython:: python
 

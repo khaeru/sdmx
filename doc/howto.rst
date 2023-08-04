@@ -64,7 +64,7 @@ the response will include:
 It is much more efficient to request many objects in a single request.
 Thus, :mod:`sdmx` provides default values for ``references`` in common queries.
 For instance, when a single dataflow is requested by specifying its ID, :mod:`sdmx` sets ``references`` to 'all'.
-On the other hand, when the dataflow ID is wildcarded, it is more practical not to request all referenced objects alongside as the response would likely be excessively large, and the user is deemed to be interested in the bird's eye perspective (list of dataflows) prior to focusing on a particular dataflow and its descendents and ancestors.
+On the other hand, when the dataflow ID is wild-carded, it is more practical not to request all referenced objects alongside as the response would likely be excessively large, and the user is deemed to be interested in the bird's eye perspective (list of data flows) prior to focusing on a particular dataflow and its descendants and ancestors.
 The default value for the ``references`` parameter can be overridden.
 
 Some web services differ in how they handle ``references``—for instance, :ref:`ESTAT <ESTAT>`.
@@ -77,13 +77,13 @@ Use category schemes to explore data
 ------------------------------------
 
 SDMX supports category-schemes to categorize dataflow definitions and other objects.
-This helps retrieve, e.g., a dataflow of interest. Note that not all agencies support categoryschemes.
+This helps retrieve, e.g., a dataflow of interest. Note that not all agencies support category schemes.
 A good example is the ECB.
-However, as the ECB's SDMX service offers less than 100 dataflows, using categoryschemes is not strictly necessary.
-A counter-example is Eurostat which offers more than 6000 dataflows, yet does not categorize them.
-Hence, the user must search through the flat list of dataflows.
+However, as the ECB's SDMX service offers less than 100 data flows, using category schemes is not strictly necessary.
+A counter-example is Eurostat which offers more than 6000 data flows, yet does not categorize them.
+Hence, the user must search through the flat list of data flows.
 
-To search the list of dataflows by category, we request the category scheme from the ECB's SDMX service and explore the response:
+To search the list of data flows by category, we request the category scheme from the ECB's SDMX service and explore the response:
 
 .. ipython:: python
 
@@ -92,7 +92,7 @@ To search the list of dataflows by category, we request the category scheme from
     cat_response = ecb.categoryscheme()
 
 Like any other scheme, a category scheme is essentially a dict mapping ID's to the actual SDMX objects.
-To display the categorised items, in our case the dataflow definitions contained in the category on exchange rates, we iterate over the `Category` instance:
+To display the categorized items, in our case the dataflow definitions contained in the category on exchange rates, we iterate over the `Category` instance:
 
 .. ipython:: python
 
@@ -187,8 +187,9 @@ pandaSDMX 0.9 could be used with `odo <https://github.com/blaze/odo>`_ by regist
     @odo.convert.register(pd.DataFrame, PandaSDMX)
     def _convert(obj, **kwargs):
         msg = sdmx.read_sdmx(obj.uri)
-        return sdxm.to_pandas(msg, **keyfilter(op.contains(keywords(write)),
-                                               kwargs))
+        return sdmx.to_pandas(
+            msg, **keyfilter(op.contains(keywords(write)), kwargs)
+        )
 
 .. deprecated:: 1.0
 

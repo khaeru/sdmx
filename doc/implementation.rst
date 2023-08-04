@@ -185,9 +185,9 @@ Metadata
 :class:`.Code`, :class:`.Codelist`
    ...
 :class:`.Category`, :class:`.CategoryScheme`, :class:`.Categorization`
-   Categories serve to classify or categorise things like dataflows, e.g. by subject matter.
+   Categories serve to classify or categorize things like data flows, e.g. by subject matter.
 
-   A :class:`.Categorisation` links the thing to be categorised, e.g., a DataFlowDefinition, to a particular Category.
+   A :class:`.Categorisation` links the thing to be categorized, e.g., a DataFlowDefinition, to a particular Category.
 
 Constraints
 ===========

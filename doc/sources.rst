@@ -317,7 +317,7 @@ SDMX-ML —
 SDMX-ML —
 `Website <https://www.norges-bank.no/en/topics/Statistics/open-data/>`__
 
-- Few dataflows. So do not use categoryscheme.
+- Few data flows, so do not use category scheme.
 - It is unknown whether NB supports series-keys-only.
 
 
