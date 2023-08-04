@@ -22,6 +22,8 @@ All changes
 -----------
 
 - Implement the SDMX 3.0 Information Model (:mod:`.model.v30`) and a SDMX-ML 3.0 reader (:mod:`.reader.xml.v30`) (:pull:`135`).
+- Add :func:`.util.item_structure.parse_item_description`, :func:`.parse_item`, and :func:`.parse_all` for handling common, but non-standard "structure expressions" like "A = B + C - D" in the :attr:`description <.NameableArtefact.description>` of :class:`Items <.Item>` in :class:`ItemSchemes <.ItemScheme>` (or subclasses, e.g. :class:`.Code` in :class:`.Codelist`) (:issue:`133`, :pull:`137`).
+  See examples and further description in the function documentation.
 - Update the :ref:`ECB` data source URL per a recent change in the service (:pull:`134`).
 
 v2.10.0 (2023-05-20)
