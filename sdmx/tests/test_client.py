@@ -126,8 +126,9 @@ class TestClient:
             client._request_from_args(kwargs)
 
         # Raises for not implemented endpoint
-        with pytest.raises(NotImplementedError, match="OECD does not implement"):
-            sdmx.Client("OECD").get("datastructure")
+        _id = "OECD_JSON"
+        with pytest.raises(NotImplementedError, match=f"{_id} does not implement"):
+            sdmx.Client(_id).get("datastructure")
 
         # Raises for invalid key type
         with pytest.raises(TypeError, match="must be str or dict; got int"):
