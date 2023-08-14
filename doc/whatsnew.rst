@@ -3,8 +3,12 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Update :ref:`OECD <OECD>` to support the provider's recently-added SDMX-ML API (:pull:`140`).
+  Rename the corresponding, older SDMX-JSON source :ref:`OECD_JSON <OECD_JSON>`.
+
 
 v2.11.0 (2023-08-04)
 ====================
