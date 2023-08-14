@@ -479,6 +479,16 @@ class TestNBB(DataSourceTest):
 
 class TestOECD(DataSourceTest):
     source_id = "OECD"
+    endpoint_args = {
+        "data": dict(
+            resource_id="DSD_MSTI@DF_MSTI",
+            headers={"Accept-Encoding": "compress, gzip"},
+        )
+    }
+
+
+class TestOECD_JSON(DataSourceTest):
+    source_id = "OECD_JSON"
 
     xfail = {
         "data": (SSLError, "SSL: UNSAFE_LEGACY_RENEGOTIATION_DISABLED"),
