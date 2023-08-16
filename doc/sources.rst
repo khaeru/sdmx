@@ -340,13 +340,42 @@ API documentation `(en) <https://www.nbb.be/doc/dq/migratie_belgostat/en/nbb_sta
 
 .. _OECD:
 
-``OECD``: Organisation for Economic Cooperation and Development
----------------------------------------------------------------
+.. currentmodule:: sdmx.source.oecd
+
+``OECD``: Organisation for Economic Cooperation and Development (SDMX-ML)
+-------------------------------------------------------------------------
+
+SDMX-ML —
+`Website <https://data-explorer.oecd.org/>`__,
+`documentation <https://gitlab.algobank.oecd.org/public-documentation/dotstat-migration/-/raw/main/OECD_Data_API_documentation.pdf>`__
+
+- As of 2023-08-14, the site includes a disclaimer that “This is a public beta release. Not all data is available on this platform yet, as it is being progressively migrated from https://stats.oecd.org.”
+- The OECD website `describes an older SDMX-ML API <https://data.oecd.org/api/sdmx-ml-documentation/>`__, but this is an implementation of SDMX 2.0, which is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
+
+.. autoclass:: sdmx.source.oecd.Source
+   :members:
+
+.. versionadded:: 2.12.0
+
+.. _OECD_JSON:
+
+.. currentmodule:: sdmx.source.oecd_json
+
+``OECD_JSON``: Organisation for Economic Cooperation and Development (SDMX-JSON)
+--------------------------------------------------------------------------------
 
 SDMX-JSON —
 `Website <https://data.oecd.org/api/sdmx-json-documentation/>`__
 
-The OECD website `describes an SDMX-ML API <https://data.oecd.org/api/sdmx-ml-documentation/>`__, but this is an implementation of SDMX 2.0, which is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
+- Only :ref:`SDMX-JSON version 1.0 <sdmx-json>` is supported.
+
+.. versionchanged:: 2.12.0
+
+   Renamed from ``OECD``.
+
+.. autofunction:: sdmx.source.oecd_json.Client
+
+.. autoclass:: sdmx.source.oecd_json.HTTPSAdapter
 
 
 .. _SGR:

@@ -264,6 +264,20 @@
   },
   {
     "id": "OECD",
+    "url": "https://sdmx.oecd.org/public/rest",
+    "name": "Organisation for Economic Co-operation and Development",
+    "supports": {
+      "dataconsumerscheme": false,
+      "dataproviderscheme": false,
+      "metadataflow": false,
+      "organisationscheme": false,
+      "provisionagreement": false,
+      "structure": false,
+      "structureset": false
+    }
+  },
+  {
+    "id": "OECD_JSON",
     "data_content_type": "JSON",
     "url": "https://stats.oecd.org/SDMX-JSON",
     "name": "Organisation for Economic Co-operation and Development"

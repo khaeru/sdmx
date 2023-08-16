@@ -819,8 +819,6 @@ class Representation:
 class Code(Item["Code"]):
     """SDMX Code."""
 
-    __post_init__ = Item.__post_init__
-
 
 class Codelist(ItemScheme[IT]):
     """SDMX Codelist."""

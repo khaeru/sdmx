@@ -213,7 +213,7 @@ def add_source(
     except ImportError:
         pass
     else:
-        SourceClass = getattr(mod, "Source")
+        SourceClass = getattr(mod, "Source", None) or SourceClass
 
     sources[id] = SourceClass(**_info)
 

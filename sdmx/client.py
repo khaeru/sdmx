@@ -55,7 +55,7 @@ class Client:
     source = None
 
     #: :class:`.Session` for queries sent from the instance.
-    session = None
+    session: requests.Session
 
     # Stored keyword arguments "allow_redirects" and "timeout" for pre-requests.
     _send_kwargs: Dict[str, Any] = {}
