@@ -13,7 +13,7 @@ import requests_mock
 
 import sdmx
 from sdmx import Client
-from sdmx.exceptions import HTTPError, SSLError, XMLParseError
+from sdmx.exceptions import HTTPError, XMLParseError
 
 # Mark the whole file so the tests can be excluded/included
 pytestmark = pytest.mark.source
@@ -490,10 +490,6 @@ class TestOECD(DataSourceTest):
 class TestOECD_JSON(DataSourceTest):
     source_id = "OECD_JSON"
 
-    xfail = {
-        "data": (SSLError, "SSL: UNSAFE_LEGACY_RENEGOTIATION_DISABLED"),
-    }
-
     endpoint_args = {
         "data": dict(
             resource_id="ITF_GOODS_TRANSPORT",
@@ -503,6 +499,13 @@ class TestOECD_JSON(DataSourceTest):
             # resource_id="PART2",
         )
     }
+
+    @pytest.fixture
+    def client(self, cache_path):
+        # Same as the default implementation, only using oecd_json.Client
+        from sdmx.source.oecd_json import Client
+
+        return Client(self.source_id, cache_name=str(cache_path), backend="sqlite")
 
 
 class TestSGR(DataSourceTest):

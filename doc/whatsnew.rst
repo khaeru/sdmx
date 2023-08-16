@@ -7,8 +7,7 @@ Next release
 ============
 
 - Update :ref:`OECD <OECD>` to support the provider's recently-added SDMX-ML API (:pull:`140`).
-  Rename the corresponding, older SDMX-JSON source :ref:`OECD_JSON <OECD_JSON>`.
-
+  Rename the corresponding, older SDMX-JSON source :ref:`OECD_JSON <OECD_JSON>`; work around a known issue with its SSL configuration (see :func:`.oecd_json.Client`).
 
 v2.11.0 (2023-08-04)
 ====================
@@ -23,7 +22,6 @@ Migration notes
   the new standards delete some classes, change the name or behaviour of others, and add entirely new classes.
   (The `“Standards” page of the SDMX website <https://sdmx.org/?page_id=5008>`_ includes a link to a document with a “Summary of Changes and New Functionalities”.)
   User code that functions against :mod:`.model.v21` **must** be updated if it uses deleted or renamed classes; it **may** need updating if it depends on behaviour that changes in SDMX 3.0.
-
 
 All changes
 -----------

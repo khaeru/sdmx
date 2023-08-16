@@ -359,6 +359,8 @@ SDMX-ML —
 
 .. _OECD_JSON:
 
+.. currentmodule:: sdmx.source.oecd_json
+
 ``OECD_JSON``: Organisation for Economic Cooperation and Development (SDMX-JSON)
 --------------------------------------------------------------------------------
 
@@ -370,6 +372,10 @@ SDMX-JSON —
 .. versionchanged:: 2.12.0
 
    Renamed from ``OECD``.
+
+.. autofunction:: sdmx.source.oecd_json.Client
+
+.. autoclass:: sdmx.source.oecd_json.HTTPSAdapter
 
 
 .. _SGR:
