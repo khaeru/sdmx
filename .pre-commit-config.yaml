@@ -7,6 +7,7 @@ repos:
     - pandas-stubs
     - pytest
     - requests-cache
+    - requests-mock
     - types-Jinja2
     - types-lxml
     - types-python-dateutil
