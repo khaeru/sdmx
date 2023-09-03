@@ -4,8 +4,15 @@ repos:
   hooks:
   - id: mypy
     additional_dependencies:
+    - pandas-stubs
+    - pytest
+    - requests-cache
+    - types-Jinja2
+    - types-lxml
     - types-python-dateutil
+    - types-PyYAML
     - types-requests
+    args: []
 - repo: https://github.com/psf/black
   rev: 23.7.0
   hooks:
