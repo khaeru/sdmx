@@ -64,18 +64,13 @@ exclude_also = [
   "@(abc\\.)?abstractmethod",
 ]
 
-
-[tool.isort]
-profile = "black"
-
 [tool.mypy]
 exclude = ["^build/"]
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available.
 module = [
-  "lxml.builder",  # Not covered by lxml-stubs
-  "requests_mock",
+  "lxml.builder", # Not covered by types-lxml
 ]
 ignore_missing_imports = true
 
@@ -90,6 +85,15 @@ markers = [
   "network: tests requiring a network connection",
   "source: slower, network tests of individual SDMX web services",
 ]
+
+[tool.ruff]
+select = ["C9", "E", "F", "I", "W"]
+
+[tool.ruff.mccabe]
+# Exceptions:
+# - .client.Client._request_from_args: 16
+# - .writer.pandas._maybe_convert_datetime: 27
+max-complexity = 13
 
 [tool.setuptools.packages]
 find = {}

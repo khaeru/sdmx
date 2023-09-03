@@ -1,0 +1,24 @@
+repos:
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.4.1
+  hooks:
+  - id: mypy
+    additional_dependencies:
+    - pandas-stubs
+    - pytest
+    - requests-cache
+    - requests-mock
+    - types-Jinja2
+    - types-lxml
+    - types-python-dateutil
+    - types-PyYAML
+    - types-requests
+    args: []
+- repo: https://github.com/psf/black
+  rev: 23.7.0
+  hooks:
+  - id: black
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.0.287
+  hooks:
+  - id: ruff

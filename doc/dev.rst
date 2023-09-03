@@ -10,17 +10,25 @@ Contributions are welcome!
 Code style
 ==========
 
-- Apply the following to new or modified code::
+- This project uses, via `pre-commit <https://pre-commit.com>`_:
 
-    isort -rc . && black . && mypy . && flake8
+  - `black <https://black.readthedocs.io>`_ code style,
+  - `ruff <https://beta.ruff.rs/docs/>`_ to ensure `PEP 8 <https://www.python.org/dev/peps/pep-0008>`_ compliance and consistent order for imports (superseding `flake8 <https://flake8.pycqa.org>`_ and `isort <https://pypi.org/project/isort/>`_), and
+  - `mypy <https://mypy.readthedocs.io>`_ for static type checking.
 
-  Respectively, these:
+  These **must** be applied to new or modified code.
+  This can be done manually, or through code editor plug-ins.
+  `Pre-commit hooks for git <https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks>`_ can be installed via:
 
-  - **isort**: sort import lines at the top of code files in a consistent way, using `isort <https://pypi.org/project/isort/>`_.
-  - **black**: apply `black <https://black.readthedocs.io>`_ code style.
-  - **mypy**: check typing using `mypy <https://mypy.readthedocs.io>`_.
-  - **flake8**: check code style against `PEP 8 <https://www.python.org/dev/peps/pep-0008>`_ using `flake8 <https://flake8.pycqa.org>`_.
+  .. code-block:: shell
 
+     pip install pre-commit
+     pre-commit install
+
+  These will ensure that each commit is compliant with the code style.
+
+- The `pytest.yaml GitHub Actions workflow <https://github.com/khaeru/sdmx/actions/workflows/pytest.yaml>`_ checks code quality for pull requests and commits.
+  This check **must** pass for pull requests to be merged.
 - Follow `the 7 rules of a great Git commit message <https://chris.beams.io/posts/git-commit/#seven-rules>`_.
 - Write docstrings in the `numpydoc <https://numpydoc.readthedocs.io/en/latest/format.html>`_ style.
 

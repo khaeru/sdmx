@@ -10,11 +10,11 @@ def _add_test_dsd(ds: m.DataSet) -> None:
         dsd = ds.structured_by
         if dsd is None:
             pytest.skip(reason="No DFD or DSD")
-
-        # Construct a fake/temporary DFD
-        ds.described_by = m.DataflowDefinition(
-            id=f"_TEST_{dsd.id}", maintainer=dsd.maintainer, version="0.0"
-        )
+        else:
+            # Construct a fake/temporary DFD
+            ds.described_by = m.DataflowDefinition(
+                id=f"_TEST_{dsd.id}", maintainer=dsd.maintainer, version="0.0"
+            )
 
 
 @pytest.mark.parametrize_specimens("path", kind="data")
