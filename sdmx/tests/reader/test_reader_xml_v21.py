@@ -117,6 +117,21 @@ def test_gh_116(specimen):
     assert cl4.is_partial and 0 < len(cl4) < len(cl3)
 
 
+def test_gh_142(specimen):
+    """Test of https://github.com/khaeru/sdmx/issues/142."""
+    with specimen("TEST/gh-142.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    # Annotations, valid_from and valid_to properties stored on the Codelist *per se*
+    cl = msg.codelist["CL_NAICS"]
+    assert 3 == len(cl.annotations)
+    assert "2021-01-24T08:00:00" == cl.valid_from
+    assert "2021-09-24T08:00:00" == cl.valid_to
+
+    # No annotations attached to any Code
+    assert all(0 == len(code.annotations) for code in cl)
+
+
 # Each entry is a tuple with 2 elements:
 # 1. an instance of lxml.etree.Element to be parsed.
 # 2. Either:
