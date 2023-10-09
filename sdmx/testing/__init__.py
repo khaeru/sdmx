@@ -275,6 +275,7 @@ class SpecimenCollection:
                 ("UNICEF", "GLOBAL_DATAFLOW-structure.xml"),
                 ("UNSD", "codelist_partial.xml"),
                 ("SGR", "common-structure.xml"),
+                ("TEST", "gh-142.xml"),
             ]
         )
 
