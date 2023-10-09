@@ -956,7 +956,7 @@ def _item_start(reader, elem):
         # No child elements; stash() anyway, but it will be a no-op
         pass
 
-    reader.stash("Name", "Description")
+    reader.stash(model.Annotation, "Name", "Description")
 
 
 @end(
