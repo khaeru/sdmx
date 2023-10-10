@@ -6,6 +6,7 @@ What's new?
 Next release
 ============
 
+- Fix two bugs in parsing :class:`.ItemScheme` from SDMX-ML: :attr:`.VersionableArtefact.valid_from`, :attr:`~.VersionableArtefact.valid_to` not stored, and :class:`Annotations <.Annotation>` for the scheme itself erroneously collected by the first :class:`.Item` in the scheme (:pull:`143`; thanks :gh-user:`goatsweater` for :issue:`142`).
 - Update :ref:`OECD <OECD>` to support the provider's recently-added SDMX-ML API (:pull:`140`).
   Rename the corresponding, older SDMX-JSON source :ref:`OECD_JSON <OECD_JSON>`; work around a known issue with its SSL configuration (see :func:`.oecd_json.Client`).
 
