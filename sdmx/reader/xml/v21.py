@@ -576,7 +576,15 @@ class Reader(metaclass=DispatchingReader):
         the same object ID will return references to the same object.
         """
         kwargs.setdefault("is_external_reference", elem is None)
-        setdefault_attrib(kwargs, elem, "isExternalReference", "isFinal", "version")
+        setdefault_attrib(
+            kwargs,
+            elem,
+            "isExternalReference",
+            "isFinal",
+            "validFrom",
+            "validTo",
+            "version",
+        )
         kwargs["is_final"] = kwargs.get("is_final", None) == "true"
 
         # Create a candidate object
@@ -956,7 +964,7 @@ def _item_start(reader, elem):
         # No child elements; stash() anyway, but it will be a no-op
         pass
 
-    reader.stash("Name", "Description")
+    reader.stash(model.Annotation, "Name", "Description")
 
 
 @end(
@@ -1393,7 +1401,6 @@ def _cc(reader, elem):
         else:
             content.add(resolved)
 
-    # return reader.nameable(
     return reader.maintainable(
         cls,
         elem,
