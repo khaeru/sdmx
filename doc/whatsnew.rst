@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.12.0 (2023-10-11)
+====================
 
 - Fix two bugs in parsing :class:`.ItemScheme` from SDMX-ML: :attr:`.VersionableArtefact.valid_from`, :attr:`~.VersionableArtefact.valid_to` not stored, and :class:`Annotations <.Annotation>` for the scheme itself erroneously collected by the first :class:`.Item` in the scheme (:pull:`143`; thanks :gh-user:`goatsweater` for :issue:`142`).
 - Update :ref:`OECD <OECD>` to support the provider's recently-added SDMX-ML API (:pull:`140`).
