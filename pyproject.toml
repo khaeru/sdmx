@@ -88,6 +88,7 @@ markers = [
 
 [tool.ruff]
 select = ["C9", "E", "F", "I", "W"]
+ignore = ["E501", "W191"]
 
 [tool.ruff.mccabe]
 # Exceptions:
