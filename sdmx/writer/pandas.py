@@ -313,7 +313,8 @@ def write_dataset(
 
     # NB mypy errors here on CI, but not locally
     result: Union[pd.Series, pd.DataFrame] = pd.DataFrame.from_dict(
-        data, orient="index"  # type: ignore [arg-type]
+        data,
+        orient="index",  # type: ignore [arg-type]
     )
 
     if len(result):

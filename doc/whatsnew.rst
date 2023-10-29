@@ -3,8 +3,10 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Python 3.12 (released 2023-10-02) is fully supported (:pull:`145`).
 
 v2.12.0 (2023-10-11)
 ====================

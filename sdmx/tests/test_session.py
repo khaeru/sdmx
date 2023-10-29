@@ -7,8 +7,7 @@ from . import has_requests_cache
 
 @pytest.mark.skipif(has_requests_cache, reason="test without requests_cache")
 def test_session_without_requests_cache():  # pragma: no cover
-    # Passing cache= arguments when requests_cache is not installed triggers a
-    # warning
+    # Passing cache= arguments when requests_cache is not installed triggers a warning
     with pytest.warns(RuntimeWarning):
         Session(cache_name="test")
 

@@ -23,6 +23,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Information Analysis",
 ]
@@ -88,6 +89,7 @@ markers = [
 
 [tool.ruff]
 select = ["C9", "E", "F", "I", "W"]
+ignore = ["E501", "W191"]
 
 [tool.ruff.mccabe]
 # Exceptions:
