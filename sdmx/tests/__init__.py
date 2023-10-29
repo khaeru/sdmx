@@ -12,7 +12,7 @@ def _importorskip(
     try:
         mod = importlib.import_module(modname)
         has = True
-        if minversion is not None:
+        if minversion is not None:  # pragma: no cover
             if Version(mod.__version__) < Version(minversion):
                 raise ImportError("Minimum version not satisfied")
     except ImportError:
