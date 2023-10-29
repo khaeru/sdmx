@@ -25,9 +25,10 @@ jobs:
         - "3.8"  # Earliest supported version
         - "3.9"
         - "3.10"
-        - "3.11"  # Latest supported version
+        - "3.11"
+        - "3.12"  # Latest supported version
         # commented: only enable once next Python version enters RC
-        # - "3.12.0-rc.1"  # Development version
+        # - "3.13.0-rc.1"  # Development version
 
       fail-fast: false
 
