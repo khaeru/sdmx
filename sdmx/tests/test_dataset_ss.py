@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Mapping
 
 import pandas as pd
@@ -26,9 +27,13 @@ class StructuredMessageTest(MessageTest):
         yield sdmx.read_sdmx(path / self.filename, dsd=dsd)
 
     # Tests for every class
-    def test_msg(self, path, dsd):
+    def test_msg(self, caplog, path, dsd):
         # The message can be parsed
-        sdmx.read_sdmx(path / self.filename, dsd=dsd)
+        with caplog.at_level(logging.WARNING):
+            sdmx.read_sdmx(path / self.filename, dsd=dsd)
+
+        # No warnings are emitted per missing dsd= argument (khaeru/sdmx#146)
+        assert [] == caplog.messages
 
     def test_structured_by(self, dsd, msg):
         # The DSD was used to parse the message
