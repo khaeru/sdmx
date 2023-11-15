@@ -7,6 +7,7 @@ Next release
 ============
 
 - Python 3.12 (released 2023-10-02) is fully supported (:pull:`145`).
+- Bugfix: :py:`dsd=...` argument supplied to the SDMX-ML reader ignored in v2.11.0 and later, causing a warning (:pull:`147`; thanks :gh-user:`miccoli` for :issue:`146`).
 
 v2.12.0 (2023-10-11)
 ====================

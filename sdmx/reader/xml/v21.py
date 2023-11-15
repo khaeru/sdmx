@@ -680,7 +680,7 @@ def _message(reader: Reader, elem):
     # With 'dsd' argument, the message should be structure-specific
     if (
         "StructureSpecific" in elem.tag
-        and reader.get_single(common.BaseDataStructureDefinition) is None
+        and reader.get_single(common.BaseDataStructureDefinition, subclass=True) is None
     ):
         log.warning(f"xml.Reader got no dsd=… argument for {QName(elem).localname}")
         ss_without_dsd = True
