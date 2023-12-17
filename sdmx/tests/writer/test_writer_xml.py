@@ -241,6 +241,7 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("INSEE/dataflow.xml", False),
         ("SGR/common-structure.xml", True),
         ("UNSD/codelist_partial.xml", True),
+        ("TEST/gh-149.xml", True),
     ],
 )
 def test_structure_roundtrip(pytestconfig, specimen, specimen_id, strict, tmp_path):
