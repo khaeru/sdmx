@@ -258,6 +258,8 @@ def _a(obj: model.Annotation):
     elem = Element("com:Annotation")
     if obj.id:
         elem.attrib["id"] = obj.id
+    if obj.title:
+        elem.append(Element("com:AnnotationTitle", obj.title))
     if obj.type:
         elem.append(Element("com:AnnotationType", obj.type))
     elem.extend(i11lstring(obj.text, "com:AnnotationText"))
