@@ -534,7 +534,11 @@ def _nsr(obj: model.NoSpecifiedRelationship, *args):
 def _pmr(obj: model.PrimaryMeasureRelationship, dsd: model.DataStructureDefinition):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:PrimaryMeasure"))
-    elem[-1].append(Element(":Ref", id="(not implemented)"))
+    try:
+        ref_id = dsd.measures[0].id
+    except IndexError:
+        ref_id = "(not implemented)"  # MeasureDescriptor is empty
+    elem[-1].append(Element(":Ref", id=ref_id))
     return elem
 
 
