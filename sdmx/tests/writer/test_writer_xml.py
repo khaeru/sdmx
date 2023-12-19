@@ -1,3 +1,4 @@
+import io
 import logging
 
 import pytest
@@ -244,21 +245,24 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("TEST/gh-149.xml", True),
     ],
 )
-def test_structure_roundtrip(pytestconfig, specimen, specimen_id, strict, tmp_path):
+def test_structure_roundtrip(specimen, specimen_id, strict, tmp_path):
     """Test that SDMX-ML StructureMessages can be 'round-tripped'."""
 
     # Read a specimen file
     with specimen(specimen_id) as f:
         msg0 = sdmx.read_sdmx(f)
 
-    # Write to file
-    path = tmp_path / "output.xml"
-    path.write_bytes(sdmx.to_xml(msg0, pretty_print=True))
+    # Write to a bytes buffer
+    data = io.BytesIO(sdmx.to_xml(msg0, pretty_print=True))
 
     # Read again
-    msg1 = sdmx.read_sdmx(path)
+    msg1 = sdmx.read_sdmx(data)
 
     # Contents are identical
-    assert msg0.compare(msg1, strict), (
-        path.read_text() if pytestconfig.getoption("verbose") else path
-    )
+    try:
+        assert msg0.compare(msg1, strict)
+    except AssertionError:
+        path = tmp_path.joinpath("output.xml")
+        path.write_bytes(data.getbuffer())
+        log.error(f"compare() = False; see {path}")
+        raise
