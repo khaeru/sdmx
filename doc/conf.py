@@ -24,6 +24,8 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
 ]
 
+nitpicky = True
+
 rst_prolog = """
 .. role:: py(code)
    :language: python
@@ -75,6 +77,10 @@ def linkcode_resolve(domain, info):
     filename = info["module"].replace(".", "/")
     return f"https://github.com/khaeru/sdmx/tree/main/{filename}.py"
 
+
+# -- Options for sphinx.ext.napoleon ---------------------------------------------------
+
+napolean_preprocess_types = True
 
 # -- Options for sphinx.ext.todo -------------------------------------------------------
 
