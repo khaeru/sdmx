@@ -261,7 +261,7 @@ def test_structure_roundtrip(specimen, specimen_id, strict, tmp_path):
     # Contents are identical
     try:
         assert msg0.compare(msg1, strict)
-    except AssertionError:
+    except AssertionError:  # pragma: no cover
         path = tmp_path.joinpath("output.xml")
         path.write_bytes(data.getbuffer())
         log.error(f"compare() = False; see {path}")
