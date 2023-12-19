@@ -401,8 +401,17 @@ def _contact(obj: model.Contact):
 
 
 @writer
-def _component(obj: model.Component):
-    elem = identifiable(obj)
+def _component(obj: model.Component, dsd):
+    kw = dict()
+    if isinstance(obj, model.DataAttribute) and obj.usage_status:
+        # assignmentStatus attribute: DataAttribute only
+        kw["assignmentStatus"] = obj.usage_status.name.title()
+    elif isinstance(obj, model.Dimension):
+        # order attribute: Dimension only
+        kw["position"] = str(obj.order)
+
+    elem = identifiable(obj, **kw)
+
     if obj.concept_identity:
         elem.append(
             reference(obj.concept_identity, tag="str:ConceptIdentity", style="Ref")
