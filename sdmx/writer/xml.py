@@ -422,7 +422,7 @@ def _component(obj: model.Component, dsd):
         )
     # DataAttribute only
     try:
-        elem.append(writer.recurse(cast(model.DataAttribute, obj).related_to))
+        elem.append(writer.recurse(cast(model.DataAttribute, obj).related_to, dsd))
     except AttributeError:
         pass
     except NotImplementedError:  # pragma: no cover
@@ -435,9 +435,9 @@ def _component(obj: model.Component, dsd):
 
 
 @writer
-def _cl(obj: model.ComponentList):
+def _cl(obj: model.ComponentList, *args):
     elem = identifiable(obj)
-    elem.extend(writer.recurse(c) for c in obj.components)
+    elem.extend(writer.recurse(c, *args) for c in obj.components)
     return elem
 
 
@@ -524,14 +524,14 @@ def _cc(obj: model.ContentConstraint):
 
 
 @writer
-def _nsr(obj: model.NoSpecifiedRelationship):
+def _nsr(obj: model.NoSpecifiedRelationship, *args):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:None"))
     return elem
 
 
 @writer
-def _pmr(obj: model.PrimaryMeasureRelationship):
+def _pmr(obj: model.PrimaryMeasureRelationship, dsd: model.DataStructureDefinition):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:PrimaryMeasure"))
     elem[-1].append(Element(":Ref", id="(not implemented)"))
@@ -539,7 +539,7 @@ def _pmr(obj: model.PrimaryMeasureRelationship):
 
 
 @writer
-def _dr(obj: common.DimensionRelationship):
+def _dr(obj: common.DimensionRelationship, *args):
     elem = Element("str:AttributeRelationship")
     for dim in obj.dimensions:
         elem.append(Element("str:Dimension"))
@@ -548,7 +548,7 @@ def _dr(obj: common.DimensionRelationship):
 
 
 @writer
-def _gr(obj: common.GroupRelationship):
+def _gr(obj: common.GroupRelationship, *args):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:Group"))
     elem[-1].append(Element(":Ref", id=getattr(obj.group_key, "id", None)))
@@ -571,11 +571,11 @@ def _dsd(obj: model.DataStructureDefinition):
     elem.append(Element("str:DataStructureComponents"))
 
     # Write in a specific order
-    elem[-1].append(writer.recurse(obj.dimensions))
+    elem[-1].append(writer.recurse(obj.dimensions, None))
     for group in obj.group_dimensions.values():
         elem[-1].append(writer.recurse(group))
-    elem[-1].append(writer.recurse(obj.attributes))
-    elem[-1].append(writer.recurse(obj.measures))
+    elem[-1].append(writer.recurse(obj.attributes, obj))
+    elem[-1].append(writer.recurse(obj.measures, None))
 
     return elem
 
