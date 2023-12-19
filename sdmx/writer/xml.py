@@ -181,7 +181,8 @@ def _sm(obj: message.StructureMessage):
         container = Element(f"str:{tag}")
         for s in filter(lambda s: not s.is_external_reference, coll.values()):
             container.append(writer.recurse(s))
-        structures.append(container)
+        if len(container):
+            structures.append(container)
 
     if obj.footer:
         elem.append(writer.recurse(obj.footer))
