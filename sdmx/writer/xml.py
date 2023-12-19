@@ -405,36 +405,34 @@ def _contact(obj: model.Contact):
 
 @writer
 def _component(obj: model.Component, dsd):
-    kw = dict()
-    if isinstance(obj, model.DataAttribute) and obj.usage_status:
-        # assignmentStatus attribute: DataAttribute only
-        kw["assignmentStatus"] = obj.usage_status.name.title()
-    elif isinstance(obj, model.Dimension):
-        # order attribute: Dimension only
-        kw["position"] = str(obj.order)
+    child = []
+    attrib = dict()
 
-    elem = identifiable(obj, **kw)
-
-    if obj.concept_identity:
-        elem.append(
+    try:
+        child.append(
             reference(obj.concept_identity, tag="str:ConceptIdentity", style="Ref")
         )
-    if obj.local_representation:
-        elem.append(
+    except NotImplementedError:
+        pass  # None
+
+    try:
+        child.append(
             writer.recurse(obj.local_representation, "LocalRepresentation", style="Ref")
         )
-    # DataAttribute only
-    try:
-        elem.append(writer.recurse(cast(model.DataAttribute, obj).related_to, dsd))
-    except AttributeError:
-        pass
-    except NotImplementedError:  # pragma: no cover
-        if getattr(obj, "related_to", None) is None:
-            pass  # .related_to not set
-        else:
-            raise  # Some other NotImplementedError
+    except NotImplementedError:
+        pass  # None
 
-    return elem
+    if isinstance(obj, model.DataAttribute) and obj.usage_status:
+        child.append(writer.recurse(obj.related_to, dsd))
+
+        # assignmentStatus attribute
+        if obj.usage_status:
+            attrib["assignmentStatus"] = obj.usage_status.name.title()
+    elif isinstance(obj, model.Dimension):
+        # position attribute
+        attrib["position"] = str(obj.order)
+
+    return identifiable(obj, *child, **attrib)
 
 
 @writer
