@@ -1,4 +1,4 @@
-"""SDMXML v2.1 writer."""
+"""SDMX-ML v2.1 writer."""
 # Contents of this file are organized in the order:
 #
 # - Utility methods and global variables.
@@ -269,23 +269,23 @@ def _a(obj: model.Annotation):
     return elem
 
 
-def annotable(obj, **kwargs):
-    cls = kwargs.pop("_tag", tag_for_class(obj.__class__))
+def annotable(obj, *args, **kwargs) -> etree._Element:
+    # Determine tag
+    tag = kwargs.pop("_tag", tag_for_class(obj.__class__))
+
+    # Write Annotations
+    e_anno = Element("com:Annotations", *[writer.recurse(a) for a in obj.annotations])
+    if len(e_anno):
+        args = args + (e_anno,)
+
     try:
-        elem = Element(cls, **kwargs)
+        return Element(tag, *args, **kwargs)
     except AttributeError:  # pragma: no cover
-        print(repr(obj), cls, kwargs)
+        print(repr(obj), tag, kwargs)
         raise
 
-    if len(obj.annotations):
-        e_anno = Element("com:Annotations")
-        e_anno.extend(writer.recurse(a) for a in obj.annotations)
-        elem.append(e_anno)
 
-    return elem
-
-
-def identifiable(obj, **kwargs):
+def identifiable(obj, *args, **kwargs) -> etree._Element:
     """Write :class:`.IdentifiableArtefact`.
 
     Unless the keyword argument `_with_urn` is :data:`False`, a URN is generated for
@@ -301,22 +301,25 @@ def identifiable(obj, **kwargs):
             kwargs.setdefault("urn", urn)
     except (AttributeError, ValueError):
         pass
-    return annotable(obj, **kwargs)
+    return annotable(obj, *args, **kwargs)
 
 
-def nameable(obj, **kwargs):
-    elem = identifiable(obj, **kwargs)
-    elem.extend(i11lstring(obj.name, "com:Name"))
-    elem.extend(i11lstring(obj.description, "com:Description"))
-    return elem
+def nameable(obj, *args, **kwargs) -> etree._Element:
+    return identifiable(
+        obj,
+        *i11lstring(obj.name, "com:Name"),
+        *i11lstring(obj.description, "com:Description"),
+        *args,
+        **kwargs,
+    )
 
 
-def maintainable(obj, **kwargs):
+def maintainable(obj, *args, **kwargs) -> etree._Element:
     kwargs.setdefault("version", obj.version)
     kwargs.setdefault("isExternalReference", str(obj.is_external_reference).lower())
     kwargs.setdefault("isFinal", str(obj.is_final).lower())
     kwargs.setdefault("agencyID", getattr(obj.maintainer, "id", None))
-    return nameable(obj, **kwargs)
+    return nameable(obj, *args, **kwargs)
 
 
 # §3.5: Item Scheme
