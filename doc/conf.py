@@ -6,7 +6,7 @@
 # -- Project information ---------------------------------------------------------------
 
 project = "sdmx"
-copyright = "2014–2023 sdmx1 developers"
+copyright = "2014–2024 sdmx1 developers"
 
 
 # -- General configuration -------------------------------------------------------------
