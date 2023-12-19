@@ -42,6 +42,8 @@ def to_xml(obj, **kwargs):
     NotImplementedError
         If writing specific objects to SDMX-ML has not been implemented in :mod:`sdmx`.
     """
+    kwargs.setdefault("encoding", "utf-8")
+    kwargs.setdefault("xml_declaration", True)
     return etree.tostring(writer.recurse(obj), **kwargs)
 
 
