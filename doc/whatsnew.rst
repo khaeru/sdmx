@@ -12,8 +12,8 @@ Next release
 - Bugfix: items not written by :mod:`.writer.xml` (:pull:`150`, thanks :gh-user:`goatsweater` for :issue:`149`).
 
   - :attr:`.Annotation.title` → :xml:`<com:AnnotationTitle>…<com:AnnotationTitle/>`.
-  - :attr:`.Dimension.order` → :xml:`<str:Dimension position="…">`.
-  - :class:`.PrimaryMeasureRelationship` → specific reference to the :attr:`~.IdentifiableArtefact.id` of the :attr:`.PrimaryMeasure` within the associated :class:`.DataStructureDefinition`.
+  - :attr:`.DimensionComponent.order` → :xml:`<str:Dimension position="…">`.
+  - :class:`.PrimaryMeasureRelationship` → specific reference to the :attr:`~.IdentifiableArtefact.id` of the :class:`.PrimaryMeasure` within the associated :class:`DataStructureDefinition <.BaseDataStructureDefinition>`.
 
 v2.12.0 (2023-10-11)
 ====================
@@ -303,7 +303,7 @@ v2.1.0 (2021-02-22)
 - :mod:`.reader.xml` internals reworked for significant speedups in parsing of SDMX-ML (:pull:`58`).
 - New convenience method :meth:`.StructureMessage.get` to retrieve objects by ID across the multiple collections in StructureMessage (:pull:`58`).
 - New convenience method :meth:`.AnnotableArtefact.pop_annotation` to locate, remove, and return a Annotation, e.g. by its ID (:pull:`58`).
-- :func:`len` of a :class:`.DataKeySet` gives the length of :attr:`.DataKeySet.keys` (:pull:`58`).
+- :func:`len` of a :class:`DataKeySet <.BaseDataKeySet>` gives the length of :attr:`.DataKeySet.keys` (:pull:`58`).
 
 v2.0.1 (2021-01-31)
 ===================
