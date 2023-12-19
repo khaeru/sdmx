@@ -24,6 +24,13 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
 ]
 
+rst_prolog = """
+.. role:: py(code)
+   :language: python
+.. role:: xml(code)
+   :language: xml
+"""
+
 # -- Options for HTML output -----------------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.
