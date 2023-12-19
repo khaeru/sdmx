@@ -1135,6 +1135,13 @@ class DimensionDescriptor(ComponentList[DimensionComponent]):
 
     _Component = Dimension
 
+    def __post_init__(self):
+        try:
+            # Sort components by already assigned 'order' attributes
+            self.components = sorted(self.components, key=lambda c: c.order)
+        except TypeError:
+            pass  # Some or all of the order attributes are None
+
     def assign_order(self):
         """Assign the :attr:`.DimensionComponent.order` attribute.
 
