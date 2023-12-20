@@ -421,8 +421,8 @@ def _component(obj: model.Component, dsd):
         child.append(
             reference(obj.concept_identity, tag="str:ConceptIdentity", style="Ref")
         )
-    except NotImplementedError:  # pragma: no cover
-        pass  # None
+    except AttributeError:  # pragma: no cover
+        pass  # concept_identity is None
 
     try:
         child.append(
