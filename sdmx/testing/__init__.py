@@ -276,6 +276,7 @@ class SpecimenCollection:
                 ("UNSD", "codelist_partial.xml"),
                 ("SGR", "common-structure.xml"),
                 ("TEST", "gh-142.xml"),
+                ("TEST", "gh-149.xml"),
             ]
         )
 

@@ -1,8 +1,11 @@
+import io
 import logging
 
 import pytest
+from lxml import etree
 
 import sdmx
+import sdmx.writer.xml
 from sdmx import message
 from sdmx.model import v21 as m
 from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
@@ -83,13 +86,14 @@ def test_ContentConstraint(dsd, dks):
     )
 
 
-def test_ds(dsd, obs):
+def test_ds(dsd, obs) -> None:
     # Write DataSet with Observations not in Series
     ds = DataSet(structured_by=dsd)
     ds.obs.append(obs)
 
     result = sdmx.to_xml(ds, pretty_print=True)
-    print(result.decode())
+    # print(result.decode())
+    del result
 
 
 def test_ds_structurespecific(dsd):
@@ -136,6 +140,24 @@ def test_obs(obs):
         match="Observation.value_for is None when writing structure-specific data",
     ):
         XMLWriter.recurse(obs, struct_spec=True)
+
+
+def test_reference() -> None:
+    cl = m.Codelist(id="FOO", version="1.0")
+    c = m.Code(id="BAR")
+    cl.append(c)
+
+    # <Ref …> to Item has maintainableParentVersion, but no version
+    result = sdmx.writer.xml.reference(c, style="Ref")
+    result_str = etree.tostring(result).decode()
+    assert 'maintainableParentVersion="1.0"' in result_str
+    assert 'version="1.0"' not in result_str
+
+    # <Ref …> to ItemScheme has version, but not maintainableParentVersion
+    result = sdmx.writer.xml.reference(cl, style="Ref")
+    result_str = etree.tostring(result).decode()
+    assert 'maintainableParentVersion="1.0"' not in result_str
+    assert 'version="1.0"' in result_str
 
 
 def test_Footer(footer):
@@ -241,23 +263,27 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("INSEE/dataflow.xml", False),
         ("SGR/common-structure.xml", True),
         ("UNSD/codelist_partial.xml", True),
+        ("TEST/gh-149.xml", False),
     ],
 )
-def test_structure_roundtrip(pytestconfig, specimen, specimen_id, strict, tmp_path):
+def test_structure_roundtrip(specimen, specimen_id, strict, tmp_path):
     """Test that SDMX-ML StructureMessages can be 'round-tripped'."""
 
     # Read a specimen file
     with specimen(specimen_id) as f:
         msg0 = sdmx.read_sdmx(f)
 
-    # Write to file
-    path = tmp_path / "output.xml"
-    path.write_bytes(sdmx.to_xml(msg0, pretty_print=True))
+    # Write to a bytes buffer
+    data = io.BytesIO(sdmx.to_xml(msg0, pretty_print=True))
 
     # Read again
-    msg1 = sdmx.read_sdmx(path)
+    msg1 = sdmx.read_sdmx(data)
 
     # Contents are identical
-    assert msg0.compare(msg1, strict), (
-        path.read_text() if pytestconfig.getoption("verbose") else path
-    )
+    try:
+        assert msg0.compare(msg1, strict)
+    except AssertionError:  # pragma: no cover
+        path = tmp_path.joinpath("output.xml")
+        path.write_bytes(data.getbuffer())
+        log.error(f"compare() = False; see {path}")
+        raise

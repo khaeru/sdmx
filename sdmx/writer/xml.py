@@ -1,11 +1,11 @@
-"""SDMXML v2.1 writer."""
+"""SDMX-ML v2.1 writer."""
 # Contents of this file are organized in the order:
 #
 # - Utility methods and global variables.
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
 
-from typing import Iterable, List, cast
+from typing import Iterable, List, Literal, cast
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -42,10 +42,15 @@ def to_xml(obj, **kwargs):
     NotImplementedError
         If writing specific objects to SDMX-ML has not been implemented in :mod:`sdmx`.
     """
+    kwargs.setdefault("encoding", "utf-8")
+    kwargs.setdefault("xml_declaration", True)
     return etree.tostring(writer.recurse(obj), **kwargs)
 
 
-def reference(obj, parent=None, tag=None, style=None):
+RefStyle = Literal["Ref", "URN"]
+
+
+def reference(obj, parent=None, tag=None, *, style: RefStyle):
     """Write a reference to `obj`.
 
     .. todo:: Currently other functions in :mod:`.writer.xml` all pass the `style`
@@ -56,45 +61,51 @@ def reference(obj, parent=None, tag=None, style=None):
 
     elem = Element(tag)
 
-    if isinstance(obj, model.MaintainableArtefact):
-        ma = obj
-    else:
-        try:
-            # Get the ItemScheme for an Item
-            parent = parent or obj.get_scheme()
-        except AttributeError:  # pragma: no cover
-            # No `parent` and `obj` is not an Item with a .get_scheme() method
-            # NB this does not occur in the test suite
-            pass
-
-        if not parent:
-            raise NotImplementedError(
-                f"Cannot write reference to {repr(obj)} without parent"
-            )
-
-        ma = parent
-
+    # assert style
     if style == "URN":
         ref = Element(":URN", obj.urn)
     elif style == "Ref":
-        args = {
-            "agencyID": getattr(ma.maintainer, "id", None),
-            "id": obj.id,
-            "maintainableParentID": ma.id if parent else None,
-            "maintainableParentVersion": ma.version if parent else None,
-            "version": ma.version,
-            "package": model.PACKAGE[ma.__class__.__name__],
-        }
-        for candidate in (obj.__class__, getattr(ma.__class__, "_Item", None)):
+        # Element attributes
+        attrib = dict(id=obj.id)
+
+        # Identify a maintainable artifact; either `obj` or its `parent`
+        if isinstance(obj, model.MaintainableArtefact):
+            ma = obj
+            attrib.update(version=obj.version)
+        else:
             try:
-                args["class"] = etree.QName(tag_for_class(candidate)).localname
+                # Get the ItemScheme for an Item
+                parent = parent or obj.get_scheme()
+            except AttributeError:  # pragma: no cover
+                # No `parent` and `obj` is not an Item with a .get_scheme() method
+                # NB this does not occur in the test suite
+                pass
+
+            if not parent:
+                raise NotImplementedError(
+                    f"Cannot write reference to {obj!r} without parent"
+                )
+
+            ma = parent
+            attrib.update(
+                maintainableParentVersion=ma.version,
+                maintainableParentID=ma.id,
+            )
+
+        attrib.update(
+            agencyID=getattr(ma.maintainer, "id", None),
+            package=model.PACKAGE[type(ma).__name__],
+        )
+
+        # "class" attribute: either the type of `obj`, or the item type of an ItemScheme
+        for candidate in (type(obj), getattr(type(ma), "_Item", None)):
+            try:
+                attrib["class"] = etree.QName(tag_for_class(candidate)).localname
                 break
             except ValueError:
                 pass
 
-        ref = Element(":Ref", **args)
-    else:  # pragma: no cover
-        raise ValueError(style)
+        ref = Element(":Ref", **attrib)
 
     elem.append(ref)
     return elem
@@ -127,7 +138,7 @@ def _dm(obj: message.DataMessage):
             attrib["structureID"] = ds.structured_by.id
 
             # Reference by URN if possible, otherwise with a <Ref> tag
-            style = "URN" if ds.structured_by.urn else "Ref"
+            style: RefStyle = "URN" if ds.structured_by.urn else "Ref"
             dsd_ref = reference(ds.structured_by, tag="com:Structure", style=style)
 
             if isinstance(obj.observation_dimension, model.DimensionComponent):
@@ -179,7 +190,8 @@ def _sm(obj: message.StructureMessage):
         container = Element(f"str:{tag}")
         for s in filter(lambda s: not s.is_external_reference, coll.values()):
             container.append(writer.recurse(s))
-        structures.append(container)
+        if len(container):
+            structures.append(container)
 
     if obj.footer:
         elem.append(writer.recurse(obj.footer))
@@ -258,29 +270,31 @@ def _a(obj: model.Annotation):
     elem = Element("com:Annotation")
     if obj.id:
         elem.attrib["id"] = obj.id
+    if obj.title:
+        elem.append(Element("com:AnnotationTitle", obj.title))
     if obj.type:
         elem.append(Element("com:AnnotationType", obj.type))
     elem.extend(i11lstring(obj.text, "com:AnnotationText"))
     return elem
 
 
-def annotable(obj, **kwargs):
-    cls = kwargs.pop("_tag", tag_for_class(obj.__class__))
+def annotable(obj, *args, **kwargs) -> etree._Element:
+    # Determine tag
+    tag = kwargs.pop("_tag", tag_for_class(obj.__class__))
+
+    # Write Annotations
+    e_anno = Element("com:Annotations", *[writer.recurse(a) for a in obj.annotations])
+    if len(e_anno):
+        args = args + (e_anno,)
+
     try:
-        elem = Element(cls, **kwargs)
+        return Element(tag, *args, **kwargs)
     except AttributeError:  # pragma: no cover
-        print(repr(obj), cls, kwargs)
+        print(repr(obj), tag, kwargs)
         raise
 
-    if len(obj.annotations):
-        e_anno = Element("com:Annotations")
-        e_anno.extend(writer.recurse(a) for a in obj.annotations)
-        elem.append(e_anno)
 
-    return elem
-
-
-def identifiable(obj, **kwargs):
+def identifiable(obj, *args, **kwargs) -> etree._Element:
     """Write :class:`.IdentifiableArtefact`.
 
     Unless the keyword argument `_with_urn` is :data:`False`, a URN is generated for
@@ -296,22 +310,25 @@ def identifiable(obj, **kwargs):
             kwargs.setdefault("urn", urn)
     except (AttributeError, ValueError):
         pass
-    return annotable(obj, **kwargs)
+    return annotable(obj, *args, **kwargs)
 
 
-def nameable(obj, **kwargs):
-    elem = identifiable(obj, **kwargs)
-    elem.extend(i11lstring(obj.name, "com:Name"))
-    elem.extend(i11lstring(obj.description, "com:Description"))
-    return elem
+def nameable(obj, *args, **kwargs) -> etree._Element:
+    return identifiable(
+        obj,
+        *i11lstring(obj.name, "com:Name"),
+        *i11lstring(obj.description, "com:Description"),
+        *args,
+        **kwargs,
+    )
 
 
-def maintainable(obj, **kwargs):
+def maintainable(obj, *args, **kwargs) -> etree._Element:
     kwargs.setdefault("version", obj.version)
     kwargs.setdefault("isExternalReference", str(obj.is_external_reference).lower())
     kwargs.setdefault("isFinal", str(obj.is_final).lower())
     kwargs.setdefault("agencyID", getattr(obj.maintainer, "id", None))
-    return nameable(obj, **kwargs)
+    return nameable(obj, *args, **kwargs)
 
 
 # §3.5: Item Scheme
@@ -396,34 +413,41 @@ def _contact(obj: model.Contact):
 
 
 @writer
-def _component(obj: model.Component):
-    elem = identifiable(obj)
-    if obj.concept_identity:
-        elem.append(
+def _component(obj: model.Component, dsd):
+    child = []
+    attrib = dict()
+
+    try:
+        child.append(
             reference(obj.concept_identity, tag="str:ConceptIdentity", style="Ref")
         )
-    if obj.local_representation:
-        elem.append(
+    except AttributeError:  # pragma: no cover
+        pass  # concept_identity is None
+
+    try:
+        child.append(
             writer.recurse(obj.local_representation, "LocalRepresentation", style="Ref")
         )
-    # DataAttribute only
-    try:
-        elem.append(writer.recurse(cast(model.DataAttribute, obj).related_to))
-    except AttributeError:
-        pass
-    except NotImplementedError:  # pragma: no cover
-        if getattr(obj, "related_to", None) is None:
-            pass  # .related_to not set
-        else:
-            raise  # Some other NotImplementedError
+    except NotImplementedError:
+        pass  # None
 
-    return elem
+    if isinstance(obj, model.DataAttribute) and obj.usage_status:
+        child.append(writer.recurse(obj.related_to, dsd))
+
+        # assignmentStatus attribute
+        if obj.usage_status:
+            attrib["assignmentStatus"] = obj.usage_status.name.title()
+    elif isinstance(obj, model.Dimension):
+        # position attribute
+        attrib["position"] = str(obj.order)
+
+    return identifiable(obj, *child, **attrib)
 
 
 @writer
-def _cl(obj: model.ComponentList):
+def _cl(obj: model.ComponentList, *args):
     elem = identifiable(obj)
-    elem.extend(writer.recurse(c) for c in obj.components)
+    elem.extend(writer.recurse(c, *args) for c in obj.components)
     return elem
 
 
@@ -463,7 +487,12 @@ def _dks(obj: model.DataKeySet):
 
 @writer
 def _ms(obj: model.MemberSelection):
-    elem = Element("com:KeyValue", id=obj.values_for.id)
+    tag = {
+        model.Dimension: "KeyValue",
+        model.DataAttribute: "Attribute",
+    }[type(obj.values_for)]
+
+    elem = Element(f"com:{tag}", id=obj.values_for.id)
     elem.extend(
         # cast(): as of PR#30, only MemberValue is supported here
         Element("com:Value", cast(model.MemberValue, mv).value)
@@ -505,22 +534,26 @@ def _cc(obj: model.ContentConstraint):
 
 
 @writer
-def _nsr(obj: model.NoSpecifiedRelationship):
+def _nsr(obj: model.NoSpecifiedRelationship, *args):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:None"))
     return elem
 
 
 @writer
-def _pmr(obj: model.PrimaryMeasureRelationship):
+def _pmr(obj: model.PrimaryMeasureRelationship, dsd: model.DataStructureDefinition):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:PrimaryMeasure"))
-    elem[-1].append(Element(":Ref", id="(not implemented)"))
+    try:
+        ref_id = dsd.measures[0].id
+    except IndexError:
+        ref_id = "(not implemented)"  # MeasureDescriptor is empty
+    elem[-1].append(Element(":Ref", id=ref_id))
     return elem
 
 
 @writer
-def _dr(obj: common.DimensionRelationship):
+def _dr(obj: common.DimensionRelationship, *args):
     elem = Element("str:AttributeRelationship")
     for dim in obj.dimensions:
         elem.append(Element("str:Dimension"))
@@ -529,7 +562,7 @@ def _dr(obj: common.DimensionRelationship):
 
 
 @writer
-def _gr(obj: common.GroupRelationship):
+def _gr(obj: common.GroupRelationship, *args):
     elem = Element("str:AttributeRelationship")
     elem.append(Element("str:Group"))
     elem[-1].append(Element(":Ref", id=getattr(obj.group_key, "id", None)))
@@ -552,11 +585,11 @@ def _dsd(obj: model.DataStructureDefinition):
     elem.append(Element("str:DataStructureComponents"))
 
     # Write in a specific order
-    elem[-1].append(writer.recurse(obj.dimensions))
+    elem[-1].append(writer.recurse(obj.dimensions, None))
     for group in obj.group_dimensions.values():
         elem[-1].append(writer.recurse(group))
-    elem[-1].append(writer.recurse(obj.attributes))
-    elem[-1].append(writer.recurse(obj.measures))
+    elem[-1].append(writer.recurse(obj.attributes, obj))
+    elem[-1].append(writer.recurse(obj.measures, None))
 
     return elem
 
