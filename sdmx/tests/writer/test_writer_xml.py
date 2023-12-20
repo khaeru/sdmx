@@ -2,8 +2,10 @@ import io
 import logging
 
 import pytest
+from lxml import etree
 
 import sdmx
+import sdmx.writer.xml
 from sdmx import message
 from sdmx.model import v21 as m
 from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
@@ -84,13 +86,14 @@ def test_ContentConstraint(dsd, dks):
     )
 
 
-def test_ds(dsd, obs):
+def test_ds(dsd, obs) -> None:
     # Write DataSet with Observations not in Series
     ds = DataSet(structured_by=dsd)
     ds.obs.append(obs)
 
     result = sdmx.to_xml(ds, pretty_print=True)
-    print(result.decode())
+    # print(result.decode())
+    del result
 
 
 def test_ds_structurespecific(dsd):
@@ -137,6 +140,24 @@ def test_obs(obs):
         match="Observation.value_for is None when writing structure-specific data",
     ):
         XMLWriter.recurse(obs, struct_spec=True)
+
+
+def test_reference() -> None:
+    cl = m.Codelist(id="FOO", version="1.0")
+    c = m.Code(id="BAR")
+    cl.append(c)
+
+    # <Ref …> to Item has maintainableParentVersion, but no version
+    result = sdmx.writer.xml.reference(c, style="Ref")
+    result_str = etree.tostring(result).decode()
+    assert 'maintainableParentVersion="1.0"' in result_str
+    assert 'version="1.0"' not in result_str
+
+    # <Ref …> to ItemScheme has version, but not maintainableParentVersion
+    result = sdmx.writer.xml.reference(cl, style="Ref")
+    result_str = etree.tostring(result).decode()
+    assert 'maintainableParentVersion="1.0"' not in result_str
+    assert 'version="1.0"' in result_str
 
 
 def test_Footer(footer):
