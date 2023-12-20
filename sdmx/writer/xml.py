@@ -5,7 +5,7 @@
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
 
-from typing import Iterable, List, cast
+from typing import Iterable, List, Literal, cast
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -47,7 +47,10 @@ def to_xml(obj, **kwargs):
     return etree.tostring(writer.recurse(obj), **kwargs)
 
 
-def reference(obj, parent=None, tag=None, style=None):
+RefStyle = Literal["Ref", "URN"]
+
+
+def reference(obj, parent=None, tag=None, *, style: RefStyle):
     """Write a reference to `obj`.
 
     .. todo:: Currently other functions in :mod:`.writer.xml` all pass the `style`
@@ -58,45 +61,51 @@ def reference(obj, parent=None, tag=None, style=None):
 
     elem = Element(tag)
 
-    if isinstance(obj, model.MaintainableArtefact):
-        ma = obj
-    else:
-        try:
-            # Get the ItemScheme for an Item
-            parent = parent or obj.get_scheme()
-        except AttributeError:  # pragma: no cover
-            # No `parent` and `obj` is not an Item with a .get_scheme() method
-            # NB this does not occur in the test suite
-            pass
-
-        if not parent:
-            raise NotImplementedError(
-                f"Cannot write reference to {repr(obj)} without parent"
-            )
-
-        ma = parent
-
+    # assert style
     if style == "URN":
         ref = Element(":URN", obj.urn)
     elif style == "Ref":
-        args = {
-            "agencyID": getattr(ma.maintainer, "id", None),
-            "id": obj.id,
-            "maintainableParentID": ma.id if parent else None,
-            "maintainableParentVersion": ma.version if parent else None,
-            "version": ma.version,
-            "package": model.PACKAGE[ma.__class__.__name__],
-        }
-        for candidate in (obj.__class__, getattr(ma.__class__, "_Item", None)):
+        # Element attributes
+        attrib = dict(id=obj.id)
+
+        # Identify a maintainable artifact; either `obj` or its `parent`
+        if isinstance(obj, model.MaintainableArtefact):
+            ma = obj
+            attrib.update(version=obj.version)
+        else:
             try:
-                args["class"] = etree.QName(tag_for_class(candidate)).localname
+                # Get the ItemScheme for an Item
+                parent = parent or obj.get_scheme()
+            except AttributeError:  # pragma: no cover
+                # No `parent` and `obj` is not an Item with a .get_scheme() method
+                # NB this does not occur in the test suite
+                pass
+
+            if not parent:
+                raise NotImplementedError(
+                    f"Cannot write reference to {obj!r} without parent"
+                )
+
+            ma = parent
+            attrib.update(
+                maintainableParentVersion=ma.version,
+                maintainableParentID=ma.id,
+            )
+
+        attrib.update(
+            agencyID=getattr(ma.maintainer, "id", None),
+            package=model.PACKAGE[type(ma).__name__],
+        )
+
+        # "class" attribute: either the type of `obj`, or the item type of an ItemScheme
+        for candidate in (type(obj), getattr(type(ma), "_Item", None)):
+            try:
+                attrib["class"] = etree.QName(tag_for_class(candidate)).localname
                 break
             except ValueError:
                 pass
 
-        ref = Element(":Ref", **args)
-    else:  # pragma: no cover
-        raise ValueError(style)
+        ref = Element(":Ref", **attrib)
 
     elem.append(ref)
     return elem
@@ -129,7 +138,7 @@ def _dm(obj: message.DataMessage):
             attrib["structureID"] = ds.structured_by.id
 
             # Reference by URN if possible, otherwise with a <Ref> tag
-            style = "URN" if ds.structured_by.urn else "Ref"
+            style: RefStyle = "URN" if ds.structured_by.urn else "Ref"
             dsd_ref = reference(ds.structured_by, tag="com:Structure", style=style)
 
             if isinstance(obj.observation_dimension, model.DimensionComponent):
