@@ -5,13 +5,14 @@ from sdmx.client import Client, Request, read_url
 from sdmx.reader import read_sdmx
 from sdmx.rest import Resource
 from sdmx.source import add_source, list_sources
-from sdmx.writer import to_csv, to_pandas, to_xml
+from sdmx.writer import install_schemas, to_csv, to_pandas, to_xml, validate_xml
 
 __all__ = [
     "Client",
     "Request",
     "Resource",
     "add_source",
+    "install_schemas",
     "list_sources",
     "log",
     "read_sdmx",
@@ -19,6 +20,7 @@ __all__ = [
     "to_csv",
     "to_pandas",
     "to_xml",
+    "validate_xml",
 ]
 
 
