@@ -46,6 +46,7 @@ tests = [
   "pytest-xdist",
   "requests-mock >= 1.4",
 ]
+validate = ["platformdirs"]
 
 [project.urls]
 homepage = "https://github.com/khaeru/sdmx"
