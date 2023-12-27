@@ -1506,10 +1506,20 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         )
 
 
+@dataclass(repr=False)
 class BaseDataflow(StructureUsage, ConstrainableArtefact):
     """Common features of SDMX 2.1 DataflowDefinition and 3.0 Dataflow."""
 
-    structure: BaseDataStructureDefinition
+    structure: BaseDataStructureDefinition = field(
+        default_factory=BaseDataStructureDefinition
+    )
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        # Factory default `structure` inherits is_external_reference from the data flow
+        if self.structure.is_external_reference is None:
+            self.structure.is_external_reference = self.is_external_reference
 
     def iter_keys(
         self, constraint: Optional[BaseConstraint] = None, dims: List[str] = []
