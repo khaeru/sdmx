@@ -73,7 +73,8 @@
     "supports": {
       "actualconstraint": false,
       "allowedconstraint": false,
-      "contentconstraint": false
+      "contentconstraint": false,
+      "structureset": false
     }
   },
   {
@@ -99,7 +100,8 @@
     "supports": {
       "actualconstraint": false,
       "allowedconstraint": false,
-      "contentconstraint": false
+      "contentconstraint": false,
+      "structureset": false
     }
   },
   {
@@ -129,7 +131,8 @@
     "supports": {
       "actualconstraint": false,
       "allowedconstraint": false,
-      "contentconstraint": false
+      "contentconstraint": false,
+      "structureset": false
     }
   },
   {
@@ -139,7 +142,8 @@
     "supports": {
       "actualconstraint": false,
       "allowedconstraint": false,
-      "contentconstraint": false
+      "contentconstraint": false,
+      "structureset": false
     }
   },
   {
@@ -307,7 +311,8 @@
     "name": "SDMX Global Registry",
     "supports": {
       "actualconstraint": false,
-      "metadataflow": false
+      "metadataflow": false,
+      "structureset": false
     }
   },
   {
