@@ -2285,6 +2285,7 @@ class RESTDatasource(QueryDatasource):
 
 
 @dataclass
+@MaintainableArtefact._preserve("hash")
 class ProvisionAgreement(MaintainableArtefact, ConstrainableArtefact):
     #:
     structure_usage: Optional[StructureUsage] = None
