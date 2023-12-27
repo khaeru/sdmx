@@ -1294,30 +1294,43 @@ def _tr(reader, elem):
 
 def _ms_component(reader, elem, kind):
     """Identify the Component for a ValueSelection."""
+    # Navigate from the current ContentConstraint to a ConstrainableArtefact
+    cc_content = reader.stack[reader.Reference]
+    assert len(cc_content) == 1, (cc_content, reader.stack, elem.attrib)
+    obj = reader.resolve(next(iter(cc_content.values())))
+
+    if isinstance(obj, model.DataflowDefinition):
+        # The constrained DFD has a corresponding DSD, which has a Dimension- or
+        # AttributeDescriptor
+        dsd = obj.structure
+    elif isinstance(obj, model.DataStructureDefinition):
+        # The DSD is constrained directly
+        dsd = obj
+    else:
+        log.warning(f"Not implemented: constraints attached to {type(obj)}")
+        dsd = None
+
     try:
-        # Navigate from the current ContentConstraint to a ConstrainableArtefact
-        cc_content = reader.stack[reader.Reference]
-        assert len(cc_content) == 1, (cc_content, reader.stack, elem.attrib)
-        obj = reader.resolve(next(iter(cc_content.values())))
-
-        if isinstance(obj, model.DataflowDefinition):
-            # The constrained DFD has a corresponding DSD, which has a Dimension- or
-            # AttributeDescriptor
-            cl = getattr(obj.structure, kind[0])
-        elif isinstance(obj, model.DataStructureDefinition):
-            # The DSD is constrained directly
-            cl = getattr(obj, kind[0])
-        else:
-            log.warning(f"Not implemented: constraints attached to {type(obj)}")
-            cl = None
-
-        # Get the Component
-        return cl, cl.get(elem.attrib["id"])
+        # Get the component list
+        cl = getattr(dsd, kind[0])
     except AttributeError:
         # Failed because the ContentConstraint is attached to something, e.g.
         # DataProvider, that does not provide an association to a DSD. Try to get a
         # Component from the current scope with matching ID.
         return None, reader.get_single(kind[1], id=elem.attrib["id"], subclass=True)
+
+    # Get the Component
+    try:
+        c = cl.get(elem.attrib["id"])
+    except KeyError:
+        if dsd.is_external_reference:
+            # No component with the given ID exists, but the DSD is an external
+            # reference → create the component automatically
+            c = cl.getdefault(elem.attrib["id"])
+        else:
+            raise
+
+    return cl, c
 
 
 def _ms_agency_id(elem):
