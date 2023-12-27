@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Any, Dict, Hashable, Set, Union, cast
+from typing import Any, Dict, Hashable, Set, Union
 
 import numpy as np
 import pandas as pd
@@ -196,13 +196,17 @@ def _cc(obj: model.ContentConstraint, **kwargs):
 def _cr(obj: model.CubeRegion, **kwargs):
     """Convert :class:`.CubeRegion`."""
     result: DictLike[str, pd.Series] = DictLike()
-    for dim, memberselection in obj.member.items():
+    for dim, ms in obj.member.items():
         result[dim.id] = pd.Series(
-            # cast(): as of PR#30, only MemberValue is supported here
-            [cast(model.MemberValue, mv).value for mv in memberselection.values],
-            name=dim.id,
+            [writer.recurse(sv, **kwargs) for sv in ms.values], name=dim.id
         )
     return result
+
+
+@writer
+def _rp(obj: model.RangePeriod, **kwargs):
+    """Convert :class:`.RangePeriod`."""
+    return f"{obj.start.period}–{obj.end.period}"
 
 
 @writer
