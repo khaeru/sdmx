@@ -1738,6 +1738,12 @@ def _msd(reader: Reader, elem):  # pragma: no cover
 
 @end("str:ProvisionAgreement")
 def _pa(reader, elem):
+    try:
+        # <str:ProvisionAgreement> in <str:ConstraintAttachment> is a reference
+        return reader.reference(elem)
+    except NotReference:
+        pass
+
     return reader.maintainable(
         model.ProvisionAgreement,
         elem,
