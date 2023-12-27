@@ -10,7 +10,7 @@ import logging
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from operator import attrgetter
-from typing import Any, List, Optional, Text, Union, get_args
+from typing import TYPE_CHECKING, List, Optional, Text, Union, get_args
 
 from sdmx import model
 from sdmx.dictlike import DictLike, DictLikeDescriptor, summarize_dictlike
@@ -22,19 +22,29 @@ from sdmx.model.internationalstring import (
 )
 from sdmx.util import compare, direct_fields
 
+if TYPE_CHECKING:
+    import requests
+
 log = logging.getLogger(__name__)
 
 
 def _summarize(obj, include: Optional[List[str]] = None):
     """Helper method for __repr__ on Header and Message (sub)classes."""
+    import requests
+
     include = include or list(map(attrgetter("name"), fields(obj)))
     for name in include:
         attr = getattr(obj, name)
         if attr is None:
             continue
         elif isinstance(attr, datetime):
-            attr = attr.isoformat()
-        yield f"{name}: {repr(attr)}"
+            s_attr = repr(attr.isoformat())
+        elif isinstance(attr, requests.Response):
+            s_attr = str(attr)
+        else:
+            s_attr = repr(attr)
+
+        yield f"{name}: {s_attr}"
 
 
 @dataclass
@@ -137,7 +147,7 @@ class Message:
     footer: Optional[Footer] = None
     #: :class:`requests.Response` instance for the response to the HTTP request that
     #: returned the Message. This is not part of the SDMX standard.
-    response: Optional[Any] = None
+    response: Optional["requests.Response"] = None
 
     def __str__(self):
         return repr(self)
