@@ -1296,7 +1296,11 @@ def _ms_component(reader, elem, kind):
     """Identify the Component for a ValueSelection."""
     # Navigate from the current ContentConstraint to a ConstrainableArtefact
     cc_content = reader.stack[reader.Reference]
-    assert len(cc_content) == 1, (cc_content, reader.stack, elem.attrib)
+    if len(cc_content) > 1:
+        log.info(
+            f"Resolve reference to <{kind[1].__name__} {elem.attrib['id']}> using first"
+            f" of {len(cc_content)} constrained objects"
+        )
     obj = reader.resolve(next(iter(cc_content.values())))
 
     if isinstance(obj, model.DataflowDefinition):
