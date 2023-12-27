@@ -1372,7 +1372,7 @@ def _ms(reader, elem):
 
     # Convert to SelectionValue
     mvs = reader.pop_all("Value")
-    trv = reader.pop_all(model.TimeRangeValue)
+    trv = reader.pop_all(model.TimeRangeValue, subclass=True)
     if mvs:
         arg["values"] = list(map(lambda v: model.MemberValue(value=v), mvs))
     elif trv:
