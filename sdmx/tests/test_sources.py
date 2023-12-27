@@ -156,6 +156,10 @@ class TestBBK(DataSourceTest):
 class TestBIS(DataSourceTest):
     source_id = "BIS"
 
+    endpoint_args = {
+        "actualconstraint": dict(resource_id="CBP_D_24D"),
+    }
+
 
 class TestECB(DataSourceTest):
     source_id = "ECB"
@@ -363,6 +367,9 @@ class TestISTAT(DataSourceTest):
         "organisationscheme": HTTPError,  # 400
         "structure": NotImplementedError,  # 501
     }
+    endpoint_args = {
+        "actualconstraint": dict(resource_id="CONS_92_143"),
+    }
 
     @pytest.mark.network
     def test_gh_75(self, client):
@@ -480,10 +487,11 @@ class TestNBB(DataSourceTest):
 class TestOECD(DataSourceTest):
     source_id = "OECD"
     endpoint_args = {
+        "actualconstraint": dict(resource_id="CR_A_DSD_DEBT_TRANS_COLL@DF_MICRO"),
         "data": dict(
             resource_id="DSD_MSTI@DF_MSTI",
             headers={"Accept-Encoding": "compress, gzip"},
-        )
+        ),
     }
 
 
@@ -519,11 +527,12 @@ class TestSPC(DataSourceTest):
         "structure": NotImplementedError,  # 501
     }
     endpoint_args = {
+        "actualconstraint": dict(resource_id="CR_A_DF_ADBKI"),
         "data": dict(
             resource_id="DF_CPI",
             key="A.CK+FJ..",
             params=dict(startPeriod=2010, endPeriod=2015),
-        )
+        ),
     }
 
 
