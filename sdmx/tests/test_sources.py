@@ -34,8 +34,6 @@ class DataSourceTest:
 
     #: Failures affecting **all** data sources, internal to :mod:`sdmx`.
     xfail_common = {
-        "allowedconstraint": (XMLParseError, NI),  # KeyError
-        "contentconstraint": (XMLParseError, NI),  # KeyError
         "hierarchicalcodelist": (XMLParseError, NI),  # <str:HierarchicalCodelist>
         "metadatastructure": (XMLParseError, NI),  # <str:MetadataStructure> not parsed
         "structure": (XMLParseError, NI),  # <str:StructureSet> not parsed
