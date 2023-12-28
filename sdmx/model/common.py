@@ -2064,6 +2064,44 @@ class BaseMetadataflow(StructureUsage, ConstrainableArtefact):
     """ABC for SDMX 2.1 MetadataflowDefinition and SDMX 3.0 Metadataflow."""
 
 
+# SDMX 2.1 §9: Structure Set and Mappings
+
+
+@dataclass
+class ItemAssociation(AnnotableArtefact, Generic[IT]):
+    _Item: ClassVar[Type[Item]] = Item
+
+    source: Optional[IT] = None
+    target: Optional[IT] = None
+
+
+class CodeMap(ItemAssociation[Code]):
+    _Item = Code
+
+
+IAT = TypeVar("IAT", bound="ItemAssociation")
+IST = TypeVar("IST", bound="ItemScheme")
+
+
+@dataclass
+class ItemSchemeMap(NameableArtefact, Generic[IST, IAT]):
+    _ItemAssociation: ClassVar[Type[ItemAssociation]] = ItemAssociation
+
+    source: Optional[IST] = None
+    target: Optional[IST] = None
+
+    item_association: List[IAT] = field(default_factory=list)
+
+
+class CodelistMap(ItemSchemeMap[Codelist, CodeMap]):
+    _ItemAssociation = CodeMap
+
+
+@dataclass
+class StructureSet(MaintainableArtefact):
+    item_scheme_map: List[ItemSchemeMap] = field(default_factory=list)
+
+
 # SDMX 2.1 §10.2: Constraint inheritance
 # SDMX 3.0 §12: Constraints
 
@@ -2431,6 +2469,7 @@ _PACKAGE_CLASS: Dict[str, set] = {
         "DataStructureDefinition",
         "StructureUsage",
     },
+    "mapping": {"CodelistMap", "StructureSet"},
     "metadatastructure": {
         "MetadataflowDefinition",  # SDMX 2.1
         "Metadataflow",  # SDMX 3.0
