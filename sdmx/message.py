@@ -196,6 +196,8 @@ class StructureMessage(Message):
     hierarchical_code_list: DictLikeDescriptor[
         str, v21.HierarchicalCodelist
     ] = DictLikeDescriptor()
+    #: Collection of :class:`.v30.Hierarchy`.
+    hierarchy: DictLikeDescriptor[str, v30.Hierarchy] = DictLikeDescriptor()
     #: Collection of :class:`.ConceptScheme`.
     concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
     #: Collection of :class:`.ContentConstraint`.
