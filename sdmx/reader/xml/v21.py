@@ -961,8 +961,9 @@ def _localization(reader, elem):
     """
 )
 def _ref(reader: Reader, elem):
-    cls_hint = None
-    if QName(elem).localname in ("Parent", "Target"):
+    cls_hint = reader.peek("ItemAssociation class") or None
+
+    if not cls_hint and QName(elem).localname in ("Parent", "Target"):
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
         cls_hint = reader.class_for_tag(elem.getparent().tag)
 
@@ -1750,6 +1751,74 @@ def _msd(reader: Reader, elem):  # pragma: no cover
     cls = reader.class_for_tag(elem)
     log.warning(f"Not parsed: {elem.tag} -> {cls}")
     return NotImplemented
+
+
+# §9: Structure Set and Mappings
+
+
+@start("str:CodelistMap", only=False)
+def _ismap_start(reader: Reader, elem):
+    cls: Type[common.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    # Push class for reference while parsing sub-elements
+    reader.push("ItemAssociation class", cls._ItemAssociation._Item)
+
+
+@end("str:CodelistMap", only=False)
+def _ismap_end(reader: Reader, elem):
+    cls: Type[common.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+
+    # Remove class from stacks
+    reader.pop_single("ItemAssociation class")
+
+    # Retrieve the source and target ItemSchemes
+    source: model.ItemScheme = reader.pop_resolved_ref("Source")
+    target: model.ItemScheme = reader.pop_resolved_ref("Target")
+
+    # Iterate over the ItemAssociation instances
+    ia_all = list()
+    for ia in reader.pop_all(cls._ItemAssociation):
+        for name, scheme in ("source", source), ("target", target):
+            # ia.source is a Reference; retrieve its ID
+            id_ = getattr(ia, name).id
+            try:
+                # Use the ID to look up an Item in the ItemScheme
+                item = scheme[id_]
+            except KeyError:
+                if scheme.is_external_reference:
+                    # Externally-referenced ItemScheme → create the Item
+                    item = scheme.setdefault(id=id_)
+                else:
+                    raise
+            setattr(ia, name, item)
+
+        ia_all.append(ia)
+
+    return reader.nameable(
+        cls, elem, source=source, target=target, item_association=ia_all
+    )
+
+
+@end("str:CodeMap")
+def _item_map(reader: Reader, elem):
+    cls: Type[common.ItemAssociation] = reader.class_for_tag(elem.tag)
+
+    # Store Source and Target as Reference instances
+    return reader.annotable(
+        cls,
+        elem,
+        source=reader.pop_single("Source"),
+        target=reader.pop_single("Target"),
+    )
+
+
+@end("str:StructureSet")
+def _ss(reader: Reader, elem):
+    return reader.maintainable(
+        common.StructureSet,
+        elem,
+        # Collect all ItemSchemeMaps
+        item_scheme_map=reader.pop_all(common.ItemSchemeMap, subclass=True),
+    )
 
 
 # §11: Data Provisioning
