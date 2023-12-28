@@ -23,6 +23,7 @@ FORMAT = XMLFormat(
             GeographicCodelist
             GeoGridCode
             GeoGridCodelist
+            Hierarchy
             Measure
             MetadataConstraint
             ValueItem
