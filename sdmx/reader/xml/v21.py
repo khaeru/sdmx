@@ -921,9 +921,9 @@ def _structures(reader, elem):
     """
     com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN
     com:Value mes:DataSetAction mes:DataSetID mes:Email mes:ID mes:Test mes:Timezone
-    str:DataType str:Email str:Expression str:NullValue str:OperatorDefinition
-    str:PersonalisedName str:Result str:RulesetDefinition str:Telephone str:URI
-    str:VtlDefaultName str:VtlScalarType
+    str:CodelistAliasRef str:DataType str:Email str:Expression str:NullValue
+    str:OperatorDefinition str:PersonalisedName str:Result str:RulesetDefinition
+    str:Telephone str:URI str:VtlDefaultName str:VtlScalarType
     """
 )
 def _text(reader, elem):
@@ -955,15 +955,15 @@ def _localization(reader, elem):
 
 @end(
     """
-    com:Structure com:StructureUsage str:AttachmentGroup str:ConceptIdentity
-    str:ConceptRole str:DimensionReference str:Enumeration str:Parent str:Source
-    str:Structure str:StructureUsage str:Target
+    com:Structure com:StructureUsage str:AttachmentGroup str:CodeID str:ConceptIdentity
+    str:ConceptRole str:DimensionReference str:Enumeration
+    str:Parent str:Source str:Structure str:StructureUsage str:Target
     """
 )
 def _ref(reader: Reader, elem):
     cls_hint = reader.peek("ItemAssociation class") or None
 
-    if not cls_hint and QName(elem).localname in ("Parent", "Target"):
+    if not cls_hint and QName(elem).localname in ("CodeID", "Parent", "Target"):
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
         cls_hint = reader.class_for_tag(elem.getparent().tag)
 
@@ -1751,6 +1751,79 @@ def _msd(reader: Reader, elem):  # pragma: no cover
     cls = reader.class_for_tag(elem)
     log.warning(f"Not parsed: {elem.tag} -> {cls}")
     return NotImplemented
+
+
+# §8: Hierarchical Code List
+
+
+@end("str:HierarchicalCode")
+def _hc(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    code = reader.resolve(reader.pop_single(Reference))
+
+    if code is None:
+        # Retrieve and resolve the reference to the Codelist
+        cl_alias = reader.pop_single("CodelistAliasRef")
+        cl_ref = reader.peek("CodelistAlias")[cl_alias]
+        cl = reader.resolve(cl_ref)
+
+        # Manually resolve the CodeID
+        code_id = reader.pop_single("CodeID").id
+        try:
+            code = cl[code_id]
+        except KeyError:
+            if cl.is_external_reference:
+                code = cl.setdefault(id=code_id)
+            else:
+                raise
+
+    # Create the HierarchicalCode
+    obj = reader.identifiable(cls, elem, code=code)
+
+    # Count children represented as XML sub-elements of the parent
+    n_child = sum(e.tag == elem.tag for e in elem)
+    # Collect this many children and append them to `obj`
+    obj.child.extend(reversed([reader.pop_single(cls) for i in range(n_child)]))
+
+    return obj
+
+
+@end("str:Level")
+def _l(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    return reader.nameable(cls, elem, child=reader.pop_single(cls))
+
+
+@end("str:Hierarchy")
+def _h(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+    return reader.nameable(
+        cls,
+        elem,
+        has_formal_levels=bool(elem.attrib["leveled"]),
+        codes={c.id: c for c in reader.pop_all(model.HierarchicalCode)},
+        level=reader.pop_single(common.Level),
+    )
+
+
+@end("str:IncludedCodelist")
+def _icl(reader: Reader, elem):
+    obj = reader.reference(elem, common.Codelist)
+
+    if reader.peek("CodelistAlias") is None:
+        reader.push("CodelistAlias", dict())
+    reader.peek("CodelistAlias")[elem.attrib["alias"]] = obj
+
+    return None
+
+
+@end("str:HierarchicalCodelist")
+def _hcl(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+    reader.pop_all("CodelistAlias")
+    return reader.maintainable(cls, elem, hierarchy=reader.pop_all(model.Hierarchy))
 
 
 # §9: Structure Set and Mappings
