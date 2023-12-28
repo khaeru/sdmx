@@ -336,6 +336,46 @@ class Reader(metaclass=DispatchingReader):
 
         return decorator
 
+    @classmethod
+    def possible_reference(cls, cls_hint: Optional[type] = None, unstash: bool = False):
+        """Decorator for a function where the `elem` parsed may be a Reference.
+
+        Before calling the decorated function, attempt to parse the `elem` as a
+        :class:`.Reference`. If successful, return the reference instead of calling the
+        function. If `elem` does not contain a reference, call the decorated function.
+
+        Parameters
+        ----------
+        cls_hint :
+            Passed to :class:`.Reference`.
+        unstash : bool, optional
+            If :data:`True`, call :meth:`.unstash` after successfully resolving a
+            reference.
+        """
+
+        def decorator(func):
+            def wrapped(reader: "Reader", elem):
+                try:
+                    # Identify a reference
+                    result = reader.Reference(
+                        reader,
+                        elem,
+                        cls_hint=cls_hint or reader.class_for_tag(elem.tag),
+                    )
+                except NotReference:
+                    # Call the wrapped function
+                    result = func(reader, elem)
+                else:
+                    # Successful; unstash if configured
+                    if unstash:
+                        reader.unstash()
+
+                return result
+
+            return wrapped
+
+        return decorator
+
     # Stack handling
 
     def _clean(self):  # pragma: no cover
@@ -488,7 +528,7 @@ class Reader(metaclass=DispatchingReader):
         """Pop a reference to `cls_or_name` and resolve it."""
         return self.resolve(self.pop_single(cls_or_name))
 
-    def reference(self, elem, cls_hint=None):
+    def reference(self, elem, cls_hint=None) -> Reference:
         return self.Reference(self, elem, cls_hint=cls_hint)
 
     def resolve(self, ref):
@@ -638,6 +678,7 @@ class Reader(metaclass=DispatchingReader):
 # Shorthand
 start = Reader.start
 end = Reader.end
+possible_reference = Reader.possible_reference
 
 # Tags to skip entirely
 start(
@@ -973,17 +1014,10 @@ def _item_start(reader, elem):
     """,
     only=False,
 )
+# <str:DataProvider> is a reference, e.g. in <str:ConstraintAttachment>
+# Restore "Name" and "Description" that may have been stashed by _item_start
+@possible_reference(unstash=True)
 def _item_end(reader: Reader, elem):
-    try:
-        # <str:DataProvider> may be a reference, e.g. in <str:ConstraintAttachment>
-        item = reader.reference(elem, cls_hint=reader.class_for_tag(elem.tag))
-    except NotReference:
-        pass
-    else:
-        # Restore "Name" and "Description" that may have been stashed by _item_start
-        reader.unstash()
-        return item
-
     cls = reader.class_for_tag(elem.tag)
     item = reader.nameable(cls, elem)
 
@@ -1019,13 +1053,8 @@ def _item_end(reader: Reader, elem):
     str:VtlMappingScheme
     """
 )
+@possible_reference()  # <str:CustomTypeScheme> in <str:Transformation>
 def _itemscheme(reader: Reader, elem):
-    try:
-        # <str:CustomTypeScheme> may be a reference, e.g. in <str:Transformation>
-        return reader.reference(elem, cls_hint=reader.class_for_tag(elem.tag))
-    except NotReference:
-        pass
-
     cls: Type[common.ItemScheme] = reader.class_for_tag(elem.tag)
 
     try:
@@ -1107,13 +1136,8 @@ def _concept(reader, elem):
     "str:Attribute str:Dimension str:GroupDimension str:MeasureDimension "
     "str:PrimaryMeasure str:TimeDimension"
 )
+@possible_reference()
 def _component(reader: Reader, elem):
-    try:
-        # May be a reference
-        return reader.reference(elem)
-    except NotReference:
-        pass
-
     # Object class: {,Measure,Time}Dimension or DataAttribute
     cls = reader.class_for_tag(elem.tag)
 
@@ -1155,13 +1179,8 @@ def _component(reader: Reader, elem):
 
 
 @end("str:AttributeList str:DimensionList str:Group str:MeasureList")
+@possible_reference(cls_hint=model.GroupDimensionDescriptor)  # <str:Group>
 def _cl(reader: Reader, elem):
-    try:
-        # <str:Group> may be a reference
-        return reader.reference(elem, cls_hint=model.GroupDimensionDescriptor)
-    except NotReference:
-        pass
-
     # Retrieve the DSD
     dsd = reader.peek("current DSD")
     assert dsd is not None
@@ -1477,14 +1496,9 @@ def _ar(reader, elem):
 
 
 @start("str:DataStructure", only=False)
+@possible_reference()  # <str:DataStructure> in <str:ConstraintAttachment>
 def _dsd_start(reader: Reader, elem):
-    try:
-        # <str:DataStructure> may be a reference, e.g. in <str:ConstraintAttachment>
-        return reader.reference(elem)
-    except NotReference:
-        pass
-
-    # Get any external reference created earlier, or instantiate a new object.
+    # Get any external reference created earlier, or instantiate a new object
     dsd = reader.maintainable(reader.model.DataStructureDefinition, elem)
 
     if dsd not in reader.stack[reader.model.DataStructureDefinition]:
@@ -1507,13 +1521,8 @@ def _dsd_end(reader, elem):
 
 
 @end("str:Dataflow str:Metadataflow")
+@possible_reference()  # <str:Dataflow> in <str:ConstraintAttachment>
 def _dfd(reader: Reader, elem):
-    try:
-        # <str:Dataflow> may be a reference, e.g. in <str:ConstraintAttachment>
-        return reader.reference(elem)
-    except NotReference:
-        pass
-
     structure = reader.pop_resolved_ref("Structure")
     if structure is None:
         log.warning(
@@ -1741,13 +1750,8 @@ def _msd(reader: Reader, elem):  # pragma: no cover
 
 
 @end("str:ProvisionAgreement")
+@possible_reference()  # <str:ProvisionAgreement> in <str:ConstraintAttachment>
 def _pa(reader, elem):
-    try:
-        # <str:ProvisionAgreement> in <str:ConstraintAttachment> is a reference
-        return reader.reference(elem)
-    except NotReference:
-        pass
-
     return reader.maintainable(
         model.ProvisionAgreement,
         elem,
