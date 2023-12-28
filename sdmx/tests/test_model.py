@@ -49,6 +49,14 @@ CLASSES = [
     "Key",
     "GroupKey",
     "SeriesKey",
+    "CodingFormat",
+    "Level",
+    "HierarchicalCode",
+    "ItemAssociation",
+    "CodeMap",
+    "ItemSchemeMap",
+    "CodelistMap",
+    "StructureSet",
     "ConstraintRole",
     "ConstrainableArtefact",
     "SelectionValue",
@@ -118,6 +126,8 @@ V21_ONLY = [
     "GenericTimeSeriesDataSet",
     "StructureSpecificTimeSeriesDataSet",
     "MetadataflowDefinition",
+    "Hierarchy",
+    "HierarchicalCodelist",
 ]
 
 V30_ONLY = [
@@ -134,9 +144,6 @@ V30_ONLY = [
     "MetadataProviderScheme",
     "Measure",
     "Dataflow",  # Instead of DataflowDefinition
-    "CodingFormat",
-    "Level",
-    "HierarchicalCode",
     "Hierarchy",
     "HierarchyAssociation",
     "DataflowRelationship",
