@@ -1760,7 +1760,7 @@ def _msd(reader: Reader, elem):  # pragma: no cover
 def _hc(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
 
-    code = reader.resolve(reader.pop_single(Reference))
+    code = reader.resolve(reader.pop_single(reader.Reference))
 
     if code is None:
         # Retrieve and resolve the reference to the Codelist
