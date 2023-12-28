@@ -2064,6 +2064,25 @@ class BaseMetadataflow(StructureUsage, ConstrainableArtefact):
     """ABC for SDMX 2.1 MetadataflowDefinition and SDMX 3.0 Metadataflow."""
 
 
+# SDMX 2.1 §8: Hierarchical Code List
+# SDMX 3.9 §8: Hierarchy
+
+
+@dataclass
+class HierarchicalCode(IdentifiableArtefact):
+    code: Optional[Code] = None
+    parent: Optional[
+        Union["HierarchicalCode", Any]
+    ] = None  # NB second element is "Hierarchy"
+    child: List["HierarchicalCode"] = field(default_factory=list)
+
+
+@dataclass
+class Level(NameableArtefact):
+    parent: Optional[Union["Level", Any]] = None  # NB second element is "Hierarchy"
+    child: Optional["Level"] = None
+
+
 # SDMX 2.1 §9: Structure Set and Mappings
 
 
@@ -2461,7 +2480,14 @@ PACKAGE = dict()
 _PACKAGE_CLASS: Dict[str, set] = {
     "base": {"Agency", "AgencyScheme", "DataProvider", "DataProviderScheme"},
     "categoryscheme": {"Category", "Categorisation", "CategoryScheme"},
-    "codelist": {"Code", "Codelist"},
+    "codelist": {
+        "Code",
+        "Codelist",
+        "HierarchicalCode",
+        "HierarchicalCodelist",  # SDMX 2.1
+        "Hierarchy",
+        "Level",
+    },
     "conceptscheme": {"Concept", "ConceptScheme"},
     "datastructure": {
         "DataflowDefinition",  # SDMX 2.1
