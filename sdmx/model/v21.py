@@ -4,7 +4,7 @@ import logging
 # TODO for complete implementation of the IM, enforce TimeKeyValue (instead of KeyValue)
 #      for {Generic,StructureSpecific} TimeSeriesDataSet.
 from dataclasses import dataclass, field
-from typing import Generator, List, Optional, Set, Union
+from typing import Dict, Generator, List, Optional, Set, Union
 
 from sdmx.dictlike import DictLikeDescriptor
 
@@ -50,6 +50,8 @@ __all__ = [
     "StructureSpecificTimeSeriesDataSet",
     "MetadataflowDefinition",
     "MetadataStructureDefinition",
+    "Hierarchy",
+    "HierarchicalCodelist",
 ]
 
 log = logging.getLogger(__name__)
@@ -291,6 +293,28 @@ class MetadataflowDefinition(common.BaseMetadataflow):
     """SDMX 2.1 MetadataflowDefinition."""
 
 
+# §8 Hierarchical Code List
+
+
+@dataclass
+class Hierarchy(NameableArtefact):
+    has_formal_levels: bool = False
+
+    #: Hierarchical codes in the hierarchy.
+    codes: Dict[str, common.HierarchicalCode] = field(default_factory=dict)
+
+    level: Optional[common.Level] = None
+
+
+@dataclass
+class HierarchicalCodelist(common.MaintainableArtefact):
+    hierarchy: List[Hierarchy] = field(default_factory=list)
+
+    def __repr__(self) -> str:
+        tmp = super(NameableArtefact, self).__repr__()[:-1]
+        return f"{tmp}: {len(self.hierarchy)} hierarchies>"
+
+
 CF = common.ClassFinder(
     __name__,
     name_map={
@@ -298,6 +322,7 @@ CF = common.ClassFinder(
         "Metadataflow": "MetadataflowDefinition",
     },
     parent_map={
+        common.HierarchicalCode: Hierarchy,
         PrimaryMeasure: MeasureDescriptor,
     },
 )
