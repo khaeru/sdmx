@@ -16,7 +16,13 @@ FORMAT = XMLFormat(
     ]
     + [
         (f"model.{name}", f"str:{name}")
-        for name in "ContentConstraint MeasureDimension PrimaryMeasure".split()
+        for name in """
+            ContentConstraint
+            HierarchicalCodelist
+            Hierarchy
+            MeasureDimension
+            PrimaryMeasure
+        """.split()
     ],
 )
 

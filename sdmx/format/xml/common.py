@@ -27,6 +27,8 @@ CT1 = [
     "DataConsumerScheme",
     "DataProvider",
     "DataProviderScheme",
+    "HierarchicalCode",
+    "Level",
     "NamePersonalisation",
     "NamePersonalisationScheme",
     "Ruleset",
