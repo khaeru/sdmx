@@ -130,7 +130,7 @@ class Resource(str, Enum):
 
 @dataclass
 class URL:
-    """Utility class to build SDMX REST URLs.
+    """Utility class to build SDMX 2.1 REST web service URLs.
 
     See also
     --------

@@ -204,6 +204,8 @@ class StructureMessage(Message):
     structure: DictLikeDescriptor[
         str, model.BaseDataStructureDefinition
     ] = DictLikeDescriptor()
+    #: Collection of :class:`.StructureSet`.
+    structureset: DictLikeDescriptor[str, model.StructureSet] = DictLikeDescriptor()
     #: Collection of :class:`.OrganisationScheme`.
     organisation_scheme: DictLikeDescriptor[
         str, model.OrganisationScheme
