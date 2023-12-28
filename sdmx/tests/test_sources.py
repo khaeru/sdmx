@@ -36,8 +36,6 @@ class DataSourceTest:
     xfail_common = {
         "hierarchicalcodelist": (XMLParseError, NI),  # <str:HierarchicalCodelist>
         "metadatastructure": (XMLParseError, NI),  # <str:MetadataStructure> not parsed
-        "structure": (XMLParseError, NI),  # <str:StructureSet> not parsed
-        "structureset": (XMLParseError, NI),  # <str:StructureSet> not implemented
     }
 
     #: Mapping of endpoint → Exception subclass. Tests of these endpoints are expected
