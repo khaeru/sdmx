@@ -259,7 +259,9 @@ class SpecimenCollection:
         self.specimens.extend(
             (base_path.joinpath(*parts), "xml", "structure")
             for parts in [
+                ("BIS", "actualconstraint-0.xml"),
                 ("ECB", "orgscheme.xml"),
+                ("ECB", "structureset-0.xml"),
                 ("ESTAT", "apro_mk_cola-structure.xml"),
                 ("ESTAT", "GOV_10Q_GGNFA.xml"),
                 ("IMF", "1PI-structure.xml"),
@@ -267,14 +269,18 @@ class SpecimenCollection:
                 # Manually reduced subset of the response for this DSD. Test for
                 # <str:CubeRegion> containing both <com:KeyValue> and <com:Attribute>
                 ("IMF", "ECOFIN_DSD-structure.xml"),
+                ("IMF", "structureset-0.xml"),
                 ("INSEE", "CNA-2010-CONSO-SI-A17-structure.xml"),
                 ("INSEE", "dataflow.xml"),
                 ("INSEE", "IPI-2010-A21-structure.xml"),
                 ("ISTAT", "22_289-structure.xml"),
                 ("ISTAT", "47_850-structure.xml"),
+                ("ISTAT", "actualconstraint-0.xml"),
+                ("OECD", "actualconstraint-0.xml"),
                 ("UNICEF", "GLOBAL_DATAFLOW-structure.xml"),
                 ("UNSD", "codelist_partial.xml"),
                 ("SGR", "common-structure.xml"),
+                ("SPC", "actualconstraint-0.xml"),
                 ("TEST", "gh-142.xml"),
                 ("TEST", "gh-149.xml"),
             ]
