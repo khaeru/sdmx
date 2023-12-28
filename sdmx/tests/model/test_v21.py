@@ -3,10 +3,13 @@ from typing import List
 
 import pytest
 
+import sdmx
+import sdmx.message
 from sdmx.model.v21 import (
     AttributeDescriptor,
     AttributeValue,
     Code,
+    Codelist,
     Component,
     ComponentList,
     ComponentValue,
@@ -578,3 +581,41 @@ class TestDataSet:
         ds1 = DataSet(action="information")
 
         assert ds0.action == ds1.action
+
+
+class TestHierarchicalCodelist:
+    @pytest.fixture(scope="class")
+    def msg(self, specimen):
+        with specimen("BIS/hierarchicalcodelist-0.xml") as f:
+            return sdmx.read_sdmx(f)
+
+    def test_hierarchy(self, msg: sdmx.message.StructureMessage) -> None:
+        for key, hcl in msg.hierarchical_code_list.items():
+            assert 1 == len(hcl.hierarchy)
+            # print(f"{hcl = }")
+
+        hcl = msg.hierarchical_code_list["BIS:HCL_COUNTRY(1.0)"]
+
+        # Access a Hierarchy
+        h = hcl.hierarchy[0]
+        assert "HIERARCHY_COUNTRY" == h.id
+        assert 2 == len(h.codes)
+
+        c1 = h.codes["1"]
+        c2 = h.codes["2"]
+
+        assert 4 == len(c1.child)
+
+        assert 56 == len(c2.child)
+        # HierarchicalCode has a `code` attribute
+        assert isinstance(c2.code, Code)
+        assert "OC" == c2.code
+
+        # This Code is contained within a code list
+        assert isinstance(c2.code.parent, Codelist)
+        assert c2.code.parent.urn.endswith("Codelist=BIS:CL_WEBSTATS_CODES(1.0)")
+
+        # The code has a child associated with a different code list
+        c3 = c2.child[0]
+        assert "6J" == c3.code
+        assert c3.code.parent.urn.endswith("Codelist=BIS:CL_BIS_IF_REF_AREA(1.0)")
