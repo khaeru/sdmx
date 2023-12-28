@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, ClassVar, List, Optional, Set
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from . import common
 from .common import (
@@ -396,7 +396,7 @@ class Hierarchy(MaintainableArtefact):
     level: Optional[common.Level] = None
 
     #: The top-level :class:`HierarchicalCodes <HierarchicalCode>` in the hierarchy.
-    codes: List[common.HierarchicalCode] = field(default_factory=list)
+    codes: Dict[str, common.HierarchicalCode] = field(default_factory=dict)
 
 
 @dataclass

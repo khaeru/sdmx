@@ -58,9 +58,9 @@ end = Reader.end
 start(
     """
     str:AgencySchemes str:ConceptSchemes str:CustomTypeSchemes str:DataConstraints
-    str:GeographicCodelists str:GeoGridCodelists str:NamePersonalisationSchemes
-    str:RulesetSchemes str:TransformationSchemes str:UserDefinedOperatorSchemes
-    str:ValueLists str:VtlMappingSchemes
+    str:GeographicCodelists str:GeoGridCodelists str:Hierarchies
+    str:NamePersonalisationSchemes str:RulesetSchemes str:TransformationSchemes
+    str:UserDefinedOperatorSchemes str:ValueLists str:VtlMappingSchemes
     """
 )(None)
 
@@ -182,4 +182,19 @@ def _complex(reader: Reader, elem):
 
     reader.stack["Attributes"][-1][da.id] = model.AttributeValue(
         value=reader.pop_all("ComplexValue"), value_for=da
+    )
+
+
+# §8: Hierarchy
+
+
+@end("str:Hierarchy")
+def _h(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+    return reader.maintainable(
+        cls,
+        elem,
+        has_formal_levels=eval(elem.attrib["hasFormalLevels"].title()),
+        codes={c.id: c for c in reader.pop_all(model.HierarchicalCode)},
+        level=reader.pop_single(common.Level),
     )
