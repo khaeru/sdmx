@@ -106,8 +106,9 @@ __all__ = [
     "Key",
     "GroupKey",
     "SeriesKey",
-    "HierarchicalCode",
+    "CodingFormat",
     "Level",
+    "HierarchicalCode",
     "ItemAssociation",
     "CodeMap",
     "ItemSchemeMap",
@@ -2075,19 +2076,36 @@ class BaseMetadataflow(StructureUsage, ConstrainableArtefact):
 # SDMX 3.9 §8: Hierarchy
 
 
-@dataclass
-class HierarchicalCode(IdentifiableArtefact):
-    code: Optional[Code] = None
-    parent: Optional[
-        Union["HierarchicalCode", Any]
-    ] = None  # NB second element is "Hierarchy"
-    child: List["HierarchicalCode"] = field(default_factory=list)
+class CodingFormat:
+    """SDMX CodingFormat."""
+
+    coding_format: Facet
 
 
 @dataclass
 class Level(NameableArtefact):
     parent: Optional[Union["Level", Any]] = None  # NB second element is "Hierarchy"
     child: Optional["Level"] = None
+
+    code_format: CodingFormat = field(default_factory=CodingFormat)
+
+
+@dataclass
+class HierarchicalCode(IdentifiableArtefact):
+    #: Date from which the construct is valid.
+    valid_from: Optional[str] = None
+    #: Date from which the construct is superseded.
+    valid_to: Optional[str] = None
+
+    #: The Code that is used at the specific point in the hierarchy.
+    code: Optional[Code] = None
+
+    level: Optional[Level] = None
+
+    parent: Optional[
+        Union["HierarchicalCode", Any]
+    ] = None  # NB second element is "Hierarchy"
+    child: List["HierarchicalCode"] = field(default_factory=list)
 
 
 # SDMX 2.1 §9: Structure Set and Mappings

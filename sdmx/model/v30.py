@@ -13,7 +13,6 @@ from .common import (
     ConstrainableArtefact,
     ConstraintRole,
     ConstraintRoleType,
-    Facet,
     IdentifiableArtefact,
     MaintainableArtefact,
     NameableArtefact,
@@ -46,9 +45,6 @@ __all__ = [
     "StructureSpecificDataSet",
     "MetadataStructureDefinition",
     "Metadataflow",
-    "CodingFormat",
-    "Level",
-    "HierarchicalCode",
     "Hierarchy",
     "HierarchyAssociation",
     "SelectionValue",
@@ -390,47 +386,17 @@ class Metadataflow(common.BaseMetadataflow):
 # §8: Hierarchy
 
 
-class CodingFormat:
-    """SDMX 3.0 CodingFormat."""
-
-    coding_format: Facet
-
-
-@dataclass
-class Level(NameableArtefact):
-    child: Optional["Level"] = None
-    parent: Optional["Level"] = None
-
-    code_format: CodingFormat = field(default_factory=CodingFormat)
-
-
-@dataclass
-class HierarchicalCode(IdentifiableArtefact):
-    #: Date from which the construct is valid.
-    valid_from: Optional[str] = None
-    #: Date from which the construct is superseded.
-    valid_to: Optional[str] = None
-
-    child: List["HierarchicalCode"] = field(default_factory=list)
-    parent: List["HierarchicalCode"] = field(default_factory=list)
-
-    #: The Code that is used at the specific point in the hierarchy.
-    code: Optional[Code] = None
-
-    level: Optional[Level] = None
-
-
 @dataclass
 class Hierarchy(MaintainableArtefact):
     """SDMX 3.0 Hierarchy."""
 
-    has_format_levels: bool = False
+    has_formal_levels: bool = False
 
     #: The top :class:`Level` in the hierarchy.
-    level: Optional[Level] = None
+    level: Optional[common.Level] = None
 
     #: The top-level :class:`HierarchicalCodes <HierarchicalCode>` in the hierarchy.
-    codes: List[HierarchicalCode] = field(default_factory=list)
+    codes: List[common.HierarchicalCode] = field(default_factory=list)
 
 
 @dataclass
