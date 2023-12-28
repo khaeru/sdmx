@@ -265,6 +265,8 @@ class SpecimenCollection:
                 ("ECB", "structureset-0.xml"),
                 ("ESTAT", "apro_mk_cola-structure.xml"),
                 ("ESTAT", "GOV_10Q_GGNFA.xml"),
+                ("ESTAT", "HCL_WSTATUS_SCL_BNSPART.xml"),
+                ("ESTAT", "HCL_WSTATUS_SCL_WSTATUSPR.xml"),
                 ("IMF", "1PI-structure.xml"),
                 ("IMF", "CL_AREA-structure.xml"),
                 # Manually reduced subset of the response for this DSD. Test for
@@ -281,6 +283,7 @@ class SpecimenCollection:
                 ("OECD", "actualconstraint-0.xml"),
                 ("UNICEF", "GLOBAL_DATAFLOW-structure.xml"),
                 ("UNSD", "codelist_partial.xml"),
+                ("SDMX", "HCL_TEST_AREA.xml"),
                 ("SGR", "common-structure.xml"),
                 ("SGR", "hierarchicalcodelist-0.xml"),
                 ("SPC", "actualconstraint-0.xml"),
