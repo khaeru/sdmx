@@ -705,8 +705,10 @@ start(
 
 
 @start(
-    "mes:Error mes:GenericData mes:GenericTimeSeriesData mes:StructureSpecificData "
-    "mes:StructureSpecificTimeSeriesData"
+    """
+    mes:Error mes:GenericData mes:GenericTimeSeriesData mes:StructureSpecificData
+    mes:StructureSpecificTimeSeriesData
+    """
 )
 @start("mes:Structure", only=False)
 def _message(reader: Reader, elem):
@@ -939,8 +941,10 @@ def _datetime(reader, elem):
 
 
 @end(
-    "com:AnnotationText com:Name com:Description com:Text mes:Source mes:Department "
-    "mes:Role str:Department str:Role"
+    """
+    com:AnnotationText com:Name com:Description com:Text mes:Source mes:Department
+    mes:Role str:Department str:Role
+    """
 )
 def _localization(reader, elem):
     reader.push(
@@ -952,8 +956,8 @@ def _localization(reader, elem):
 @end(
     """
     com:Structure com:StructureUsage str:AttachmentGroup str:ConceptIdentity
-    str:ConceptRole str:DimensionReference str:Parent str:Source str:Structure
-    str:StructureUsage str:Target str:Enumeration
+    str:ConceptRole str:DimensionReference str:Enumeration str:Parent str:Source
+    str:Structure str:StructureUsage str:Target
     """
 )
 def _ref(reader: Reader, elem):
@@ -1133,8 +1137,10 @@ def _concept(reader, elem):
 
 
 @end(
-    "str:Attribute str:Dimension str:GroupDimension str:MeasureDimension "
-    "str:PrimaryMeasure str:TimeDimension"
+    """
+    str:Attribute str:Dimension str:GroupDimension str:MeasureDimension
+    str:PrimaryMeasure str:TimeDimension
+    """
 )
 @possible_reference()
 def _component(reader: Reader, elem):
