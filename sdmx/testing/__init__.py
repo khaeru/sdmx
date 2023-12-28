@@ -260,6 +260,7 @@ class SpecimenCollection:
             (base_path.joinpath(*parts), "xml", "structure")
             for parts in [
                 ("BIS", "actualconstraint-0.xml"),
+                ("BIS", "hierarchicalcodelist-0.xml"),
                 ("ECB", "orgscheme.xml"),
                 ("ECB", "structureset-0.xml"),
                 ("ESTAT", "apro_mk_cola-structure.xml"),
@@ -269,6 +270,7 @@ class SpecimenCollection:
                 # Manually reduced subset of the response for this DSD. Test for
                 # <str:CubeRegion> containing both <com:KeyValue> and <com:Attribute>
                 ("IMF", "ECOFIN_DSD-structure.xml"),
+                ("IMF", "hierarchicalcodelist-0.xml"),
                 ("IMF", "structureset-0.xml"),
                 ("INSEE", "CNA-2010-CONSO-SI-A17-structure.xml"),
                 ("INSEE", "dataflow.xml"),
@@ -280,6 +282,7 @@ class SpecimenCollection:
                 ("UNICEF", "GLOBAL_DATAFLOW-structure.xml"),
                 ("UNSD", "codelist_partial.xml"),
                 ("SGR", "common-structure.xml"),
+                ("SGR", "hierarchicalcodelist-0.xml"),
                 ("SPC", "actualconstraint-0.xml"),
                 ("TEST", "gh-142.xml"),
                 ("TEST", "gh-149.xml"),
