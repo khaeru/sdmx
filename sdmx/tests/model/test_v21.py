@@ -599,6 +599,7 @@ class TestHierarchicalCodelist:
         # Access a Hierarchy
         h = hcl.hierarchy[0]
         assert "HIERARCHY_COUNTRY" == h.id
+        assert False is h.has_formal_levels
         assert 2 == len(h.codes)
 
         c1 = h.codes["1"]
