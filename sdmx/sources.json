@@ -74,6 +74,8 @@
       "actualconstraint": false,
       "allowedconstraint": false,
       "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "structure": false,
       "structureset": false
     }
   },
@@ -101,6 +103,8 @@
       "actualconstraint": false,
       "allowedconstraint": false,
       "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "structure": false,
       "structureset": false
     }
   },
@@ -132,6 +136,8 @@
       "actualconstraint": false,
       "allowedconstraint": false,
       "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "structure": false,
       "structureset": false
     }
   },
@@ -143,6 +149,8 @@
       "actualconstraint": false,
       "allowedconstraint": false,
       "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "structure": false,
       "structureset": false
     }
   },
@@ -322,7 +330,6 @@
     "supports": {
       "dataconsumerscheme": false,
       "dataproviderscheme": false,
-      "hierarchicalcodelist": false,
       "metadataflow": false,
       "provisionagreement": false,
       "structureset": false
@@ -384,6 +391,7 @@
       "metadataflow": false,
       "metadatastructure": false,
       "provisionagreement": false,
+      "structure": false,
       "structureset": false,
       "preview": true
     }
