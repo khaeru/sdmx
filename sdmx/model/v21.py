@@ -319,10 +319,13 @@ class MetadataTarget(ComponentList):
     _Component = TargetObject
 
 
+@dataclass
 class ReportStructure(ComponentList):
     """SDMX 2.1 ReportStructure."""
 
     _Component = common.MetadataAttribute
+
+    report_for: List[MetadataTarget] = field(default_factory=list)
 
 
 @dataclass
@@ -443,6 +446,7 @@ CF = common.ClassFinder(
     parent_map={
         common.HierarchicalCode: Hierarchy,
         PrimaryMeasure: MeasureDescriptor,
+        MetadataTarget: MetadataStructureDefinition,
     },
 )
 get_class = CF.get_class
