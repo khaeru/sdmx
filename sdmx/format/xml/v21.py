@@ -12,6 +12,7 @@ FORMAT = XMLFormat(
         ("message.DataMessage", "mes:StructureSpecificTimeSeriesData"),
         ("model.NoSpecifiedRelationship", "str:None"),
         ("model.DataflowDefinition", "str:Dataflow"),
+        ("model.DimensionDescriptorValuesTarget", "str:KeyDescriptorValuesTarget"),
         ("model.MetadataflowDefinition", "str:Metadataflow"),
     ]
     + [
@@ -20,8 +21,12 @@ FORMAT = XMLFormat(
             ContentConstraint
             HierarchicalCodelist
             Hierarchy
+            IdentifiableObjectTarget
             MeasureDimension
+            MetadataAttribute
+            MetadataTarget
             PrimaryMeasure
+            ReportStructure
         """.split()
     ],
 )
