@@ -33,9 +33,7 @@ class DataSourceTest:
     source_id: str
 
     #: Failures affecting **all** data sources, internal to :mod:`sdmx`.
-    xfail_common = {
-        "metadatastructure": (XMLParseError, NI),  # <str:MetadataStructure> not parsed
-    }
+    xfail_common: Dict[str, Any] = {}
 
     #: Mapping of endpoint → Exception subclass. Tests of these endpoints are expected
     #: to fail with the given kind of exception.
