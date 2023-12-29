@@ -285,12 +285,131 @@ class StructureSpecificTimeSeriesDataSet(DataSet):
 # §7.3 Metadata Structure Definition
 
 
+class ReportingCategory(common.Item):
+    pass
+
+
+class ReportingTaxonomy(common.ItemScheme):
+    pass
+
+
+class TargetObject(common.Component):
+    pass
+
+
+class DataSetTarget(TargetObject):
+    pass
+
+
+class DimensionDescriptorValuesTarget(TargetObject):
+    pass
+
+
+class IdentifiableObjectTarget(TargetObject):
+    pass
+
+
+class ReportPeriodTarget(TargetObject):
+    pass
+
+
+class MetadataTarget(ComponentList):
+    """SDMX 2.1 MetadataTarget."""
+
+    _Component = TargetObject
+
+
+class ReportStructure(ComponentList):
+    """SDMX 2.1 ReportStructure."""
+
+    _Component = common.MetadataAttribute
+
+
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 2.1 MetadataStructureDefinition."""
+
+    # NB narrows the type of common.Structure.grouping
+    #: .. note:: SDMX 2.1 IM (2011-08), in Figure 28, gives the cardinality of this
+    #:    association as "1..*", but the text (§7.4.3.2) reads "An association to a
+    #:    [singular] Metadata Target or Report Structure." This implementation follows
+    #:    the latter, which is consistent with the typing of :class:`.common.Structure`.
+    grouping: Optional[Union[MetadataTarget, ReportStructure]] = None
 
 
 class MetadataflowDefinition(common.BaseMetadataflow):
     """SDMX 2.1 MetadataflowDefinition."""
+
+    # NB narrows the type of common.StructureUsage.structure
+    structure: MetadataStructureDefinition
+
+
+# §7.4: Metadata Set
+
+
+@dataclass
+class ReportedAttribute:
+    """SDMX 2.1 ReportedAttribute.
+
+    Analogous to :class:`.v30.MetadataAttributeValue`.
+    """
+
+    value_for: common.MetadataAttribute
+    parent: Optional["ReportedAttribute"] = None
+    child: List["ReportedAttribute"] = field(default_factory=list)
+
+
+class EnumeratedAttributeValue(ReportedAttribute):
+    """SDMX 2.1 EnumeratedAttributeValue.
+
+    Analogous to :class:`.v30.CodedMetadataAttributeValue`.
+    """
+
+    value: str
+
+    #: .. note:: The SDMX 2.1 IM (2011-08) gives this as `valueFor`, but this name
+    #:    duplicates :attr:`ReporterAttribute.value_for`. :mod:`sdmx` uses `value_of`
+    #:    for consistency with :attr:`.v30.CodedMetadataAttributeValue.value_of`.
+    value_of: common.Code
+
+
+class NonEnumeratedAttributeValue(ReportedAttribute):
+    pass
+
+
+class OtherNonEnumeratedAttributeValue(NonEnumeratedAttributeValue):
+    value: str
+
+
+class TextAttributeValue(NonEnumeratedAttributeValue, common.BaseTextAttributeValue):
+    pass
+
+
+class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttributeValue):
+    pass
+
+
+@dataclass
+class MetadataReport:
+    metadata: List[ReportedAttribute] = field(default_factory=list)
+    target: Optional[MetadataTarget] = None
+
+
+@dataclass
+class MetadataSet(NameableArtefact, common.BaseMetadataSet):
+    """SDMX 2.1 MetadataSet.
+
+    .. note:: Contrast :class:`.v30.MetadataSet`, which is a
+       :class:`.MaintainableArtefact`.
+    """
+
+    described_by: Optional[MetadataflowDefinition] = None
+    # described_by: Optional[ReportStructure] = None
+    structured_by: Optional[MetadataStructureDefinition] = None
+
+    #: Analogous to :attr:`.v30.MetadataSet.provided_by`.
+    published_by: Optional[common.DataProvider] = None
+
+    report: List[MetadataReport] = field(default_factory=list)
 
 
 # §8 Hierarchical Code List

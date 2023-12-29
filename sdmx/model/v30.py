@@ -1,6 +1,7 @@
 """SDMX 3.0 Information Model."""
 
 from dataclasses import dataclass, field
+from datetime import date
 from enum import Enum
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
@@ -375,12 +376,112 @@ class StructureSpecificDataSet(DataSet):
 # §7.3 Metadata Structure Definition
 
 
+class MetadataAttributeDescriptor(common.ComponentList):
+    """SDMX 3.0 MetadataAttributeDescriptor."""
+
+    _Component = common.MetadataAttribute
+
+
+class IdentifiableObjectSelection:
+    pass
+
+
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 3.0 MetadataStructureDefinition."""
+
+    #: A :class:`MetadataAttributeDescriptor` that describes the attributes of the
+    #: metadata structure.
+    #:
+    #: .. note:: The SDMX 3.0.0 IM (version 1.0 / 2021-10) does not give a name for this
+    #:    association. :mod:`sdmx` uses `attributes` for consistency with
+    #:    :class:`.DataStructureDefinition`.
+    attributes: MetadataAttributeDescriptor = field(
+        default_factory=MetadataAttributeDescriptor
+    )
 
 
 class Metadataflow(common.BaseMetadataflow):
     """SDMX 3.0 MetadataflowDefinition."""
+
+    structure: MetadataStructureDefinition
+
+
+# §7.4: Metadata Set
+
+
+class MetadataAttributeValue:
+    """SDMX 3.0 MetadataAttributeValue.
+
+    Analogous to :class:`.v21.ReportedAttribute`.
+    """
+
+    # NB the IM specifies this is a subclass of common.AttributeValue, but the
+    #    implementation in .common has both Coded- and UncodedAttributeValue, which
+    #    offends mypy.
+
+    parent: Optional["MetadataAttributeValue"] = None
+    child: List["MetadataAttributeValue"] = field(default_factory=list)
+
+
+class CodedMetadataAttributeValue(MetadataAttributeValue):
+    """SDMX 3.0 CodedMetadataAttributeValue.
+
+    Analogous to :class:`.v21.EnumeratedAttributeValue.
+    """
+
+    value_of: common.Code
+
+
+class UncodedMetadataAttributeValue(MetadataAttributeValue):
+    pass
+
+
+class OtherUncodedAttributeValue(UncodedMetadataAttributeValue):
+    value: str
+    start_time: date
+
+
+class TextAttributeValue(UncodedMetadataAttributeValue, common.BaseTextAttributeValue):
+    pass
+
+
+class XHTMLAttributeValue(
+    UncodedMetadataAttributeValue, common.BaseXHTMLAttributeValue
+):
+    pass
+
+
+class TargetIdentifiableObject:
+    pass
+
+
+@dataclass
+class MetadataSet(MaintainableArtefact, common.BaseMetadataSet):
+    """SDMX 3.0 MetadataSet.
+
+    .. note:: Contrast :class:`.v21.MetadataSet`, which is a :class:`.NameableArtefact`.
+    """
+
+    # NB Would prefer to type as datetime.date, but VersionableArtefact currently uses
+    #    str
+    valid_from: Optional[str] = None
+    # NB Would prefer to type as datetime.date, but VersionableArtefact currently uses
+    #    str
+    valid_to: Optional[str] = None
+    set_id: Optional[str] = None
+
+    described_by: Optional[Metadataflow] = None
+
+    # described_by: Optional[MetadataProvisionAgreement] = None
+
+    structured_by: Optional[MetadataAttributeDescriptor] = None
+
+    #: Analogous to :attr:`.v21.MetadataSet.published_by`.
+    provided_by: Optional[MetadataProvider] = None
+
+    attaches_to: List[TargetIdentifiableObject] = field(default_factory=list)
+
+    metadata: List[MetadataAttributeValue] = field(default_factory=list)
 
 
 # §8: Hierarchy

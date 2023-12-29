@@ -2064,6 +2064,21 @@ class BaseDataSet(AnnotableArtefact):
 # §7.3: Metadata Structure Definition
 
 
+class AttributeComponent(Component):
+    """SDMX 3.0 AttributeComponent.
+
+    .. note:: This intermediate, abstract class is not present in the SDMX 2.1 IM.
+    """
+
+
+class MetadataAttribute(AttributeComponent):
+    """SDMX MetadataAttribute."""
+
+    is_presentational: bool
+    max_occurs: int
+    min_occurs: int
+
+
 class BaseMetadataStructureDefinition(Structure, ConstrainableArtefact):
     """ABC for SDMX 2.1 and 3.0 MetadataStructureDefinition."""
 
@@ -2072,8 +2087,38 @@ class BaseMetadataflow(StructureUsage, ConstrainableArtefact):
     """ABC for SDMX 2.1 MetadataflowDefinition and SDMX 3.0 Metadataflow."""
 
 
+# §7.4 MetadataSet
+
+
+@dataclass
+class BaseTextAttributeValue:
+    """ABC for SDMX 2.1 and 3.0 TextAttributeValue."""
+
+    text: InternationalStringDescriptor = InternationalStringDescriptor()
+
+
+@dataclass
+class BaseXHTMLAttributeValue:
+    """ABC for SDMX 2.1 and 3.0 XHTMLAttributeValue."""
+
+    value: str
+
+
+@dataclass
+class BaseMetadataSet:
+    """ABC for SDMX 2.1 and 3.0 MetadataSet."""
+
+    action: ActionType
+
+    reporting_begin: date
+    reporting_end: date
+
+    publication_period: date
+    publication_year: date
+
+
 # SDMX 2.1 §8: Hierarchical Code List
-# SDMX 3.9 §8: Hierarchy
+# SDMX 3.0 §8: Hierarchy
 
 
 class CodingFormat:
