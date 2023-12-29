@@ -1502,29 +1502,30 @@ def _ar(reader, elem):
         return common.GroupRelationship(**args)
 
 
-@start("str:DataStructure", only=False)
+@start("str:DataStructure str:MetadataStructure", only=False)
 @possible_reference()  # <str:DataStructure> in <str:ConstraintAttachment>
-def _dsd_start(reader: Reader, elem):
+def _structure_start(reader: Reader, elem):
     # Get any external reference created earlier, or instantiate a new object
-    dsd = reader.maintainable(reader.model.DataStructureDefinition, elem)
+    cls = reader.class_for_tag(elem.tag)
+    obj = reader.maintainable(cls, elem)
 
-    if dsd not in reader.stack[reader.model.DataStructureDefinition]:
+    if obj not in reader.stack[cls]:
         # A new object was created
-        reader.push(dsd)
+        reader.push(obj)
 
     # Store a separate reference to the current DSD
-    reader.push("current DSD", dsd)
+    reader.push("current DSD", obj)
 
 
-@end("str:DataStructure", only=False)
-def _dsd_end(reader, elem):
-    dsd = reader.pop_single("current DSD")
+@end("str:DataStructure str:MetadataStructure", only=False)
+def _structure_end(reader, elem):
+    obj = reader.pop_single("current DSD")
 
-    if dsd:
+    if obj:
         # Collect annotations, name, and description
-        dsd.annotations = list(reader.pop_all(model.Annotation))
-        add_localizations(dsd.name, reader.pop_all("Name"))
-        add_localizations(dsd.description, reader.pop_all("Description"))
+        obj.annotations = list(reader.pop_all(model.Annotation))
+        add_localizations(obj.name, reader.pop_all("Name"))
+        add_localizations(obj.description, reader.pop_all("Description"))
 
 
 @end("str:Dataflow str:Metadataflow")
@@ -1739,18 +1740,6 @@ def _ds_end(reader, elem):
 
 
 # §7.3: Metadata Structure Definition
-
-
-@end("str:MetadataTarget")
-def _mdt(reader: Reader, elem):  # pragma: no cover
-    raise NotImplementedError
-
-
-@end("str:MetadataStructure")
-def _msd(reader: Reader, elem):  # pragma: no cover
-    cls = reader.class_for_tag(elem)
-    log.warning(f"Not parsed: {elem.tag} -> {cls}")
-    return NotImplemented
 
 
 # §8: Hierarchical Code List
