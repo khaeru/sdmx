@@ -36,7 +36,7 @@ import sdmx.urn
 from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
 from sdmx.format import Version, list_media_types
-from sdmx.model import common
+from sdmx.model import common, v21
 from sdmx.model import v21 as model
 from sdmx.reader.base import BaseReader
 
@@ -1186,30 +1186,43 @@ def _component(reader: Reader, elem):
     return reader.identifiable(cls, elem, **args)
 
 
-@end("str:AttributeList str:DimensionList str:Group str:MeasureList")
+@end(
+    """
+    str:AttributeList str:DimensionList str:Group str:MetadataTarget str:MeasureList
+    str:ReportStructure
+    """
+)
 @possible_reference(cls_hint=model.GroupDimensionDescriptor)  # <str:Group>
 def _cl(reader: Reader, elem):
-    # Retrieve the DSD
-    dsd = reader.peek("current DSD")
+    # Retrieve the DSD (or MSD)
+    dsd: common.Structure = reader.peek("current DSD")
     assert dsd is not None
 
-    # Retrieve the components
-    args = dict(components=reader.pop_all(model.Component, subclass=True))
-
     # Determine the class
-    localname = QName(elem).localname
-    if localname == "Group":
-        cls: Type = model.GroupDimensionDescriptor
+    cls = reader.class_for_tag(elem.tag)
 
+    args = dict(
+        # Retrieve the components
+        components=reader.pop_all(model.Component, subclass=True),
+        # SDMX-ML spec for, e.g. DimensionList: "The id attribute is provided in this
+        # case for completeness. However, its value is fixed to 'DimensionDescriptor'."
+        id=elem.attrib.get("id", cls.__name__),
+    )
+
+    if cls is common.GroupDimensionDescriptor:
+        assert isinstance(dsd, common.BaseDataStructureDefinition)
         # Replace components with references
         args["components"] = [
             dsd.dimensions.get(ref.target_id)
             for ref in reader.pop_all("DimensionReference")
         ]
+    elif cls is v21.ReportStructure:
+        assert isinstance(dsd, v21.MetadataStructureDefinition)
+        # Assemble MetadataTarget references for the `report_for` field
+        args["report_for"] = list()
+        for target_ref in reader.pop_all(reader.Reference):
+            args["report_for"].append(dsd.target[target_ref.id])
     else:
-        # SDMX-ML spec for, e.g. DimensionList: "The id attribute is provided in this
-        # case for completeness. However, its value is fixed to 'DimensionDescriptor'."
-        cls = reader.class_for_tag(elem.tag)
         args["id"] = elem.attrib.get("id", cls.__name__)
 
     cl = reader.identifiable(cls, elem, **args)
@@ -1223,16 +1236,7 @@ def _cl(reader: Reader, elem):
     # Assign to the DSD eagerly (instead of in _dsd_end()) for reference by next
     # ComponentList e.g. so that AttributeRelationship can reference the
     # DimensionDescriptor
-    attr = {
-        common.DimensionDescriptor: "dimensions",
-        common.AttributeDescriptor: "attributes",
-        reader.model.MeasureDescriptor: "measures",
-        common.GroupDimensionDescriptor: "group_dimensions",
-    }[cl.__class__]
-    if attr == "group_dimensions":
-        getattr(dsd, attr)[cl.id] = cl
-    else:
-        setattr(dsd, attr, cl)
+    dsd.replace_grouping(cl)
 
 
 # §4.5: Category Scheme
