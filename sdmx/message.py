@@ -204,7 +204,12 @@ class StructureMessage(Message):
     constraint: DictLikeDescriptor[str, model.BaseConstraint] = DictLikeDescriptor()
     #: Collection of :class:`Dataflow(Definition) <.BaseDataflow>`.
     dataflow: DictLikeDescriptor[str, model.BaseDataflow] = DictLikeDescriptor()
-    #: Collection of :class:`MetaDataflow(Definition) <.BaseMetaDataflow>`.
+    #: Collection of :class:`MetadataStructureDefinition
+    #: <.BaseMetadataStructureDefinition>`.
+    metadatastructure: DictLikeDescriptor[
+        str, model.BaseMetadataStructureDefinition
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`Metadataflow(Definition) <.BaseMetadataflow>`.
     metadataflow: DictLikeDescriptor[str, model.BaseMetadataflow] = DictLikeDescriptor()
     #: Collection of :class:`DataStructureDefinition <.BaseDataStructureDefinition>`.
     structure: DictLikeDescriptor[
