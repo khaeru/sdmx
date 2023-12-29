@@ -514,7 +514,13 @@ class HierarchyAssociation(MaintainableArtefact):
     linked_hierarchy: Optional[Hierarchy] = None
 
 
-CF = common.ClassFinder(__name__, parent_map={Measure: MeasureDescriptor})
+CF = common.ClassFinder(
+    __name__,
+    parent_map={
+        Measure: MeasureDescriptor,
+        common.MetadataAttribute: MetadataAttributeDescriptor,
+    },
+)
 get_class = CF.get_class
 parent_class = CF.parent_class
 __dir__ = CF.dir
