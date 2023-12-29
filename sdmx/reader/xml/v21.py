@@ -1139,7 +1139,8 @@ def _concept(reader, elem):
 
 @end(
     """
-    str:Attribute str:Dimension str:GroupDimension str:MeasureDimension
+    str:Attribute str:Dimension str:GroupDimension str:IdentifiableObjectTarget
+    str:KeyDescriptorValuesTarget str:MeasureDimension str:MetadataAttribute
     str:PrimaryMeasure str:TimeDimension
     """
 )
