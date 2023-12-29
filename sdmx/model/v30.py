@@ -386,6 +386,8 @@ class IdentifiableObjectSelection:
     pass
 
 
+@dataclass
+@MaintainableArtefact._preserve("hash")
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 3.0 MetadataStructureDefinition."""
 
