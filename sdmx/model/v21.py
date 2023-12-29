@@ -325,15 +325,15 @@ class ReportStructure(ComponentList):
     _Component = common.MetadataAttribute
 
 
+@dataclass
+@common.MaintainableArtefact._preserve("hash")
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 2.1 MetadataStructureDefinition."""
 
-    # NB narrows the type of common.Structure.grouping
-    #: .. note:: SDMX 2.1 IM (2011-08), in Figure 28, gives the cardinality of this
-    #:    association as "1..*", but the text (§7.4.3.2) reads "An association to a
-    #:    [singular] Metadata Target or Report Structure." This implementation follows
-    #:    the latter, which is consistent with the typing of :class:`.common.Structure`.
-    grouping: Optional[Union[MetadataTarget, ReportStructure]] = None
+    report_structure: ReportStructure = field(default_factory=ReportStructure)
+
+    #: Association to 1 or more :class:`.MetadataTarget`
+    target: DictLikeDescriptor[str, MetadataTarget] = DictLikeDescriptor()
 
 
 class MetadataflowDefinition(common.BaseMetadataflow):

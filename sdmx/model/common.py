@@ -21,7 +21,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections import ChainMap
 from copy import copy
-from dataclasses import InitVar, dataclass, field
+from dataclasses import InitVar, dataclass, field, fields
 from datetime import date, datetime, timedelta
 from enum import Enum
 from functools import lru_cache
@@ -45,6 +45,7 @@ from typing import (
     TypeVar,
     Union,
     get_args,
+    get_origin,
 )
 
 from sdmx.dictlike import DictLikeDescriptor
@@ -1098,8 +1099,42 @@ class DataProviderScheme(OrganisationScheme[DataProvider]):
 
 @dataclass(repr=False)
 class Structure(MaintainableArtefact):
-    #:
-    grouping: Optional[ComponentList] = None
+    @property
+    def grouping(self) -> Sequence[ComponentList]:
+        """A collection of all the ComponentLists associated with a subclass."""
+        result: List[ComponentList] = []
+        for f in fields(self):
+            if isinstance(f.type, ComponentList):
+                result.append(getattr(self.f.name))
+        return result
+
+    def replace_grouping(self, cl: ComponentList) -> None:
+        """Replace existing component list with `cl`."""
+        field = None
+        for f in fields(self):
+            is_dictlike = get_origin(f.type) is DictLikeDescriptor
+            if f.type == type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
+                field = f
+                break
+
+        if not field:
+            raise TypeError(f"No grouping of type {type(cl)} on {type(self)}")
+
+        if is_dictlike:
+            getattr(self, field.name).setdefault(cl.id, cl)
+        else:
+            setattr(self, field.name, cl)
+
+    def compare(self, other: "Structure", strict: bool = True) -> bool:
+        from operator import attrgetter
+
+        return all(
+            s.compare(o, strict)
+            for s, o in zip(
+                sorted(self.grouping, key=attrgetter("id")),
+                sorted(other.grouping, key=attrgetter("id")),
+            )
+        )
 
 
 class StructureUsage(MaintainableArtefact):
@@ -1258,6 +1293,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         str, GroupDimensionDescriptor
     ] = DictLikeDescriptor()
 
+    # Specific types to be used in concrete subclasses
     MemberValue: ClassVar[Type["BaseMemberValue"]]
     MemberSelection: ClassVar[Type["BaseMemberSelection"]]
     ConstraintType: ClassVar[Type[BaseConstraint]]
@@ -1495,23 +1531,6 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         key.values.update({kv.id: kv for _, kv in sorted(keyvalues)})
 
         return key
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two DataStructureDefinitions are the same if each of :attr:`attributes`,
-        :attr:`dimensions`, :attr:`measures`, and :attr:`group_dimensions` compares
-        equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :meth:`.ComponentList.compare`.
-        """
-        return all(
-            getattr(self, attr).compare(getattr(other, attr), strict)
-            for attr in ("attributes", "dimensions", "measures", "group_dimensions")
-        )
 
 
 @dataclass(repr=False)
