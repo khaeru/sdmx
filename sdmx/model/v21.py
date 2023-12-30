@@ -423,6 +423,7 @@ class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttribute
 class MetadataReport:
     metadata: List[ReportedAttribute] = field(default_factory=list)
     target: Optional[MetadataTarget] = None
+    attaches_to: Optional[TargetObjectKey] = None
 
 
 @dataclass
