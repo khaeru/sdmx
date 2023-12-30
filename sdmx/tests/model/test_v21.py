@@ -583,6 +583,27 @@ class TestDataSet:
         assert ds0.action == ds1.action
 
 
+class TestMetadataSet:
+    @pytest.fixture(scope="class")
+    def msg(self, specimen) -> sdmx.message.MetadataMessage:
+        with specimen("esms_generic.xml") as f:
+            return sdmx.read_sdmx(f)
+
+    def test_report_hierarchy(self, msg: sdmx.message.MetadataMessage) -> None:
+        # Access message → metadata set → report
+        r = msg.data[0].report[0]
+
+        # Number of top-level ReportedAttribute
+        assert 3 == len(r.metadata)
+        # Number of ReportedAttribute in tree branches
+        assert 4 == len(r.metadata[0])
+        assert 0 == len(r.metadata[0][0])
+        assert 4 == len(r.metadata[0][2])
+        assert 0 == len(r.metadata[0][2][0])
+        assert 3 == len(r.metadata[1])
+        assert 1 == len(r.metadata[2])
+
+
 class TestHierarchicalCodelist:
     @pytest.fixture(scope="class")
     def msg(self, specimen):
