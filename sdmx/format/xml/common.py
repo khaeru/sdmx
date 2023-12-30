@@ -67,6 +67,8 @@ CT2 = [
     ("model.VTLMappingScheme", "str:VtlMappingScheme"),
     # Message classes
     ("message.DataMessage", "mes:StructureSpecificData"),
+    ("message.MetadataMessage", "mes:GenericMetadata"),
+    ("message.MetadataMessage", "mes:StructureSpecificMetadata"),
     ("message.ErrorMessage", "mes:Error"),
     ("message.StructureMessage", "mes:Structure"),
 ]

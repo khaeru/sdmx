@@ -427,3 +427,8 @@ class DataMessage(Message):
             and len(self.data) == len(other.data)
             and all(ds[0].compare(ds[1], strict) for ds in zip(self.data, other.data))
         )
+
+
+@dataclass
+class MetadataMessage(DataMessage):
+    pass
