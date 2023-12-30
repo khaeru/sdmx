@@ -339,11 +339,12 @@ class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     target: DictLikeDescriptor[str, MetadataTarget] = DictLikeDescriptor()
 
 
+@dataclass
 class MetadataflowDefinition(common.BaseMetadataflow):
     """SDMX 2.1 MetadataflowDefinition."""
 
     # NB narrows the type of common.StructureUsage.structure
-    structure: MetadataStructureDefinition
+    structure: Optional[MetadataStructureDefinition] = None
 
 
 # §7.4: Metadata Set
