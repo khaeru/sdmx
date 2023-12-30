@@ -792,18 +792,19 @@ def _header_org(reader, elem):
 
 @end("mes:Structure", only=False)
 def _header_structure(reader, elem):
-    """<mes:Structure> within <mes:Header> of a DataMessage."""
+    """<mes:Structure> within <mes:Header> of a {Metad,D}ataMessage."""
     # The root node of a structure message is handled by _message(), above.
     if elem.getparent() is None:
         return
 
-    msg = reader.get_single(message.DataMessage)
+    msg = reader.get_single(message.DataMessage, subclass=True)
+    assert msg is not None
 
     # Retrieve a DSD supplied to the parser, e.g. for a structure specific message
-    provided_dsd = reader.get_single(common.BaseDataStructureDefinition, subclass=True)
+    provided_structure = reader.get_single(common.Structure, subclass=True)
 
     # Resolve the <com:Structure> child to a DSD, maybe is_external_reference=True
-    header_dsd = reader.pop_resolved_ref("Structure")
+    header_structure = reader.pop_resolved_ref("Structure")
 
     # The header may give either a StructureUsage, or a specific reference to a subclass
     # like BaseDataflow. Resolve the <str:StructureUsage> child, if any, and remove it
@@ -817,34 +818,34 @@ def _header_structure(reader, elem):
 
     # DSD to use: the provided one; the one referenced by <com:Structure>; or a
     # candidate constructed using the information contained in `header_su` (if any)
-    dsd = provided_dsd or (
+    structure = provided_structure or (
         reader.maintainable(
-            reader.model.DataStructureDefinition,
+            msg.structure_type,
             None,
             id=header_su.id,
             maintainer=header_su.maintainer,
             version=header_su.version,  # NB this may not always be the case
         )
         if header_su
-        else header_dsd
+        else header_structure
     )
 
-    if header_dsd and header_su:
+    if header_structure and header_su:
         # Ensure the constructed candidate and the one given directly are equivalent
-        assert header_dsd == dsd
-    elif header_su and not provided_dsd:
-        reader.push(dsd)
-    elif dsd is None:
+        assert header_structure == structure
+    elif header_su and not provided_structure:
+        reader.push(structure)
+    elif structure is None:
         raise RuntimeError
 
     # Store on the data flow
-    msg.dataflow.structure = dsd
+    msg.dataflow.structure = structure
 
     # Store under the structure ID, so it can be looked up by that ID
-    reader.push(elem.attrib["structureID"], dsd)
+    reader.push(elem.attrib["structureID"], structure)
 
     # Store as an object that won't cause a parsing error if it is left over
-    reader.ignore.add(id(dsd))
+    reader.ignore.add(id(structure))
 
     try:
         # Information about the 'dimension at observation level'
@@ -856,12 +857,12 @@ def _header_structure(reader, elem):
         if dim_at_obs == "AllDimensions":
             # Use a singleton object
             dim = model.AllDimensions
-        elif provided_dsd:
+        elif provided_structure:
             # Use existing dimension from the provided DSD
-            dim = dsd.dimensions.get(dim_at_obs)
+            dim = structure.dimensions.get(dim_at_obs)
         else:
             # Force creation of the 'dimension at observation' level
-            dim = dsd.dimensions.getdefault(
+            dim = structure.dimensions.getdefault(
                 dim_at_obs,
                 cls=(
                     model.TimeDimension
