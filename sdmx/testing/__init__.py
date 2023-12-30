@@ -281,6 +281,7 @@ class SpecimenCollection:
                 ("ISTAT", "22_289-structure.xml"),
                 ("ISTAT", "47_850-structure.xml"),
                 ("ISTAT", "actualconstraint-0.xml"),
+                ("ISTAT", "metadataflow-0.xml"),
                 ("ISTAT", "metadatastructure-0.xml"),
                 ("OECD", "actualconstraint-0.xml"),
                 ("OECD", "metadatastructure-0.xml"),
