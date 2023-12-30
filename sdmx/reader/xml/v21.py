@@ -1762,6 +1762,119 @@ def _ds_end(reader, elem):
 
 # §7.3: Metadata Structure Definition
 
+# §7.4: Metadata Set
+
+
+@start("mes:MetadataSet", only=False)
+def _mds_start(reader, elem):
+    # Create an instance of a MetadataSet
+    mds = reader.class_for_tag(elem.tag)()
+
+    # Retrieve the (message-local) ID referencing a data structure definition
+    id = elem.attrib.get("structureRef", None) or elem.attrib.get(
+        reader.qname("metadata:structureRef"), None
+    )
+
+    # Get a reference to the MSD that structures the data set
+    # Provided in the <mes:Header> / <mes:Structure>
+    dsd = reader.get_single(id)
+    if not dsd:
+        # Fall back to a MSD provided as an argument to read_message()
+        dsd = reader.get_single(common.BaseMetadataStructureDefinition, subclass=True)
+
+        if not dsd:  # pragma: no cover
+            raise RuntimeError("No MSD when creating DataSet")
+
+        log.debug(
+            f'Use provided {dsd!r} for structureRef="{id}" not defined in message'
+        )
+
+    mds.structured_by = dsd
+
+    reader.push("MetadataSet", mds)
+
+
+@end("mes:MetadataSet", only=False)
+def _mds_end(reader, elem):
+    mds = reader.pop_single("MetadataSet")
+
+    # Collect the contained MetadataReports
+    mds.report.extend(reader.pop_all(v21.MetadataReport))
+
+    # Add the data set to the message
+    reader.get_single(message.MetadataMessage).data.append(mds)
+
+
+@end(":Report md:Report")
+def _md_report(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    obj = cls(
+        attaches_to=reader.pop_single(model.TargetObjectKey),
+        metadata=reader.pop_all(model.ReportedAttribute, subclass=True),
+    )
+    return obj
+
+
+@end(":Target md:Target")
+def _tov(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    obj = cls(
+        key_values={
+            v.value_for: v for v in reader.pop_all(v21.TargetObjectValue, subclass=True)
+        }
+    )
+    return obj
+
+
+@end(":ReferenceValue md:ReferenceValue")
+def _rv(reader: Reader, elem):
+    cls = reader.class_for_tag(elem[0].tag)
+
+    mds = reader.get_single(common.BaseMetadataStructureDefinition, subclass=True)
+
+    # TODO resolve the TargetObject
+    del mds
+
+    args = dict(value_for=elem.attrib["id"])
+
+    if cls is v21.TargetReportPeriod:
+        args["report_period"] = reader.pop_single("ReportPeriod")
+    elif cls is model.TargetIdentifiableObject:
+        args["obj"] = reader.pop_single("ObjectReference")
+
+    obj = cls(**args)
+
+    return obj
+
+
+@start("md:ReportedAttribute", only=False)
+def _ra_generic_start(reader: Reader, elem):
+    # Avoid collecting previous/sibling ReportedAttribute as children of this one
+    reader.stash(model.ReportedAttribute)
+
+
+@end("md:ReportedAttribute", only=False)
+def _ra_generic_end(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    args = dict(
+        # Pop all child elements
+        child=reader.pop_all(cls, subclass=True),
+        value_for=elem.attrib["id"],
+    )
+
+    xhtml = reader.pop_single("StructuredText")
+    if xhtml:
+        cls = v21.XHTMLAttributeValue
+        args["value"] = xhtml
+
+    obj = cls(**args)
+
+    reader.unstash()
+    return obj
+
 
 # §8: Hierarchical Code List
 
