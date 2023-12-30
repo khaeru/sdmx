@@ -414,8 +414,9 @@ class TextAttributeValue(NonEnumeratedAttributeValue, common.BaseTextAttributeVa
     pass
 
 
+@dataclass
 class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttributeValue):
-    pass
+    value: str
 
 
 @dataclass
