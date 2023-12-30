@@ -10,12 +10,12 @@ import logging
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from operator import attrgetter
-from typing import TYPE_CHECKING, List, Optional, Text, Union, get_args
+from typing import TYPE_CHECKING, List, Optional, Text, Type, Union, get_args
 
 from sdmx import model
 from sdmx.dictlike import DictLike, DictLikeDescriptor, summarize_dictlike
 from sdmx.format import Version
-from sdmx.model import v21, v30
+from sdmx.model import common, v21, v30
 from sdmx.model.internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
@@ -394,6 +394,14 @@ class DataMessage(Message):
         """DataStructureDefinition used in the :attr:`dataflow`."""
         return self.dataflow.structure
 
+    @property
+    def structure_type(self) -> Type[common.Structure]:
+        """:class:`.Structure` subtype describing the contained (meta)data."""
+        return {
+            Version["2.1"]: v21.DataStructureDefinition,
+            Version["3.0.0"]: v30.DataStructureDefinition,
+        }[self.version]
+
     def __repr__(self):
         """String representation."""
         lines = [super().__repr__()]
@@ -431,4 +439,9 @@ class DataMessage(Message):
 
 @dataclass
 class MetadataMessage(DataMessage):
-    pass
+    @property
+    def structure_type(self) -> Type[common.Structure]:
+        return {
+            Version["2.1"]: v21.MetadataStructureDefinition,
+            Version["3.0.0"]: v30.MetadataStructureDefinition,
+        }[self.version]
