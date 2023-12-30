@@ -689,6 +689,7 @@ start(
     "gen:ObsDimension gen:ObsValue gen:Value "
     # Tags that are bare containers for other XML elements
     """
+    :AttributeSet md:AttributeSet
     str:Categorisations str:CategorySchemes str:Codelists str:Concepts
     str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
     str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
@@ -708,7 +709,8 @@ start(
 
 @start(
     """
-    mes:Error mes:GenericData mes:GenericTimeSeriesData mes:StructureSpecificData
+    mes:Error mes:GenericData mes:GenericMetadata mes:GenericTimeSeriesData
+    mes:StructureSpecificData mes:StructureSpecificMetadata
     mes:StructureSpecificTimeSeriesData
     """
 )
@@ -730,13 +732,13 @@ def _message(reader: Reader, elem):
         log.warning(f"xml.Reader got no dsd=… argument for {QName(elem).localname}")
         ss_without_dsd = True
     elif "StructureSpecific" not in elem.tag and reader.get_single(
-        common.BaseDataStructureDefinition
+        common.BaseDataStructureDefinition, subclass=True
     ):
         log.info("Use supplied dsd=… argument for non–structure-specific message")
 
     # Store values for other methods
     reader.push("SS without DSD", ss_without_dsd)
-    if "Data" in elem.tag:
+    if elem.tag.endswith("Data"):
         reader.push("DataSetClass", model.get_class(f"{QName(elem).localname}Set"))
 
     # Handle namespaces mapped on `elem` but not part of the standard set
@@ -921,11 +923,11 @@ def _structures(reader, elem):
 
 @end(
     """
-    com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN
-    com:Value mes:DataSetAction mes:DataSetID mes:Email mes:ID mes:Test mes:Timezone
-    str:CodelistAliasRef str:DataType str:Email str:Expression str:NullValue
-    str:OperatorDefinition str:PersonalisedName str:Result str:RulesetDefinition
-    str:Telephone str:URI str:VtlDefaultName str:VtlScalarType
+    com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN com:Value
+    mes:DataSetAction :ReportPeriod md:ReportPeriod mes:DataSetID mes:Email mes:ID
+    mes:Test mes:Timezone str:CodelistAliasRef str:DataType str:Email str:Expression
+    str:NullValue str:OperatorDefinition str:PersonalisedName str:Result
+    str:RulesetDefinition str:Telephone str:URI str:VtlDefaultName str:VtlScalarType
     """
 )
 def _text(reader, elem):
@@ -957,9 +959,10 @@ def _localization(reader, elem):
 
 @end(
     """
-    com:Structure com:StructureUsage str:AttachmentGroup str:CodeID str:ConceptIdentity
-    str:ConceptRole str:DimensionReference str:Enumeration
-    str:Parent str:Source str:Structure str:StructureUsage str:Target
+    com:Structure com:StructureUsage :ObjectReference md:ObjectReference
+    str:AttachmentGroup str:CodeID str:ConceptIdentity str:ConceptRole
+    str:DimensionReference str:Enumeration str:Parent str:Source str:Structure
+    str:StructureUsage str:Target
     """
 )
 def _ref(reader: Reader, elem):
