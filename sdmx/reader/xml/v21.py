@@ -266,6 +266,8 @@ class Reader(metaclass=DispatchingReader):
                     # Retrieve the parsing function for this element & event
                     func = self.parser[element.tag, event]
                 except KeyError:  # pragma: no cover
+                    if QName(element.tag).namespace == "http://www.w3.org/1999/xhtml":
+                        continue
                     # Don't know what to do for this (element, event)
                     raise NotImplementedError(element.tag, event) from None
 
