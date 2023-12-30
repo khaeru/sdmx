@@ -79,6 +79,7 @@ NS = {
     "xsi": "http://www.w3.org/2001/XMLSchema-instance",
     # To be formatted
     "com": "{}/common",
+    "md": "{}/metadata/generic",
     "data": "{}/data/structurespecific",
     "str": "{}/structure",
     "mes": "{}/message",
