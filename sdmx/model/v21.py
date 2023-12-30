@@ -470,6 +470,8 @@ CF = common.ClassFinder(
     __name__,
     name_map={
         "Dataflow": "DataflowDefinition",
+        "DataStructure": "DataStructureDefinition",
+        "MetadataStructure": "MetadataStructureDefinition",
         "Metadataflow": "MetadataflowDefinition",
     },
     parent_map={
