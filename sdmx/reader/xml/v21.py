@@ -978,6 +978,10 @@ def _ref(reader: Reader, elem):
     if not cls_hint and QName(elem).localname in ("CodeID", "Parent", "Target"):
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
         cls_hint = reader.class_for_tag(elem.getparent().tag)
+    elif not cls_hint and QName(elem).localname == "Structure":
+        # <com:Structure>/<str:Structure>: use message property for a class hint
+        msg = reader.get_single(message.DataMessage, subclass=True)
+        cls_hint = cast(Type[message.DataMessage], type(msg)).structure_type
 
     reader.push(QName(elem).localname, reader.reference(elem, cls_hint))
 
