@@ -351,6 +351,26 @@ class MetadataflowDefinition(common.BaseMetadataflow):
 
 
 @dataclass
+class TargetObjectValue:
+    value_for: TargetObject
+
+
+@dataclass
+class TargetReportPeriod(TargetObjectValue):
+    report_period: str
+
+
+@dataclass
+class TargetIdentifiableObject(TargetObjectValue):
+    obj: IdentifiableArtefact
+
+
+@dataclass
+class TargetObjectKey:
+    key_values: DictLikeDescriptor[str, TargetObjectValue] = DictLikeDescriptor()
+
+
+@dataclass
 class ReportedAttribute:
     """SDMX 2.1 ReportedAttribute.
 
