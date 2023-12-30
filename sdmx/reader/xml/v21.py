@@ -981,7 +981,10 @@ def _ref(reader: Reader, elem):
     elif not cls_hint and QName(elem).localname == "Structure":
         # <com:Structure>/<str:Structure>: use message property for a class hint
         msg = reader.get_single(message.DataMessage, subclass=True)
-        cls_hint = cast(Type[message.DataMessage], type(msg)).structure_type
+        if msg:
+            cls_hint = cast(Type[message.DataMessage], type(msg))(
+                version=reader.xml_version
+            ).structure_type
 
     reader.push(QName(elem).localname, reader.reference(elem, cls_hint))
 
