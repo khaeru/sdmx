@@ -936,6 +936,12 @@ def _text(reader, elem):
     reader.push(elem, elem.text or NoText)
 
 
+@start("com:StructuredText")
+def _st(reader, elem):
+    """Contained XHTML."""
+    reader.push(elem, etree.tostring(elem[0], pretty_print=True))
+
+
 @end("mes:Extracted mes:Prepared mes:ReportingBegin mes:ReportingEnd")
 def _datetime(reader, elem):
     text, n = re.subn(r"(.*\.)(\d{6})\d+(\+.*)", r"\1\2\3", elem.text)
