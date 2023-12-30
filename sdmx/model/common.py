@@ -2127,13 +2127,13 @@ class BaseXHTMLAttributeValue:
 class BaseMetadataSet:
     """ABC for SDMX 2.1 and 3.0 MetadataSet."""
 
-    action: ActionType
+    action: Optional[ActionType] = None
 
-    reporting_begin: date
-    reporting_end: date
+    reporting_begin: Optional[date] = None
+    reporting_end: Optional[date] = None
 
-    publication_period: date
-    publication_year: date
+    publication_period: Optional[date] = None
+    publication_year: Optional[date] = None
 
 
 # SDMX 2.1 §8: Hierarchical Code List
