@@ -12,6 +12,7 @@ FORMAT = XMLFormat(
         ("model.Dataflow", "str:Dataflow"),
         ("model.MetadataAttributeDescriptor", "str:MetadataAttributeList"),
         ("model.Metadataflow", "str:Metadataflow"),
+        ("model.MetadataSet", "mes:MetadataSet"),
     ]
     + [
         (f"model.{name}", f"str:{name}")

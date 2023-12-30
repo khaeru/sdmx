@@ -44,17 +44,14 @@ CT2 = [
     ("model.Agency", "str:Agency"),  # Order matters
     ("model.Agency", "mes:Receiver"),
     ("model.Agency", "mes:Sender"),
+    ("model.AttributeDescriptor", "str:AttributeList"),
     ("model.Concept", "str:ConceptIdentity"),
     ("model.Codelist", "str:Enumeration"),  # This could possibly be ItemScheme
     ("model.Dimension", "str:Dimension"),  # Order matters
     ("model.Dimension", "str:DimensionReference"),
     ("model.Dimension", "str:GroupDimension"),
-    ("model.StructureUsage", "com:StructureUsage"),
-    ("model.AttributeDescriptor", "str:AttributeList"),
     ("model.DataAttribute", "str:Attribute"),
     ("model.DataStructureDefinition", "str:DataStructure"),
-    ("model.DataStructureDefinition", "com:Structure"),
-    ("model.DataStructureDefinition", "str:Structure"),
     ("model.DimensionDescriptor", "str:DimensionList"),
     ("model.GroupDimensionDescriptor", "str:Group"),
     ("model.GroupDimensionDescriptor", "str:AttachmentGroup"),
@@ -63,6 +60,8 @@ CT2 = [
     ("model.MeasureDescriptor", "str:MeasureList"),
     ("model.MetadataStructureDefinition", "str:MetadataStructure"),
     ("model.SeriesKey", "gen:SeriesKey"),
+    ("model.Structure", "com:Structure"),
+    ("model.Structure", "str:Structure"),
     ("model.StructureUsage", "com:StructureUsage"),
     ("model.VTLMappingScheme", "str:VtlMappingScheme"),
     # Message classes
