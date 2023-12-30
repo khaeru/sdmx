@@ -381,6 +381,12 @@ class ReportedAttribute:
     parent: Optional["ReportedAttribute"] = None
     child: List["ReportedAttribute"] = field(default_factory=list)
 
+    def __getitem__(self, index: int) -> "ReportedAttribute":
+        return self.child[index]
+
+    def __len__(self) -> int:
+        return len(self.child)
+
 
 class EnumeratedAttributeValue(ReportedAttribute):
     """SDMX 2.1 EnumeratedAttributeValue.
