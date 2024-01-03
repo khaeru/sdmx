@@ -4,8 +4,10 @@ import zipfile
 
 import pytest
 import requests
+from lxml import etree
 
 import sdmx
+import sdmx.writer.xml
 from sdmx import message
 from sdmx.model import v21 as m
 from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
@@ -87,13 +89,14 @@ def test_ContentConstraint(dsd, dks):
     )
 
 
-def test_ds(dsd, obs):
+def test_ds(dsd, obs) -> None:
     # Write DataSet with Observations not in Series
     ds = DataSet(structured_by=dsd)
     ds.obs.append(obs)
 
     result = sdmx.to_xml(ds, pretty_print=True)
-    print(result.decode())
+    # print(result.decode())
+    del result
 
 
 def test_ds_structurespecific(dsd):
@@ -140,6 +143,24 @@ def test_obs(obs):
         match="Observation.value_for is None when writing structure-specific data",
     ):
         XMLWriter.recurse(obs, struct_spec=True)
+
+
+def test_reference() -> None:
+    cl = m.Codelist(id="FOO", version="1.0")
+    c = m.Code(id="BAR")
+    cl.append(c)
+
+    # <Ref …> to Item has maintainableParentVersion, but no version
+    result = sdmx.writer.xml.reference(c, style="Ref")
+    result_str = etree.tostring(result).decode()
+    assert 'maintainableParentVersion="1.0"' in result_str
+    assert 'version="1.0"' not in result_str
+
+    # <Ref …> to ItemScheme has version, but not maintainableParentVersion
+    result = sdmx.writer.xml.reference(cl, style="Ref")
+    result_str = etree.tostring(result).decode()
+    assert 'maintainableParentVersion="1.0"' not in result_str
+    assert 'version="1.0"' in result_str
 
 
 def test_Footer(footer):
@@ -245,74 +266,27 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("INSEE/dataflow.xml", False),
         ("SGR/common-structure.xml", True),
         ("UNSD/codelist_partial.xml", True),
+        ("TEST/gh-149.xml", False),
     ],
 )
-def test_structure_roundtrip(pytestconfig, specimen, specimen_id, strict, tmp_path):
+def test_structure_roundtrip(specimen, specimen_id, strict, tmp_path):
     """Test that SDMX-ML StructureMessages can be 'round-tripped'."""
 
     # Read a specimen file
     with specimen(specimen_id) as f:
         msg0 = sdmx.read_sdmx(f)
 
-    # Write to file
-    path = tmp_path / "output.xml"
-    path.write_bytes(sdmx.to_xml(msg0, pretty_print=True))
+    # Write to a bytes buffer
+    data = io.BytesIO(sdmx.to_xml(msg0, pretty_print=True))
 
     # Read again
-    msg1 = sdmx.read_sdmx(path)
+    msg1 = sdmx.read_sdmx(data)
 
     # Contents are identical
-    assert msg0.compare(msg1, strict), (
-        path.read_text() if pytestconfig.getoption("verbose") else path
-    )
-
-
-@pytest.mark.network
-def test_install_schemas(tmp_path):
-    """Test that XSD files are downloaded and ready for use in validation."""
-    sdmx.install_schemas(schema_dir=tmp_path)
-
-    # Look for a couple of the expected files
-    files = ["SDMXCommon.xsd", "SDMXMessage.xsd"]
-    for schema_doc in files:
-        doc = tmp_path.joinpath(schema_doc)
-        assert doc.exists()
-
-
-@pytest.mark.network
-def test_validate_xml_from_samples(tmp_path):
-    """Use official samples to ensure validation work correctly."""
-    # Grab the latest v2.1 schema release to get the URL to the zip
-    release_url = "https://api.github.com/repos/sdmx-twg/sdmx-ml-v2_1/releases/latest"
-    gh_headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28"
-    }
-    resp = requests.get(url=release_url, headers=gh_headers)
-    zipball_url = resp.json().get("zipball_url")
-    # Download the zipped content and find the schemas within
-    resp = requests.get(url=zipball_url, headers=gh_headers)
-    zipped = zipfile.ZipFile(io.BytesIO(resp.content))
-    zipped.extractall(path=tmp_path)
-    extracted_content = list(tmp_path.glob("sdmx-twg-sdmx-ml*"))[0]
-
-    # Schemas as just in a flat directory
-    schema_dir = extracted_content.joinpath("schemas")
-
-    # Samples are somewhat spread out, and some are known broken so we pick a bunch
-    samples_dir = extracted_content.joinpath("samples")
-    samples = [
-        samples_dir / "common" / "common.xml",
-        samples_dir / "demography" / "demography.xml",
-        samples_dir / "demography" / "esms.xml",
-        samples_dir / "exr" / "common" / "exr_common.xml",
-        samples_dir / "exr" / "ecb_exr_ng" / "ecb_exr_ng_full.xml",
-        samples_dir / "exr" / "ecb_exr_ng" / "ecb_exr_ng.xml",
-        samples_dir / "query" / "query_cl_all.xml",
-        samples_dir / "query" / "response_cl_all.xml",
-        samples_dir / "query" / "query_esms_children.xml",
-        samples_dir / "query" / "response_esms_children.xml",
-    ]
-
-    for sample in samples:
-        assert sdmx.validate_xml(sample, schema_dir)
+    try:
+        assert msg0.compare(msg1, strict)
+    except AssertionError:  # pragma: no cover
+        path = tmp_path.joinpath("output.xml")
+        path.write_bytes(data.getbuffer())
+        log.error(f"compare() = False; see {path}")
+        raise

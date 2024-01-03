@@ -1126,6 +1126,11 @@ def _component(reader: Reader, elem):
         args["order"] = int(elem.attrib["position"])
     except KeyError:
         pass
+    # DataAttributeOnly
+    us = elem.attrib.get("assignmentStatus")
+    if us:
+        args["usage_status"] = model.UsageStatus[us.lower()]
+
     cr = reader.pop_resolved_ref("ConceptRole")
     if cr:
         args["concept_role"] = cr
@@ -1175,9 +1180,8 @@ def _cl(reader: Reader, elem):
             for ref in reader.pop_all("DimensionReference")
         ]
     else:
-        # SDMX-ML spec for, e.g. DimensionList: "The id attribute is
-        # provided in this case for completeness. However, its value is
-        # fixed to 'DimensionDescriptor'."
+        # SDMX-ML spec for, e.g. DimensionList: "The id attribute is provided in this
+        # case for completeness. However, its value is fixed to 'DimensionDescriptor'."
         cls = reader.class_for_tag(elem.tag)
         args["id"] = elem.attrib.get("id", cls.__name__)
 
