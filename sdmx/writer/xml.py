@@ -7,7 +7,7 @@
 
 import logging
 from pathlib import Path
-from typing import Iterable, IO, List, Optional, Literal, cast
+from typing import IO, Iterable, List, Literal, Optional, Union, cast
 
 from lxml import etree
 from lxml.builder import ElementMaker
