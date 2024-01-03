@@ -4,7 +4,6 @@ import zipfile
 
 import pytest
 import requests
-from lxml import etree
 
 import sdmx
 import sdmx.writer.xml
