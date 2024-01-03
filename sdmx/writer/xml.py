@@ -7,7 +7,7 @@
 
 import logging
 from pathlib import Path
-from typing import IO, Iterable, List, Literal, Optional, cast
+from typing import IO, Iterable, List, Literal, Optional, Union, cast
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -51,7 +51,7 @@ def to_xml(obj, **kwargs):
     return etree.tostring(writer.recurse(obj), **kwargs)
 
 
-def validate_xml(msg: Path | IO, schema_dir: Optional[Path] = None) -> bool:
+def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> bool:
     """Validate and SDMX message against the XML Schema (XSD) documents.
 
     The XML Schemas must first be installed or validation will fail. See
