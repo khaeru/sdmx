@@ -7,7 +7,7 @@
 
 import logging
 from pathlib import Path
-from typing import Iterable, IO, Literal, List, Optional, cast
+from typing import IO, Iterable, List, Literal, Optional, cast
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -151,6 +151,9 @@ def install_schemas(schema_dir: Optional[Path] = None) -> None:
         xsd_path = zipfile.Path(zipped, at=xsd)
         target = schema_dir.joinpath(xsd_path.name)
         target.write_text(xsd_path.read_text())
+
+
+RefStyle = Literal["Ref", "URN"]
 
 
 def reference(obj, parent=None, tag=None, style=None):
