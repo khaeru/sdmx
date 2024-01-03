@@ -310,7 +310,7 @@ def test_validate_xml_from_samples(tmp_path):
     release_url = "https://api.github.com/repos/sdmx-twg/sdmx-ml-v2_1/releases/latest"
     gh_headers = {
         "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28"
+        "X-GitHub-Api-Version": "2022-11-28",
     }
     resp = requests.get(url=release_url, headers=gh_headers)
     zipball_url = resp.json().get("zipball_url")
