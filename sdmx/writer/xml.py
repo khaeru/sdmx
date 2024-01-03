@@ -108,8 +108,12 @@ def validate_xml(msg: Path | IO, schema_dir: Optional[Path] = None) -> bool:
     xml_schema_doc = etree.parse(message_xsd)
     xml_schema = etree.XMLSchema(xml_schema_doc)
 
-    return xml_schema.validate(msg_doc)
-    # return xml_schema.assertValid(msg_doc)
+    try:
+        xml_schema.assertValid(msg_doc)
+    except etree.DocumentInvalid as err:
+        log.error(err)
+    finally:
+        return xml_schema.validate(msg_doc)
 
 
 def install_schemas(schema_dir: Optional[Path] = None) -> None:
@@ -135,7 +139,7 @@ def install_schemas(schema_dir: Optional[Path] = None) -> None:
     release_url = "https://api.github.com/repos/sdmx-twg/sdmx-ml-v2_1/releases/latest"
     gh_headers = {
         "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28"
+        "X-GitHub-Api-Version": "2022-11-28",
     }
     resp = requests.get(url=release_url, headers=gh_headers)
     zipball_url = resp.json().get("zipball_url")
