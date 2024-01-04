@@ -130,15 +130,16 @@ class XMLFormat:
         else:
             if name is None:
                 match = re.fullmatch(
-                    r"(\{(?P<ns_full>.*)\}|(?P<ns_key>.*):)(?P<name>.*)", ns_or_name
+                    r"(\{(?P<ns_full>.*)\}|(?P<ns_key>.*):)?(?P<name>.*)", ns_or_name
                 )
                 assert match
                 name = match.group("name")
-                ns_key = match.group("ns_key")
-                if ns_key:
+                if ns_key := match.group("ns_key"):
                     ns = self.NS[ns_key]
+                elif ns := match.group("ns_full"):
+                    pass
                 else:
-                    ns = match.group("ns_full")
+                    ns = None
             else:
                 ns = self.NS[ns_or_name]
 
