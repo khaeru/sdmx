@@ -1119,7 +1119,12 @@ def _facet(reader, elem):
     # in XML, first letter is uppercase; in the spec and Python enum, lowercase. SDMX-ML
     # default is "String".
     tt = args.pop("text_type", "String")
-    fvt = model.FacetValueType[f"{tt[0].lower()}{tt[1:]}"]
+    try:
+        fvt = model.FacetValueType[f"{tt[0].lower()}{tt[1:]}"]
+    except KeyError:
+        # ExtendedFacetValueType instead. Convert case of the value: in XML, the string
+        # is "XHTML", upper case; in the spec and Python enum, "Xhtml", title case.
+        fvt = model.ExtendedFacetValueType[f"{tt[0]}{tt[1:].lower()}"]
 
     # NB Erratum: "isMultiLingual" appears in XSD schemas ("The isMultiLingual attribute
     #    indicates for a text format of type 'string', whether the value should allow
