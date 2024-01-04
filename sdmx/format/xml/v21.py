@@ -36,6 +36,7 @@ FORMAT = XMLFormat(
             MetadataAttribute
             MetadataTarget
             PrimaryMeasure
+            ReportPeriodTarget
             ReportStructure
         """.split()
     ],
