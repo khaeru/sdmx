@@ -985,6 +985,9 @@ def _ref(reader: Reader, elem):
             cls_hint = cast(Type[message.DataMessage], type(msg))(
                 version=reader.xml_version
             ).structure_type
+        elif QName(elem.getparent()).localname == "Dataflow":
+            # In a StructureMessage
+            cls_hint = reader.model.DataStructureDefinition
 
     reader.push(QName(elem).localname, reader.reference(elem, cls_hint))
 
