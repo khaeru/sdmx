@@ -1168,7 +1168,7 @@ def _concept(reader, elem):
     """
     str:Attribute str:Dimension str:GroupDimension str:IdentifiableObjectTarget
     str:KeyDescriptorValuesTarget str:MeasureDimension str:MetadataAttribute
-    str:PrimaryMeasure str:TimeDimension
+    str:PrimaryMeasure str:ReportPeriodTarget str:TimeDimension
     """
 )
 @possible_reference()

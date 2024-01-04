@@ -20,7 +20,7 @@ FORMAT = XMLFormat(
         ("model.TargetIdentifiableObject", "md:ObjectReference"),
         ("model.TargetObjectKey", ":Target"),
         ("model.TargetObjectKey", "md:Target"),
-        ("model.TargetReportPeriod", ":ReportPeriod"),
+        ("model.TargetReportPeriod", "ReportPeriod"),
         ("model.TargetReportPeriod", "md:ReportPeriod"),
         ("model.MetadataReport", ":Report"),
         ("model.MetadataReport", "md:Report"),
