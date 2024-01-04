@@ -511,6 +511,23 @@ FacetValueType = Enum(
     "geospatialInformation",
 )
 
+
+#: SDMX ExtendedFaceValueType.
+#:
+#: This enumeration is identical to :class:`.FacetValueType` except for one additional
+#: member, "Xhtml". This member is used only in metadata.
+ExtendedFacetValueType = Enum(
+    "ExtendedFacetValueType",
+    """string bigInteger integer long short decimal float double boolean uri count
+    inclusiveValueRange alpha alphaNumeric numeric exclusiveValueRange incremental
+    observationalTimePeriod standardTimePeriod basicTimePeriod gregorianTimePeriod
+    gregorianYear gregorianMonth gregorianYearMonth gregorianDay reportingTimePeriod
+    reportingYear reportingSemester reportingTrimester reportingQuarter reportingMonth
+    reportingWeek reportingDay dateTime timesRange month monthDay day time duration
+    keyValues identifiableReference dataSetReference Xhtml""",
+)
+
+
 UsageStatus = Enum("UsageStatus", "mandatory conditional")
 
 
