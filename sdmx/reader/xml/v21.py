@@ -1840,7 +1840,12 @@ def _rv(reader: Reader, elem):
     # TODO resolve the TargetObject
     del mds
 
-    args = dict(value_for=elem.attrib["id"])
+    if QName(elem).namespace is None:
+        # Structure-specific: the TargetObject ID is stored in the "xsi:type" attribute
+        # as the last part of a value like "esms:CATEGORY_TARGET.ReportPeriodTarget"
+        args = dict(value_for=elem.attrib[reader.qname("xsi", "type")].split(".")[-1])
+    else:
+        args = dict(value_for=elem.attrib["id"])
 
     if cls is v21.TargetReportPeriod:
         args["report_period"] = reader.pop_single("ReportPeriod")
