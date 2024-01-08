@@ -53,14 +53,17 @@ def to_xml(obj, **kwargs):
 
 def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> bool:
     """Validate and SDMX message against the XML Schema (XSD) documents.
+
     The XML Schemas must first be installed or validation will fail. See
     :func:`sdmx.install_schemas` to download the schema files.
+
     Parameters
     ----------
     msg
         A SDMX-ML Message formatted XML file.
     schema_dir
         The directory to XSD schemas used to validate the message.
+
     Returns
     -------
     bool
@@ -115,6 +118,7 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> boo
 
 def install_schemas(schema_dir: Optional[Path] = None) -> None:
     """Cache XML Schema documents locally for use during message validation.
+
     Parameters
     ----------
     schema_dir
@@ -156,7 +160,7 @@ def install_schemas(schema_dir: Optional[Path] = None) -> None:
 RefStyle = Literal["Ref", "URN"]
 
 
-def reference(obj, parent=None, tag=None, *, style: RefStyle):
+def reference(obj, parent=None, tag=None, style=None):
     """Write a reference to `obj`.
 
     .. todo:: Currently other functions in :mod:`.writer.xml` all pass the `style`
