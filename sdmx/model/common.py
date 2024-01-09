@@ -2102,12 +2102,16 @@ class AttributeComponent(Component):
     """
 
 
+@dataclass
 class MetadataAttribute(AttributeComponent):
     """SDMX MetadataAttribute."""
 
-    is_presentational: bool
-    max_occurs: int
-    min_occurs: int
+    is_presentational: Optional[bool] = None
+    max_occurs: Optional[int] = None
+    min_occurs: Optional[int] = None
+
+    parent: Optional["MetadataAttribute"] = None
+    child: List["MetadataAttribute"] = field(default_factory=list)
 
 
 class BaseMetadataStructureDefinition(Structure, ConstrainableArtefact):
