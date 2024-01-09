@@ -350,7 +350,7 @@ class ReportStructure(ComponentList):
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 2.1 MetadataStructureDefinition."""
 
-    report_structure: ReportStructure = field(default_factory=ReportStructure)
+    report_structure: DictLikeDescriptor[str, ReportStructure] = DictLikeDescriptor()
 
     #: Association to 1 or more :class:`.MetadataTarget`
     target: DictLikeDescriptor[str, MetadataTarget] = DictLikeDescriptor()
