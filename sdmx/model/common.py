@@ -2168,6 +2168,8 @@ class CodingFormat:
 
 @dataclass
 class Level(NameableArtefact):
+    """SDMX Level."""
+
     parent: Optional[Union["Level", Any]] = None  # NB second element is "Hierarchy"
     child: Optional["Level"] = None
 
@@ -2176,6 +2178,8 @@ class Level(NameableArtefact):
 
 @dataclass
 class HierarchicalCode(IdentifiableArtefact):
+    """SDMX HierarchicalCode."""
+
     #: Date from which the construct is valid.
     valid_from: Optional[str] = None
     #: Date from which the construct is superseded.

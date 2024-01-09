@@ -60,8 +60,29 @@ __all__ = [
     "GenericDataSet",
     "GenericTimeSeriesDataSet",
     "StructureSpecificTimeSeriesDataSet",
-    "MetadataflowDefinition",
+    "ReportingCategory",
+    "ReportingTaxonomy",
+    "TargetObject",
+    "DataSetTarget",
+    "DimensionDescriptorValuesTarget",
+    "IdentifiableObjectTarget",
+    "ReportPeriodTarget",
+    "MetadataTarget",
+    "ReportStructure",
     "MetadataStructureDefinition",
+    "MetadataflowDefinition",
+    "TargetObjectValue",
+    "TargetReportPeriod",
+    "TargetIdentifiableObject",
+    "TargetObjectKey",
+    "ReportedAttribute",
+    "EnumeratedAttributeValue",
+    "NonEnumeratedAttributeValue",
+    "OtherNonEnumeratedAttributeValue",
+    "TextAttributeValue",
+    "XHTMLAttributeValue",
+    "MetadataReport",
+    "MetadataSet",
     "Hierarchy",
     "HierarchicalCodelist",
     "ItemAssociation",
@@ -303,31 +324,31 @@ class StructureSpecificTimeSeriesDataSet(DataSet):
 
 
 class ReportingCategory(common.Item):
-    pass
+    """SDMX 2.1 ReportingCategory."""
 
 
 class ReportingTaxonomy(common.ItemScheme):
-    pass
+    """SDMX 2.1 ReportingTaxonomy."""
 
 
 class TargetObject(common.Component):
-    pass
+    """SDMX 2.1 TargetObject."""
 
 
 class DataSetTarget(TargetObject):
-    pass
+    """SDMX 2.1 DataSetTarget."""
 
 
 class DimensionDescriptorValuesTarget(TargetObject):
-    pass
+    """SDMX 2.1 DimensionDescriptorValuesTarget."""
 
 
 class IdentifiableObjectTarget(TargetObject):
-    pass
+    """SDMX 2.1 IdentifiableObjectTarget."""
 
 
 class ReportPeriodTarget(TargetObject):
-    pass
+    """SDMX 2.1 ReportPeriodTarget."""
 
 
 class MetadataTarget(ComponentList):
@@ -369,21 +390,29 @@ class MetadataflowDefinition(common.BaseMetadataflow):
 
 @dataclass
 class TargetObjectValue:
+    """SDMX 2.1 TargetObjectValue."""
+
     value_for: TargetObject
 
 
 @dataclass
 class TargetReportPeriod(TargetObjectValue):
+    """SDMX 2.1 TargetReportPeriod."""
+
     report_period: str
 
 
 @dataclass
 class TargetIdentifiableObject(TargetObjectValue):
+    """SDMX 2.1 TargetIdentifiableObject."""
+
     obj: IdentifiableArtefact
 
 
 @dataclass
 class TargetObjectKey:
+    """SDMX 2.1 TargetObjectKey."""
+
     key_values: DictLikeDescriptor[str, TargetObjectValue] = DictLikeDescriptor()
 
 
@@ -420,24 +449,30 @@ class EnumeratedAttributeValue(ReportedAttribute):
 
 
 class NonEnumeratedAttributeValue(ReportedAttribute):
-    pass
+    """SDMX 2.1 NonEnumeratedAttributeValue."""
 
 
 class OtherNonEnumeratedAttributeValue(NonEnumeratedAttributeValue):
+    """SDMX 2.1 OtherNonEnumeratedAttributeValue."""
+
     value: str
 
 
 class TextAttributeValue(NonEnumeratedAttributeValue, common.BaseTextAttributeValue):
-    pass
+    """SDMX 2.1 TextAttributeValue."""
 
 
 @dataclass
 class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttributeValue):
+    """SDMX 2.1 XHTMLAttributeValue."""
+
     value: str
 
 
 @dataclass
 class MetadataReport:
+    """SDMX 2.1 MetadataReport."""
+
     metadata: List[ReportedAttribute] = field(default_factory=list)
     target: Optional[MetadataTarget] = None
     attaches_to: Optional[TargetObjectKey] = None
@@ -466,6 +501,8 @@ class MetadataSet(NameableArtefact, common.BaseMetadataSet):
 
 @dataclass
 class Hierarchy(NameableArtefact):
+    """SDMX 2.1 Hierarchy."""
+
     has_formal_levels: bool = False
 
     #: Hierarchical codes in the hierarchy.
@@ -476,6 +513,8 @@ class Hierarchy(NameableArtefact):
 
 @dataclass
 class HierarchicalCodelist(common.MaintainableArtefact):
+    """SDMX 2.1 HierarchicalCodelist."""
+
     hierarchy: List[Hierarchy] = field(default_factory=list)
 
     def __repr__(self) -> str:

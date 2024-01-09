@@ -44,8 +44,18 @@ __all__ = [
     "Dataflow",
     "Observation",
     "StructureSpecificDataSet",
+    "MetadataAttributeDescriptor",
+    "IdentifiableObjectSelection",
     "MetadataStructureDefinition",
     "Metadataflow",
+    "MetadataAttributeValue",
+    "CodedMetadataAttributeValue",
+    "UncodedMetadataAttributeValue",
+    "OtherUncodedAttributeValue",
+    "TextAttributeValue",
+    "XHTMLAttributeValue",
+    "TargetIdentifiableObject",
+    "MetadataSet",
     "Hierarchy",
     "HierarchyAssociation",
     "SelectionValue",
@@ -383,7 +393,7 @@ class MetadataAttributeDescriptor(common.ComponentList):
 
 
 class IdentifiableObjectSelection:
-    pass
+    """SDMX 3.0 IdentifiableObjectSelection."""
 
 
 @dataclass
@@ -435,26 +445,30 @@ class CodedMetadataAttributeValue(MetadataAttributeValue):
 
 
 class UncodedMetadataAttributeValue(MetadataAttributeValue):
+    """SDMX 3.0 UncodedMetadataAttributeValue."""
+
     pass
 
 
 class OtherUncodedAttributeValue(UncodedMetadataAttributeValue):
+    """SDMX 3.0 OtherUncodedAttributeValue."""
+
     value: str
     start_time: date
 
 
 class TextAttributeValue(UncodedMetadataAttributeValue, common.BaseTextAttributeValue):
-    pass
+    """SDMX 3.0 TextAttributeValue."""
 
 
 class XHTMLAttributeValue(
     UncodedMetadataAttributeValue, common.BaseXHTMLAttributeValue
 ):
-    pass
+    """SDMX 3.0 XHTMLAttributeValue."""
 
 
 class TargetIdentifiableObject:
-    pass
+    """SDMX 3.0 TargetIdentifiableObject."""
 
 
 @dataclass
