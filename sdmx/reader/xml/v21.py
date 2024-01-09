@@ -231,6 +231,7 @@ class Reader(metaclass=DispatchingReader):
     def read_message(
         self,
         source,
+        structure: Optional[common.Structure] = None,
         dsd: Optional[common.BaseDataStructureDefinition] = None,
         _events=None,
     ) -> message.Message:
@@ -242,8 +243,10 @@ class Reader(metaclass=DispatchingReader):
         # Elements to ignore when parsing finishes
         self.ignore = set()
 
-        # If calling code provided a DSD, add it to a stack, and let it be ignored when
-        # parsing finishes
+        # If calling code provided a {Metad,D}ataStructureDefinition, add it to a stack,
+        # and let it be ignored when parsing finishes
+        self.push(structure)
+        self.ignore.add(id(structure))
         self.push(dsd)
         self.ignore.add(id(dsd))
 
@@ -296,7 +299,7 @@ class Reader(metaclass=DispatchingReader):
         # parsing errors
 
         # Remove some internal items
-        self.pop_single("SS without DSD")
+        self.pop_single("SS without structure")
         self.pop_single("DataSetClass")
 
         # Count only non-ignored items
@@ -722,22 +725,24 @@ def _message(reader: Reader, elem):
     if getattr(elem.getparent(), "tag", None) == reader.qname("mes", "Header"):
         return
 
-    ss_without_dsd = False
+    ss_without_structure = False
 
-    # With 'dsd' argument, the message should be structure-specific
-    if (
-        "StructureSpecific" in elem.tag
-        and reader.get_single(common.BaseDataStructureDefinition, subclass=True) is None
-    ):
-        log.warning(f"xml.Reader got no dsd=… argument for {QName(elem).localname}")
-        ss_without_dsd = True
-    elif "StructureSpecific" not in elem.tag and reader.get_single(
-        common.BaseDataStructureDefinition, subclass=True
-    ):
+    # Retrieve any {Metad,D}ataStructure definition given to Reader.read_message()
+    supplied_structure = reader.get_single(common.Structure, subclass=True)
+
+    # Handle
+    qname = QName(elem)
+    if "StructureSpecific" in elem.tag:
+        if supplied_structure is None:
+            log.warning(f"xml.Reader got no structure=… argument for {qname.localname}")
+            ss_without_structure = True
+        elif isinstance(supplied_structure, model.MetadataStructureDefinition):
+            add_mds_events(reader, supplied_structure)
+    elif supplied_structure:
         log.info("Use supplied dsd=… argument for non–structure-specific message")
 
     # Store values for other methods
-    reader.push("SS without DSD", ss_without_dsd)
+    reader.push("SS without structure", ss_without_structure)
     if elem.tag.endswith("Data"):
         reader.push("DataSetClass", model.get_class(f"{QName(elem).localname}Set"))
 
@@ -800,10 +805,10 @@ def _header_structure(reader, elem):
     msg = reader.get_single(message.DataMessage, subclass=True)
     assert msg is not None
 
-    # Retrieve a DSD supplied to the parser, e.g. for a structure specific message
+    # Retrieve a structure supplied to the reader, e.g. for a structure specific message
     provided_structure = reader.get_single(common.Structure, subclass=True)
 
-    # Resolve the <com:Structure> child to a DSD, maybe is_external_reference=True
+    # Resolve the <com:Structure> child to an object, maybe is_external_reference=True
     header_structure = reader.pop_resolved_ref("Structure")
 
     # The header may give either a StructureUsage, or a specific reference to a subclass
@@ -844,8 +849,8 @@ def _header_structure(reader, elem):
     # Store under the structure ID, so it can be looked up by that ID
     reader.push(elem.attrib["structureID"], structure)
 
-    # Store as an object that won't cause a parsing error if it is left over
-    reader.ignore.add(id(structure))
+    # Store as objects that won't cause a parsing error if it is left over
+    reader.ignore.update({id(structure), id(header_structure)})
 
     try:
         # Information about the 'dimension at observation level'
@@ -1163,16 +1168,21 @@ def _concept(reader, elem):
 
 # §3.3: Basic Inheritance
 
-
-@end(
-    """
+COMPONENT = """
     str:Attribute str:Dimension str:GroupDimension str:IdentifiableObjectTarget
     str:KeyDescriptorValuesTarget str:MeasureDimension str:MetadataAttribute
     str:PrimaryMeasure str:ReportPeriodTarget str:TimeDimension
     """
-)
-@possible_reference()
-def _component(reader: Reader, elem):
+
+
+@start(COMPONENT, only=False)
+def _component_start(reader: Reader, elem):
+    reader.stash(reader.class_for_tag(elem.tag))
+
+
+@end(COMPONENT, only=False)
+@possible_reference(unstash=True)
+def _component_end(reader: Reader, elem):
     # Object class: {,Measure,Time}Dimension or DataAttribute
     cls = reader.class_for_tag(elem.tag)
 
@@ -1199,6 +1209,12 @@ def _component(reader: Reader, elem):
     if len(ar):
         assert len(ar) == 1, ar
         args["related_to"] = ar[0]
+
+    # MetadataAttribute.child only
+    if children := reader.pop_all(cls):
+        args["child"] = children
+
+    reader.unstash()
 
     # SDMX 2.1 spec §3A, part III, p.140: “The id attribute holds an explicit
     # identification of the component. If this identifier is not supplied, then it is
@@ -1616,7 +1632,7 @@ def _series_ss(reader, elem):
     ds.add_obs(
         reader.pop_all(model.Observation),
         ds.structured_by.make_key(
-            model.SeriesKey, elem.attrib, extend=reader.peek("SS without DSD")
+            model.SeriesKey, elem.attrib, extend=reader.peek("SS without structure")
         ),
     )
 
@@ -1640,7 +1656,7 @@ def _group_ss(reader, elem):
     group_id = attrib.pop(reader.qname("xsi", "type"), None)
 
     gk = ds.structured_by.make_key(
-        model.GroupKey, attrib, extend=reader.peek("SS without DSD")
+        model.GroupKey, attrib, extend=reader.peek("SS without structure")
     )
 
     if group_id:
@@ -1652,7 +1668,7 @@ def _group_ss(reader, elem):
         try:
             gk.described_by = ds.structured_by.group_dimensions[group_id]
         except KeyError:
-            if not reader.peek("SS without DSD"):
+            if not reader.peek("SS without structure"):
                 raise
 
     ds.group[gk] = []
@@ -1686,7 +1702,7 @@ def _obs(reader, elem):
 @end(":Obs")
 def _obs_ss(reader, elem):
     # True if the user failed to provide a DSD to use in parsing structure-specific data
-    extend = reader.peek("SS without DSD")
+    extend = reader.peek("SS without structure")
 
     # Retrieve the PrimaryMeasure from the DSD for the current data set
     dsd = reader.get_single("DataSet").structured_by
@@ -1865,21 +1881,38 @@ def _rv(reader: Reader, elem):
     return obj
 
 
+def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
+    """Add parser events for structure-specific metadata."""
+
+    # TODO these persist after reading a particular message; avoid this
+    def _add_events_for_ma(ma: model.MetadataAttribute):
+        reader.start(f":{ma.id}", only=False)(_ra_start)
+        reader.end(f":{ma.id}", only=False)(_ra_end)
+        for child in ma.child:
+            _add_events_for_ma(child)
+
+    for rs in mds.report_structure.values():
+        for ma in rs.components:
+            _add_events_for_ma(ma)
+
+
 @start("md:ReportedAttribute", only=False)
-def _ra_generic_start(reader: Reader, elem):
+def _ra_start(reader: Reader, elem):
     # Avoid collecting previous/sibling ReportedAttribute as children of this one
     reader.stash(model.ReportedAttribute)
 
 
 @end("md:ReportedAttribute", only=False)
-def _ra_generic_end(reader: Reader, elem):
+def _ra_end(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
+    if cls is None:
+        cls = reader.class_for_tag("md:ReportedAttribute")
+        value_for = elem.tag
+    else:
+        value_for = elem.attrib["id"]
 
-    args = dict(
-        # Pop all child elements
-        child=reader.pop_all(cls, subclass=True),
-        value_for=elem.attrib["id"],
-    )
+    # Pop all child elements
+    args = dict(child=reader.pop_all(cls, subclass=True), value_for=value_for)
 
     xhtml = reader.pop_single("StructuredText")
     if xhtml:

@@ -71,7 +71,8 @@ start("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(
     v21._item_start
 )
 end("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(v21._item_end)
-end("str:Measure str:MetadataAttribute")(v21._component)
+start("str:Measure str:MetadataAttribute", only=False)(v21._component_start)
+end("str:Measure str:MetadataAttribute", only=False)(v21._component_end)
 end("str:MetadataAttributeList")(v21._cl)
 end("str:DataConstraint")(v21._cc)
 end("str:KeyValue")(v21._ms)
