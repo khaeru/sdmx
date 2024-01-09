@@ -28,6 +28,8 @@ FORMAT = XMLFormat(
     + [
         (f"model.{name}", f"str:{name}")
         for name in """
+            CodelistMap
+            CodeMap
             ContentConstraint
             HierarchicalCodelist
             Hierarchy
@@ -38,6 +40,7 @@ FORMAT = XMLFormat(
             PrimaryMeasure
             ReportPeriodTarget
             ReportStructure
+            StructureSet
         """.split()
     ],
 )
