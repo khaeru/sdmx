@@ -110,11 +110,6 @@ __all__ = [
     "CodingFormat",
     "Level",
     "HierarchicalCode",
-    "ItemAssociation",
-    "CodeMap",
-    "ItemSchemeMap",
-    "CodelistMap",
-    "StructureSet",
     "ConstraintRole",
     "StartPeriod",
     "EndPeriod",
@@ -2187,44 +2182,6 @@ class HierarchicalCode(IdentifiableArtefact):
         Union["HierarchicalCode", Any]
     ] = None  # NB second element is "Hierarchy"
     child: List["HierarchicalCode"] = field(default_factory=list)
-
-
-# SDMX 2.1 §9: Structure Set and Mappings
-
-
-@dataclass
-class ItemAssociation(AnnotableArtefact, Generic[IT]):
-    _Item: ClassVar[Type[Item]] = Item
-
-    source: Optional[IT] = None
-    target: Optional[IT] = None
-
-
-class CodeMap(ItemAssociation[Code]):
-    _Item = Code
-
-
-IAT = TypeVar("IAT", bound="ItemAssociation")
-IST = TypeVar("IST", bound="ItemScheme")
-
-
-@dataclass
-class ItemSchemeMap(NameableArtefact, Generic[IST, IAT]):
-    _ItemAssociation: ClassVar[Type[ItemAssociation]] = ItemAssociation
-
-    source: Optional[IST] = None
-    target: Optional[IST] = None
-
-    item_association: List[IAT] = field(default_factory=list)
-
-
-class CodelistMap(ItemSchemeMap[Codelist, CodeMap]):
-    _ItemAssociation = CodeMap
-
-
-@dataclass
-class StructureSet(MaintainableArtefact):
-    item_scheme_map: List[ItemSchemeMap] = field(default_factory=list)
 
 
 # SDMX 2.1 §10.2: Constraint inheritance

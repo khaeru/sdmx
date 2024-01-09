@@ -4,12 +4,24 @@ import logging
 # TODO for complete implementation of the IM, enforce TimeKeyValue (instead of KeyValue)
 #      for {Generic,StructureSpecific} TimeSeriesDataSet.
 from dataclasses import dataclass, field
-from typing import Dict, Generator, List, Optional, Set, Union
+from typing import (
+    ClassVar,
+    Dict,
+    Generator,
+    Generic,
+    List,
+    Optional,
+    Set,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from sdmx.dictlike import DictLikeDescriptor
 
 from . import common
 from .common import (
+    IT,
     AttributeRelationship,
     Component,
     ComponentList,
@@ -52,6 +64,11 @@ __all__ = [
     "MetadataStructureDefinition",
     "Hierarchy",
     "HierarchicalCodelist",
+    "ItemAssociation",
+    "CodeMap",
+    "ItemSchemeMap",
+    "CodelistMap",
+    "StructureSet",
 ]
 
 log = logging.getLogger(__name__)
@@ -464,6 +481,54 @@ class HierarchicalCodelist(common.MaintainableArtefact):
     def __repr__(self) -> str:
         tmp = super(NameableArtefact, self).__repr__()[:-1]
         return f"{tmp}: {len(self.hierarchy)} hierarchies>"
+
+
+# §9: Structure Set and Mappings
+
+
+@dataclass
+class ItemAssociation(common.AnnotableArtefact, Generic[IT]):
+    """SDMX 2.1 ItemAssociation."""
+
+    _Item: ClassVar[Type[common.Item]] = common.Item
+
+    source: Optional[IT] = None
+    target: Optional[IT] = None
+
+
+class CodeMap(ItemAssociation[common.Code]):
+    """SDMX 2.1 CodeMap."""
+
+    _Item = common.Code
+
+
+IAT = TypeVar("IAT", bound="ItemAssociation")
+IST = TypeVar("IST", bound="common.ItemScheme")
+
+
+@dataclass
+class ItemSchemeMap(NameableArtefact, Generic[IST, IAT]):
+    """SDMX 2.1 ItemSchemeMap."""
+
+    _ItemAssociation: ClassVar[Type[ItemAssociation]] = ItemAssociation
+
+    source: Optional[IST] = None
+    target: Optional[IST] = None
+
+    item_association: List[IAT] = field(default_factory=list)
+
+
+class CodelistMap(ItemSchemeMap[common.Codelist, CodeMap]):
+    """SDMX 2.1 CodelistMap."""
+
+    _ItemAssociation = CodeMap
+
+
+@dataclass
+class StructureSet(common.MaintainableArtefact):
+    """SDMX 2.1 StructureSet."""
+
+    item_scheme_map: List[ItemSchemeMap] = field(default_factory=list)
 
 
 CF = common.ClassFinder(

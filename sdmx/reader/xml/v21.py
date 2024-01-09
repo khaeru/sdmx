@@ -1970,14 +1970,14 @@ def _hcl(reader: Reader, elem):
 
 @start("str:CodelistMap", only=False)
 def _ismap_start(reader: Reader, elem):
-    cls: Type[common.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    cls: Type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
     # Push class for reference while parsing sub-elements
     reader.push("ItemAssociation class", cls._ItemAssociation._Item)
 
 
 @end("str:CodelistMap", only=False)
 def _ismap_end(reader: Reader, elem):
-    cls: Type[common.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    cls: Type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
 
     # Remove class from stacks
     reader.pop_single("ItemAssociation class")
@@ -2012,7 +2012,7 @@ def _ismap_end(reader: Reader, elem):
 
 @end("str:CodeMap")
 def _item_map(reader: Reader, elem):
-    cls: Type[common.ItemAssociation] = reader.class_for_tag(elem.tag)
+    cls: Type[model.ItemAssociation] = reader.class_for_tag(elem.tag)
 
     # Store Source and Target as Reference instances
     return reader.annotable(
@@ -2026,10 +2026,10 @@ def _item_map(reader: Reader, elem):
 @end("str:StructureSet")
 def _ss(reader: Reader, elem):
     return reader.maintainable(
-        common.StructureSet,
+        model.StructureSet,
         elem,
         # Collect all ItemSchemeMaps
-        item_scheme_map=reader.pop_all(common.ItemSchemeMap, subclass=True),
+        item_scheme_map=reader.pop_all(model.ItemSchemeMap, subclass=True),
     )
 
 
