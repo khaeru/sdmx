@@ -21,12 +21,7 @@ def test_read_xml(path) -> None:
         # without additional assertions
         ("M.USD.EUR.SP00.A.xml", "ECB_EXR/1/structure.xml", "ECB_EXR1"),
         # Structure-specific metadata
-        pytest.param(
-            "esms_structured.xml",
-            "v21/xml/demography/esms.xml",
-            "ESMS_SIMPLE",
-            marks=pytest.mark.xfail(reason="Not implemented"),
-        ),
+        ("esms_structured.xml", "v21/xml/demography/esms.xml", "ESMS_SIMPLE"),
     ),
 )
 def test_read_xml_ss(specimen, message_path, structure_path, structure_id) -> None:
