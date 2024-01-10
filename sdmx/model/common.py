@@ -1146,13 +1146,14 @@ class Structure(MaintainableArtefact):
             setattr(self, field.name, cl)
 
     def compare(self, other: "Structure", strict: bool = True) -> bool:
-        from operator import attrgetter
+        # DictLike of ComponentList will not have an "id" attribute
+        def _key(item) -> str:
+            return getattr(item, "id", str(type(item)))
 
         return all(
             s.compare(o, strict)
             for s, o in zip(
-                sorted(self.grouping, key=attrgetter("id")),
-                sorted(other.grouping, key=attrgetter("id")),
+                sorted(self.grouping, key=_key), sorted(other.grouping, key=_key)
             )
         )
 
