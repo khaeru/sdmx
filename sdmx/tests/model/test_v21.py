@@ -5,6 +5,7 @@ import pytest
 
 import sdmx
 import sdmx.message
+from sdmx.model import v21 as model
 from sdmx.model.v21 import (
     AttributeDescriptor,
     AttributeValue,
@@ -610,6 +611,10 @@ class TestHierarchicalCodelist:
         with specimen("BIS/hierarchicalcodelist-0.xml") as f:
             return sdmx.read_sdmx(f)
 
+    @pytest.fixture(scope="class")
+    def obj(self, msg) -> model.HierarchicalCodelist:
+        return msg.hierarchical_codelist["BIS:HCL_COUNTRY(1.0)"]
+
     def test_hierarchy(self, msg: sdmx.message.StructureMessage) -> None:
         for key, hcl in msg.hierarchical_codelist.items():
             assert 1 == len(hcl.hierarchy)
@@ -641,3 +646,6 @@ class TestHierarchicalCodelist:
         c3 = c2.child[0]
         assert "6J" == c3.code
         assert c3.code.parent.urn.endswith("Codelist=BIS:CL_BIS_IF_REF_AREA(1.0)")
+
+    def test_repr(self, obj: model.HierarchicalCodelist):
+        assert "<HierarchicalCodelist HCL_COUNTRY: 1 hierarchies>" == repr(obj)
