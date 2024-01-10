@@ -611,11 +611,11 @@ class TestHierarchicalCodelist:
             return sdmx.read_sdmx(f)
 
     def test_hierarchy(self, msg: sdmx.message.StructureMessage) -> None:
-        for key, hcl in msg.hierarchical_code_list.items():
+        for key, hcl in msg.hierarchical_codelist.items():
             assert 1 == len(hcl.hierarchy)
             # print(f"{hcl = }")
 
-        hcl = msg.hierarchical_code_list["BIS:HCL_COUNTRY(1.0)"]
+        hcl = msg.hierarchical_codelist["BIS:HCL_COUNTRY(1.0)"]
 
         # Access a Hierarchy
         h = hcl.hierarchy[0]

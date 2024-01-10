@@ -193,7 +193,7 @@ class StructureMessage(Message):
     #: Collection of :class:`.Codelist`.
     codelist: DictLikeDescriptor[str, model.Codelist] = DictLikeDescriptor()
     #: Collection of :class:`.HierarchicalCodelist`.
-    hierarchical_code_list: DictLikeDescriptor[
+    hierarchical_codelist: DictLikeDescriptor[
         str, v21.HierarchicalCodelist
     ] = DictLikeDescriptor()
     #: Collection of :class:`.v30.Hierarchy`.
@@ -216,7 +216,7 @@ class StructureMessage(Message):
         str, model.BaseDataStructureDefinition
     ] = DictLikeDescriptor()
     #: Collection of :class:`.StructureSet`.
-    structureset: DictLikeDescriptor[str, model.StructureSet] = DictLikeDescriptor()
+    structureset: DictLikeDescriptor[str, v21.StructureSet] = DictLikeDescriptor()
     #: Collection of :class:`.OrganisationScheme`.
     organisation_scheme: DictLikeDescriptor[
         str, model.OrganisationScheme
