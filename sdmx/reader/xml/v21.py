@@ -739,7 +739,7 @@ def _message(reader: Reader, elem):
         elif isinstance(supplied_structure, model.MetadataStructureDefinition):
             add_mds_events(reader, supplied_structure)
     elif supplied_structure:
-        log.info("Use supplied dsd=… argument for non–structure-specific message")
+        log.info("Use supplied structure=… argument for non–structure-specific message")
 
     # Store values for other methods
     reader.push("SS without structure", ss_without_structure)
@@ -840,7 +840,7 @@ def _header_structure(reader, elem):
         assert header_structure == structure
     elif header_su and not provided_structure:
         reader.push(structure)
-    elif structure is None:
+    elif structure is None:  # pragma: no cover
         raise RuntimeError
 
     # Store on the data flow
@@ -1804,19 +1804,19 @@ def _mds_start(reader, elem):
 
     # Get a reference to the MSD that structures the data set
     # Provided in the <mes:Header> / <mes:Structure>
-    dsd = reader.get_single(id)
-    if not dsd:
+    msd = reader.get_single(id)
+    if not msd:  # pragma: no cover
         # Fall back to a MSD provided as an argument to read_message()
-        dsd = reader.get_single(common.BaseMetadataStructureDefinition, subclass=True)
+        msd = reader.get_single(common.BaseMetadataStructureDefinition, subclass=True)
 
-        if not dsd:  # pragma: no cover
+        if not msd:
             raise RuntimeError("No MSD when creating DataSet")
 
         log.debug(
-            f'Use provided {dsd!r} for structureRef="{id}" not defined in message'
+            f'Use provided {msd!r} for structureRef="{id}" not defined in message'
         )
 
-    mds.structured_by = dsd
+    mds.structured_by = msd
 
     reader.push("MetadataSet", mds)
 
@@ -1947,7 +1947,7 @@ def _hc(reader: Reader, elem):
         except KeyError:
             if cl.is_external_reference:
                 code = cl.setdefault(id=code_id)
-            else:
+            else:  # pragma: no cover
                 raise
 
     # Create the HierarchicalCode
@@ -2032,7 +2032,7 @@ def _ismap_end(reader: Reader, elem):
                 if scheme.is_external_reference:
                     # Externally-referenced ItemScheme → create the Item
                     item = scheme.setdefault(id=id_)
-                else:
+                else:  # pragma: no cover
                     raise
             setattr(ia, name, item)
 
