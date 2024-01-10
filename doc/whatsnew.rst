@@ -3,8 +3,69 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Expand :mod:`.model` and :mod:`.reader.xml` support for metadata structures and metadata sets (§7 of the Information Model in both SDMX 2.1 and 3.0) (:issue:`73`, :pull:`152`).
+  This includes the additional classes:
+
+  - :mod:`.model.common`:
+    :class:`.CodingFormat`
+    :class:`.ExtendedFacetValueType`
+    :class:`.HierarchicalCode`
+    :class:`.Level`.
+  - :mod:`.model.v21`:
+    :class:`.CodelistMap`
+    :class:`.CodeMap`
+    :class:`.DataSetTarget`
+    :class:`.DimensionDescriptorValuesTarget`
+    :class:`.EnumeratedAttributeValue`
+    :class:`.IdentifiableObjectTarget`
+    :class:`.ItemAssociation`
+    :class:`.ItemSchemeMap`
+    :class:`.MetadataReport`
+    :class:`.MetadataSet`
+    :class:`.MetadataTarget`
+    :class:`.NonEnumeratedAttributeValue`
+    :class:`.OtherNonEnumeratedAttributeValue`
+    :class:`.ReportedAttribute`
+    :class:`.ReportingCategory`
+    :class:`.ReportingTaxonomy`
+    :class:`.ReportPeriodTarget`
+    :class:`.ReportStructure`
+    :class:`.StructureSet`
+    :class:`.TargetIdentifiableObject`
+    :class:`.TargetObject`
+    :class:`.TargetObjectKey`
+    :class:`.TargetObjectValue`
+    :class:`.TargetReportPeriod`
+    :class:`.TextAttributeValue`
+    :class:`.XHTMLAttributeValue`.
+  - :mod:`.model.v30`:
+    :class:`.CodedMetadataAttributeValue`
+    :class:`.IdentifiableObjectSelection`
+    :class:`.MetadataAttributeDescriptor`
+    :class:`.MetadataAttributeValue`
+    :class:`.Metadataflow`
+    :class:`.MetadataSet`
+    :class:`.MetadataStructureDefinition`
+    :class:`.OtherUncodedAttributeValue`
+    :class:`.TargetIdentifiableObject`
+    :class:`.TextAttributeValue`
+    :class:`.UncodedMetadataAttributeValue`
+    :class:`.XHTMLAttributeValue`.
+- New collections on StructureMessage:
+  :attr:`.hierarchical_codelist`,
+  :attr:`.hierarchy`,
+  :attr:`.metadatastructure`.
+- New class :class:`.MetadataMessage`.
+- Improve :class:`.Structure`:
+
+  - New attribute :attr:`~.Structure.grouping` per the information model.
+  - New convenience method :meth:`~.Structure.replace_grouping`.
+- :mod:`.reader.xml` parses messages available from 'actualconstraint', 'allowedconstraint', 'contentconstraint', 'hierarchicalcodelist', 'metadatstructure', 'structure', and 'structureset' SDMX 2.1 REST API endpoints for all known data sources that support these.
+
+  - Expand explicit marking of particular data sources that do not support the above endpoints.
 
 v2.12.1 (2023-12-20)
 ====================

@@ -438,7 +438,7 @@ class MetadataAttributeValue:
 class CodedMetadataAttributeValue(MetadataAttributeValue):
     """SDMX 3.0 CodedMetadataAttributeValue.
 
-    Analogous to :class:`.v21.EnumeratedAttributeValue.
+    Analogous to :class:`.v21.EnumeratedAttributeValue`.
     """
 
     value_of: common.Code

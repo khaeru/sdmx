@@ -442,9 +442,11 @@ class EnumeratedAttributeValue(ReportedAttribute):
 
     value: str
 
-    #: .. note:: The SDMX 2.1 IM (2011-08) gives this as `valueFor`, but this name
-    #:    duplicates :attr:`ReporterAttribute.value_for`. :mod:`sdmx` uses `value_of`
-    #:    for consistency with :attr:`.v30.CodedMetadataAttributeValue.value_of`.
+    #: .. note::
+    #:
+    #:    The SDMX 2.1 IM (2011-08) gives this as `valueFor`, but this name duplicates
+    #:    :attr:`.ReportedAttribute.value_for`. :mod:`sdmx` uses `value_of` for
+    #:    consistency with :attr:`.v30.CodedMetadataAttributeValue.value_of`.
     value_of: common.Code
 
 

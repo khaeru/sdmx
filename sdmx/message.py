@@ -360,7 +360,7 @@ class StructureMessage(Message):
 
 @dataclass
 class DataMessage(Message):
-    """Data Message.
+    """SDMX Data Message.
 
     .. note:: A DataMessage may contain zero or more :class:`.DataSet`, so
        :attr:`data` is a list. To retrieve the first (and possibly only)
@@ -440,6 +440,8 @@ class DataMessage(Message):
 
 @dataclass
 class MetadataMessage(DataMessage):
+    """SDMX Metadata Message."""
+
     @property
     def structure_type(self) -> Type[common.Structure]:
         return {
