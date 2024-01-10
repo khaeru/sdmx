@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 import pytest
 
+import sdmx.model as model
+from sdmx.model import v21
 from sdmx.model.common import (
     Agency,
     AnnotableArtefact,
@@ -15,7 +17,6 @@ from sdmx.model.common import (
     NameableArtefact,
     Representation,
 )
-from sdmx.model.v21 import AttributeDescriptor, DataStructureDefinition
 
 
 class TestAnnotation:
@@ -107,7 +108,7 @@ class TestIdentifiableArtefact:
         assert hash(ia) == hash("foo")
 
         # Subclass is hashable
-        ad = AttributeDescriptor()
+        ad = model.AttributeDescriptor()
         assert hash(ad) == id(ad)
 
     def test_hash_subclass(self):
@@ -131,7 +132,7 @@ class TestIdentifiableArtefact:
                 "'DataStructureDefinition'"
             ),
         ):
-            sorted([DataStructureDefinition(id="c")] + items)
+            sorted([v21.DataStructureDefinition(id="c")] + items)
 
 
 class TestNameableArtefact:
@@ -347,3 +348,25 @@ class TestContact:
         c2.name = "foo"
 
         assert repr(c1) != repr(c2)
+
+
+class TestStructure:
+    @pytest.fixture
+    def obj(self):
+        # Use BaseDataStructureDefinition as a concrete/less abstract subclass
+        return model.BaseDataStructureDefinition()
+
+    def test_grouping(self, obj) -> None:
+        result = obj.grouping
+        # Class has an AttributeDescriptor, DimensionDescriptor, and dict-like of
+        # GroupDimensionDescriptor
+        assert 3 == len(result)
+
+    def test_replace_grouping(self, obj) -> None:
+        class Foo(model.ComponentList):
+            pass
+
+        # Cannot replace with an instance of Foo, because this does not correspond to
+        # the type of any member of the class
+        with pytest.raises(TypeError, match="No grouping of type"):
+            obj.replace_grouping(Foo())

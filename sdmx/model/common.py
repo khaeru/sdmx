@@ -1120,8 +1120,12 @@ class Structure(MaintainableArtefact):
         """A collection of all the ComponentLists associated with a subclass."""
         result: List[ComponentList] = []
         for f in fields(self):
-            if isinstance(f.type, ComponentList):
-                result.append(getattr(self.f.name))
+            types = get_args(f.type) or (f.type,)
+            try:
+                if any(issubclass(t, ComponentList) for t in types):
+                    result.append(getattr(self, f.name))
+            except TypeError:
+                pass
         return result
 
     def replace_grouping(self, cl: ComponentList) -> None:
