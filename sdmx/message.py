@@ -40,6 +40,7 @@ def _summarize(obj, include: Optional[List[str]] = None):
         elif isinstance(attr, datetime):
             s_attr = repr(attr.isoformat())
         elif isinstance(attr, requests.Response):
+            # Don't use repr(), which displays the entire response body
             s_attr = str(attr)
         else:
             s_attr = repr(attr)
