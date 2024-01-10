@@ -36,7 +36,7 @@ import sdmx.urn
 from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
 from sdmx.format import Version, list_media_types
-from sdmx.model import common
+from sdmx.model import common, v21
 from sdmx.model import v21 as model
 from sdmx.reader.base import BaseReader
 
@@ -231,6 +231,7 @@ class Reader(metaclass=DispatchingReader):
     def read_message(
         self,
         source,
+        structure: Optional[common.Structure] = None,
         dsd: Optional[common.BaseDataStructureDefinition] = None,
         _events=None,
     ) -> message.Message:
@@ -242,8 +243,10 @@ class Reader(metaclass=DispatchingReader):
         # Elements to ignore when parsing finishes
         self.ignore = set()
 
-        # If calling code provided a DSD, add it to a stack, and let it be ignored when
-        # parsing finishes
+        # If calling code provided a {Metad,D}ataStructureDefinition, add it to a stack,
+        # and let it be ignored when parsing finishes
+        self.push(structure)
+        self.ignore.add(id(structure))
         self.push(dsd)
         self.ignore.add(id(dsd))
 
@@ -266,6 +269,8 @@ class Reader(metaclass=DispatchingReader):
                     # Retrieve the parsing function for this element & event
                     func = self.parser[element.tag, event]
                 except KeyError:  # pragma: no cover
+                    if QName(element.tag).namespace == "http://www.w3.org/1999/xhtml":
+                        continue
                     # Don't know what to do for this (element, event)
                     raise NotImplementedError(element.tag, event) from None
 
@@ -294,7 +299,7 @@ class Reader(metaclass=DispatchingReader):
         # parsing errors
 
         # Remove some internal items
-        self.pop_single("SS without DSD")
+        self.pop_single("SS without structure")
         self.pop_single("DataSetClass")
 
         # Count only non-ignored items
@@ -333,6 +338,46 @@ class Reader(metaclass=DispatchingReader):
                 if only:
                     cls.parser[tag, "start"] = None
             return func
+
+        return decorator
+
+    @classmethod
+    def possible_reference(cls, cls_hint: Optional[type] = None, unstash: bool = False):
+        """Decorator for a function where the `elem` parsed may be a Reference.
+
+        Before calling the decorated function, attempt to parse the `elem` as a
+        :class:`.Reference`. If successful, return the reference instead of calling the
+        function. If `elem` does not contain a reference, call the decorated function.
+
+        Parameters
+        ----------
+        cls_hint :
+            Passed to :class:`.Reference`.
+        unstash : bool, optional
+            If :data:`True`, call :meth:`.unstash` after successfully resolving a
+            reference.
+        """
+
+        def decorator(func):
+            def wrapped(reader: "Reader", elem):
+                try:
+                    # Identify a reference
+                    result = reader.Reference(
+                        reader,
+                        elem,
+                        cls_hint=cls_hint or reader.class_for_tag(elem.tag),
+                    )
+                except NotReference:
+                    # Call the wrapped function
+                    result = func(reader, elem)
+                else:
+                    # Successful; unstash if configured
+                    if unstash:
+                        reader.unstash()
+
+                return result
+
+            return wrapped
 
         return decorator
 
@@ -488,7 +533,7 @@ class Reader(metaclass=DispatchingReader):
         """Pop a reference to `cls_or_name` and resolve it."""
         return self.resolve(self.pop_single(cls_or_name))
 
-    def reference(self, elem, cls_hint=None):
+    def reference(self, elem, cls_hint=None) -> Reference:
         return self.Reference(self, elem, cls_hint=cls_hint)
 
     def resolve(self, ref):
@@ -638,6 +683,7 @@ class Reader(metaclass=DispatchingReader):
 # Shorthand
 start = Reader.start
 end = Reader.end
+possible_reference = Reader.possible_reference
 
 # Tags to skip entirely
 start(
@@ -646,6 +692,7 @@ start(
     "gen:ObsDimension gen:ObsValue gen:Value "
     # Tags that are bare containers for other XML elements
     """
+    :AttributeSet md:AttributeSet
     str:Categorisations str:CategorySchemes str:Codelists str:Concepts
     str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
     str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
@@ -664,8 +711,11 @@ start(
 
 
 @start(
-    "mes:Error mes:GenericData mes:GenericTimeSeriesData mes:StructureSpecificData "
-    "mes:StructureSpecificTimeSeriesData"
+    """
+    mes:Error mes:GenericData mes:GenericMetadata mes:GenericTimeSeriesData
+    mes:StructureSpecificData mes:StructureSpecificMetadata
+    mes:StructureSpecificTimeSeriesData
+    """
 )
 @start("mes:Structure", only=False)
 def _message(reader: Reader, elem):
@@ -675,23 +725,25 @@ def _message(reader: Reader, elem):
     if getattr(elem.getparent(), "tag", None) == reader.qname("mes", "Header"):
         return
 
-    ss_without_dsd = False
+    ss_without_structure = False
 
-    # With 'dsd' argument, the message should be structure-specific
-    if (
-        "StructureSpecific" in elem.tag
-        and reader.get_single(common.BaseDataStructureDefinition, subclass=True) is None
-    ):
-        log.warning(f"xml.Reader got no dsd=… argument for {QName(elem).localname}")
-        ss_without_dsd = True
-    elif "StructureSpecific" not in elem.tag and reader.get_single(
-        common.BaseDataStructureDefinition
-    ):
-        log.info("Use supplied dsd=… argument for non–structure-specific message")
+    # Retrieve any {Metad,D}ataStructure definition given to Reader.read_message()
+    supplied_structure = reader.get_single(common.Structure, subclass=True)
+
+    # Handle
+    qname = QName(elem)
+    if "StructureSpecific" in elem.tag:
+        if supplied_structure is None:
+            log.warning(f"xml.Reader got no structure=… argument for {qname.localname}")
+            ss_without_structure = True
+        elif isinstance(supplied_structure, model.MetadataStructureDefinition):
+            add_mds_events(reader, supplied_structure)
+    elif supplied_structure:
+        log.info("Use supplied structure=… argument for non–structure-specific message")
 
     # Store values for other methods
-    reader.push("SS without DSD", ss_without_dsd)
-    if "Data" in elem.tag:
+    reader.push("SS without structure", ss_without_structure)
+    if elem.tag.endswith("Data"):
         reader.push("DataSetClass", model.get_class(f"{QName(elem).localname}Set"))
 
     # Handle namespaces mapped on `elem` but not part of the standard set
@@ -745,18 +797,19 @@ def _header_org(reader, elem):
 
 @end("mes:Structure", only=False)
 def _header_structure(reader, elem):
-    """<mes:Structure> within <mes:Header> of a DataMessage."""
+    """<mes:Structure> within <mes:Header> of a {Metad,D}ataMessage."""
     # The root node of a structure message is handled by _message(), above.
     if elem.getparent() is None:
         return
 
-    msg = reader.get_single(message.DataMessage)
+    msg = reader.get_single(message.DataMessage, subclass=True)
+    assert msg is not None
 
-    # Retrieve a DSD supplied to the parser, e.g. for a structure specific message
-    provided_dsd = reader.get_single(common.BaseDataStructureDefinition, subclass=True)
+    # Retrieve a structure supplied to the reader, e.g. for a structure specific message
+    provided_structure = reader.get_single(common.Structure, subclass=True)
 
-    # Resolve the <com:Structure> child to a DSD, maybe is_external_reference=True
-    header_dsd = reader.pop_resolved_ref("Structure")
+    # Resolve the <com:Structure> child to an object, maybe is_external_reference=True
+    header_structure = reader.pop_resolved_ref("Structure")
 
     # The header may give either a StructureUsage, or a specific reference to a subclass
     # like BaseDataflow. Resolve the <str:StructureUsage> child, if any, and remove it
@@ -770,34 +823,34 @@ def _header_structure(reader, elem):
 
     # DSD to use: the provided one; the one referenced by <com:Structure>; or a
     # candidate constructed using the information contained in `header_su` (if any)
-    dsd = provided_dsd or (
+    structure = provided_structure or (
         reader.maintainable(
-            reader.model.DataStructureDefinition,
+            msg.structure_type,
             None,
             id=header_su.id,
             maintainer=header_su.maintainer,
             version=header_su.version,  # NB this may not always be the case
         )
         if header_su
-        else header_dsd
+        else header_structure
     )
 
-    if header_dsd and header_su:
+    if header_structure and header_su:
         # Ensure the constructed candidate and the one given directly are equivalent
-        assert header_dsd == dsd
-    elif header_su and not provided_dsd:
-        reader.push(dsd)
-    elif dsd is None:
+        assert header_structure == structure
+    elif header_su and not provided_structure:
+        reader.push(structure)
+    elif structure is None:  # pragma: no cover
         raise RuntimeError
 
     # Store on the data flow
-    msg.dataflow.structure = dsd
+    msg.dataflow.structure = structure
 
     # Store under the structure ID, so it can be looked up by that ID
-    reader.push(elem.attrib["structureID"], dsd)
+    reader.push(elem.attrib["structureID"], structure)
 
-    # Store as an object that won't cause a parsing error if it is left over
-    reader.ignore.add(id(dsd))
+    # Store as objects that won't cause a parsing error if it is left over
+    reader.ignore.update({id(structure), id(header_structure)})
 
     try:
         # Information about the 'dimension at observation level'
@@ -809,12 +862,12 @@ def _header_structure(reader, elem):
         if dim_at_obs == "AllDimensions":
             # Use a singleton object
             dim = model.AllDimensions
-        elif provided_dsd:
+        elif provided_structure:
             # Use existing dimension from the provided DSD
-            dim = dsd.dimensions.get(dim_at_obs)
+            dim = structure.dimensions.get(dim_at_obs)
         else:
             # Force creation of the 'dimension at observation' level
-            dim = dsd.dimensions.getdefault(
+            dim = structure.dimensions.getdefault(
                 dim_at_obs,
                 cls=(
                     model.TimeDimension
@@ -876,16 +929,22 @@ def _structures(reader, elem):
 
 @end(
     """
-    com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN
-    com:Value mes:DataSetAction mes:DataSetID mes:Email mes:ID mes:Test mes:Timezone
-    str:DataType str:Email str:Expression str:NullValue str:OperatorDefinition
-    str:PersonalisedName str:Result str:RulesetDefinition str:Telephone str:URI
-    str:VtlDefaultName str:VtlScalarType
+    com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN com:Value
+    mes:DataSetAction :ReportPeriod md:ReportPeriod mes:DataSetID mes:Email mes:ID
+    mes:Test mes:Timezone str:CodelistAliasRef str:DataType str:Email str:Expression
+    str:NullValue str:OperatorDefinition str:PersonalisedName str:Result
+    str:RulesetDefinition str:Telephone str:URI str:VtlDefaultName str:VtlScalarType
     """
 )
 def _text(reader, elem):
     # If elem.text is None, push a sentinel value
     reader.push(elem, elem.text or NoText)
+
+
+@start("com:StructuredText")
+def _st(reader, elem):
+    """Contained XHTML."""
+    reader.push(elem, etree.tostring(elem[0], pretty_print=True))
 
 
 @end("mes:Extracted mes:Prepared mes:ReportingBegin mes:ReportingEnd")
@@ -898,8 +957,10 @@ def _datetime(reader, elem):
 
 
 @end(
-    "com:AnnotationText com:Name com:Description com:Text mes:Source mes:Department "
-    "mes:Role str:Department str:Role"
+    """
+    com:AnnotationText com:Name com:Description com:Text mes:Source mes:Department
+    mes:Role str:Department str:Role
+    """
 )
 def _localization(reader, elem):
     reader.push(
@@ -910,16 +971,28 @@ def _localization(reader, elem):
 
 @end(
     """
-    com:Structure com:StructureUsage str:AttachmentGroup str:ConceptIdentity
-    str:ConceptRole str:DimensionReference str:Parent str:Source str:Structure
-    str:StructureUsage str:Target str:Enumeration
+    com:Structure com:StructureUsage :ObjectReference md:ObjectReference
+    str:AttachmentGroup str:CodeID str:ConceptIdentity str:ConceptRole
+    str:DimensionReference str:Enumeration str:Parent str:Source str:Structure
+    str:StructureUsage str:Target
     """
 )
 def _ref(reader: Reader, elem):
-    cls_hint = None
-    if QName(elem).localname in ("Parent", "Target"):
+    cls_hint = reader.peek("ItemAssociation class") or None
+
+    if not cls_hint and QName(elem).localname in ("CodeID", "Parent", "Target"):
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
         cls_hint = reader.class_for_tag(elem.getparent().tag)
+    elif not cls_hint and QName(elem).localname == "Structure":
+        # <com:Structure>/<str:Structure>: use message property for a class hint
+        msg = reader.get_single(message.DataMessage, subclass=True)
+        if msg:
+            cls_hint = cast(Type[message.DataMessage], type(msg))(
+                version=reader.xml_version
+            ).structure_type
+        elif QName(elem.getparent()).localname == "Dataflow":
+            # In a StructureMessage
+            cls_hint = reader.model.DataStructureDefinition
 
     reader.push(QName(elem).localname, reader.reference(elem, cls_hint))
 
@@ -973,17 +1046,10 @@ def _item_start(reader, elem):
     """,
     only=False,
 )
+# <str:DataProvider> is a reference, e.g. in <str:ConstraintAttachment>
+# Restore "Name" and "Description" that may have been stashed by _item_start
+@possible_reference(unstash=True)
 def _item_end(reader: Reader, elem):
-    try:
-        # <str:DataProvider> may be a reference, e.g. in <str:ConstraintAttachment>
-        item = reader.reference(elem, cls_hint=reader.class_for_tag(elem.tag))
-    except NotReference:
-        pass
-    else:
-        # Restore "Name" and "Description" that may have been stashed by _item_start
-        reader.unstash()
-        return item
-
     cls = reader.class_for_tag(elem.tag)
     item = reader.nameable(cls, elem)
 
@@ -1019,13 +1085,8 @@ def _item_end(reader: Reader, elem):
     str:VtlMappingScheme
     """
 )
+@possible_reference()  # <str:CustomTypeScheme> in <str:Transformation>
 def _itemscheme(reader: Reader, elem):
-    try:
-        # <str:CustomTypeScheme> may be a reference, e.g. in <str:Transformation>
-        return reader.reference(elem, cls_hint=reader.class_for_tag(elem.tag))
-    except NotReference:
-        pass
-
     cls: Type[common.ItemScheme] = reader.class_for_tag(elem.tag)
 
     try:
@@ -1066,7 +1127,12 @@ def _facet(reader, elem):
     # in XML, first letter is uppercase; in the spec and Python enum, lowercase. SDMX-ML
     # default is "String".
     tt = args.pop("text_type", "String")
-    fvt = model.FacetValueType[f"{tt[0].lower()}{tt[1:]}"]
+    try:
+        fvt = model.FacetValueType[f"{tt[0].lower()}{tt[1:]}"]
+    except KeyError:
+        # ExtendedFacetValueType instead. Convert case of the value: in XML, the string
+        # is "XHTML", upper case; in the spec and Python enum, "Xhtml", title case.
+        fvt = model.ExtendedFacetValueType[f"{tt[0]}{tt[1:].lower()}"]
 
     # NB Erratum: "isMultiLingual" appears in XSD schemas ("The isMultiLingual attribute
     #    indicates for a text format of type 'string', whether the value should allow
@@ -1102,18 +1168,21 @@ def _concept(reader, elem):
 
 # §3.3: Basic Inheritance
 
+COMPONENT = """
+    str:Attribute str:Dimension str:GroupDimension str:IdentifiableObjectTarget
+    str:KeyDescriptorValuesTarget str:MeasureDimension str:MetadataAttribute
+    str:PrimaryMeasure str:ReportPeriodTarget str:TimeDimension
+    """
 
-@end(
-    "str:Attribute str:Dimension str:GroupDimension str:MeasureDimension "
-    "str:PrimaryMeasure str:TimeDimension"
-)
-def _component(reader: Reader, elem):
-    try:
-        # May be a reference
-        return reader.reference(elem)
-    except NotReference:
-        pass
 
+@start(COMPONENT, only=False)
+def _component_start(reader: Reader, elem):
+    reader.stash(reader.class_for_tag(elem.tag))
+
+
+@end(COMPONENT, only=False)
+@possible_reference(unstash=True)
+def _component_end(reader: Reader, elem):
     # Object class: {,Measure,Time}Dimension or DataAttribute
     cls = reader.class_for_tag(elem.tag)
 
@@ -1141,6 +1210,12 @@ def _component(reader: Reader, elem):
         assert len(ar) == 1, ar
         args["related_to"] = ar[0]
 
+    # MetadataAttribute.child only
+    if children := reader.pop_all(cls):
+        args["child"] = children
+
+    reader.unstash()
+
     # SDMX 2.1 spec §3A, part III, p.140: “The id attribute holds an explicit
     # identification of the component. If this identifier is not supplied, then it is
     # assumed to be the same as the identifier of the concept referenced from the
@@ -1154,35 +1229,43 @@ def _component(reader: Reader, elem):
     return reader.identifiable(cls, elem, **args)
 
 
-@end("str:AttributeList str:DimensionList str:Group str:MeasureList")
+@end(
+    """
+    str:AttributeList str:DimensionList str:Group str:MetadataTarget str:MeasureList
+    str:ReportStructure
+    """
+)
+@possible_reference(cls_hint=model.GroupDimensionDescriptor)  # <str:Group>
 def _cl(reader: Reader, elem):
-    try:
-        # <str:Group> may be a reference
-        return reader.reference(elem, cls_hint=model.GroupDimensionDescriptor)
-    except NotReference:
-        pass
-
-    # Retrieve the DSD
-    dsd = reader.peek("current DSD")
+    # Retrieve the DSD (or MSD)
+    dsd: common.Structure = reader.peek("current DSD")
     assert dsd is not None
 
-    # Retrieve the components
-    args = dict(components=reader.pop_all(model.Component, subclass=True))
-
     # Determine the class
-    localname = QName(elem).localname
-    if localname == "Group":
-        cls: Type = model.GroupDimensionDescriptor
+    cls = reader.class_for_tag(elem.tag)
 
+    args = dict(
+        # Retrieve the components
+        components=reader.pop_all(model.Component, subclass=True),
+        # SDMX-ML spec for, e.g. DimensionList: "The id attribute is provided in this
+        # case for completeness. However, its value is fixed to 'DimensionDescriptor'."
+        id=elem.attrib.get("id", cls.__name__),
+    )
+
+    if cls is common.GroupDimensionDescriptor:
+        assert isinstance(dsd, common.BaseDataStructureDefinition)
         # Replace components with references
         args["components"] = [
             dsd.dimensions.get(ref.target_id)
             for ref in reader.pop_all("DimensionReference")
         ]
+    elif cls is v21.ReportStructure:
+        assert isinstance(dsd, v21.MetadataStructureDefinition)
+        # Assemble MetadataTarget references for the `report_for` field
+        args["report_for"] = list()
+        for target_ref in reader.pop_all(reader.Reference):
+            args["report_for"].append(dsd.target[target_ref.id])
     else:
-        # SDMX-ML spec for, e.g. DimensionList: "The id attribute is provided in this
-        # case for completeness. However, its value is fixed to 'DimensionDescriptor'."
-        cls = reader.class_for_tag(elem.tag)
         args["id"] = elem.attrib.get("id", cls.__name__)
 
     cl = reader.identifiable(cls, elem, **args)
@@ -1196,16 +1279,7 @@ def _cl(reader: Reader, elem):
     # Assign to the DSD eagerly (instead of in _dsd_end()) for reference by next
     # ComponentList e.g. so that AttributeRelationship can reference the
     # DimensionDescriptor
-    attr = {
-        common.DimensionDescriptor: "dimensions",
-        common.AttributeDescriptor: "attributes",
-        reader.model.MeasureDescriptor: "measures",
-        common.GroupDimensionDescriptor: "group_dimensions",
-    }[cl.__class__]
-    if attr == "group_dimensions":
-        getattr(dsd, attr)[cl.id] = cl
-    else:
-        setattr(dsd, attr, cl)
+    dsd.replace_grouping(cl)
 
 
 # §4.5: Category Scheme
@@ -1294,30 +1368,47 @@ def _tr(reader, elem):
 
 def _ms_component(reader, elem, kind):
     """Identify the Component for a ValueSelection."""
+    # Navigate from the current ContentConstraint to a ConstrainableArtefact
+    cc_content = reader.stack[reader.Reference]
+    if len(cc_content) > 1:
+        log.info(
+            f"Resolve reference to <{kind[1].__name__} {elem.attrib['id']}> using first"
+            f" of {len(cc_content)} constrained objects"
+        )
+    obj = reader.resolve(next(iter(cc_content.values())))
+
+    if isinstance(obj, model.DataflowDefinition):
+        # The constrained DFD has a corresponding DSD, which has a Dimension- or
+        # AttributeDescriptor
+        dsd = obj.structure
+    elif isinstance(obj, model.DataStructureDefinition):
+        # The DSD is constrained directly
+        dsd = obj
+    else:
+        log.warning(f"Not implemented: constraints attached to {type(obj)}")
+        dsd = None
+
     try:
-        # Navigate from the current ContentConstraint to a ConstrainableArtefact
-        cc_content = reader.stack[reader.Reference]
-        assert len(cc_content) == 1, (cc_content, reader.stack, elem.attrib)
-        obj = reader.resolve(next(iter(cc_content.values())))
-
-        if isinstance(obj, model.DataflowDefinition):
-            # The constrained DFD has a corresponding DSD, which has a Dimension- or
-            # AttributeDescriptor
-            cl = getattr(obj.structure, kind[0])
-        elif isinstance(obj, model.DataStructureDefinition):
-            # The DSD is constrained directly
-            cl = getattr(obj, kind[0])
-        else:
-            log.warning(f"Not implemented: constraints attached to {type(obj)}")
-            cl = None
-
-        # Get the Component
-        return cl, cl.get(elem.attrib["id"])
+        # Get the component list
+        cl = getattr(dsd, kind[0])
     except AttributeError:
         # Failed because the ContentConstraint is attached to something, e.g.
         # DataProvider, that does not provide an association to a DSD. Try to get a
         # Component from the current scope with matching ID.
         return None, reader.get_single(kind[1], id=elem.attrib["id"], subclass=True)
+
+    # Get the Component
+    try:
+        c = cl.get(elem.attrib["id"])
+    except KeyError:
+        if dsd.is_external_reference:
+            # No component with the given ID exists, but the DSD is an external
+            # reference → create the component automatically
+            c = cl.getdefault(elem.attrib["id"])
+        else:
+            raise
+
+    return cl, c
 
 
 def _ms_agency_id(elem):
@@ -1359,7 +1450,7 @@ def _ms(reader, elem):
 
     # Convert to SelectionValue
     mvs = reader.pop_all("Value")
-    trv = reader.pop_all(model.TimeRangeValue)
+    trv = reader.pop_all(model.TimeRangeValue, subclass=True)
     if mvs:
         arg["values"] = list(map(lambda v: model.MemberValue(value=v), mvs))
     elif trv:
@@ -1459,44 +1550,35 @@ def _ar(reader, elem):
         return common.GroupRelationship(**args)
 
 
-@start("str:DataStructure", only=False)
-def _dsd_start(reader: Reader, elem):
-    try:
-        # <str:DataStructure> may be a reference, e.g. in <str:ConstraintAttachment>
-        return reader.reference(elem)
-    except NotReference:
-        pass
+@start("str:DataStructure str:MetadataStructure", only=False)
+@possible_reference()  # <str:DataStructure> in <str:ConstraintAttachment>
+def _structure_start(reader: Reader, elem):
+    # Get any external reference created earlier, or instantiate a new object
+    cls = reader.class_for_tag(elem.tag)
+    obj = reader.maintainable(cls, elem)
 
-    # Get any external reference created earlier, or instantiate a new object.
-    dsd = reader.maintainable(reader.model.DataStructureDefinition, elem)
-
-    if dsd not in reader.stack[reader.model.DataStructureDefinition]:
+    if obj not in reader.stack[cls]:
         # A new object was created
-        reader.push(dsd)
+        reader.push(obj)
 
     # Store a separate reference to the current DSD
-    reader.push("current DSD", dsd)
+    reader.push("current DSD", obj)
 
 
-@end("str:DataStructure", only=False)
-def _dsd_end(reader, elem):
-    dsd = reader.pop_single("current DSD")
+@end("str:DataStructure str:MetadataStructure", only=False)
+def _structure_end(reader, elem):
+    obj = reader.pop_single("current DSD")
 
-    if dsd:
+    if obj:
         # Collect annotations, name, and description
-        dsd.annotations = list(reader.pop_all(model.Annotation))
-        add_localizations(dsd.name, reader.pop_all("Name"))
-        add_localizations(dsd.description, reader.pop_all("Description"))
+        obj.annotations = list(reader.pop_all(model.Annotation))
+        add_localizations(obj.name, reader.pop_all("Name"))
+        add_localizations(obj.description, reader.pop_all("Description"))
 
 
 @end("str:Dataflow str:Metadataflow")
+@possible_reference()  # <str:Dataflow> in <str:ConstraintAttachment>
 def _dfd(reader: Reader, elem):
-    try:
-        # <str:Dataflow> may be a reference, e.g. in <str:ConstraintAttachment>
-        return reader.reference(elem)
-    except NotReference:
-        pass
-
     structure = reader.pop_resolved_ref("Structure")
     if structure is None:
         log.warning(
@@ -1550,7 +1632,7 @@ def _series_ss(reader, elem):
     ds.add_obs(
         reader.pop_all(model.Observation),
         ds.structured_by.make_key(
-            model.SeriesKey, elem.attrib, extend=reader.peek("SS without DSD")
+            model.SeriesKey, elem.attrib, extend=reader.peek("SS without structure")
         ),
     )
 
@@ -1574,7 +1656,7 @@ def _group_ss(reader, elem):
     group_id = attrib.pop(reader.qname("xsi", "type"), None)
 
     gk = ds.structured_by.make_key(
-        model.GroupKey, attrib, extend=reader.peek("SS without DSD")
+        model.GroupKey, attrib, extend=reader.peek("SS without structure")
     )
 
     if group_id:
@@ -1586,7 +1668,7 @@ def _group_ss(reader, elem):
         try:
             gk.described_by = ds.structured_by.group_dimensions[group_id]
         except KeyError:
-            if not reader.peek("SS without DSD"):
+            if not reader.peek("SS without structure"):
                 raise
 
     ds.group[gk] = []
@@ -1620,7 +1702,7 @@ def _obs(reader, elem):
 @end(":Obs")
 def _obs_ss(reader, elem):
     # True if the user failed to provide a DSD to use in parsing structure-specific data
-    extend = reader.peek("SS without DSD")
+    extend = reader.peek("SS without structure")
 
     # Retrieve the PrimaryMeasure from the DSD for the current data set
     dsd = reader.get_single("DataSet").structured_by
@@ -1707,23 +1789,288 @@ def _ds_end(reader, elem):
 
 # §7.3: Metadata Structure Definition
 
-
-@end("str:MetadataTarget")
-def _mdt(reader: Reader, elem):  # pragma: no cover
-    raise NotImplementedError
+# §7.4: Metadata Set
 
 
-@end("str:MetadataStructure")
-def _msd(reader: Reader, elem):  # pragma: no cover
-    cls = reader.class_for_tag(elem)
-    log.warning(f"Not parsed: {elem.tag} -> {cls}")
-    return NotImplemented
+@start("mes:MetadataSet", only=False)
+def _mds_start(reader, elem):
+    # Create an instance of a MetadataSet
+    mds = reader.class_for_tag(elem.tag)()
+
+    # Retrieve the (message-local) ID referencing a data structure definition
+    id = elem.attrib.get("structureRef", None) or elem.attrib.get(
+        reader.qname("metadata:structureRef"), None
+    )
+
+    # Get a reference to the MSD that structures the data set
+    # Provided in the <mes:Header> / <mes:Structure>
+    msd = reader.get_single(id)
+    if not msd:  # pragma: no cover
+        # Fall back to a MSD provided as an argument to read_message()
+        msd = reader.get_single(common.BaseMetadataStructureDefinition, subclass=True)
+
+        if not msd:
+            raise RuntimeError("No MSD when creating DataSet")
+
+        log.debug(
+            f'Use provided {msd!r} for structureRef="{id}" not defined in message'
+        )
+
+    mds.structured_by = msd
+
+    reader.push("MetadataSet", mds)
+
+
+@end("mes:MetadataSet", only=False)
+def _mds_end(reader, elem):
+    mds = reader.pop_single("MetadataSet")
+
+    # Collect the contained MetadataReports
+    mds.report.extend(reader.pop_all(v21.MetadataReport))
+
+    # Add the data set to the message
+    reader.get_single(message.MetadataMessage).data.append(mds)
+
+
+@end(":Report md:Report")
+def _md_report(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    obj = cls(
+        attaches_to=reader.pop_single(model.TargetObjectKey),
+        metadata=reader.pop_all(model.ReportedAttribute, subclass=True),
+    )
+    return obj
+
+
+@end(":Target md:Target")
+def _tov(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    obj = cls(
+        key_values={
+            v.value_for: v for v in reader.pop_all(v21.TargetObjectValue, subclass=True)
+        }
+    )
+    return obj
+
+
+@end(":ReferenceValue md:ReferenceValue")
+def _rv(reader: Reader, elem):
+    cls = reader.class_for_tag(elem[0].tag)
+
+    mds = reader.get_single(common.BaseMetadataStructureDefinition, subclass=True)
+
+    # TODO resolve the TargetObject
+    del mds
+
+    if QName(elem).namespace is None:
+        # Structure-specific: the TargetObject ID is stored in the "xsi:type" attribute
+        # as the last part of a value like "esms:CATEGORY_TARGET.ReportPeriodTarget"
+        args = dict(value_for=elem.attrib[reader.qname("xsi", "type")].split(".")[-1])
+    else:
+        args = dict(value_for=elem.attrib["id"])
+
+    if cls is v21.TargetReportPeriod:
+        args["report_period"] = reader.pop_single("ReportPeriod")
+    elif cls is model.TargetIdentifiableObject:
+        args["obj"] = reader.pop_single("ObjectReference")
+
+    obj = cls(**args)
+
+    return obj
+
+
+def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
+    """Add parser events for structure-specific metadata."""
+
+    # TODO these persist after reading a particular message; avoid this
+    def _add_events_for_ma(ma: model.MetadataAttribute):
+        reader.start(f":{ma.id}", only=False)(_ra_start)
+        reader.end(f":{ma.id}", only=False)(_ra_end)
+        for child in ma.child:
+            _add_events_for_ma(child)
+
+    for rs in mds.report_structure.values():
+        for ma in rs.components:
+            _add_events_for_ma(ma)
+
+
+@start("md:ReportedAttribute", only=False)
+def _ra_start(reader: Reader, elem):
+    # Avoid collecting previous/sibling ReportedAttribute as children of this one
+    reader.stash(model.ReportedAttribute)
+
+
+@end("md:ReportedAttribute", only=False)
+def _ra_end(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+    if cls is None:
+        cls = reader.class_for_tag("md:ReportedAttribute")
+        value_for = elem.tag
+    else:
+        value_for = elem.attrib["id"]
+
+    # Pop all child elements
+    args = dict(child=reader.pop_all(cls, subclass=True), value_for=value_for)
+
+    xhtml = reader.pop_single("StructuredText")
+    if xhtml:
+        cls = v21.XHTMLAttributeValue
+        args["value"] = xhtml
+
+    obj = cls(**args)
+
+    reader.unstash()
+    return obj
+
+
+# §8: Hierarchical Code List
+
+
+@end("str:HierarchicalCode")
+def _hc(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    code = reader.resolve(reader.pop_single(reader.Reference))
+
+    if code is None:
+        # Retrieve and resolve the reference to the Codelist
+        cl_alias = reader.pop_single("CodelistAliasRef")
+        cl_ref = reader.peek("CodelistAlias")[cl_alias]
+        cl = reader.resolve(cl_ref)
+
+        # Manually resolve the CodeID
+        code_id = reader.pop_single("CodeID").id
+        try:
+            code = cl[code_id]
+        except KeyError:
+            if cl.is_external_reference:
+                code = cl.setdefault(id=code_id)
+            else:  # pragma: no cover
+                raise
+
+    # Create the HierarchicalCode
+    obj = reader.identifiable(cls, elem, code=code)
+
+    # Count children represented as XML sub-elements of the parent
+    n_child = sum(e.tag == elem.tag for e in elem)
+    # Collect this many children and append them to `obj`
+    obj.child.extend(reversed([reader.pop_single(cls) for i in range(n_child)]))
+
+    return obj
+
+
+@end("str:Level")
+def _l(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+
+    return reader.nameable(cls, elem, child=reader.pop_single(cls))
+
+
+@end("str:Hierarchy")
+def _h(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+    return reader.nameable(
+        cls,
+        elem,
+        has_formal_levels=eval(elem.attrib["leveled"].title()),
+        codes={c.id: c for c in reader.pop_all(model.HierarchicalCode)},
+        level=reader.pop_single(common.Level),
+    )
+
+
+@end("str:IncludedCodelist")
+def _icl(reader: Reader, elem):
+    obj = reader.reference(elem, common.Codelist)
+
+    if reader.peek("CodelistAlias") is None:
+        reader.push("CodelistAlias", dict())
+    reader.peek("CodelistAlias")[elem.attrib["alias"]] = obj
+
+    return None
+
+
+@end("str:HierarchicalCodelist")
+def _hcl(reader: Reader, elem):
+    cls = reader.class_for_tag(elem.tag)
+    reader.pop_all("CodelistAlias")
+    return reader.maintainable(cls, elem, hierarchy=reader.pop_all(model.Hierarchy))
+
+
+# §9: Structure Set and Mappings
+
+
+@start("str:CodelistMap", only=False)
+def _ismap_start(reader: Reader, elem):
+    cls: Type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    # Push class for reference while parsing sub-elements
+    reader.push("ItemAssociation class", cls._ItemAssociation._Item)
+
+
+@end("str:CodelistMap", only=False)
+def _ismap_end(reader: Reader, elem):
+    cls: Type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+
+    # Remove class from stacks
+    reader.pop_single("ItemAssociation class")
+
+    # Retrieve the source and target ItemSchemes
+    source: model.ItemScheme = reader.pop_resolved_ref("Source")
+    target: model.ItemScheme = reader.pop_resolved_ref("Target")
+
+    # Iterate over the ItemAssociation instances
+    ia_all = list()
+    for ia in reader.pop_all(cls._ItemAssociation):
+        for name, scheme in ("source", source), ("target", target):
+            # ia.source is a Reference; retrieve its ID
+            id_ = getattr(ia, name).id
+            try:
+                # Use the ID to look up an Item in the ItemScheme
+                item = scheme[id_]
+            except KeyError:
+                if scheme.is_external_reference:
+                    # Externally-referenced ItemScheme → create the Item
+                    item = scheme.setdefault(id=id_)
+                else:  # pragma: no cover
+                    raise
+            setattr(ia, name, item)
+
+        ia_all.append(ia)
+
+    return reader.nameable(
+        cls, elem, source=source, target=target, item_association=ia_all
+    )
+
+
+@end("str:CodeMap")
+def _item_map(reader: Reader, elem):
+    cls: Type[model.ItemAssociation] = reader.class_for_tag(elem.tag)
+
+    # Store Source and Target as Reference instances
+    return reader.annotable(
+        cls,
+        elem,
+        source=reader.pop_single("Source"),
+        target=reader.pop_single("Target"),
+    )
+
+
+@end("str:StructureSet")
+def _ss(reader: Reader, elem):
+    return reader.maintainable(
+        model.StructureSet,
+        elem,
+        # Collect all ItemSchemeMaps
+        item_scheme_map=reader.pop_all(model.ItemSchemeMap, subclass=True),
+    )
 
 
 # §11: Data Provisioning
 
 
 @end("str:ProvisionAgreement")
+@possible_reference()  # <str:ProvisionAgreement> in <str:ConstraintAttachment>
 def _pa(reader, elem):
     return reader.maintainable(
         model.ProvisionAgreement,

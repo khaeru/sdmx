@@ -21,7 +21,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections import ChainMap
 from copy import copy
-from dataclasses import InitVar, dataclass, field
+from dataclasses import InitVar, dataclass, field, fields
 from datetime import date, datetime, timedelta
 from enum import Enum
 from functools import lru_cache
@@ -45,6 +45,7 @@ from typing import (
     TypeVar,
     Union,
     get_args,
+    get_origin,
 )
 
 from sdmx.dictlike import DictLikeDescriptor
@@ -68,6 +69,10 @@ __all__ = [
     "NameableArtefact",
     "VersionableArtefact",
     "MaintainableArtefact",
+    "ActionType",
+    "ConstraintRoleType",
+    "FacetValueType",
+    "ExtendedFacetValueType",
     "Item",
     "ItemScheme",
     "FacetType",
@@ -106,6 +111,9 @@ __all__ = [
     "Key",
     "GroupKey",
     "SeriesKey",
+    "CodingFormat",
+    "Level",
+    "HierarchicalCode",
     "ConstraintRole",
     "StartPeriod",
     "EndPeriod",
@@ -501,6 +509,23 @@ FacetValueType = Enum(
     # SDMX 3.0 only
     "geospatialInformation",
 )
+
+
+#: SDMX ExtendedFaceValueType.
+#:
+#: This enumeration is identical to :class:`.FacetValueType` except for one additional
+#: member, "Xhtml". This member is used only in metadata.
+ExtendedFacetValueType = Enum(
+    "ExtendedFacetValueType",
+    """string bigInteger integer long short decimal float double boolean uri count
+    inclusiveValueRange alpha alphaNumeric numeric exclusiveValueRange incremental
+    observationalTimePeriod standardTimePeriod basicTimePeriod gregorianTimePeriod
+    gregorianYear gregorianMonth gregorianYearMonth gregorianDay reportingTimePeriod
+    reportingYear reportingSemester reportingTrimester reportingQuarter reportingMonth
+    reportingWeek reportingDay dateTime timesRange month monthDay day time duration
+    keyValues identifiableReference dataSetReference Xhtml""",
+)
+
 
 UsageStatus = Enum("UsageStatus", "mandatory conditional")
 
@@ -1090,8 +1115,47 @@ class DataProviderScheme(OrganisationScheme[DataProvider]):
 
 @dataclass(repr=False)
 class Structure(MaintainableArtefact):
-    #:
-    grouping: Optional[ComponentList] = None
+    @property
+    def grouping(self) -> Sequence[ComponentList]:
+        """A collection of all the ComponentLists associated with a subclass."""
+        result: List[ComponentList] = []
+        for f in fields(self):
+            types = get_args(f.type) or (f.type,)
+            try:
+                if any(issubclass(t, ComponentList) for t in types):
+                    result.append(getattr(self, f.name))
+            except TypeError:
+                pass
+        return result
+
+    def replace_grouping(self, cl: ComponentList) -> None:
+        """Replace existing component list with `cl`."""
+        field = None
+        for f in fields(self):
+            is_dictlike = get_origin(f.type) is DictLikeDescriptor
+            if f.type == type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
+                field = f
+                break
+
+        if not field:
+            raise TypeError(f"No grouping of type {type(cl)} on {type(self)}")
+
+        if is_dictlike:
+            getattr(self, field.name).setdefault(cl.id, cl)
+        else:
+            setattr(self, field.name, cl)
+
+    def compare(self, other: "Structure", strict: bool = True) -> bool:
+        # DictLike of ComponentList will not have an "id" attribute
+        def _key(item) -> str:
+            return getattr(item, "id", str(type(item)))
+
+        return all(
+            s.compare(o, strict)
+            for s, o in zip(
+                sorted(self.grouping, key=_key), sorted(other.grouping, key=_key)
+            )
+        )
 
 
 class StructureUsage(MaintainableArtefact):
@@ -1250,6 +1314,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         str, GroupDimensionDescriptor
     ] = DictLikeDescriptor()
 
+    # Specific types to be used in concrete subclasses
     MemberValue: ClassVar[Type["BaseMemberValue"]]
     MemberSelection: ClassVar[Type["BaseMemberSelection"]]
     ConstraintType: ClassVar[Type[BaseConstraint]]
@@ -1488,28 +1553,21 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
 
         return key
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
 
-        Two DataStructureDefinitions are the same if each of :attr:`attributes`,
-        :attr:`dimensions`, :attr:`measures`, and :attr:`group_dimensions` compares
-        equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :meth:`.ComponentList.compare`.
-        """
-        return all(
-            getattr(self, attr).compare(getattr(other, attr), strict)
-            for attr in ("attributes", "dimensions", "measures", "group_dimensions")
-        )
-
-
+@dataclass(repr=False)
 class BaseDataflow(StructureUsage, ConstrainableArtefact):
     """Common features of SDMX 2.1 DataflowDefinition and 3.0 Dataflow."""
 
-    structure: BaseDataStructureDefinition
+    structure: BaseDataStructureDefinition = field(
+        default_factory=BaseDataStructureDefinition
+    )
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        # Factory default `structure` inherits is_external_reference from the data flow
+        if self.structure.is_external_reference is None:
+            self.structure.is_external_reference = self.is_external_reference
 
     def iter_keys(
         self, constraint: Optional[BaseConstraint] = None, dims: List[str] = []
@@ -2046,12 +2104,101 @@ class BaseDataSet(AnnotableArtefact):
 # §7.3: Metadata Structure Definition
 
 
+class AttributeComponent(Component):
+    """SDMX 3.0 AttributeComponent.
+
+    .. note:: This intermediate, abstract class is not present in the SDMX 2.1 IM.
+    """
+
+
+@dataclass
+class MetadataAttribute(AttributeComponent):
+    """SDMX MetadataAttribute."""
+
+    is_presentational: Optional[bool] = None
+    max_occurs: Optional[int] = None
+    min_occurs: Optional[int] = None
+
+    parent: Optional["MetadataAttribute"] = None
+    child: List["MetadataAttribute"] = field(default_factory=list)
+
+
 class BaseMetadataStructureDefinition(Structure, ConstrainableArtefact):
     """ABC for SDMX 2.1 and 3.0 MetadataStructureDefinition."""
 
 
 class BaseMetadataflow(StructureUsage, ConstrainableArtefact):
     """ABC for SDMX 2.1 MetadataflowDefinition and SDMX 3.0 Metadataflow."""
+
+
+# §7.4 MetadataSet
+
+
+@dataclass
+class BaseTextAttributeValue:
+    """ABC for SDMX 2.1 and 3.0 TextAttributeValue."""
+
+    text: InternationalStringDescriptor = InternationalStringDescriptor()
+
+
+@dataclass
+class BaseXHTMLAttributeValue:
+    """ABC for SDMX 2.1 and 3.0 XHTMLAttributeValue."""
+
+    value: str
+
+
+@dataclass
+class BaseMetadataSet:
+    """ABC for SDMX 2.1 and 3.0 MetadataSet."""
+
+    action: Optional[ActionType] = None
+
+    reporting_begin: Optional[date] = None
+    reporting_end: Optional[date] = None
+
+    publication_period: Optional[date] = None
+    publication_year: Optional[date] = None
+
+
+# SDMX 2.1 §8: Hierarchical Code List
+# SDMX 3.0 §8: Hierarchy
+
+
+class CodingFormat:
+    """SDMX CodingFormat."""
+
+    coding_format: Facet
+
+
+@dataclass
+class Level(NameableArtefact):
+    """SDMX Level."""
+
+    parent: Optional[Union["Level", Any]] = None  # NB second element is "Hierarchy"
+    child: Optional["Level"] = None
+
+    code_format: CodingFormat = field(default_factory=CodingFormat)
+
+
+@dataclass
+class HierarchicalCode(IdentifiableArtefact):
+    """SDMX HierarchicalCode."""
+
+    #: Date from which the construct is valid.
+    valid_from: Optional[str] = None
+    #: Date from which the construct is superseded.
+    valid_to: Optional[str] = None
+
+    #: The Code that is used at the specific point in the hierarchy.
+    code: Optional[Code] = None
+
+    level: Optional[Level] = None
+
+    parent: Optional[
+        Union["HierarchicalCode", Any]
+    ] = None  # NB second element is "Hierarchy"
+    child: List["HierarchicalCode"] = field(default_factory=list)
 
 
 # SDMX 2.1 §10.2: Constraint inheritance
@@ -2275,6 +2422,7 @@ class RESTDatasource(QueryDatasource):
 
 
 @dataclass
+@MaintainableArtefact._preserve("hash")
 class ProvisionAgreement(MaintainableArtefact, ConstrainableArtefact):
     #:
     structure_usage: Optional[StructureUsage] = None
@@ -2412,7 +2560,14 @@ PACKAGE = dict()
 _PACKAGE_CLASS: Dict[str, set] = {
     "base": {"Agency", "AgencyScheme", "DataProvider", "DataProviderScheme"},
     "categoryscheme": {"Category", "Categorisation", "CategoryScheme"},
-    "codelist": {"Code", "Codelist"},
+    "codelist": {
+        "Code",
+        "Codelist",
+        "HierarchicalCode",
+        "HierarchicalCodelist",  # SDMX 2.1
+        "Hierarchy",
+        "Level",
+    },
     "conceptscheme": {"Concept", "ConceptScheme"},
     "datastructure": {
         "DataflowDefinition",  # SDMX 2.1
@@ -2420,6 +2575,7 @@ _PACKAGE_CLASS: Dict[str, set] = {
         "DataStructureDefinition",
         "StructureUsage",
     },
+    "mapping": {"CodelistMap", "StructureSet"},
     "metadatastructure": {
         "MetadataflowDefinition",  # SDMX 2.1
         "Metadataflow",  # SDMX 3.0

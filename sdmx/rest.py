@@ -48,30 +48,30 @@ class Resource(str, Enum):
     ``codelist``                  :class:`.Codelist`
     ``conceptscheme``             :class:`.ConceptScheme`
     ``contentconstraint``         :class:`.ContentConstraint`
+    ``customtypescheme``          :class:`.CustomTypeScheme`.
     ``data``                      :class:`.DataSet`
     ``dataflow``                  :class:`Dataflow(Definition) <.BaseDataflow>`
     ``dataconsumerscheme``        :class:`.DataConsumerScheme`
     ``dataproviderscheme``        :class:`.DataProviderScheme`
     ``datastructure``             :class:`DataStructureDefinition <.BaseDataStructureDefinition>`
+    ``hierarchicalcodelist``      :class:`.v21.HierarchicalCodelist`.
+    ``metadata``                  :class:`MetadataSet <.BaseMetadataSet>`.
     ``metadataflow``              :class:`Metadataflow(Definition) <.Metadataflow>`
     ``metadatastructure``         :class:`MetadataStructureDefinition <.BaseMetadataStructureDefinition>`
+    ``namepersonalisationscheme`` :class:`.NamePersonalisationScheme`.
     ``organisationscheme``        :class:`.OrganisationScheme`
     ``provisionagreement``        :class:`.ProvisionAgreement`
+    ``rulesetscheme``             :class:`.RulesetScheme`.
     ``structure``                 Mixed.
+    ``structureset``              :class:`.StructureSet`.
+    ``transformationscheme``      :class:`.TransformationScheme`.
+    ``userdefinedoperatorscheme`` :class:`.UserdefinedoperatorScheme`.
+    ``vtlmappingscheme``          :class:`.VTLMappingScheme`.
     ----------------------------- ------------------------------------------------------
-    ``customtypescheme``          Not implemented.
-    ``hierarchicalcodelist``      Not implemented.
-    ``metadata``                  Not implemented.
-    ``namepersonalisationscheme`` Not implemented.
     ``organisationunitscheme``    Not implemented.
     ``process``                   Not implemented.
     ``reportingtaxonomy``         Not implemented.
-    ``rulesetscheme``             Not implemented.
     ``schema``                    Not implemented.
-    ``structureset``              Not implemented.
-    ``transformationscheme``      Not implemented.
-    ``userdefinedoperatorscheme`` Not implemented.
-    ``vtlmappingscheme``          Not implemented.
     ============================= ======================================================
 
     """  # noqa: E501
@@ -130,7 +130,7 @@ class Resource(str, Enum):
 
 @dataclass
 class URL:
-    """Utility class to build SDMX REST URLs.
+    """Utility class to build SDMX 2.1 REST web service URLs.
 
     See also
     --------

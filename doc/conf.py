@@ -87,12 +87,10 @@ napolean_preprocess_types = True
 # If True, todo and todolist produce output, else they produce nothing
 todo_include_todos = True
 
-
 # -- Options for IPython.sphinxext.ipython_directive -----------------------------------
 
 # Specify if the embedded Sphinx shell should import Matplotlib and set the backend
 ipython_mplbackend = ""
-
 
 # -- Dynamic configuration
 

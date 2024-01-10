@@ -137,6 +137,11 @@ Address any failures before releasing.
 Internal code reference
 =======================
 
+.. automodule:: sdmx.dictlike
+   :noindex:
+   :undoc-members:
+   :show-inheritance:
+
 ``testing``: Testing utilities
 ------------------------------
 
@@ -147,12 +152,11 @@ Internal code reference
 
 ``util``: Utilities
 -------------------
+
 .. automodule:: sdmx.util
    :noindex:
-   :members: summarize_dictlike
    :undoc-members:
    :show-inheritance:
-
 
 Inline TODOs
 ============

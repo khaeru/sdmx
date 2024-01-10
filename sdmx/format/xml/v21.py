@@ -12,11 +12,36 @@ FORMAT = XMLFormat(
         ("message.DataMessage", "mes:StructureSpecificTimeSeriesData"),
         ("model.NoSpecifiedRelationship", "str:None"),
         ("model.DataflowDefinition", "str:Dataflow"),
+        ("model.DimensionDescriptorValuesTarget", "str:KeyDescriptorValuesTarget"),
         ("model.MetadataflowDefinition", "str:Metadataflow"),
+        ("model.MetadataSet", "mes:MetadataSet"),
+        ("model.ReportedAttribute", "md:ReportedAttribute"),
+        ("model.TargetIdentifiableObject", ":ObjectReference"),
+        ("model.TargetIdentifiableObject", "md:ObjectReference"),
+        ("model.TargetObjectKey", ":Target"),
+        ("model.TargetObjectKey", "md:Target"),
+        ("model.TargetReportPeriod", "ReportPeriod"),
+        ("model.TargetReportPeriod", "md:ReportPeriod"),
+        ("model.MetadataReport", ":Report"),
+        ("model.MetadataReport", "md:Report"),
     ]
     + [
         (f"model.{name}", f"str:{name}")
-        for name in "ContentConstraint MeasureDimension PrimaryMeasure".split()
+        for name in """
+            CodelistMap
+            CodeMap
+            ContentConstraint
+            HierarchicalCodelist
+            Hierarchy
+            IdentifiableObjectTarget
+            MeasureDimension
+            MetadataAttribute
+            MetadataTarget
+            PrimaryMeasure
+            ReportPeriodTarget
+            ReportStructure
+            StructureSet
+        """.split()
     ],
 )
 

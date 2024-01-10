@@ -3,10 +3,14 @@ from typing import List
 
 import pytest
 
+import sdmx
+import sdmx.message
+from sdmx.model import v21 as model
 from sdmx.model.v21 import (
     AttributeDescriptor,
     AttributeValue,
     Code,
+    Codelist,
     Component,
     ComponentList,
     ComponentValue,
@@ -578,3 +582,70 @@ class TestDataSet:
         ds1 = DataSet(action="information")
 
         assert ds0.action == ds1.action
+
+
+class TestMetadataSet:
+    @pytest.fixture(scope="class")
+    def msg(self, specimen) -> sdmx.message.MetadataMessage:
+        with specimen("esms_generic.xml") as f:
+            return sdmx.read_sdmx(f)
+
+    def test_report_hierarchy(self, msg: sdmx.message.MetadataMessage) -> None:
+        # Access message → metadata set → report
+        r = msg.data[0].report[0]
+
+        # Number of top-level ReportedAttribute
+        assert 3 == len(r.metadata)
+        # Number of ReportedAttribute in tree branches
+        assert 4 == len(r.metadata[0])
+        assert 0 == len(r.metadata[0][0])
+        assert 4 == len(r.metadata[0][2])
+        assert 0 == len(r.metadata[0][2][0])
+        assert 3 == len(r.metadata[1])
+        assert 1 == len(r.metadata[2])
+
+
+class TestHierarchicalCodelist:
+    @pytest.fixture(scope="class")
+    def msg(self, specimen):
+        with specimen("BIS/hierarchicalcodelist-0.xml") as f:
+            return sdmx.read_sdmx(f)
+
+    @pytest.fixture(scope="class")
+    def obj(self, msg) -> model.HierarchicalCodelist:
+        return msg.hierarchical_codelist["BIS:HCL_COUNTRY(1.0)"]
+
+    def test_hierarchy(self, msg: sdmx.message.StructureMessage) -> None:
+        for key, hcl in msg.hierarchical_codelist.items():
+            assert 1 == len(hcl.hierarchy)
+            # print(f"{hcl = }")
+
+        hcl = msg.hierarchical_codelist["BIS:HCL_COUNTRY(1.0)"]
+
+        # Access a Hierarchy
+        h = hcl.hierarchy[0]
+        assert "HIERARCHY_COUNTRY" == h.id
+        assert False is h.has_formal_levels
+        assert 2 == len(h.codes)
+
+        c1 = h.codes["1"]
+        c2 = h.codes["2"]
+
+        assert 4 == len(c1.child)
+
+        assert 56 == len(c2.child)
+        # HierarchicalCode has a `code` attribute
+        assert isinstance(c2.code, Code)
+        assert "OC" == c2.code
+
+        # This Code is contained within a code list
+        assert isinstance(c2.code.parent, Codelist)
+        assert c2.code.parent.urn.endswith("Codelist=BIS:CL_WEBSTATS_CODES(1.0)")
+
+        # The code has a child associated with a different code list
+        c3 = c2.child[0]
+        assert "6J" == c3.code
+        assert c3.code.parent.urn.endswith("Codelist=BIS:CL_BIS_IF_REF_AREA(1.0)")
+
+    def test_repr(self, obj: model.HierarchicalCodelist):
+        assert "<HierarchicalCodelist HCL_COUNTRY: 1 hierarchies>" == repr(obj)

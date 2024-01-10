@@ -10,7 +10,9 @@ FORMAT = XMLFormat(
         ("model.DataflowRelationship", "str:None"),
         ("model.ObservationRelationship", "str:Observation"),
         ("model.Dataflow", "str:Dataflow"),
+        ("model.MetadataAttributeDescriptor", "str:MetadataAttributeList"),
         ("model.Metadataflow", "str:Metadataflow"),
+        ("model.MetadataSet", "mes:MetadataSet"),
     ]
     + [
         (f"model.{name}", f"str:{name}")
@@ -23,7 +25,9 @@ FORMAT = XMLFormat(
             GeographicCodelist
             GeoGridCode
             GeoGridCodelist
+            Hierarchy
             Measure
+            MetadataAttribute
             MetadataConstraint
             ValueItem
             ValueList

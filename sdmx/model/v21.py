@@ -4,12 +4,24 @@ import logging
 # TODO for complete implementation of the IM, enforce TimeKeyValue (instead of KeyValue)
 #      for {Generic,StructureSpecific} TimeSeriesDataSet.
 from dataclasses import dataclass, field
-from typing import Generator, List, Optional, Set, Union
+from typing import (
+    ClassVar,
+    Dict,
+    Generator,
+    Generic,
+    List,
+    Optional,
+    Set,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from sdmx.dictlike import DictLikeDescriptor
 
 from . import common
 from .common import (
+    IT,
     AttributeRelationship,
     Component,
     ComponentList,
@@ -48,8 +60,36 @@ __all__ = [
     "GenericDataSet",
     "GenericTimeSeriesDataSet",
     "StructureSpecificTimeSeriesDataSet",
-    "MetadataflowDefinition",
+    "ReportingCategory",
+    "ReportingTaxonomy",
+    "TargetObject",
+    "DataSetTarget",
+    "DimensionDescriptorValuesTarget",
+    "IdentifiableObjectTarget",
+    "ReportPeriodTarget",
+    "MetadataTarget",
+    "ReportStructure",
     "MetadataStructureDefinition",
+    "MetadataflowDefinition",
+    "TargetObjectValue",
+    "TargetReportPeriod",
+    "TargetIdentifiableObject",
+    "TargetObjectKey",
+    "ReportedAttribute",
+    "EnumeratedAttributeValue",
+    "NonEnumeratedAttributeValue",
+    "OtherNonEnumeratedAttributeValue",
+    "TextAttributeValue",
+    "XHTMLAttributeValue",
+    "MetadataReport",
+    "MetadataSet",
+    "Hierarchy",
+    "HierarchicalCodelist",
+    "ItemAssociation",
+    "CodeMap",
+    "ItemSchemeMap",
+    "CodelistMap",
+    "StructureSet",
 ]
 
 log = logging.getLogger(__name__)
@@ -283,22 +323,267 @@ class StructureSpecificTimeSeriesDataSet(DataSet):
 # §7.3 Metadata Structure Definition
 
 
+class ReportingCategory(common.Item):
+    """SDMX 2.1 ReportingCategory."""
+
+
+class ReportingTaxonomy(common.ItemScheme):
+    """SDMX 2.1 ReportingTaxonomy."""
+
+
+class TargetObject(common.Component):
+    """SDMX 2.1 TargetObject."""
+
+
+class DataSetTarget(TargetObject):
+    """SDMX 2.1 DataSetTarget."""
+
+
+class DimensionDescriptorValuesTarget(TargetObject):
+    """SDMX 2.1 DimensionDescriptorValuesTarget."""
+
+
+class IdentifiableObjectTarget(TargetObject):
+    """SDMX 2.1 IdentifiableObjectTarget."""
+
+
+class ReportPeriodTarget(TargetObject):
+    """SDMX 2.1 ReportPeriodTarget."""
+
+
+class MetadataTarget(ComponentList):
+    """SDMX 2.1 MetadataTarget."""
+
+    _Component = TargetObject
+
+
+@dataclass
+class ReportStructure(ComponentList):
+    """SDMX 2.1 ReportStructure."""
+
+    _Component = common.MetadataAttribute
+
+    report_for: List[MetadataTarget] = field(default_factory=list)
+
+
+@dataclass
+@common.MaintainableArtefact._preserve("hash")
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 2.1 MetadataStructureDefinition."""
 
+    report_structure: DictLikeDescriptor[str, ReportStructure] = DictLikeDescriptor()
 
+    #: Association to 1 or more :class:`.MetadataTarget`
+    target: DictLikeDescriptor[str, MetadataTarget] = DictLikeDescriptor()
+
+
+@dataclass
 class MetadataflowDefinition(common.BaseMetadataflow):
     """SDMX 2.1 MetadataflowDefinition."""
+
+    # NB narrows the type of common.StructureUsage.structure
+    structure: Optional[MetadataStructureDefinition] = None
+
+
+# §7.4: Metadata Set
+
+
+@dataclass
+class TargetObjectValue:
+    """SDMX 2.1 TargetObjectValue."""
+
+    value_for: TargetObject
+
+
+@dataclass
+class TargetReportPeriod(TargetObjectValue):
+    """SDMX 2.1 TargetReportPeriod."""
+
+    report_period: str
+
+
+@dataclass
+class TargetIdentifiableObject(TargetObjectValue):
+    """SDMX 2.1 TargetIdentifiableObject."""
+
+    obj: IdentifiableArtefact
+
+
+@dataclass
+class TargetObjectKey:
+    """SDMX 2.1 TargetObjectKey."""
+
+    key_values: DictLikeDescriptor[str, TargetObjectValue] = DictLikeDescriptor()
+
+
+@dataclass
+class ReportedAttribute:
+    """SDMX 2.1 ReportedAttribute.
+
+    Analogous to :class:`.v30.MetadataAttributeValue`.
+    """
+
+    value_for: common.MetadataAttribute
+    parent: Optional["ReportedAttribute"] = None
+    child: List["ReportedAttribute"] = field(default_factory=list)
+
+    def __getitem__(self, index: int) -> "ReportedAttribute":
+        return self.child[index]
+
+    def __len__(self) -> int:
+        return len(self.child)
+
+
+class EnumeratedAttributeValue(ReportedAttribute):
+    """SDMX 2.1 EnumeratedAttributeValue.
+
+    Analogous to :class:`.v30.CodedMetadataAttributeValue`.
+    """
+
+    value: str
+
+    #: .. note::
+    #:
+    #:    The SDMX 2.1 IM (2011-08) gives this as `valueFor`, but this name duplicates
+    #:    :attr:`.ReportedAttribute.value_for`. :mod:`sdmx` uses `value_of` for
+    #:    consistency with :attr:`.v30.CodedMetadataAttributeValue.value_of`.
+    value_of: common.Code
+
+
+class NonEnumeratedAttributeValue(ReportedAttribute):
+    """SDMX 2.1 NonEnumeratedAttributeValue."""
+
+
+class OtherNonEnumeratedAttributeValue(NonEnumeratedAttributeValue):
+    """SDMX 2.1 OtherNonEnumeratedAttributeValue."""
+
+    value: str
+
+
+class TextAttributeValue(NonEnumeratedAttributeValue, common.BaseTextAttributeValue):
+    """SDMX 2.1 TextAttributeValue."""
+
+
+@dataclass
+class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttributeValue):
+    """SDMX 2.1 XHTMLAttributeValue."""
+
+    value: str
+
+
+@dataclass
+class MetadataReport:
+    """SDMX 2.1 MetadataReport."""
+
+    metadata: List[ReportedAttribute] = field(default_factory=list)
+    target: Optional[MetadataTarget] = None
+    attaches_to: Optional[TargetObjectKey] = None
+
+
+@dataclass
+class MetadataSet(NameableArtefact, common.BaseMetadataSet):
+    """SDMX 2.1 MetadataSet.
+
+    .. note:: Contrast :class:`.v30.MetadataSet`, which is a
+       :class:`.MaintainableArtefact`.
+    """
+
+    described_by: Optional[MetadataflowDefinition] = None
+    # described_by: Optional[ReportStructure] = None
+    structured_by: Optional[MetadataStructureDefinition] = None
+
+    #: Analogous to :attr:`.v30.MetadataSet.provided_by`.
+    published_by: Optional[common.DataProvider] = None
+
+    report: List[MetadataReport] = field(default_factory=list)
+
+
+# §8 Hierarchical Code List
+
+
+@dataclass
+class Hierarchy(NameableArtefact):
+    """SDMX 2.1 Hierarchy."""
+
+    has_formal_levels: bool = False
+
+    #: Hierarchical codes in the hierarchy.
+    codes: Dict[str, common.HierarchicalCode] = field(default_factory=dict)
+
+    level: Optional[common.Level] = None
+
+
+@dataclass
+class HierarchicalCodelist(common.MaintainableArtefact):
+    """SDMX 2.1 HierarchicalCodelist."""
+
+    hierarchy: List[Hierarchy] = field(default_factory=list)
+
+    def __repr__(self) -> str:
+        tmp = super(NameableArtefact, self).__repr__()[:-1]
+        return f"{tmp}: {len(self.hierarchy)} hierarchies>"
+
+
+# §9: Structure Set and Mappings
+
+
+@dataclass
+class ItemAssociation(common.AnnotableArtefact, Generic[IT]):
+    """SDMX 2.1 ItemAssociation."""
+
+    _Item: ClassVar[Type[common.Item]] = common.Item
+
+    source: Optional[IT] = None
+    target: Optional[IT] = None
+
+
+class CodeMap(ItemAssociation[common.Code]):
+    """SDMX 2.1 CodeMap."""
+
+    _Item = common.Code
+
+
+IAT = TypeVar("IAT", bound="ItemAssociation")
+IST = TypeVar("IST", bound="common.ItemScheme")
+
+
+@dataclass
+class ItemSchemeMap(NameableArtefact, Generic[IST, IAT]):
+    """SDMX 2.1 ItemSchemeMap."""
+
+    _ItemAssociation: ClassVar[Type[ItemAssociation]] = ItemAssociation
+
+    source: Optional[IST] = None
+    target: Optional[IST] = None
+
+    item_association: List[IAT] = field(default_factory=list)
+
+
+class CodelistMap(ItemSchemeMap[common.Codelist, CodeMap]):
+    """SDMX 2.1 CodelistMap."""
+
+    _ItemAssociation = CodeMap
+
+
+@dataclass
+class StructureSet(common.MaintainableArtefact):
+    """SDMX 2.1 StructureSet."""
+
+    item_scheme_map: List[ItemSchemeMap] = field(default_factory=list)
 
 
 CF = common.ClassFinder(
     __name__,
     name_map={
         "Dataflow": "DataflowDefinition",
+        "DataStructure": "DataStructureDefinition",
+        "MetadataStructure": "MetadataStructureDefinition",
         "Metadataflow": "MetadataflowDefinition",
     },
     parent_map={
+        common.HierarchicalCode: Hierarchy,
         PrimaryMeasure: MeasureDescriptor,
+        MetadataTarget: MetadataStructureDefinition,
     },
 )
 get_class = CF.get_class

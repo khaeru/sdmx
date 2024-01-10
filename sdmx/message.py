@@ -10,31 +10,42 @@ import logging
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from operator import attrgetter
-from typing import Any, List, Optional, Text, Union, get_args
+from typing import TYPE_CHECKING, List, Optional, Text, Type, Union, get_args
 
 from sdmx import model
 from sdmx.dictlike import DictLike, DictLikeDescriptor, summarize_dictlike
 from sdmx.format import Version
-from sdmx.model import v21, v30
+from sdmx.model import common, v21, v30
 from sdmx.model.internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
 )
 from sdmx.util import compare, direct_fields
 
+if TYPE_CHECKING:
+    import requests
+
 log = logging.getLogger(__name__)
 
 
 def _summarize(obj, include: Optional[List[str]] = None):
     """Helper method for __repr__ on Header and Message (sub)classes."""
+    import requests
+
     include = include or list(map(attrgetter("name"), fields(obj)))
     for name in include:
         attr = getattr(obj, name)
         if attr is None:
             continue
         elif isinstance(attr, datetime):
-            attr = attr.isoformat()
-        yield f"{name}: {repr(attr)}"
+            s_attr = repr(attr.isoformat())
+        elif isinstance(attr, requests.Response):
+            # Don't use repr(), which displays the entire response body
+            s_attr = str(attr)
+        else:
+            s_attr = repr(attr)
+
+        yield f"{name}: {s_attr}"
 
 
 @dataclass
@@ -137,7 +148,7 @@ class Message:
     footer: Optional[Footer] = None
     #: :class:`requests.Response` instance for the response to the HTTP request that
     #: returned the Message. This is not part of the SDMX standard.
-    response: Optional[Any] = None
+    response: Optional["requests.Response"] = None
 
     def __str__(self):
         return repr(self)
@@ -182,18 +193,31 @@ class StructureMessage(Message):
     ] = DictLikeDescriptor()
     #: Collection of :class:`.Codelist`.
     codelist: DictLikeDescriptor[str, model.Codelist] = DictLikeDescriptor()
+    #: Collection of :class:`.HierarchicalCodelist`.
+    hierarchical_codelist: DictLikeDescriptor[
+        str, v21.HierarchicalCodelist
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`.v30.Hierarchy`.
+    hierarchy: DictLikeDescriptor[str, v30.Hierarchy] = DictLikeDescriptor()
     #: Collection of :class:`.ConceptScheme`.
     concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
     #: Collection of :class:`.ContentConstraint`.
     constraint: DictLikeDescriptor[str, model.BaseConstraint] = DictLikeDescriptor()
     #: Collection of :class:`Dataflow(Definition) <.BaseDataflow>`.
     dataflow: DictLikeDescriptor[str, model.BaseDataflow] = DictLikeDescriptor()
-    #: Collection of :class:`MetaDataflow(Definition) <.BaseMetaDataflow>`.
+    #: Collection of :class:`MetadataStructureDefinition
+    #: <.BaseMetadataStructureDefinition>`.
+    metadatastructure: DictLikeDescriptor[
+        str, model.BaseMetadataStructureDefinition
+    ] = DictLikeDescriptor()
+    #: Collection of :class:`Metadataflow(Definition) <.BaseMetadataflow>`.
     metadataflow: DictLikeDescriptor[str, model.BaseMetadataflow] = DictLikeDescriptor()
     #: Collection of :class:`DataStructureDefinition <.BaseDataStructureDefinition>`.
     structure: DictLikeDescriptor[
         str, model.BaseDataStructureDefinition
     ] = DictLikeDescriptor()
+    #: Collection of :class:`.StructureSet`.
+    structureset: DictLikeDescriptor[str, v21.StructureSet] = DictLikeDescriptor()
     #: Collection of :class:`.OrganisationScheme`.
     organisation_scheme: DictLikeDescriptor[
         str, model.OrganisationScheme
@@ -336,7 +360,7 @@ class StructureMessage(Message):
 
 @dataclass
 class DataMessage(Message):
-    """Data Message.
+    """SDMX Data Message.
 
     .. note:: A DataMessage may contain zero or more :class:`.DataSet`, so
        :attr:`data` is a list. To retrieve the first (and possibly only)
@@ -371,6 +395,14 @@ class DataMessage(Message):
         """DataStructureDefinition used in the :attr:`dataflow`."""
         return self.dataflow.structure
 
+    @property
+    def structure_type(self) -> Type[common.Structure]:
+        """:class:`.Structure` subtype describing the contained (meta)data."""
+        return {
+            Version["2.1"]: v21.DataStructureDefinition,
+            Version["3.0.0"]: v30.DataStructureDefinition,
+        }[self.version]
+
     def __repr__(self):
         """String representation."""
         lines = [super().__repr__()]
@@ -404,3 +436,15 @@ class DataMessage(Message):
             and len(self.data) == len(other.data)
             and all(ds[0].compare(ds[1], strict) for ds in zip(self.data, other.data))
         )
+
+
+@dataclass
+class MetadataMessage(DataMessage):
+    """SDMX Metadata Message."""
+
+    @property
+    def structure_type(self) -> Type[common.Structure]:
+        return {
+            Version["2.1"]: v21.MetadataStructureDefinition,
+            Version["3.0.0"]: v30.MetadataStructureDefinition,
+        }[self.version]

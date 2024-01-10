@@ -25,6 +25,8 @@ CT1 = [
     "DataConsumerScheme",
     "DataProvider",
     "DataProviderScheme",
+    "HierarchicalCode",
+    "Level",
     "NamePersonalisation",
     "NamePersonalisationScheme",
     "Ruleset",
@@ -39,17 +41,14 @@ CT2 = [
     ("model.Agency", "str:Agency"),  # Order matters
     ("model.Agency", "mes:Receiver"),
     ("model.Agency", "mes:Sender"),
+    ("model.AttributeDescriptor", "str:AttributeList"),
     ("model.Concept", "str:ConceptIdentity"),
     ("model.Codelist", "str:Enumeration"),  # This could possibly be ItemScheme
     ("model.Dimension", "str:Dimension"),  # Order matters
     ("model.Dimension", "str:DimensionReference"),
     ("model.Dimension", "str:GroupDimension"),
-    ("model.StructureUsage", "com:StructureUsage"),
-    ("model.AttributeDescriptor", "str:AttributeList"),
     ("model.DataAttribute", "str:Attribute"),
     ("model.DataStructureDefinition", "str:DataStructure"),
-    ("model.DataStructureDefinition", "com:Structure"),
-    ("model.DataStructureDefinition", "str:Structure"),
     ("model.DimensionDescriptor", "str:DimensionList"),
     ("model.GroupDimensionDescriptor", "str:Group"),
     ("model.GroupDimensionDescriptor", "str:AttachmentGroup"),
@@ -58,10 +57,14 @@ CT2 = [
     ("model.MeasureDescriptor", "str:MeasureList"),
     ("model.MetadataStructureDefinition", "str:MetadataStructure"),
     ("model.SeriesKey", "gen:SeriesKey"),
+    ("model.Structure", "com:Structure"),
+    ("model.Structure", "str:Structure"),
     ("model.StructureUsage", "com:StructureUsage"),
     ("model.VTLMappingScheme", "str:VtlMappingScheme"),
     # Message classes
     ("message.DataMessage", "mes:StructureSpecificData"),
+    ("message.MetadataMessage", "mes:GenericMetadata"),
+    ("message.MetadataMessage", "mes:StructureSpecificMetadata"),
     ("message.ErrorMessage", "mes:Error"),
     ("message.StructureMessage", "mes:Structure"),
 ]
@@ -72,6 +75,7 @@ NS = {
     "xsi": "http://www.w3.org/2001/XMLSchema-instance",
     # To be formatted
     "com": "{}/common",
+    "md": "{}/metadata/generic",
     "data": "{}/data/structurespecific",
     "str": "{}/structure",
     "mes": "{}/message",
@@ -123,15 +127,16 @@ class XMLFormat:
         else:
             if name is None:
                 match = re.fullmatch(
-                    r"(\{(?P<ns_full>.*)\}|(?P<ns_key>.*):)(?P<name>.*)", ns_or_name
+                    r"(\{(?P<ns_full>.*)\}|(?P<ns_key>.*):)?(?P<name>.*)", ns_or_name
                 )
                 assert match
                 name = match.group("name")
-                ns_key = match.group("ns_key")
-                if ns_key:
+                if ns_key := match.group("ns_key"):
                     ns = self.NS[ns_key]
+                elif ns := match.group("ns_full"):
+                    pass
                 else:
-                    ns = match.group("ns_full")
+                    ns = None
             else:
                 ns = self.NS[ns_or_name]
 

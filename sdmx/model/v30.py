@@ -1,8 +1,9 @@
 """SDMX 3.0 Information Model."""
 
 from dataclasses import dataclass, field
+from datetime import date
 from enum import Enum
-from typing import Any, ClassVar, List, Optional, Set
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from . import common
 from .common import (
@@ -13,7 +14,6 @@ from .common import (
     ConstrainableArtefact,
     ConstraintRole,
     ConstraintRoleType,
-    Facet,
     IdentifiableArtefact,
     MaintainableArtefact,
     NameableArtefact,
@@ -44,11 +44,18 @@ __all__ = [
     "Dataflow",
     "Observation",
     "StructureSpecificDataSet",
+    "MetadataAttributeDescriptor",
+    "IdentifiableObjectSelection",
     "MetadataStructureDefinition",
     "Metadataflow",
-    "CodingFormat",
-    "Level",
-    "HierarchicalCode",
+    "MetadataAttributeValue",
+    "CodedMetadataAttributeValue",
+    "UncodedMetadataAttributeValue",
+    "OtherUncodedAttributeValue",
+    "TextAttributeValue",
+    "XHTMLAttributeValue",
+    "TargetIdentifiableObject",
+    "MetadataSet",
     "Hierarchy",
     "HierarchyAssociation",
     "SelectionValue",
@@ -379,58 +386,134 @@ class StructureSpecificDataSet(DataSet):
 # §7.3 Metadata Structure Definition
 
 
+class MetadataAttributeDescriptor(common.ComponentList):
+    """SDMX 3.0 MetadataAttributeDescriptor."""
+
+    _Component = common.MetadataAttribute
+
+
+class IdentifiableObjectSelection:
+    """SDMX 3.0 IdentifiableObjectSelection."""
+
+
+@dataclass
+@MaintainableArtefact._preserve("hash")
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 3.0 MetadataStructureDefinition."""
+
+    #: A :class:`MetadataAttributeDescriptor` that describes the attributes of the
+    #: metadata structure.
+    #:
+    #: .. note:: The SDMX 3.0.0 IM (version 1.0 / 2021-10) does not give a name for this
+    #:    association. :mod:`sdmx` uses `attributes` for consistency with
+    #:    :class:`.DataStructureDefinition`.
+    attributes: MetadataAttributeDescriptor = field(
+        default_factory=MetadataAttributeDescriptor
+    )
 
 
 class Metadataflow(common.BaseMetadataflow):
     """SDMX 3.0 MetadataflowDefinition."""
 
+    structure: MetadataStructureDefinition
+
+
+# §7.4: Metadata Set
+
+
+class MetadataAttributeValue:
+    """SDMX 3.0 MetadataAttributeValue.
+
+    Analogous to :class:`.v21.ReportedAttribute`.
+    """
+
+    # NB the IM specifies this is a subclass of common.AttributeValue, but the
+    #    implementation in .common has both Coded- and UncodedAttributeValue, which
+    #    offends mypy.
+
+    parent: Optional["MetadataAttributeValue"] = None
+    child: List["MetadataAttributeValue"] = field(default_factory=list)
+
+
+class CodedMetadataAttributeValue(MetadataAttributeValue):
+    """SDMX 3.0 CodedMetadataAttributeValue.
+
+    Analogous to :class:`.v21.EnumeratedAttributeValue`.
+    """
+
+    value_of: common.Code
+
+
+class UncodedMetadataAttributeValue(MetadataAttributeValue):
+    """SDMX 3.0 UncodedMetadataAttributeValue."""
+
+    pass
+
+
+class OtherUncodedAttributeValue(UncodedMetadataAttributeValue):
+    """SDMX 3.0 OtherUncodedAttributeValue."""
+
+    value: str
+    start_time: date
+
+
+class TextAttributeValue(UncodedMetadataAttributeValue, common.BaseTextAttributeValue):
+    """SDMX 3.0 TextAttributeValue."""
+
+
+class XHTMLAttributeValue(
+    UncodedMetadataAttributeValue, common.BaseXHTMLAttributeValue
+):
+    """SDMX 3.0 XHTMLAttributeValue."""
+
+
+class TargetIdentifiableObject:
+    """SDMX 3.0 TargetIdentifiableObject."""
+
+
+@dataclass
+class MetadataSet(MaintainableArtefact, common.BaseMetadataSet):
+    """SDMX 3.0 MetadataSet.
+
+    .. note:: Contrast :class:`.v21.MetadataSet`, which is a :class:`.NameableArtefact`.
+    """
+
+    # NB Would prefer to type as datetime.date, but VersionableArtefact currently uses
+    #    str
+    valid_from: Optional[str] = None
+    # NB Would prefer to type as datetime.date, but VersionableArtefact currently uses
+    #    str
+    valid_to: Optional[str] = None
+    set_id: Optional[str] = None
+
+    described_by: Optional[Metadataflow] = None
+
+    # described_by: Optional[MetadataProvisionAgreement] = None
+
+    structured_by: Optional[MetadataAttributeDescriptor] = None
+
+    #: Analogous to :attr:`.v21.MetadataSet.published_by`.
+    provided_by: Optional[MetadataProvider] = None
+
+    attaches_to: List[TargetIdentifiableObject] = field(default_factory=list)
+
+    metadata: List[MetadataAttributeValue] = field(default_factory=list)
+
 
 # §8: Hierarchy
-
-
-class CodingFormat:
-    """SDMX 3.0 CodingFormat."""
-
-    coding_format: Facet
-
-
-@dataclass
-class Level(NameableArtefact):
-    child: Optional["Level"] = None
-    parent: Optional["Level"] = None
-
-    code_format: CodingFormat = field(default_factory=CodingFormat)
-
-
-@dataclass
-class HierarchicalCode(IdentifiableArtefact):
-    #: Date from which the construct is valid.
-    valid_from: Optional[str] = None
-    #: Date from which the construct is superseded.
-    valid_to: Optional[str] = None
-
-    child: List["HierarchicalCode"] = field(default_factory=list)
-    parent: List["HierarchicalCode"] = field(default_factory=list)
-
-    #: The Code that is used at the specific point in the hierarchy.
-    code: Optional[Code] = None
-
-    level: Optional[Level] = None
 
 
 @dataclass
 class Hierarchy(MaintainableArtefact):
     """SDMX 3.0 Hierarchy."""
 
-    has_format_levels: bool = False
+    has_formal_levels: bool = False
 
     #: The top :class:`Level` in the hierarchy.
-    level: Optional[Level] = None
+    level: Optional[common.Level] = None
 
     #: The top-level :class:`HierarchicalCodes <HierarchicalCode>` in the hierarchy.
-    codes: List[HierarchicalCode] = field(default_factory=list)
+    codes: Dict[str, common.HierarchicalCode] = field(default_factory=dict)
 
 
 @dataclass
@@ -445,7 +528,13 @@ class HierarchyAssociation(MaintainableArtefact):
     linked_hierarchy: Optional[Hierarchy] = None
 
 
-CF = common.ClassFinder(__name__, parent_map={Measure: MeasureDescriptor})
+CF = common.ClassFinder(
+    __name__,
+    parent_map={
+        Measure: MeasureDescriptor,
+        common.MetadataAttribute: MetadataAttributeDescriptor,
+    },
+)
 get_class = CF.get_class
 parent_class = CF.parent_class
 __dir__ = CF.dir

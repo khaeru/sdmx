@@ -81,6 +81,7 @@ EXPECTED = [
     sender: <Agency FR1: Institut national de la statistique et des études économiques>
     source: fr: Banque de données macro-économiques
     test: False
+  response: <Response [None]>
   Categorisation (1): CAT_IPI-2010_IPI-2010-A21
   CategoryScheme (1): CLASSEMENT_DATAFLOWS
   Codelist (7): CL_FREQ CL_NAF2_A21 CL_NATURE CL_UNIT CL_AREA CL_TIME_C...
@@ -99,6 +100,7 @@ EXPECTED = [
     sender: <Agency FR1: Institut national de la statistique et des études économiques>
     source: fr: Banque de données macro-économiques
     test: False
+  response: <Response [None]>
   DataflowDefinition (663): ACT-TRIM-ANC BPM6-CCAPITAL BPM6-CFINANCIER ...
   DataStructureDefinition (663): ACT-TRIM-ANC BPM6-CCAPITAL BPM6-CFINAN...""",
     ),
@@ -113,6 +115,7 @@ EXPECTED = [
     source: """
         """
     test: False
+  response: <Response [None]>
   DataSet (1)
   dataflow: <DataflowDefinition (missing id)>
   observation_dimension: <Dimension CURRENCY>""",
@@ -128,6 +131,7 @@ EXPECTED = [
     source: """
         """
     test: False
+  response: <Response [None]>
   DataSet (2)
   dataflow: <DataflowDefinition (missing id)>
   observation_dimension: [<Dimension CURRENCY>]""",
@@ -139,8 +143,14 @@ EXPECTED = [
     "pattern, expected", EXPECTED, ids=list(map(itemgetter(0), EXPECTED))
 )
 def test_message_repr(specimen, pattern, expected):
+    import requests
+
     with specimen(pattern) as f:
         msg = sdmx.read_sdmx(f)
+
+    # Attach a response object, as if the Message resulted from a requests query
+    msg.response = requests.Response()
+
     if isinstance(expected, re.Pattern):
         assert expected.fullmatch(repr(msg))
     else:

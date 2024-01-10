@@ -69,7 +69,17 @@
   {
     "id": "COMP",
     "name": "European Commission Directorate General for Competition",
-    "url": "https://webgate.ec.europa.eu/comp/redisstat/api/dissemination/sdmx/2.1"
+    "url": "https://webgate.ec.europa.eu/comp/redisstat/api/dissemination/sdmx/2.1",
+    "supports": {
+      "actualconstraint": false,
+      "allowedconstraint": false,
+      "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "structure": false,
+      "structureset": false
+    }
   },
   {
     "id": "ECB",
@@ -90,7 +100,17 @@
   {
     "id": "EMPL",
     "name": "European Commission Directorate General for Employment, Social Affairs, and Inclusion",
-    "url": "https://webgate.ec.europa.eu/empl/redisstat/api/dissemination/sdmx/2.1"
+    "url": "https://webgate.ec.europa.eu/empl/redisstat/api/dissemination/sdmx/2.1",
+    "supports": {
+      "actualconstraint": false,
+      "allowedconstraint": false,
+      "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "structure": false,
+      "structureset": false
+    }
   },
   {
     "id": "ESTAT",
@@ -115,12 +135,32 @@
   {
     "id": "ESTAT_COMEXT",
     "name": "Eurostat (Comext and Prodcom datasets)",
-    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1"
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1",
+    "supports": {
+      "actualconstraint": false,
+      "allowedconstraint": false,
+      "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "structure": false,
+      "structureset": false
+    }
   },
   {
     "id": "GROW",
     "name": "European Commission Directorate General for Internal Market, Industry, Entrepreneurship and SMEs",
-    "url": "https://webgate.ec.europa.eu/grow/redisstat/api/dissemination/sdmx/2.1"
+    "url": "https://webgate.ec.europa.eu/grow/redisstat/api/dissemination/sdmx/2.1",
+    "supports": {
+      "actualconstraint": false,
+      "allowedconstraint": false,
+      "contentconstraint": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "structure": false,
+      "structureset": false
+    }
   },
   {
     "id": "ILO",
@@ -148,7 +188,6 @@
     "name": "International Monetary Fund",
     "supports": {
       "actualconstraint": false,
-      "allowedconstraint": false,
       "hierarchicalcodelist": false,
       "metadataflow": false,
       "metadatastructure": false,
@@ -288,8 +327,8 @@
     "name": "SDMX Global Registry",
     "supports": {
       "actualconstraint": false,
-      "allowedconstraint": false,
-      "metadataflow": false
+      "metadataflow": false,
+      "structureset": false
     }
   },
   {
@@ -299,7 +338,6 @@
     "supports": {
       "dataconsumerscheme": false,
       "dataproviderscheme": false,
-      "hierarchicalcodelist": false,
       "metadataflow": false,
       "provisionagreement": false,
       "structureset": false
@@ -361,6 +399,7 @@
       "metadataflow": false,
       "metadatastructure": false,
       "provisionagreement": false,
+      "structure": false,
       "structureset": false,
       "preview": true
     }

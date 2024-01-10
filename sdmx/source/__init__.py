@@ -21,10 +21,10 @@ DataContentType = Enum("DataContentType", "CSV JSON XML")
 #: endpoints that are described in the standards but are not implemented by any source
 #: currently in :file:`sources.json`; these all return 404.
 SDMX_ML_SUPPORTS = {
-    Resource.data: True,
     Resource.attachementconstraint: False,
     Resource.customtypescheme: False,
-    Resource.metadata: False,
+    Resource.data: True,
+    Resource.metadata: True,
     Resource.namepersonalisationscheme: False,
     Resource.organisationunitscheme: False,
     Resource.process: False,
