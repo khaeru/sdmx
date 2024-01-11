@@ -67,6 +67,8 @@ Next release
 
   - Expand explicit marking of particular data sources that do not support the above endpoints.
 
+-Add support for validating SDMX-ML messages via sdmx.validate_xml() (Closes #51)
+
 v2.12.1 (2023-12-20)
 ====================
 
