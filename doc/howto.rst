@@ -7,6 +7,7 @@ On other pages:
    :maxdepth: 1
 
    howto/create
+   howto/validate
 
 Access other SDMX data sources
 ------------------------------
