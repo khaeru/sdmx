@@ -5,7 +5,9 @@
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
 
-from typing import Iterable, List, Literal, cast
+import logging
+from pathlib import Path
+from typing import IO, Iterable, List, Literal, Optional, Union, cast
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -18,6 +20,8 @@ from sdmx.model import v21 as model
 from sdmx.writer.base import BaseWriter
 
 _element_maker = ElementMaker(nsmap={k: v for k, v in NS.items() if v is not None})
+
+log = logging.getLogger(__name__)
 
 writer = BaseWriter("XML")
 
@@ -45,6 +49,112 @@ def to_xml(obj, **kwargs):
     kwargs.setdefault("encoding", "utf-8")
     kwargs.setdefault("xml_declaration", True)
     return etree.tostring(writer.recurse(obj), **kwargs)
+
+
+def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> bool:
+    """Validate and SDMX message against the XML Schema (XSD) documents.
+
+    The XML Schemas must first be installed or validation will fail. See
+    :func:`sdmx.install_schemas` to download the schema files.
+
+    Parameters
+    ----------
+    msg
+        A SDMX-ML Message formatted XML file.
+    schema_dir
+        The directory to XSD schemas used to validate the message.
+
+    Returns
+    -------
+    bool
+        True if validation passed. False otherwise.
+    """
+    try:
+        import platformdirs
+    except ModuleNotFoundError as err:
+        log.error(
+            "Missing platformdirs. Re-install sdmx with pip install sdmx1[validation]"
+        )
+        raise err
+
+    # If the user has no preference, get the schemas from the local cache directory
+    if not schema_dir:
+        schema_dir = platformdirs.user_cache_path("sdmx")
+
+    msg_doc = etree.parse(msg)
+
+    # Make sure the message is a supported type
+    supported_elements = [
+        "CodelistQuery",
+        "DataStructureQuery",
+        "GenericData",
+        "GenericMetadata",
+        "GenericTimeSeriesData",
+        "MetadataStructureQuery",
+        "Structure",
+        "StructureSpecificData",
+        "StructureSpecificMetadata",
+        "StructureSpecificTimeSeriesData",
+    ]
+    root_elem_name = msg_doc.docinfo.root_name
+    if root_elem_name not in supported_elements:
+        raise NotImplementedError
+
+    message_xsd = schema_dir.joinpath("SDMXMessage.xsd")
+    if not message_xsd.exists():
+        raise ValueError
+
+    # Turn the XSD into a schema object
+    xml_schema_doc = etree.parse(message_xsd)
+    xml_schema = etree.XMLSchema(xml_schema_doc)
+
+    try:
+        xml_schema.assertValid(msg_doc)
+    except etree.DocumentInvalid as err:
+        log.error(err)
+    finally:
+        return xml_schema.validate(msg_doc)
+
+
+def install_schemas(schema_dir: Optional[Path] = None) -> None:
+    """Cache XML Schema documents locally for use during message validation.
+
+    Parameters
+    ----------
+    schema_dir
+        The directory where XSD schemas will be downloaded to.
+    """
+    import io
+    import zipfile
+
+    import platformdirs
+    import requests
+
+    # If the user has no preference, download the schemas to the local cache directory
+    if not schema_dir:
+        schema_dir = platformdirs.user_cache_path("sdmx")
+    schema_dir.mkdir(exist_ok=True, parents=True)
+
+    # Check the latest release to get the URL to the schema zip
+    release_url = "https://api.github.com/repos/sdmx-twg/sdmx-ml-v2_1/releases/latest"
+    gh_headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    resp = requests.get(url=release_url, headers=gh_headers)
+    zipball_url = resp.json().get("zipball_url")
+
+    # Download the zipped content and find the schemas within
+    resp = requests.get(url=zipball_url, headers=gh_headers)
+    zipped = zipfile.ZipFile(io.BytesIO(resp.content))
+    schemas = [n for n in zipped.namelist() if "schemas" in n and n.endswith(".xsd")]
+
+    # Extract the schemas to the destination directory
+    # We can't use ZipFile.extract here because it will keep the directory structure
+    for xsd in schemas:
+        xsd_path = zipfile.Path(zipped, at=xsd)
+        target = schema_dir.joinpath(xsd_path.name)
+        target.write_text(xsd_path.read_text())
 
 
 RefStyle = Literal["Ref", "URN"]
