@@ -31,6 +31,7 @@ requires-python = ">=3.8"
 dependencies = [
   "lxml >= 3.6",
   "pandas >= 1.0",
+  "platformdirs",
   "python-dateutil",
   "requests >= 2.7",
   "typing_extensions",
@@ -46,7 +47,6 @@ tests = [
   "pytest-xdist",
   "requests-mock >= 1.4",
 ]
-validate = ["platformdirs"]
 
 [project.urls]
 homepage = "https://github.com/khaeru/sdmx"

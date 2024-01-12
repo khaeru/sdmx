@@ -69,13 +69,7 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> boo
     bool
         True if validation passed. False otherwise.
     """
-    try:
-        import platformdirs
-    except ModuleNotFoundError as err:
-        log.error(
-            "Missing platformdirs. Re-install sdmx with pip install sdmx1[validation]"
-        )
-        raise err
+    import platformdirs
 
     # If the user has no preference, get the schemas from the local cache directory
     if not schema_dir:

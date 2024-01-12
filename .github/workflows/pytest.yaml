@@ -54,7 +54,7 @@ jobs:
       run: python -m pip install --upgrade pip wheel
 
     - name: Install the Python package and dependencies
-      run: pip install .[cache,tests,validate]
+      run: pip install .[cache,tests]
 
     - name: Run pytest
       env:
