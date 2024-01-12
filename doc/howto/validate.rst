@@ -4,18 +4,22 @@ Validate SDMX-ML against official schemas
 :mod:`sdmx` is capable of generating XML for all kinds of SDMX components. When communicating with remote services though, only valid SDMX-ML messages can be sent.
 To help ensure your generated XML complies with the standard you can call :func:`.validate_xml`.
 
-Validation requires having a copy of the `official schema <https://github.com/sdmx-twg/sdmx-ml-v2_1>`_ files available.
+Validation requires having a copy of the `official schema <https://github.com/sdmx-twg/>`_ files available.
 To help make this easier, you can use :func:`.install_schemas`, which will cache a local copy for use in validation.
 
 Cache schema files
 ==================
 
-.. note:: This only needs to be run once.
+Installation of the schemas defaults to v2.1 format. For SDMX v3.0 you need to supply the version string.
+
+.. note:: This only needs to be run once for each SDMX-ML version.
 
 .. ipython:: python
 
     import sdmx
     sdmx.install_schemas()
+    # or
+    sdmx.install_schemas(version="3.0")
 
 The schema files will be downloaded and placed in your local cache directory.
 
@@ -33,6 +37,12 @@ These instructions will use the samples provided by the `SDMX technical working 
     True
     >>> sdmx.validate_xml("samples/demography/demography.xml")
     True
+
+Validating SDMX v3.0 messages requires a version parameter to be supplied.
+
+.. code-block:: python
+
+    >>> sdmx.validate_xml("samples/Codelist/codelist.xml", version="3.0")
 
 Invalid messages will return ``False``. You will also see a log message to help in tracing the problem::
 

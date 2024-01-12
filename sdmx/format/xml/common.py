@@ -89,7 +89,7 @@ NS = {
 }
 
 
-def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> bool:
+def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None, version: Optional[str] = "2.1") -> bool:
     """Validate and SDMX message against the XML Schema (XSD) documents.
 
     The XML Schemas must first be installed or validation will fail. See
@@ -101,6 +101,8 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> boo
         A SDMX-ML Message formatted XML file.
     schema_dir
         The directory to XSD schemas used to validate the message.
+    version
+        The SDMX-ML schema version to validate against. One of ``2.1`` or ``3.0``.
 
     Returns
     -------
@@ -108,10 +110,18 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> boo
         True if validation passed. False otherwise.
     """
     import platformdirs
+    
+    # Supported versions according to install_schemas()
+    sdmx_ml_versions = ["2.1", "3.0"]
+    # Raise an error if the version doesn't match one of the defined values
+    if not version in sdmx_ml_versions:
+        raise NotImplementedError(
+            f"SDMX-ML version must be one of {sdmx_ml_versions}"
+        )
 
     # If the user has no preference, get the schemas from the local cache directory
     if not schema_dir:
-        schema_dir = platformdirs.user_cache_path("sdmx")
+        schema_dir = platformdirs.user_cache_path("sdmx") / version
 
     msg_doc = etree.parse(msg)
 
@@ -134,7 +144,7 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> boo
 
     message_xsd = schema_dir.joinpath("SDMXMessage.xsd")
     if not message_xsd.exists():
-        raise ValueError
+        raise ValueError(f"Could not find XSD files in {schema_dir}")
 
     # Turn the XSD into a schema object
     xml_schema_doc = etree.parse(message_xsd)
@@ -148,13 +158,15 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None) -> boo
         return xml_schema.validate(msg_doc)
 
 
-def install_schemas(schema_dir: Optional[Path] = None) -> None:
+def install_schemas(schema_dir: Optional[Path] = None, version: Optional[str]="2.1") -> None:
     """Cache XML Schema documents locally for use during message validation.
 
     Parameters
     ----------
     schema_dir
         The directory where XSD schemas will be downloaded to.
+    version
+        The SDMX-ML schema version to validate against. One of ``2.1`` or ``3.0``.
     """
     import io
     import zipfile
@@ -162,13 +174,25 @@ def install_schemas(schema_dir: Optional[Path] = None) -> None:
     import platformdirs
     import requests
 
+    # Map SDMX-ML schema versions to repo paths
+    sdmx_ml_versions = {
+        "2.1": "sdmx-ml-v2_1",
+        "3.0": "sdmx-ml",
+    }
+    # Raise an error if the version doesn't match one of the defined values
+    if not version in sdmx_ml_versions.keys():
+        raise NotImplementedError(
+            f"SDMX-ML version must be one of {sdmx_ml_versions.keys()}"
+        )
+
     # If the user has no preference, download the schemas to the local cache directory
     if not schema_dir:
-        schema_dir = platformdirs.user_cache_path("sdmx")
+        schema_dir = platformdirs.user_cache_path("sdmx") / version
     schema_dir.mkdir(exist_ok=True, parents=True)
 
     # Check the latest release to get the URL to the schema zip
-    release_url = "https://api.github.com/repos/sdmx-twg/sdmx-ml-v2_1/releases/latest"
+    repo = sdmx_ml_versions.get(version)
+    release_url = f"https://api.github.com/repos/sdmx-twg/{repo}/releases/latest"
     gh_headers = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
