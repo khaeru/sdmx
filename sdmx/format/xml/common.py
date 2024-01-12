@@ -89,7 +89,11 @@ NS = {
 }
 
 
-def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None, version: Optional[str] = "2.1") -> bool:
+def validate_xml(
+    msg: Union[Path, IO],
+    schema_dir: Optional[Path] = None,
+    version: Optional[str] = "2.1",
+) -> bool:
     """Validate and SDMX message against the XML Schema (XSD) documents.
 
     The XML Schemas must first be installed or validation will fail. See
@@ -110,14 +114,12 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None, versio
         True if validation passed. False otherwise.
     """
     import platformdirs
-    
+
     # Supported versions according to install_schemas()
     sdmx_ml_versions = ["2.1", "3.0"]
     # Raise an error if the version doesn't match one of the defined values
     if not version in sdmx_ml_versions:
-        raise NotImplementedError(
-            f"SDMX-ML version must be one of {sdmx_ml_versions}"
-        )
+        raise NotImplementedError(f"SDMX-ML version must be one of {sdmx_ml_versions}")
 
     # If the user has no preference, get the schemas from the local cache directory
     if not schema_dir:
@@ -158,7 +160,9 @@ def validate_xml(msg: Union[Path, IO], schema_dir: Optional[Path] = None, versio
         return xml_schema.validate(msg_doc)
 
 
-def install_schemas(schema_dir: Optional[Path] = None, version: Optional[str]="2.1") -> None:
+def install_schemas(
+    schema_dir: Optional[Path] = None, version: Optional[str] = "2.1"
+) -> None:
     """Cache XML Schema documents locally for use during message validation.
 
     Parameters
