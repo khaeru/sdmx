@@ -118,7 +118,7 @@ def validate_xml(
     # Supported versions according to install_schemas()
     sdmx_ml_versions = ["2.1", "3.0"]
     # Raise an error if the version doesn't match one of the defined values
-    if not version in sdmx_ml_versions:
+    if version not in sdmx_ml_versions:
         raise NotImplementedError(f"SDMX-ML version must be one of {sdmx_ml_versions}")
 
     # If the user has no preference, get the schemas from the local cache directory
@@ -184,7 +184,7 @@ def install_schemas(
         "3.0": "sdmx-ml",
     }
     # Raise an error if the version doesn't match one of the defined values
-    if not version in sdmx_ml_versions.keys():
+    if version not in sdmx_ml_versions.keys():
         raise NotImplementedError(
             f"SDMX-ML version must be one of {sdmx_ml_versions.keys()}"
         )
@@ -214,7 +214,8 @@ def install_schemas(
     for xsd in schemas:
         xsd_path = zipfile.Path(zipped, at=xsd)
         target = schema_dir.joinpath(xsd_path.name)
-        target.write_text(xsd_path.read_text())
+        # The encoding needs to be supplied here for Windows to read the file
+        target.write_text(xsd_path.read_text(encoding="utf-8"))
 
 
 class XMLFormat:
