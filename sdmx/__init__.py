@@ -2,10 +2,11 @@ import logging
 from importlib.metadata import PackageNotFoundError, version
 
 from sdmx.client import Client, Request, read_url
+from sdmx.format import install_schemas, validate_xml
 from sdmx.reader import read_sdmx
 from sdmx.rest import Resource
 from sdmx.source import add_source, list_sources
-from sdmx.writer import install_schemas, to_csv, to_pandas, to_xml, validate_xml
+from sdmx.writer import to_csv, to_pandas, to_xml
 
 __all__ = [
     "Client",
