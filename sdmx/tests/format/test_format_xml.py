@@ -111,10 +111,10 @@ def test_validate_xml_from_v3_0_samples(tmp_path):
     zipped = zipfile.ZipFile(io.BytesIO(resp.content))
     zipped.extractall(path=tmp_path)
     extracted_content = list(tmp_path.glob("sdmx-twg-sdmx-ml*"))[0]
-    
+
     # Schemas as just in a flat directory
     schema_dir = extracted_content.joinpath("schemas")
-    
+
     # Samples are somewhat spread out, and some are known broken so we pick a bunch
     samples_dir = extracted_content.joinpath("samples")
     samples = [
