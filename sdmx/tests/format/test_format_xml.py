@@ -48,6 +48,21 @@ def test_install_schemas(tmp_path, version):
         assert doc.exists()
 
 
+@pytest.mark.network
+def test_install_schemas_in_user_cache():
+    """Test that XSD files are downloaded and ready for use in validation."""
+    import platformdirs
+
+    cache_dir = platformdirs.user_cache_path("sdmx") / "2.1"
+    sdmx.install_schemas()
+
+    # Look for a couple of the expected files
+    files = ["SDMXCommon.xsd", "SDMXMessage.xsd"]
+    for schema_doc in files:
+        doc = cache_dir.joinpath(schema_doc)
+        assert doc.exists()
+
+
 @pytest.mark.parametrize("version", ["1", 1, None])
 def test_validate_xml_invalid_version(version):
     """Ensure validation of invalid versions throw ``NotImplementedError``."""
