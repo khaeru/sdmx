@@ -56,6 +56,14 @@ def test_validate_xml_invalid_version(version):
         sdmx.validate_xml("samples/common/common.xml", version=version)
 
 
+def test_validate_xml_no_schemas(specimen, tmp_path):
+    """Check that supplying an invalid schema path will raise ``ValueError``."""
+    with specimen("IPI-2010-A21-structure.xml", opened=False) as msg_path:
+        with pytest.raises(ValueError):
+            # This message doesn't exist, but the schema should throw before it is used.
+            sdmx.validate_xml(msg_path, schema_dir=tmp_path)
+
+
 @pytest.mark.network
 def test_validate_xml_from_v2_1_samples(tmp_path):
     """Use official samples to ensure validation of v2.1 messages works correctly."""
