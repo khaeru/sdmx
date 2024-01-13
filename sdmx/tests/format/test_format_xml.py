@@ -6,6 +6,7 @@ import requests
 
 import sdmx
 from sdmx.format import xml
+from sdmx.message import StructureMessage
 from sdmx.model import v21
 
 
@@ -75,7 +76,6 @@ def test_validate_xml_no_schemas(specimen, tmp_path):
     """Check that supplying an invalid schema path will raise ``ValueError``."""
     with specimen("IPI-2010-A21-structure.xml", opened=False) as msg_path:
         with pytest.raises(ValueError):
-            # This message doesn't exist, but the schema should throw before it is used.
             sdmx.validate_xml(msg_path, schema_dir=tmp_path)
 
 
@@ -116,6 +116,45 @@ def test_validate_xml_from_v2_1_samples(tmp_path):
 
     for sample in samples:
         assert sdmx.validate_xml(sample, schema_dir, version="2.1")
+
+
+@pytest.mark.network
+def test_validate_xml_invalid_doc(tmp_path):
+    """Ensure that an invalid document fails validation."""
+    msg_path = tmp_path / "invalid.xml"
+
+    # Generate a codelist to form a StructureMessage
+    ECB = v21.Agency(id="ECB")
+
+    cl = v21.Codelist(
+        id="CL_COLLECTION",
+        version="1.0",
+        is_final=False,
+        is_external_reference=False,
+        maintainer=ECB,
+        name={"en": "Collection indicator code list"},
+    )
+
+    # Add items
+    CL_ITEMS = [
+        dict(id="A", name={"en": "Average of observations through period"}),
+        dict(id="B", name={"en": "Beginning of period"}),
+        dict(id="B1", name={"en": "Child code of B"}),
+    ]
+    for info in CL_ITEMS:
+        cl.items[info["id"]] = v21.Code(**info)
+
+    msg = StructureMessage(codelist={cl.id: cl})
+
+    msg_path.write_bytes(sdmx.to_xml(msg))
+
+    # Install schemas for use in validation
+    schema_dir = tmp_path / "schemas"
+    schema_dir.mkdir(exist_ok=True, parents=True)
+    sdmx.install_schemas(schema_dir=schema_dir)
+
+    # Expect validation to fail
+    assert not sdmx.validate_xml(msg_path, schema_dir=schema_dir)
 
 
 @pytest.mark.network
