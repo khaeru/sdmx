@@ -1,4 +1,5 @@
 import io
+import re
 import zipfile
 
 import pytest
@@ -155,6 +156,16 @@ def test_validate_xml_invalid_doc(tmp_path):
 
     # Expect validation to fail
     assert not sdmx.validate_xml(msg_path, schema_dir=schema_dir)
+
+
+def test_validate_xml_invalid_message_type():
+    """Ensure that an invalid document fails validation."""
+    # Create a mangled structure message with its outmost tag changed to be invalid
+    msg = StructureMessage()
+    invalid_msg = re.sub(b"mes:Structure([ >])", rb"mes:FooBar\1", sdmx.to_xml(msg))
+
+    with pytest.raises(NotImplementedError):
+        sdmx.validate_xml(io.BytesIO(invalid_msg))
 
 
 @pytest.mark.network
