@@ -5,6 +5,7 @@
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
 
+import logging
 from typing import Iterable, List, Literal, cast
 
 from lxml import etree
@@ -18,6 +19,8 @@ from sdmx.model import v21 as model
 from sdmx.writer.base import BaseWriter
 
 _element_maker = ElementMaker(nsmap={k: v for k, v in NS.items() if v is not None})
+
+log = logging.getLogger(__name__)
 
 writer = BaseWriter("XML")
 

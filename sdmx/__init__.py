@@ -2,6 +2,7 @@ import logging
 from importlib.metadata import PackageNotFoundError, version
 
 from sdmx.client import Client, Request, read_url
+from sdmx.format.xml.common import install_schemas, validate_xml
 from sdmx.reader import read_sdmx
 from sdmx.rest import Resource
 from sdmx.source import add_source, list_sources
@@ -12,6 +13,7 @@ __all__ = [
     "Request",
     "Resource",
     "add_source",
+    "install_schemas",
     "list_sources",
     "log",
     "read_sdmx",
@@ -19,6 +21,7 @@ __all__ = [
     "to_csv",
     "to_pandas",
     "to_xml",
+    "validate_xml",
 ]
 
 
