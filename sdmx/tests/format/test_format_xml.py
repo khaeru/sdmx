@@ -1,12 +1,11 @@
 import io
 import re
-import zipfile
 
 import pytest
-import requests
 
 import sdmx
-from sdmx.format import xml
+from sdmx.format import Version, xml
+from sdmx.format.xml.common import _gh_zipball
 from sdmx.message import StructureMessage
 from sdmx.model import v21
 
@@ -83,18 +82,8 @@ def test_validate_xml_no_schemas(specimen, tmp_path):
 @pytest.mark.network
 def test_validate_xml_from_v2_1_samples(tmp_path):
     """Use official samples to ensure validation of v2.1 messages works correctly."""
-    # Grab the latest v2.1 schema release to get the URL to the zip
-    release_url = "https://api.github.com/repos/sdmx-twg/sdmx-ml-v2_1/releases/latest"
-    gh_headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-    resp = requests.get(url=release_url, headers=gh_headers)
-    zipball_url = resp.json().get("zipball_url")
-    # Download the zipped content and find the schemas within
-    resp = requests.get(url=zipball_url, headers=gh_headers)
-    zipped = zipfile.ZipFile(io.BytesIO(resp.content))
-    zipped.extractall(path=tmp_path)
+    with _gh_zipball(Version["2.1"]) as zf:
+        zf.extractall(path=tmp_path)
     extracted_content = list(tmp_path.glob("sdmx-twg-sdmx-ml*"))[0]
 
     # Schemas as just in a flat directory
@@ -171,18 +160,8 @@ def test_validate_xml_invalid_message_type():
 @pytest.mark.network
 def test_validate_xml_from_v3_0_samples(tmp_path):
     """Use official samples to ensure validation of v3.0 messages works correctly."""
-    # Grab the latest v3.0 schema release to get the URL to the zip
-    release_url = "https://api.github.com/repos/sdmx-twg/sdmx-ml/releases/latest"
-    gh_headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-    resp = requests.get(url=release_url, headers=gh_headers)
-    zipball_url = resp.json().get("zipball_url")
-    # Download the zipped content and find the schemas within
-    resp = requests.get(url=zipball_url, headers=gh_headers)
-    zipped = zipfile.ZipFile(io.BytesIO(resp.content))
-    zipped.extractall(path=tmp_path)
+    with _gh_zipball(Version["3.0.0"]) as zf:
+        zf.extractall(path=tmp_path)
     extracted_content = list(tmp_path.glob("sdmx-twg-sdmx-ml*"))[0]
 
     # Schemas as just in a flat directory
