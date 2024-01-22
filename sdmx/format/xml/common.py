@@ -207,11 +207,8 @@ def _gh_zipball(version: Version) -> Generator["zipfile.ZipFile", None, None]:
         target.write_bytes(resp.content)
 
     # Yield a Zipfile pointing at the cached file
-    zf = zipfile.ZipFile(target)
-    try:
+    with zipfile.ZipFile(target) as zf:
         yield zf
-    finally:
-        zf.close()
 
 
 def _handle_validate_args(
