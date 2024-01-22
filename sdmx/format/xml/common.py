@@ -228,7 +228,7 @@ def _handle_validate_args(
 
     # If the user has no preference, download the schemas to the local cache directory
     if not schema_dir:
-        schema_dir = platformdirs.user_cache_path("sdmx") / str(version)
+        schema_dir = platformdirs.user_cache_path("sdmx") / version.name
     schema_dir.mkdir(exist_ok=True, parents=True)
 
     return schema_dir, version
