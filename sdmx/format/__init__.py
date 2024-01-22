@@ -27,7 +27,10 @@ Flag = IntFlag("Flag", "data meta ss ts")
 f = Flag
 
 #: SDMX standard versions.
-Version = Enum("Version", "1.0.0 2.0.0 2.1 3.0.0 unknown")
+Version = Enum(
+    "Version",
+    {"1.0.0": 1, "2.0.0": 2, "2.1": 2.1, "3.0.0": 3, "3.0": 3, "unknown": None},
+)
 
 
 @dataclass(frozen=True)
