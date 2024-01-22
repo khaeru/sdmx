@@ -175,6 +175,7 @@ def _gh_zipball(version: Version) -> Generator["zipfile.ZipFile", None, None]:
 
     # Map SDMX-ML schema versions to repo paths
     url_part = {Version["2.1"]: "sdmx-ml-v2_1", Version["3.0.0"]: "sdmx-ml"}
+
     # Check the latest release to get the URL to the schema zip
     url = f"https://api.github.com/repos/sdmx-twg/{url_part[version]}/releases/latest"
     gh_headers = {

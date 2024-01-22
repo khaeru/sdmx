@@ -29,6 +29,35 @@ def test_class_for_tag():
     assert xml.v30.class_for_tag("str:DataStructure") is not None
 
 
+@pytest.fixture(scope="module")
+def mock_gh_api():
+    """Mock GitHub API responses to avoid hitting rate limits.
+
+    For each API endpoint URL queried by :func:.`_gh_zipball`, return a pared-down JSON
+    response that contains the required "zipball_url" key.
+    """
+    import requests_mock
+
+    base = "https://api.github.com/repos/sdmx-twg/"
+
+    with requests_mock.Mocker(real_http=True) as m:
+        for api_url, zipball_url in (
+            ("sdmx-ml-v2_1/releases/latest", "sdmx-ml-v2_1/zipball/v1.0.2"),
+            ("sdmx-ml/releases/latest", "sdmx-ml/zipball/v3.0.0"),
+        ):
+            m.get(f"{base}{api_url}", json=dict(zipball_url=f"{base}{zipball_url}"))
+        yield
+
+
+@pytest.fixture(scope="module")
+def installed_schemas(mock_gh_api, tmp_path_factory):
+    """Fixture that ensures schemas are installed locally in a temporary directory."""
+    dir = tmp_path_factory.mktemp("schemas")
+    sdmx.install_schemas(dir, Version["2.1"])
+    sdmx.install_schemas(dir, Version["3.0.0"])
+    yield dir
+
+
 @pytest.mark.parametrize("version", ["1", 1, None])
 def test_install_schemas_invalid_version(version):
     """Ensure invalid versions throw ``NotImplementedError``."""
@@ -38,15 +67,11 @@ def test_install_schemas_invalid_version(version):
 
 @pytest.mark.network
 @pytest.mark.parametrize("version", ["2.1", "3.0"])
-def test_install_schemas(tmp_path, version):
+def test_install_schemas(installed_schemas, version):
     """Test that XSD files are downloaded and ready for use in validation."""
-    sdmx.install_schemas(schema_dir=tmp_path, version=version)
-
     # Look for a couple of the expected files
-    files = ["SDMXCommon.xsd", "SDMXMessage.xsd"]
-    for schema_doc in files:
-        doc = tmp_path.joinpath(schema_doc)
-        assert doc.exists()
+    for schema_doc in ("SDMXCommon.xsd", "SDMXMessage.xsd"):
+        assert installed_schemas.joinpath(schema_doc).exists()
 
 
 @pytest.mark.network
@@ -72,7 +97,7 @@ def test_validate_xml_invalid_version(version):
         sdmx.validate_xml("samples/common/common.xml", version=version)
 
 
-def test_validate_xml_no_schemas(specimen, tmp_path):
+def test_validate_xml_no_schemas(tmp_path, specimen, installed_schemas):
     """Check that supplying an invalid schema path will raise ``ValueError``."""
     with specimen("IPI-2010-A21-structure.xml", opened=False) as msg_path:
         with pytest.raises(ValueError):
@@ -80,7 +105,7 @@ def test_validate_xml_no_schemas(specimen, tmp_path):
 
 
 @pytest.mark.network
-def test_validate_xml_from_v2_1_samples(tmp_path):
+def test_validate_xml_from_v2_1_samples(tmp_path, installed_schemas):
     """Use official samples to ensure validation of v2.1 messages works correctly."""
     with _gh_zipball(Version["2.1"]) as zf:
         zf.extractall(path=tmp_path)
@@ -109,7 +134,7 @@ def test_validate_xml_from_v2_1_samples(tmp_path):
 
 
 @pytest.mark.network
-def test_validate_xml_invalid_doc(tmp_path):
+def test_validate_xml_invalid_doc(tmp_path, installed_schemas):
     """Ensure that an invalid document fails validation."""
     msg_path = tmp_path / "invalid.xml"
 
@@ -138,13 +163,8 @@ def test_validate_xml_invalid_doc(tmp_path):
 
     msg_path.write_bytes(sdmx.to_xml(msg))
 
-    # Install schemas for use in validation
-    schema_dir = tmp_path / "schemas"
-    schema_dir.mkdir(exist_ok=True, parents=True)
-    sdmx.install_schemas(schema_dir=schema_dir)
-
     # Expect validation to fail
-    assert not sdmx.validate_xml(msg_path, schema_dir=schema_dir)
+    assert not sdmx.validate_xml(msg_path, schema_dir=installed_schemas)
 
 
 def test_validate_xml_invalid_message_type():
@@ -158,7 +178,7 @@ def test_validate_xml_invalid_message_type():
 
 
 @pytest.mark.network
-def test_validate_xml_from_v3_0_samples(tmp_path):
+def test_validate_xml_from_v3_0_samples(tmp_path, installed_schemas):
     """Use official samples to ensure validation of v3.0 messages works correctly."""
     with _gh_zipball(Version["3.0.0"]) as zf:
         zf.extractall(path=tmp_path)
