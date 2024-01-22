@@ -3,7 +3,6 @@ from typing import Any, Dict, Hashable, Set, Union
 
 import numpy as np
 import pandas as pd
-from pandas.core.indexes.datetimes import prefix_mapping  # type: ignore [attr-defined]
 
 from sdmx import message
 from sdmx.dictlike import DictLike
@@ -390,14 +389,14 @@ def _maybe_convert_datetime(df, arg, obj, dsd=None):  # noqa: C901
         From the `obj` argument to :meth:`write_dataset`.
     dsd: ~.DataStructureDefinition, optional
     """
-    # TODO Simplify this method to reduce its McCabe complexity from 27 to <= 13
-    if not arg:
-        # False, None, empty dict: no datetime conversion
-        return df
+    # TODO Simplify this method to reduce its McCabe complexity from 23 to <= 13
 
     # Check argument values
     param = dict(dim=None, axis=0, freq=False)
-    if isinstance(arg, str):
+
+    if not arg:
+        return df  # False, None, empty dict → no datetime conversion
+    elif isinstance(arg, str):
         param["dim"] = arg
     elif isinstance(arg, DimensionComponent):
         param["dim"] = arg.id
@@ -411,33 +410,22 @@ def _maybe_convert_datetime(df, arg, obj, dsd=None):  # noqa: C901
     else:
         raise ValueError(arg)
 
-    def _get_dims():
-        """Return an appropriate list of dimensions."""
-        if len(obj.structured_by.dimensions.components):
-            return obj.structured_by.dimensions.components
+    def _get(kind: str):
+        """Return an appropriate list of dimensions or attributes."""
+        if len(getattr(obj.structured_by, kind).components):
+            return getattr(obj.structured_by, kind).components
         elif dsd:
-            return dsd.dimensions.components
+            return getattr(dsd, kind).components
         else:
             return []
 
-    def _get_attrs():
-        """Return an appropriate list of attributes."""
-        if len(obj.structured_by.attributes.components):
-            return obj.structured_by.attributes.components
-        elif dsd:
-            return dsd.attributes.components
-        else:
-            return []
-
+    # Determine time dimension
     if not param["dim"]:
-        # Determine time dimension
-        dims = _get_dims()
-        for dim in dims:
-            if isinstance(dim, TimeDimension):
-                param["dim"] = dim
-                break
-        if not param["dim"]:
-            raise ValueError(f"no TimeDimension in {dims}")
+        for dim in filter(lambda d: isinstance(d, TimeDimension), _get("dimensions")):
+            param["dim"] = dim
+            break
+    if not param["dim"]:
+        raise ValueError(f"no TimeDimension in {_get('dimensions')}")
 
     # Unstack all but the time dimension and convert
     other_dims = list(filter(lambda d: d != param["dim"], df.index.names))
@@ -446,22 +434,24 @@ def _maybe_convert_datetime(df, arg, obj, dsd=None):  # noqa: C901
     kw = dict(format="mixed") if _HAS_PANDAS_2 else {}
     df.index = pd.to_datetime(df.index, **kw)
 
-    if param["freq"]:
-        # Determine frequency string, Dimension, or Attribute
-        freq = param["freq"]
-        if isinstance(freq, str) and freq not in prefix_mapping:
-            # ID of a Dimension or Attribute
-            for component in chain(_get_dims(), _get_attrs()):
+    # Convert to a PeriodIndex with a particular frequency
+    if freq := param["freq"]:
+        try:
+            # A frequency string recognized by pandas.PeriodDtype
+            if isinstance(freq, str):
+                freq = pd.PeriodDtype(freq=freq).freq
+        except ValueError:
+            # ID of a Dimension; Attribute; or column of `df`
+            result = None
+            for component in chain(
+                _get("dimensions"), _get("attributes"), map(Dimension, df.columns.names)
+            ):
                 if component.id == freq:
-                    freq = component
+                    freq = result = component
                     break
 
-            # No named dimension in the DSD; but perhaps on the df
-            if isinstance(freq, str):
-                if freq in df.columns.names:
-                    freq = Dimension(id=freq)
-                else:
-                    raise ValueError(freq)
+            if not result:
+                raise ValueError(freq)
 
         if isinstance(freq, Dimension):
             # Retrieve Dimension values from pd.MultiIndex level
@@ -470,9 +460,8 @@ def _maybe_convert_datetime(df, arg, obj, dsd=None):  # noqa: C901
             values = set(df.columns.levels[i])
 
             if len(values) > 1:
-                values = sorted(values)
                 raise ValueError(
-                    "cannot convert to PeriodIndex with " f"non-unique freq={values}"
+                    f"cannot convert to PeriodIndex with non-unique freq={sorted(values)}"
                 )
 
             # Store the unique value
