@@ -86,7 +86,7 @@ def test_install_schemas_in_user_cache():
     files = ["SDMXCommon.xsd", "SDMXMessage.xsd"]
     for schema_doc in files:
         doc = cache_dir.joinpath(schema_doc)
-        assert doc.exists()
+        assert doc.exists(), (cache_dir, sorted(cache_dir.glob("*")))
 
 
 @pytest.mark.parametrize("version", ["1", 1, None])
