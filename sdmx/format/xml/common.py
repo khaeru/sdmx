@@ -203,6 +203,7 @@ def _gh_zipball(version: Version) -> Generator["zipfile.ZipFile", None, None]:
         resp.close()
     else:
         # Write response content to file
+        target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(resp.content)
 
     # Yield a Zipfile pointing at the cached file
