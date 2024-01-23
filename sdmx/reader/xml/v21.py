@@ -583,7 +583,7 @@ class Reader(metaclass=DispatchingReader):
         """
         if elem is not None:
             kwargs.setdefault("annotations", [])
-            kwargs["annotations"].extend(self.pop_all(model.Annotation))
+            kwargs["annotations"].extend(self.pop_all(common.Annotation))
         return cls(**kwargs)
 
     def identifiable(self, cls, elem, **kwargs):
@@ -1008,7 +1008,7 @@ def _a(reader, elem):
     # Optional 'id' attribute
     setdefault_attrib(args, elem, "id")
 
-    a = model.Annotation(**args)
+    a = common.Annotation(**args)
     add_localizations(a.text, reader.pop_all("AnnotationText"))
 
     return a
