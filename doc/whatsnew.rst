@@ -68,6 +68,7 @@ Next release
   - Expand explicit marking of particular data sources that do not support the above endpoints.
 
 - Add support for validating SDMX-ML messages; see :func:`.validate_xml` (:issue:`51`; thanks :gh-user:`goatsweater` for :pull:`154`).
+- :mod:`sdmx` is fully compatible with pandas 2.2.0, released 2024-01-19 (:pull:`156`).
 
 v2.12.1 (2023-12-20)
 ====================
