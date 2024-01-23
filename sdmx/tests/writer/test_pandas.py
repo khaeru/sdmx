@@ -221,8 +221,8 @@ def test_write_dataset_datetime(specimen):
     df = sdmx.to_pandas(ds, datetime=dict(dim="TIME_PERIOD", freq="M"))
     expected(df, cls=pd.PeriodIndex)
 
-    # Write with freq='A' works
-    df = sdmx.to_pandas(ds, datetime=dict(dim="TIME_PERIOD", freq="A"))
+    # Write with freq='Y' (in older pandas, freq='A') works
+    df = sdmx.to_pandas(ds, datetime=dict(dim="TIME_PERIOD", freq="Y"))
     expected(df, cls=pd.PeriodIndex)
     # …but the index is not unique, because month information was discarded
     assert not df.index.is_unique
