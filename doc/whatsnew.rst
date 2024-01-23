@@ -114,7 +114,7 @@ All changes
 v2.10.0 (2023-05-20)
 ====================
 
-- Switch from third-party :mod:`.pydantic` to Python standard library :mod:`dataclasses` (:pull:`128`).
+- Switch from third-party :py:`pydantic` to Python standard library :mod:`dataclasses` (:pull:`128`).
 
   This is a major change to the :mod:`sdmx` internals, but should come with few API changes and some performance improvements.
   Specific known changes:
@@ -244,7 +244,7 @@ v2.6.3 (2022-09-29)
 
 - Update :ref:`ILO` web service URL and quirks handling (:pull:`97`, thanks :gh-user:`ethangelbach`).
 - Use HTTPS for :ref:`ESTAT` (:pull:`97`).
-- Bump minimum version of :mod:`pydantic` to 1.9.2 (:pull:`98`).
+- Bump minimum version of :py:`pydantic` to 1.9.2 (:pull:`98`).
 - Always return all objects parsed from a SDMX-ML :class:`.StructureMessage` (:pull:`99`).
 
   If two or more :class:`.MaintainableArtefact` have the same ID (e.g. "CL_FOO"); :mod:`sdmx` would formerly store only the last one parsed.
@@ -314,7 +314,7 @@ v2.5.0 (2021-06-27)
 - Document how :ref:`Countdown to 2030 <CD2030>` data can be accessed from the :ref:`UNICEF <UNICEF>` service (:pull:`83`).
 - Tolerate malformed SDMX-JSON from :ref:`OECD <OECD>` (:issue:`64`, :pull:`81`).
 - Reduce noise when :mod:`requests_cache` is not installed (:issue:`75`, :pull:`80`).
-  An exception is still raised if (a) the package is not installed and (b) cache-related arguments are passed to :class:`Client`.
+  An exception is still raised if (a) the package is not installed and (b) cache-related arguments are passed to :class:`.Client`.
 - Bugfix: `verify` = :obj:`False` was not passed to the preliminary request used to validate a :class:`dict` key for a data request (:pull:`80`; thanks :gh-user:`albertame` for :issue:`77`).
 - Handle ``<mes:Department>`` and ``<mes:Role>>`` in SDMX-ML headers (:issue:`78`, :pull:`79`).
 
@@ -334,8 +334,8 @@ v2.4.0 (2021-03-28)
   - Also add :meth:`.ContentConstraint.iter_keys`, :meth:`.DataflowDefinition.iter_keys`.
   - Implement or improve :meth:`.Constraint.__contains__`, :meth:`.CubeRegion.__contains__`, :meth:`.ContentConstraint.__contains__`, :meth:`.v21.KeyValue.__eq__`, and :meth:`.Key.__eq__`.
 
-- Speed up creation of :class:`.Key` objects by improving :mod:`pydantic` usage, updating :meth:`.Key.__init__`, and adding :meth:`.Key._fast`.
-- Simplify :func:`.validate_dictlike`; add :func:`.dictlike_field`, and simplify :mod:`pydantic` validation of :class:`.DictLike` objects, keys, and values.
+- Speed up creation of :class:`.Key` objects by improving :py:`pydantic` usage, updating :meth:`.Key.__init__`, and adding :meth:`.Key._fast`.
+- Simplify :func:`.validate_dictlike`; add :func:`.dictlike_field`, and simplify :py:`pydantic` validation of :class:`.DictLike` objects, keys, and values.
 
 v2.3.0 (2021-03-10)
 ===================
@@ -343,7 +343,7 @@ v2.3.0 (2021-03-10)
 - :func:`.to_xml` can produce structure-specific SDMX-ML (:pull:`67`).
 - Improve typing of :class:`.Item` and subclasses, e.g. :class:`.Code` (:pull:`66`).
   :attr:`~Item.parent` and :attr:`~Item.child` elements are typed the same as a subclass.
-- Require :mod:`pydantic` >= 1.8.1, and remove workarounds for limitations in earlier versions (:pull:`66`).
+- Require :py:`pydantic` >= 1.8.1, and remove workarounds for limitations in earlier versions (:pull:`66`).
 - The default branch of the :mod:`sdmx` GitHub repository is renamed ``main``.
 
 Bug fixes
@@ -354,7 +354,7 @@ Bug fixes
 v2.2.1 (2021-02-27)
 ===================
 
-- Temporary exclude :mod:`pydantic` versions >= 1.8 (:pull:`62`).
+- Temporary exclude :py:`pydantic` versions >= 1.8 (:pull:`62`).
 
 v2.2.0 (2021-02-26)
 ===================
@@ -411,7 +411,7 @@ All changes
 
 - The large library of test specimens for :mod:`sdmx` is no longer shipped with the package, reducing the archive size by about 80% (:issue:`18`, :pull:`52`).
   The specimens can be retrieved for running tests locally; see :ref:`testing`.
-- The :class:`Request` class is renamed :class:`.Client` for semantic clarity (:issue:`11`, :pull:`44`):
+- The :py:`Request` class is renamed :class:`.Client` for semantic clarity (:issue:`11`, :pull:`44`):
 
   A Client can open a :class:`.requests.Session` and might make many :class:`requests.Requests <.requests.Request>` against the same web service.
 
@@ -419,10 +419,10 @@ All changes
 - Some internal modules are renamed.
   These should not affect user code; if they do, adjust that code to use the top-level objects.
 
-  - :mod:`sdmx.api` is renamed :mod:`sdmx.client`.
-  - :mod:`sdmx.remote` is renamed :mod:`sdmx.session`.
-  - :mod:`sdmx.reader.sdmxml` is renamed :mod:`sdmx.reader.xml`, to conform with :mod:`sdmx.format.xml` and :mod:`sdmx.writer.xml`.
-  - :mod:`sdmx.reader.sdmxjson` is renamed :mod:`sdmx.reader.json`.
+  - :py:`sdmx.api` is renamed :mod:`sdmx.client`.
+  - :py:`sdmx.remote` is renamed :mod:`sdmx.session`.
+  - :py:`sdmx.reader.sdmxml` is renamed :mod:`sdmx.reader.xml`, to conform with :mod:`sdmx.format.xml` and :mod:`sdmx.writer.xml`.
+  - :py:`sdmx.reader.sdmxjson` is renamed :mod:`sdmx.reader.json`.
 
 v1.7 and earlier
 ================
@@ -475,7 +475,7 @@ New features
 - Enhance :func:`.to_xml` to handle :class:`DataMessages <.DataMessage>` (:pull:`13`).
 
   In v1.4.0, this feature supports a subset of DataMessages and DataSets.
-  If you have an example of a DataMessages that :mod:`sdmx1` 1.4.0 cannot write, please `file an issue on GitHub <https://github.com/khaeru/sdmx/issues/new>`_ with a file attachment.
+  If you have an example of a DataMessages that :mod:`sdmx` 1.4.0 cannot write, please `file an issue on GitHub <https://github.com/khaeru/sdmx/issues/new>`_ with a file attachment.
   SDMX-ML features used in such examples will be prioritized for future improvements.
 
 - Add ``compare()`` methods to :class:`.DataMessage`, :class:`.DataSet`, and related classes  (:pull:`13`).
@@ -525,7 +525,7 @@ New features
 
 - :attr:`.Item.hierarchical_id` and :meth:`.ItemScheme.get_hierarchical` create and search on IDs like ‘A.B.C’ for Item ‘A’ with child/grandchild Items ‘B’ and ‘C’ (:pull:`4`).
 - New methods :func:`.parent_class`, :func:`.get_reader_for_path`, :func:`.detect_content_reader`, and :func:`.reader.register` (:pull:`4`).
-- :class:`.sdmxml.Reader` uses an event-driven, rather than recursive/tree iterating, parser (:pull:`4`).
+- :class:`.sdmxml.Reader <.xml.v21.Reader>` uses an event-driven, rather than recursive/tree iterating, parser (:pull:`4`).
 - The codebase is improved to pass static type checking with `mypy <https://mypy.readthedocs.io>`_ (:pull:`4`).
 - Add :func:`.to_xml` to generate SDMX-ML for a subset of the IM (:pull:`3`).
 
@@ -545,11 +545,11 @@ v1.0.0 (2020-05-01)
     Users familiar with the IM can use :mod:`sdmx` without the need to understand implementation-specific details.
   - IM classes are no longer tied to :mod:`sdmx.reader` instances and can be created and manipulated outside of a read operation.
 
-- :mod:`sdmx.api` and :mod:`sdmx.remote` are reimplemented to (1) match the semantics of the requests_ package and (2) be much thinner.
+- :py:`sdmx.api` and :py:`sdmx.remote` are reimplemented to (1) match the semantics of the requests_ package and (2) be much thinner.
 - Data sources are modularized in :class:`~.source.Source`.
 
   - Idiosyncrasies of particular data sources (e.g. ESTAT's process for large requests) are handled by source-specific subclasses.
-    As a result, :mod:`sdmx.api` is leaner.
+    As a result, :py:`sdmx.api` is leaner.
 
 - Testing coverage is significantly expanded.
 
@@ -637,8 +637,8 @@ v0.7.0 (2017-06-10)
   - UNESCO (free registration required)
   - World Bank - World Integrated Trade Solution (WITS)
 
-* new feature: load metadata on data providers from json file; allow the user to add new agencies on the fly by specifying an appropriate JSON file using the :meth:`pandasdmx.api.Request.load_agency_profile`.
-* new :meth:`pandasdmx.api.Request.preview_data` providing a powerful fine-grain key validation algorithm by downloading all series-keys of a dataset and exposing them as a pandas DataFrame which is then mapped to the cartesian product of the given dimension values.
+* new feature: load metadata on data providers from json file; allow the user to add new agencies on the fly by specifying an appropriate JSON file using the :py:`pandasdmx.api.Request.load_agency_profile`.
+* new :meth:`pandasdmx.api.Request.preview_data <.Client.preview_data>` providing a powerful fine-grain key validation algorithm by downloading all series-keys of a dataset and exposing them as a pandas DataFrame which is then mapped to the cartesian product of the given dimension values.
   Works only with data providers such as ECB and UNSD which support "series-keys-only" requests.
   This feature could be wrapped by a browser-based UI for building queries.
 * SDMX-JSON reader: add support for flat and cross-sectional datasets, preserve dimension order where possible
@@ -678,7 +678,7 @@ New features
 
 * new reader module for SDMX JSON data messages
 * add OECD as data provider (data messages only)
-* :class:`pandasdmx.model.Category` is now an iterator over categorised objects.
+* :class:`pandasdmx.model.Category <.Category>` is now an iterator over categorised objects.
   This greatly simplifies category usage.
   Besides, categories with the same ID while belonging to multiple category schemes are no longer conflated.
 
@@ -686,7 +686,7 @@ API changes
 ~~~~~~~~~~~
 
 * Request constructor: make agency ID case-insensitive
-* As :class:`Category` is now an iterator over categorised objects, :class:`Categorisations` is no longer considered part of the public API.
+* As :class:`.Category` is now an iterator over categorised objects, :py:`Categorisations` is no longer considered part of the public API.
 
 Bug fixes
 ~~~~~~~~~
@@ -709,15 +709,15 @@ New features
 API changes
 ~~~~~~~~~~~
 
-* :class:`pandasdmx.api.Request` constructor accepts a ``log_level`` keyword argument which can be set to a log-level for the pandasdmx logger and its children (currently only pandasdmx.api)
-* :class:`pandasdmx.api.Request` now has a ``timeout`` property to set the timeout for http requests
+* :py:`pandasdmx.api.Request` constructor accepts a ``log_level`` keyword argument which can be set to a log-level for the pandasdmx logger and its children (currently only pandasdmx.api)
+* :py:`pandasdmx.api.Request` now has a ``timeout`` property to set the timeout for http requests
 * extend api.Request._agencies configuration to specify agency- and resource-specific settings such as headers.
   Future versions may exploit this to provide reader selection information.
 * api.Request.get: specify http_headers per request. Defaults are set according to agency configuration
 * Response instances expose Message attributes to make application code more succinct
-* rename :class:`pandasdmx.api.Message` attributes to singular form.
+* rename :class:`pandasdmx.api.Message <.Message>` attributes to singular form.
   Old names are deprecated and will be removed in the future.
-* :class:`pandasdmx.api.Request` exposes resource names such as data, datastructure, dataflow etc. as descriptors calling 'get' without specifying the resource type as string.
+* :py:`pandasdmx.api.Request` exposes resource names such as data, datastructure, dataflow etc. as descriptors calling 'get' without specifying the resource type as string.
   In interactive environments, this saves typing and enables code completion.
 * data2pd writer: return attributes as namedtuples rather than dict
 * use patched version of namedtuple that accepts non-identifier strings as field names and makes all fields accessible through dict syntax.
@@ -725,7 +725,7 @@ API changes
 * sdmxml reader: return strings or unicode strings instead of LXML smart strings
 * sdmxml reader: remove most of the specialized read methods.
   Adapt model to use generalized methods. This makes code more maintainable.
-* :class:`sdmx.model.Representation` for DSD attributes and dimensions now supports text not just code lists.
+* :class:`sdmx.model.Representation <.Representation>` for DSD attributes and dimensions now supports text not just code lists.
 
 Other changes and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -758,7 +758,7 @@ v0.3.0 (2015-09-22)
 v0.2.2
 ------
 
-* Make HTTP connections configurable by exposing the `requests.get API <http://www.python-requests.org/en/latest/>`_ through the :class:`pandasdmx.api.Request` constructor.
+* Make HTTP connections configurable by exposing the `requests.get API <http://www.python-requests.org/en/latest/>`_ through the :py:`pandasdmx.api.Request` constructor.
   Hence, proxy servers, authorisation information and other HTTP-related parameters consumed by ``requests.get`` can be specified for each ``Request`` instance and used in subsequent requests.
   The configuration is exposed as a dict through a new ``Request.client.config`` attribute.
 * Responses have a new ``http_headers`` attribute containing the HTTP headers returned by the SDMX server
