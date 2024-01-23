@@ -47,6 +47,7 @@ CT1 = [
 
 # XML tag name and class name differ
 CT2 = [
+    ("model.Annotation", "com:Annotation"),
     ("model.Agency", "str:Agency"),  # Order matters
     ("model.Agency", "mes:Receiver"),
     ("model.Agency", "mes:Sender"),
