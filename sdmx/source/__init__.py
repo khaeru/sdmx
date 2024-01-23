@@ -4,10 +4,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
 from io import IOBase
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Set, Tuple, Union
 
 from requests import Response
 
+from sdmx.format import Version
 from sdmx.model.v21 import DataStructureDefinition
 from sdmx.rest import Resource
 
@@ -69,6 +70,9 @@ class Source:
     #: :class:`.DataContentType` indicating the type of data returned by the source.
     data_content_type: DataContentType = DataContentType.XML
 
+    #: SDMX REST API version(s) supported.
+    versions: Set[Version] = field(default_factory=lambda: {Version["2.1"]})
+
     #: Mapping from :class:`.Resource` values to :class:`bool` indicating support for
     #: SDMX-REST endpoints and features. If not supplied, the defaults from
     #: :data:`SDMX_ML_SUPPORTS` are used.
@@ -88,6 +92,11 @@ class Source:
         # Convert an e.g. string to a DataContentType member
         if not isinstance(self.data_content_type, DataContentType):
             self.data_content_type = DataContentType[self.data_content_type]
+
+        # Convert str to a Version member
+        self.versions = set(
+            map(lambda v: v if isinstance(v, Version) else Version[v], self.versions)
+        )
 
         # Default feature support: True for sdmx_ml, False otherwise
         sdmx_ml = self.data_content_type is DataContentType.XML
