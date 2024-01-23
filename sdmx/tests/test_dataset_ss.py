@@ -128,7 +128,7 @@ class TestSeriesDataSet(StructuredMessageTest):
         s3 = sdmx.to_pandas(data.series[3], attributes="")
         assert isinstance(s3, pd.Series)
         # With expected values
-        assert s3[0] == 1.2894
+        assert s3.iloc[0] == 1.2894
 
         # Single series can be converted with attributes
         s3_attr = sdmx.to_pandas(data.series[3], attributes="osgd")
