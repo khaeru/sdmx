@@ -186,7 +186,7 @@ def _extracted_zipball(version: Version) -> Path:
     release_json = requests.get(url=url, headers=gh_headers).json()
     try:
         zipball_url = release_json["zipball_url"]
-    except KeyError:
+    except KeyError:  # pragma: no cover
         log.debug(release_json)
         raise RuntimeError("Failed to download SDMX-ML schema bundle")
 
