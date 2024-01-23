@@ -5,10 +5,11 @@ from warnings import warn
 
 import requests
 
+from sdmx.format import Version
 from sdmx.message import Message
 from sdmx.model.v21 import DataStructureDefinition, MaintainableArtefact
 from sdmx.reader import get_reader_for_media_type
-from sdmx.rest import URL, Resource
+from sdmx.rest import Resource
 from sdmx.session import ResponseIO, Session
 from sdmx.source import NoSource, list_sources, sources
 
@@ -217,6 +218,14 @@ class Client:
             )
 
         # Construct the URL
+        # TODO specify API version for sources that support multiple API versions at the
+        #      same URL
+        if {Version["3.0.0"]} == self.source.versions:
+            from sdmx.rest.v30 import URL
+        elif Version["2.1"] in self.source.versions:
+            from sdmx.rest.v21 import URL
+        else:  # pragma: no cover
+            raise NotImplementedError(f"Query against {self.source.versions}")
         url = URL(
             source=self.source,
             resource_type=resource_type,
