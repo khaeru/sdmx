@@ -1,11 +1,12 @@
 import io
 import re
+from pathlib import Path
 
 import pytest
 
 import sdmx
 from sdmx.format import Version, xml
-from sdmx.format.xml.common import _gh_zipball
+from sdmx.format.xml.common import _extracted_zipball
 from sdmx.message import StructureMessage
 from sdmx.model import v21
 
@@ -38,14 +39,14 @@ def mock_gh_api():
     """
     import requests_mock
 
-    base = "https://api.github.com/repos/sdmx-twg/"
+    base = "https://api.github.com/repos/sdmx-twg/sdmx-ml"
 
     with requests_mock.Mocker(real_http=True) as m:
-        for api_url, zipball_url in (
-            ("sdmx-ml-v2_1/releases/latest", "sdmx-ml-v2_1/zipball/v1.0.2"),
-            ("sdmx-ml/releases/latest", "sdmx-ml/zipball/v3.0.0"),
-        ):
-            m.get(f"{base}{api_url}", json=dict(zipball_url=f"{base}{zipball_url}"))
+        for v in "2.1", "3.0":
+            m.get(
+                f"{base}/releases/tags/v{v}",
+                json=dict(zipball_url=f"{base}/zipball/v{v}"),
+            )
         yield
 
 
@@ -53,8 +54,8 @@ def mock_gh_api():
 def installed_schemas(mock_gh_api, tmp_path_factory):
     """Fixture that ensures schemas are installed locally in a temporary directory."""
     dir = tmp_path_factory.mktemp("schemas")
-    sdmx.install_schemas(dir, Version["2.1"])
-    sdmx.install_schemas(dir, Version["3.0.0"])
+    sdmx.install_schemas(dir.joinpath("2.1"), Version["2.1"])
+    sdmx.install_schemas(dir.joinpath("3.0"), Version["3.0.0"])
     yield dir
 
 
@@ -71,7 +72,7 @@ def test_install_schemas(installed_schemas, version):
     """Test that XSD files are downloaded and ready for use in validation."""
     # Look for a couple of the expected files
     for schema_doc in ("SDMXCommon.xsd", "SDMXMessage.xsd"):
-        assert installed_schemas.joinpath(schema_doc).exists()
+        assert installed_schemas.joinpath(version, schema_doc).exists()
 
 
 @pytest.mark.network
@@ -105,32 +106,28 @@ def test_validate_xml_no_schemas(tmp_path, specimen, installed_schemas):
 
 
 @pytest.mark.network
-def test_validate_xml_from_v2_1_samples(tmp_path, installed_schemas):
+def test_validate_xml_from_v2_1_samples(tmp_path, specimen, installed_schemas):
     """Use official samples to ensure validation of v2.1 messages works correctly."""
-    with _gh_zipball(Version["2.1"]) as zf:
-        zf.extractall(path=tmp_path)
-    extracted_content = list(tmp_path.glob("sdmx-twg-sdmx-ml*"))[0]
+    extracted_content = _extracted_zipball(Version["2.1"])
 
     # Schemas as just in a flat directory
     schema_dir = extracted_content.joinpath("schemas")
 
     # Samples are somewhat spread out, and some are known broken so we pick a bunch
-    samples_dir = extracted_content.joinpath("samples")
-    samples = [
-        samples_dir / "common" / "common.xml",
-        samples_dir / "demography" / "demography.xml",
-        samples_dir / "demography" / "esms.xml",
-        samples_dir / "exr" / "common" / "exr_common.xml",
-        samples_dir / "exr" / "ecb_exr_ng" / "ecb_exr_ng_full.xml",
-        samples_dir / "exr" / "ecb_exr_ng" / "ecb_exr_ng.xml",
-        samples_dir / "query" / "query_cl_all.xml",
-        samples_dir / "query" / "response_cl_all.xml",
-        samples_dir / "query" / "query_esms_children.xml",
-        samples_dir / "query" / "response_esms_children.xml",
-    ]
-
-    for sample in samples:
-        assert sdmx.validate_xml(sample, schema_dir, version="2.1")
+    for parts in [
+        ("v21", "xml", "common", "common.xml"),
+        ("v21", "xml", "demography", "demography.xml"),
+        ("v21", "xml", "demography", "esms.xml"),
+        ("ECB_EXR", "common.xml"),
+        ("ECB_EXR", "ng-structure-full.xml"),
+        ("ECB_EXR", "ng-structure.xml"),
+        ("v21", "xml", "query", "query_cl_all.xml"),
+        ("v21", "xml", "query", "response_cl_all.xml"),
+        ("v21", "xml", "query", "query_esms_children.xml"),
+        ("v21", "xml", "query", "response_esms_children.xml"),
+    ]:
+        with specimen(str(Path(*parts))) as sample:
+            assert sdmx.validate_xml(sample, schema_dir, version="2.1")
 
 
 @pytest.mark.network
@@ -164,7 +161,7 @@ def test_validate_xml_invalid_doc(tmp_path, installed_schemas):
     msg_path.write_bytes(sdmx.to_xml(msg))
 
     # Expect validation to fail
-    assert not sdmx.validate_xml(msg_path, schema_dir=installed_schemas)
+    assert not sdmx.validate_xml(msg_path, schema_dir=installed_schemas.joinpath("2.1"))
 
 
 def test_validate_xml_invalid_message_type():
@@ -180,9 +177,7 @@ def test_validate_xml_invalid_message_type():
 @pytest.mark.network
 def test_validate_xml_from_v3_0_samples(tmp_path, installed_schemas):
     """Use official samples to ensure validation of v3.0 messages works correctly."""
-    with _gh_zipball(Version["3.0.0"]) as zf:
-        zf.extractall(path=tmp_path)
-    extracted_content = list(tmp_path.glob("sdmx-twg-sdmx-ml*"))[0]
+    extracted_content = _extracted_zipball(Version["3.0.0"])
 
     # Schemas as just in a flat directory
     schema_dir = extracted_content.joinpath("schemas")
