@@ -526,6 +526,13 @@ class TestSGR(DataSourceTest):
     source_id = "SGR"
 
 
+class TestSGR3(DataSourceTest):
+    """Query the `SGR` source using SDMX 3.0."""
+
+    source_id = "SGR"
+    endpoint_args = {"codelist": dict(params=dict(format="sdmx-3.0"))}
+
+
 class TestSPC(DataSourceTest):
     source_id = "SPC"
     xfail = {
