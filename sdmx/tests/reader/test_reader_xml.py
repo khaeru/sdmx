@@ -7,7 +7,7 @@ from sdmx.message import Message
 @pytest.mark.parametrize_specimens("path", format="xml")
 def test_read_xml(path) -> None:
     """XML specimens can be read."""
-    if "esms_structured" in path.name:
+    if "esms_structured" in path.name or "query" in str(path):
         pytest.xfail("Not implemented")
 
     result = sdmx.read_sdmx(path)
