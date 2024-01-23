@@ -1,29 +1,17 @@
 import logging
 import re
-from contextlib import contextmanager
+import zipfile
 from functools import lru_cache
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
-from typing import (
-    IO,
-    TYPE_CHECKING,
-    Generator,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from shutil import copytree
+from typing import IO, Iterable, List, Mapping, Optional, Tuple, Union
 
 from lxml import etree
 from lxml.etree import QName
 
 from sdmx.format import Version
-
-if TYPE_CHECKING:
-    import zipfile
 
 log = logging.getLogger(__name__)
 
@@ -166,18 +154,31 @@ def validate_xml(
         return xml_schema.validate(msg_doc)
 
 
-@contextmanager
-def _gh_zipball(version: Version) -> Generator["zipfile.ZipFile", None, None]:
-    import zipfile
+def _extracted_zipball(version: Version) -> Path:
+    """Retrieve, cache, and extract the SDMX-ML schemas for `version`.
 
+    1. Query the GitHub REST API to identify a URL for the `version` in zipball format.
+    2. Download and cache the zipball. The file is not downloaded if it already exists.
+    3. Unpack the archive.
+
+    Actions (2) and (3) are performed in the user's cache directory (for instance,
+    :file:`$HOME/.cache/sdmx/`). :func:`install_schemas` handles copying the extracted
+    files to other locations.
+
+    Returns
+    -------
+    Path
+        Path to the root folder of the unpacked archive.
+    """
     import platformdirs
     import requests
 
     # Map SDMX-ML schema versions to repo paths
-    url_part = {Version["2.1"]: "sdmx-ml-v2_1", Version["3.0.0"]: "sdmx-ml"}
-
     # Check the latest release to get the URL to the schema zip
-    url = f"https://api.github.com/repos/sdmx-twg/{url_part[version]}/releases/latest"
+    url = (
+        "https://api.github.com/repos/sdmx-twg/sdmx-ml/releases/tags/"
+        + {Version["2.1"]: "v2.1", Version["3.0.0"]: "v3.0.0"}[version]
+    )
     gh_headers = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -194,21 +195,25 @@ def _gh_zipball(version: Version) -> Generator["zipfile.ZipFile", None, None]:
 
     # Filename indicated by the HTTP response
     filename = resp.headers["content-disposition"].split("filename=")[-1]
-    # Always cache in same location
+    # Location for the cached zipball
     target = platformdirs.user_cache_path("sdmx").joinpath(filename)
 
-    # Avoid downloading if the same file is already retrieved
+    # Avoid downloading if the same file is already present
     if target.exists():
-        log.info(f"Already downloaded: {target}")
+        log.info(f"Use existing {target}")
         resp.close()
     else:
         # Write response content to file
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(resp.content)
 
-    # Yield a Zipfile pointing at the cached file
     with zipfile.ZipFile(target) as zf:
-        yield zf
+        # Unpack the entire archive
+        zf.extractall(target.parent)
+        # The first name list is the top-level directory within the file
+        subdir = zf.namelist()[0]
+
+    return target.parent.joinpath(subdir)
 
 
 def _handle_validate_args(
@@ -237,28 +242,31 @@ def _handle_validate_args(
 def install_schemas(
     schema_dir: Optional[Path] = None,
     version: Union[str, Version] = Version["2.1"],
-) -> None:
-    """Cache XML Schema documents locally for use during message validation.
+) -> Path:
+    """Install SDMX-ML XML Schema documents for use with :func:`.validate_xml`.
 
     Parameters
     ----------
-    schema_dir
-        The directory where XSD schemas will be downloaded to.
-    version
-        The SDMX-ML schema version to validate against. One of ``2.1`` or ``3.0``.
-    """
-    import zipfile
+    schema_dir : Path, optional
+        The directory where XSD schemas will be downloaded to. Default: a subdirectory
+        named :file:`sdmx/{version}` within the :meth:`platformdirs.user_cache_path`.
+    version : str or Version, optional
+        The SDMX-ML schema version to install. One of :py:`Version["2.1"]` (default),
+        :py:`Version["3.0.0"]`, or :class:`str` equivalent.
 
+    Returns
+    -------
+    Path
+        The path containing the installed schemas. If `schema_dir` is given, the return
+        value is identical to the parameter.
+    """
     schema_dir, version = _handle_validate_args(schema_dir, version)
 
-    with _gh_zipball(version) as zf:
-        # Extract the schemas to the destination directory
-        # We can't use ZipFile.extract here because it will keep the directory structure
-        for xsd in filter(re.compile(r".*schemas.*\.xsd").match, zf.namelist()):
-            xsd_path = zipfile.Path(zf, at=xsd)
-            target = schema_dir.joinpath(xsd_path.name)
-            # The encoding needs to be supplied here for Windows to read the file
-            target.write_text(xsd_path.read_text(encoding="utf-8"))
+    # Copy the entire "schemas" subtree recursively
+    copytree(
+        _extracted_zipball(version).joinpath("schemas"), schema_dir, dirs_exist_ok=True
+    )
+    return schema_dir
 
 
 class XMLFormat:
