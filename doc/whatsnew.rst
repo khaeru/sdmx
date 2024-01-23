@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.13.0 (2024-01-23)
+====================
 
 - Expand :mod:`.model` and :mod:`.reader.xml` support for metadata structures and metadata sets (§7 of the Information Model in both SDMX 2.1 and 3.0) (:issue:`73`, :pull:`152`).
   This includes the additional classes:
