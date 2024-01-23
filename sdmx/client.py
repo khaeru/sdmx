@@ -498,7 +498,7 @@ class Client:
         reader = Reader()
 
         # Parse the message, using any provided or auto-queried DSD
-        msg = reader.read_message(response_content, dsd=kwargs.get("dsd", None))
+        msg = reader.read_message(response_content, structure=kwargs.get("dsd", None))
 
         # Store the HTTP response with the message
         msg.response = response
