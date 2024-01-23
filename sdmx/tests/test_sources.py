@@ -259,6 +259,17 @@ class TestESTAT(DataSourceTest):
         assert cl4.is_partial and 0 < len(cl4) < len(cl3)
 
 
+class TestESTAT3(DataSourceTest):
+    source_id = "ESTAT3"
+
+    # Examples from
+    # https://wikis.ec.europa.eu/display/EUROSTATHELP/API+-+Getting+started+with+SDMX3.0+API
+    endpoint_args = {
+        "codelist": dict(resource_id="FREQ"),
+        "dataflow": dict(resource_id="ISOC_CI_ID_H", version="1.0"),
+    }
+
+
 class TestESTAT_COMEXT(DataSourceTest):
     source_id = "ESTAT_COMEXT"
 

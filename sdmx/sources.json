@@ -133,6 +133,14 @@
     }
   },
   {
+    "id": "ESTAT3",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/3.0",
+    "versions": [
+      "3.0.0"
+    ],
+    "name": "Eurostat (SDMX 3.0)"
+  },
+  {
     "id": "ESTAT_COMEXT",
     "name": "Eurostat (Comext and Prodcom datasets)",
     "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1",
