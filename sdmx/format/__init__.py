@@ -2,12 +2,7 @@ import logging
 from dataclasses import InitVar, dataclass, field
 from enum import Enum, IntFlag
 from functools import lru_cache
-from typing import List, Optional, Union
-
-try:
-    from typing import Literal
-except ImportError:  # Python 3.7
-    from typing_extensions import Literal  # type: ignore
+from typing import List, Literal, Optional, Union
 
 from sdmx.util import parse_content_type
 
@@ -26,8 +21,12 @@ log = logging.getLogger(__name__)
 Flag = IntFlag("Flag", "data meta ss ts")
 f = Flag
 
-#: SDMX standard versions.
-Version = Enum("Version", "1.0.0 2.0.0 2.1 3.0.0 unknown")
+#: SDMX standard versions. In this enumeration, the strings "3.0.0" and "3.0" evaluate
+#: to the same member.
+Version = Enum(
+    "Version",
+    {"1.0.0": 1, "2.0.0": 2, "2.1": 2.1, "3.0.0": 3, "3.0": 3, "unknown": None},
+)
 
 
 @dataclass(frozen=True)

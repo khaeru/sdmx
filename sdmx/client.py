@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 from warnings import warn
 
 import requests
@@ -11,6 +11,9 @@ from sdmx.reader import get_reader_for_media_type
 from sdmx.rest import URL, Resource
 from sdmx.session import ResponseIO, Session
 from sdmx.source import NoSource, list_sources, sources
+
+if TYPE_CHECKING:
+    import sdmx.source
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +55,7 @@ class Client:
     cache: Dict[str, Message] = {}
 
     #: :class:`.source.Source` for requests sent from the instance.
-    source = None
+    source: "sdmx.source.Source"
 
     #: :class:`.Session` for queries sent from the instance.
     session: requests.Session

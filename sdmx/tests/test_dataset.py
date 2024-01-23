@@ -114,7 +114,7 @@ class TestGenericSeriesDataSet(DataMessageTest):
         assert isinstance(s3, pd.Series)
 
         # Test a particular value
-        assert s3[0] == 1.2894
+        assert s3.iloc[0] == 1.2894
 
         # Length of index
         assert len(s3.index.names) == 6
