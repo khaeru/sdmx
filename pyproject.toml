@@ -42,10 +42,12 @@ cache = ["requests-cache"]
 docs = ["IPython", "sphinx >=4", "sphinx-book-theme"]
 tests = [
   "Jinja2",
+  "pyarrow",              # Suppress a warning from pandas >=2.2, <3.0
   "pytest >= 5",
   "pytest-cov",
   "pytest-xdist",
   "requests-mock >= 1.4",
+  "sdmx1[cache]",
 ]
 
 [project.urls]
