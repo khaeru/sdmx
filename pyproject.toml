@@ -34,7 +34,6 @@ dependencies = [
   "platformdirs >= 4.1",
   "python-dateutil",
   "requests >= 2.7",
-  "typing_extensions",
 ]
 
 [project.optional-dependencies]
