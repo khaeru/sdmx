@@ -1,10 +1,11 @@
 """Information related to the SDMX-REST web service standard."""
+import abc
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 from warnings import warn
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     import sdmx.source
 
 # Mapping from Resource value to class name.
@@ -131,13 +132,8 @@ class Resource(str, Enum):
 
 
 @dataclass
-class URL:
-    """Utility class to build SDMX 2.1 REST web service URLs.
-
-    See also
-    --------
-    https://github.com/sdmx-twg/sdmx-rest/blob/v1.5.0/v2_1/ws/rest/src/sdmx-rest.yaml
-    """
+class URL(abc.ABC):
+    """Utility class to build SDMX REST web service URLs."""
 
     source: "sdmx.source.Source"
 
@@ -165,20 +161,6 @@ class URL:
                 self.provider if self.provider else getattr(self.source, "id", None)
             )
 
+    @abc.abstractmethod
     def join(self) -> str:
         """Join the URL parts, returning a complete URL."""
-        resource_id = "all" if self.resource_id is None else self.resource_id
-        version = "latest" if self.version is None else self.version
-
-        parts = [self.source.url, self.resource_type.name]
-
-        if self.resource_type in (Resource.data, Resource.availableconstraint):
-            parts.append(self.resource_id)
-            if self.key:
-                parts.append(self.key)
-        else:
-            parts.extend([self.agency_id, resource_id, version])
-
-        assert None not in parts, parts
-
-        return "/".join(parts)
