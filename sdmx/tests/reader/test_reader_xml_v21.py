@@ -8,6 +8,7 @@ from lxml import etree
 
 import sdmx
 from sdmx.format.xml.v21 import qname
+from sdmx.model import common
 from sdmx.model.v21 import Facet, FacetType, FacetValueType
 from sdmx.reader.xml.v21 import Reader, XMLParseError
 from sdmx.writer.xml import Element as E
@@ -130,6 +131,28 @@ def test_gh_142(specimen):
 
     # No annotations attached to any Code
     assert all(0 == len(code.annotations) for code in cl)
+
+
+def test_gh_159():
+    """Test of https://github.com/khaeru/sdmx/pull/159."""
+    # Agency and contained Contact with distinct names
+    elem = E(
+        qname("str:Agency"),
+        E(qname("com:Name"), "Foo Agency"),
+        E(qname("str:Contact"), E(qname("com:Name"), "Jane Smith")),
+        id="FOO",
+    )
+
+    # - Create a reader
+    # - Convert to a file-like object compatible with read_message()
+    # - Parse the element
+    # - Retrieve the resulting object
+    reader = Reader()
+    reader.read_message(BytesIO(etree.tostring(elem)))
+    obj = reader.pop_single(common.Agency)
+
+    assert "Foo Agency" == str(obj.name)
+    assert "Jane Smith" == str(obj.contact[0].name)
 
 
 # Each entry is a tuple with 2 elements:

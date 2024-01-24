@@ -1299,14 +1299,12 @@ def _cat(reader, elem):
 
 @start("mes:Contact str:Contact", only=False)
 def _contact_start(reader, elem):
-    # Avoid stealing the name, description, and annotations of the parent Item
+    # Avoid stealing the name of the parent Item
     reader.stash("Name")
 
 
 @end("mes:Contact str:Contact", only=False)
 def _contact(reader, elem):
-    reader.unstash()
-
     contact = model.Contact(
         telephone=reader.pop_single("Telephone"),
         uri=reader.pop_all("URI"),
@@ -1316,6 +1314,8 @@ def _contact(reader, elem):
     add_localizations(contact.name, reader.pop_all("Name"))
     add_localizations(contact.org_unit, reader.pop_all("Department"))
     add_localizations(contact.responsibility, reader.pop_all("Role"))
+
+    reader.unstash()
 
     return contact
 
