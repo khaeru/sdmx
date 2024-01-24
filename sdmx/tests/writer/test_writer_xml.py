@@ -50,7 +50,11 @@ def dks(dsd):
 
 def test_contact() -> None:
     c = m.Contact(
-        name="John Smith", org_unit="Human Resources", telephone="+1234567890"
+        name="John Smith",
+        org_unit="Human Resources",
+        telephone="+1234567890",
+        uri=["https://example.org"],
+        email=["john.smith@example.org"],
     )
 
     result = sdmx.to_xml(c, pretty_print=True)
@@ -60,6 +64,8 @@ def test_contact() -> None:
   <com:Name xml:lang="en">John Smith</com:Name>
   <str:Department xml:lang="en">Human Resources</str:Department>
   <str:Telephone>+1234567890</str:Telephone>
+  <str:URI>https://example.org</str:URI>
+  <str:Email>john.smith@example.org</str:Email>
 </str:Contact>
 """
     )
