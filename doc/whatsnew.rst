@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.13.1 (2024-01-24)
+====================
 
 - Bug fix for reading :class:`.Agency` from SDMX-ML 2.1: name of the parent :class:`.Organisation` would be incorrectly attached to the Contact (:pull:`159`).
 - Bug fix for writing :class:`.Contact` to SDMX-ML 2.1: :attr:`.Contact.uri` and :attr:`.Contact.email` would be written as, for instance, :xml:`<str:URI text="https://example.com"/>` instead of :xml:`<str:URI>https://example.com</str:URI>` (:pull:`159`).
