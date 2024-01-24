@@ -406,8 +406,8 @@ def _contact(obj: model.Contact):
         + i11lstring(obj.org_unit, "str:Department")
         + i11lstring(obj.responsibility, "str:Role")
         + ([Element("str:Telephone", obj.telephone)] if obj.telephone else [])
-        + [Element("str:URI", text=value) for value in obj.uri]
-        + [Element("str:Email", text=value) for value in obj.email]
+        + [Element("str:URI", value) for value in obj.uri]
+        + [Element("str:Email", value) for value in obj.email]
     )
     return elem
 
