@@ -20,7 +20,7 @@ Download the metadata and expose:
 
 .. ipython:: python
 
-    metadata = estat.datastructure("UNE_RT_A")
+    metadata = estat.datastructure("UNE_RT_A", params=dict(references="descendants"))
     metadata
 
 Explore the contents of some code lists:

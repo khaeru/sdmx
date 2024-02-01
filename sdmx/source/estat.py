@@ -27,19 +27,25 @@ def handle_references_param(kwargs: Dict) -> None:
       with "descendants".
     - Replaces other, unsupported values with "none".
     """
-    resource_type = kwargs.get("resource_type")
+    try:
+        resource_type = kwargs.get("resource_type") or Resource.from_obj(
+            kwargs["resource"]
+        )
+    except KeyError:
+        resource_type = None
+    resource_id = kwargs.get("resource_id") or getattr(
+        kwargs.get("resource", None), "id", None
+    )
     params = kwargs.setdefault("params", {})
 
     # Preempt default values that would be set by Client._request_from_args()
-    if (
-        "references" not in params
-        and (
-            resource_type in {Resource.dataflow, Resource.datastructure}
-            and kwargs.get("resource_id")
-        )
-        or resource_type == Resource.categoryscheme
-    ):
-        params["references"] = "descendants"
+    if not params.get("references"):
+        if resource_type == Resource.datastructure and resource_id:
+            params["references"] = "descendants"
+        elif (
+            resource_type == Resource.dataflow and resource_id
+        ) or resource_type == Resource.categoryscheme:
+            params["references"] = "descendants"
 
     # Replace unsupported values
     references = params.get("references")
