@@ -275,6 +275,7 @@ class TestCOMP(DataSourceTest):
 
     endpoint_args = {
         "data": dict(resource_id="AID_RAIL"),
+        "dataflow": dict(resource_id="AID_SCB_OBJ"),
     }
 
 
