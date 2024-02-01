@@ -3,8 +3,10 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Automatically handle unsupported values of the ``?references=...`` query parameter for the :ref:`COMP` data sources (:issue:`162`, :pull:`163`).
 
 v2.13.1 (2024-01-24)
 ====================
