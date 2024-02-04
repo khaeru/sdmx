@@ -697,10 +697,9 @@ start(
     str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
     str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
     str:HierarchicalCodelists str:Metadataflows str:MetadataStructures
-    str:MetadataStructureComponents str:NamePersonalisations
-    str:None str:OrganisationSchemes str:ProvisionAgreements str:Rulesets
-    str:StructureSets str:ToVtlSubSpace str:Transformations str:UserDefinedOperators
-    str:VtlMappings
+    str:MetadataStructureComponents str:NamePersonalisations str:OrganisationSchemes
+    str:ProvisionAgreements str:Rulesets str:StructureSets str:ToVtlSubSpace
+    str:Transformations str:UserDefinedOperators str:VtlMappings
     """
     # Contents of references
     ":Ref :URN"
