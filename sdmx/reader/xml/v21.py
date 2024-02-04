@@ -650,8 +650,8 @@ class Reader(metaclass=DispatchingReader):
                 self.ignore.add(id(maint))
             obj.maintainer = maint
 
-        # Maybe retrieve an existing object of the same class and ID
-        existing = self.get_single(cls, obj.id)
+        # Maybe retrieve an existing object of the same class, ID, and version (if any)
+        existing = self.get_single(cls, obj.id, version=obj.version)
 
         if existing and (
             existing.compare(obj, strict=True) or existing.urn == sdmx.urn.make(obj)
