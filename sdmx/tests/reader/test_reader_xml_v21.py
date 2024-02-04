@@ -7,8 +7,9 @@ import pytest
 from lxml import etree
 
 import sdmx
+from sdmx import urn
 from sdmx.format.xml.v21 import qname
-from sdmx.model import common
+from sdmx.model import common, v21
 from sdmx.model.v21 import Facet, FacetType, FacetValueType
 from sdmx.reader.xml.v21 import Reader, XMLParseError
 from sdmx.writer.xml import Element as E
@@ -153,6 +154,50 @@ def test_gh_159():
 
     assert "Foo Agency" == str(obj.name)
     assert "Jane Smith" == str(obj.contact[0].name)
+
+
+def test_gh_164(specimen):
+    """Test of https://github.com/khaeru/sdmx/issues/164."""
+    with specimen("IMF_STA/DSD_GFS.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    # Retrieve objects directly from the message
+    dsd = msg.structure["DSD_GFS"]
+    IMF_CL_COUNTRY = msg.codelist["CL_COUNTRY"]
+    IMF_CS_MASTER = msg.concept_scheme["IMF:CS_MASTER"]
+    IMF_STA_CS_MASTER = msg.concept_scheme["IMF_STA:CS_MASTER"]
+
+    # Component's concept identity is resolved within the correct concept scheme
+    c = dsd.dimensions.get("COUNTRY").concept_identity
+    cs = c.parent
+    assert cs.urn.endswith("ConceptScheme=IMF:CS_MASTER(4.0.0)")
+    assert urn.make(c).endswith("Concept=IMF:CS_MASTER(4.0.0).COUNTRY")
+
+    # The reference is to the full concept scheme in the same message
+    assert cs is IMF_CS_MASTER
+    assert 56 == len(cs) == len(IMF_CS_MASTER)
+
+    # Concept's core representation, per that scheme, can be retrieved
+    assert c.core_representation.enumerated is IMF_CL_COUNTRY
+
+    # Another component's concept identity is resolved within a concept scheme with the
+    # same ID, but different maintainer and version:
+    c = dsd.attributes.get("STATUS").concept_identity
+    cs = c.parent
+    assert cs.urn.endswith("ConceptScheme=IMF_STA:CS_MASTER(1.0.1)")
+    assert urn.make(c).endswith("Concept=IMF_STA:CS_MASTER(1.0.1).STATUS")
+
+    # The reference is to the full concept scheme in the same message
+    assert cs is IMF_STA_CS_MASTER
+    assert 12 == len(cs) == len(IMF_STA_CS_MASTER)
+
+    # Concept's core representation as a text / string is parsed and stored
+    facet = c.core_representation.non_enumerated[0]
+    assert common.FacetValueType["string"] == facet.value_type
+
+    # NoSpecifiedRelationship is correctly parsed
+    da = dsd.attributes.get("FULL_CITATION")
+    assert isinstance(da.related_to, v21.NoSpecifiedRelationship)
 
 
 # Each entry is a tuple with 2 elements:

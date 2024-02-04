@@ -275,6 +275,7 @@ class SpecimenCollection:
                 ("IMF", "ECOFIN_DSD-structure.xml"),
                 ("IMF", "hierarchicalcodelist-0.xml"),
                 ("IMF", "structureset-0.xml"),
+                ("IMF_STA", "DSD_GFS.xml"),  # khaeru/sdmx#164
                 ("INSEE", "CNA-2010-CONSO-SI-A17-structure.xml"),
                 ("INSEE", "dataflow.xml"),
                 ("INSEE", "IPI-2010-A21-structure.xml"),
