@@ -71,7 +71,9 @@ def test_doc_index1():
 
     # Same effect
     structure_response = estat.get(
-        "datastructure", flow_response.dataflow.UNE_RT_A.structure.id
+        "datastructure",
+        flow_response.dataflow.UNE_RT_A.structure.id,
+        params=dict(references="descendants"),
     )
 
     # Even better: Client.get(…) should examine the class and ID of the object

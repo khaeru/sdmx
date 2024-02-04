@@ -275,6 +275,7 @@ class TestCOMP(DataSourceTest):
 
     endpoint_args = {
         "data": dict(resource_id="AID_RAIL"),
+        "dataflow": dict(resource_id="AID_SCB_OBJ"),
     }
 
 
@@ -283,6 +284,7 @@ class TestEMPL(DataSourceTest):
 
     endpoint_args = {
         "data": dict(resource_id="LMP_IND_EXP"),
+        "dataflow": dict(resource_id="LMP_IND_EXP"),
     }
 
 
@@ -291,6 +293,7 @@ class TestGROW(DataSourceTest):
 
     endpoint_args = {
         "data": dict(resource_id="POST_CUBE1_X"),
+        "dataflow": dict(resource_id="POST_CUBE1_X"),
     }
 
 

@@ -181,8 +181,8 @@ Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=40708145>`__
 - In some cases, the service can have a long response time, so :mod:`sdmx` will time out.
   Increase the timeout attribute if necessary.
 
-.. autoclass:: sdmx.source.estat.Source()
-   :members:
+.. automodule:: sdmx.source.estat
+   :members: Source, handle_references_param
 
 .. _ESTAT_COMEXT:
 
@@ -213,6 +213,14 @@ In order to identify available data flows:
    sm = COMP.dataflow()
    print(sm.dataflow)
 
+.. automodule:: sdmx.source.comp
+   :members:
+
+.. automodule:: sdmx.source.empl
+   :members:
+
+.. automodule:: sdmx.source.grow
+   :members:
 
 .. _ILO:
 

@@ -1,6 +1,7 @@
 import logging
 from tempfile import NamedTemporaryFile
 from time import sleep
+from typing import Dict
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -10,6 +11,47 @@ from sdmx.rest import Resource
 from sdmx.source import Source as BaseSource
 
 log = logging.getLogger(__name__)
+
+
+def handle_references_param(kwargs: Dict) -> None:
+    """Handle the "references" query parameter for ESTAT and similar.
+
+    For this parameter, the server software behind ESTAT's data source only supports
+    (as of 2022-11-13) the values "children", "descendants", or "none". Other values—
+    including the "all" or parentsandsiblings" used as defaults by :class:`.Client`—
+    result in error messages.
+
+    This handler, used via :meth:`.Source.modify_request_args`:
+
+    - Replaces the defaults of "all" or "parentsandsiblings" set by :class:`.Client`
+      with "descendants".
+    - Replaces other, unsupported values with "none".
+    """
+    try:
+        resource_type = kwargs.get("resource_type") or Resource.from_obj(
+            kwargs["resource"]
+        )
+    except KeyError:
+        resource_type = None
+    resource_id = kwargs.get("resource_id") or getattr(
+        kwargs.get("resource", None), "id", None
+    )
+    params = kwargs.setdefault("params", {})
+
+    # Preempt default values that would be set by Client._request_from_args()
+    if not params.get("references"):
+        if resource_type == Resource.datastructure and resource_id:
+            params["references"] = "descendants"
+        elif (
+            resource_type == Resource.dataflow and resource_id
+        ) or resource_type == Resource.categoryscheme:
+            params["references"] = "descendants"
+
+    # Replace unsupported values
+    references = params.get("references")
+    if references not in ("children", "descendants", "none", None):
+        log.info(f"Replace unsupported references={references!r} with 'none'")
+        params["references"] = "none"
 
 
 class Source(BaseSource):
@@ -23,10 +65,6 @@ class Source(BaseSource):
     :meth:`.Client.get`.
 
     .. versionadded:: 0.2.1
-
-    See also
-    --------
-    :meth:`modify_request_args`
     """
 
     _id = "ESTAT"
@@ -34,10 +72,6 @@ class Source(BaseSource):
     def modify_request_args(self, kwargs):
         """Modify arguments used to build query URL.
 
-        For the "references" query parameter, ESTAT (as of 2022-11-13) only supports the
-        values "children", "descendants", or "none". Other values—including the "all" or
-        "parentsandsiblings" used as defaults by :class:`.Client` cause errors. Replace
-        unsupported values with "none", and use "descendants" as default.
 
         See also
         --------
@@ -47,23 +81,7 @@ class Source(BaseSource):
 
         kwargs.pop("get_footer_url", None)
 
-        resource_type = kwargs.get("resource_type")
-
-        # Handle the ?references= query parameter
-        params = kwargs.setdefault("params", {})
-        references = params.get("references")
-        if references is None:
-            # Client._request_from_args() sets "all" or "parentsandsiblings" by default.
-            # Neither of these values is supported by ESTAT; use "descendants" instead.
-            if (
-                resource_type
-                in (Resource.categoryscheme, Resource.dataflow, Resource.datastructure)
-                and kwargs.get("resource_id")
-            ) or kwargs.get("resource"):
-                params["references"] = "descendants"
-        elif references not in ("children", "descendants", "none"):
-            log.info(f"Replace unsupported references={references!r} with 'none'")
-            params["references"] = "none"
+        handle_references_param(kwargs)
 
     def finish_message(self, message, request, get_footer_url=(30, 3), **kwargs):
         """Handle the initial response.
