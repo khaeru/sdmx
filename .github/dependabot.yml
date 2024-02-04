@@ -1,0 +1,19 @@
+version: 2
+updates:
+- package-ecosystem: "github-actions"
+  # Only update major versions
+  ignore:
+    - dependency-name: "*"
+      update-types:
+      - "version-update:semver-minor"
+      - "version-update:semver-patch"
+  # Below config mirrors the example at
+  # https://github.com/dependabot/dependabot-core/blob/main/.github/dependabot.yml
+  directory: "/"
+  schedule:
+    interval: "weekly"
+    day: "sunday"
+    time: "16:00"
+  groups:
+    all-actions:
+      patterns: [ "*" ]
