@@ -7,6 +7,7 @@ Next release
 ============
 
 - Automatically handle unsupported values of the ``?references=...`` query parameter for the :ref:`COMP` data sources (:issue:`162`, :pull:`163`).
+- Bug fix for reading SDMX-ML 2.1: some associations (particularly, :attr:`.core_representation`) not stored correctly if a message contained two :class:`.MaintainableArtefact` with the same ID but different maintainer/version (:pull:`165`, thanks :gh-user:`sychsergiy` for :issue:`164`).
 
 v2.13.1 (2024-01-24)
 ====================
