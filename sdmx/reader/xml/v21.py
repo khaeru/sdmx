@@ -650,8 +650,8 @@ class Reader(metaclass=DispatchingReader):
                 self.ignore.add(id(maint))
             obj.maintainer = maint
 
-        # Maybe retrieve an existing object of the same class and ID
-        existing = self.get_single(cls, obj.id)
+        # Maybe retrieve an existing object of the same class, ID, and version (if any)
+        existing = self.get_single(cls, obj.id, version=obj.version)
 
         if existing and (
             existing.compare(obj, strict=True) or existing.urn == sdmx.urn.make(obj)
@@ -697,10 +697,9 @@ start(
     str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
     str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
     str:HierarchicalCodelists str:Metadataflows str:MetadataStructures
-    str:MetadataStructureComponents str:NamePersonalisations
-    str:None str:OrganisationSchemes str:ProvisionAgreements str:Rulesets
-    str:StructureSets str:ToVtlSubSpace str:Transformations str:UserDefinedOperators
-    str:VtlMappings
+    str:MetadataStructureComponents str:NamePersonalisations str:OrganisationSchemes
+    str:ProvisionAgreements str:Rulesets str:StructureSets str:ToVtlSubSpace
+    str:Transformations str:UserDefinedOperators str:VtlMappings
     """
     # Contents of references
     ":Ref :URN"
