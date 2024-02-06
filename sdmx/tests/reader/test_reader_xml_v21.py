@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from itertools import chain
 
+import pandas
 import pytest
 from lxml import etree
 
@@ -10,7 +11,7 @@ import sdmx
 from sdmx import urn
 from sdmx.format.xml.v21 import qname
 from sdmx.model import common, v21
-from sdmx.model.v21 import Facet, FacetType, FacetValueType
+from sdmx.model.v21 import ContentConstraint, Facet, FacetType, FacetValueType
 from sdmx.reader.xml.v21 import Reader, XMLParseError
 from sdmx.writer.xml import Element as E
 
@@ -282,3 +283,29 @@ def test_parse_elem(elem, expected):
         if expected:
             # Expected value supplied
             assert expected == result
+
+
+def test_availableconstraint_xml_response(specimen):
+    """Test of https://github.com/khaeru/sdmx/pull/161"""
+
+    with specimen("IMF_STA/availableconstraint_CPI.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    res = sdmx.to_pandas(msg.constraint)
+    assert len(res) == 1
+    assert "CPI" in res.keys()
+    assert len(res["CPI"]) == 1
+    assert len(res["CPI"][0]) == 3
+
+    assert isinstance(msg.constraint.CPI, ContentConstraint)
+
+    assert list(res["CPI"][0].keys()) == ["COUNTRY", "FREQUENCY", "INDICATOR"]
+
+    expected = pandas.Series(["111", "134"], name="COUNTRY")
+    assert expected.equals(res["CPI"][0]["COUNTRY"])
+    expected = pandas.Series(["A", "M", "Q"], name="FREQUENCY")
+    assert expected.equals(res["CPI"][0]["FREQUENCY"])
+    expected = pandas.Series(
+        ["PCPIHA_IX", "PCPIHA_PC_CP_A_PT", "PCPI_PC_CP_A_PT"], name="INDICATOR"
+    )
+    assert expected.equals(res["CPI"][0]["INDICATOR"])

@@ -140,7 +140,10 @@ class Client:
         string which becomes part of the URL. Otherwise, do nothing, as `key` must be a
         :class:`str` confirming to the REST API spec.
         """
-        if not (resource_type == Resource.data and isinstance(key, dict)):
+        if not (
+            resource_type in (Resource.data, Resource.availableconstraint)
+            and isinstance(key, dict)
+        ):
             return key, dsd
 
         # Select validation method based on agency capabilities

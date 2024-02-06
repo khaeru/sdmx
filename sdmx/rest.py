@@ -43,6 +43,7 @@ class Resource(str, Enum):
     ``agencyscheme``              :class:`.AgencyScheme`
     ``allowedconstraint``         :class:`.ContentConstraint`
     ``attachementconstraint``     :class:`.AttachmentConstraint`
+    ``availableconstraint``       :class:`.ContentConstraint`
     ``categorisation``            :class:`.Categorisation`
     ``categoryscheme``            :class:`.CategoryScheme`
     ``codelist``                  :class:`.Codelist`
@@ -80,6 +81,7 @@ class Resource(str, Enum):
     agencyscheme = "agencyscheme"
     allowedconstraint = "allowedconstraint"
     attachementconstraint = "attachementconstraint"
+    availableconstraint = "availableconstraint"
     categorisation = "categorisation"
     categoryscheme = "categoryscheme"
     codelist = "codelist"
@@ -153,7 +155,7 @@ class URL:
     key: Optional[str] = None
 
     def __post_init__(self):
-        if self.resource_type == Resource.data:
+        if self.resource_type in (Resource.data, Resource.availableconstraint):
             # Requests for data do not specific an agency in the URL
             if self.provider is not None:
                 warn(f"'provider' argument is redundant for {self.resource_type!r}")
@@ -170,7 +172,7 @@ class URL:
 
         parts = [self.source.url, self.resource_type.name]
 
-        if self.resource_type == Resource.data:
+        if self.resource_type in (Resource.data, Resource.availableconstraint):
             parts.append(self.resource_id)
             if self.key:
                 parts.append(self.key)
