@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from sdmx.rest.common import URL as BaseURL
-from sdmx.rest.common import Resource
 
 
 @dataclass
@@ -20,7 +19,7 @@ class URL(BaseURL):
 
         parts = [self.source.url, self.resource_type.name]
 
-        if self.resource_type == Resource.data:
+        if self.resource_type in self._resource_types_with_key:
             parts.append(self.resource_id)
             if self.key:
                 parts.append(self.key)

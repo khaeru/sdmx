@@ -2,7 +2,7 @@
 import abc
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional, Set
 from warnings import warn
 
 if TYPE_CHECKING:
@@ -150,8 +150,13 @@ class URL(abc.ABC):
 
     key: Optional[str] = None
 
+    _resource_types_with_key: ClassVar[Set[Resource]] = {
+        Resource.data,
+        Resource.actualconstraint,
+    }
+
     def __post_init__(self):
-        if self.resource_type in (Resource.data, Resource.availableconstraint):
+        if self.resource_type in self._resource_types_with_key:
             # Requests for data do not specific an agency in the URL
             if self.provider is not None:
                 warn(f"'provider' argument is redundant for {self.resource_type!r}")
