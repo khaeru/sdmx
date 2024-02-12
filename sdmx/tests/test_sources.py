@@ -54,7 +54,14 @@ class DataSourceTest:
 
     @pytest.fixture
     def client(self, cache_path):
-        return Client(self.source_id, cache_name=str(cache_path), backend="sqlite")
+        from sdmx.util import HAS_REQUESTS_CACHE
+
+        if HAS_REQUESTS_CACHE:
+            kw = dict(cache_name=str(cache_path), backend="sqlite")
+        else:
+            kw = {}
+
+        return Client(self.source_id, **kw)
 
     # NB the following can be added to any subclass below for SSL failures. Update the
     #    docstring to describe the nature of the problem.
