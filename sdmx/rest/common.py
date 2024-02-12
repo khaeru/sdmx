@@ -175,7 +175,7 @@ class PathParameter(Parameter):
     def handle(self, parameters, *args):
         """Return a length-1 dict to update :attr:`.URL.path`."""
         # Retrieve the value from `parameters`
-        value = parameters.pop(self.name, self.default)
+        value = parameters.pop(self.name, None) or self.default
         # Check against allowable values
         assert value in self.values or 0 == len(self.values)
         # Return

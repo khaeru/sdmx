@@ -4,13 +4,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
 from io import IOBase
-from typing import Any, Dict, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Set, Tuple, Type, Union
 
 from requests import Response
 
 from sdmx.format import Version
 from sdmx.model.v21 import DataStructureDefinition
 from sdmx.rest import Resource
+
+if TYPE_CHECKING:
+    import sdmx.rest.common
 
 #: Data sources registered with :mod:`sdmx`.
 sources: Dict[str, "Source"] = {}
@@ -116,6 +119,19 @@ class Source:
                 feature,
                 self.supports.pop(f_name, SDMX_ML_SUPPORTS.get(feature, sdmx_ml)),
             )
+
+    def get_url_class(self) -> Type["sdmx.rest.common.URL"]:
+        """Return a class for constructing URLs for this Source."""
+        if {Version["3.0.0"]} == self.versions:
+            import sdmx.rest.v30
+
+            return sdmx.rest.v30.URL
+        elif Version["2.1"] in self.versions:
+            import sdmx.rest.v21
+
+            return sdmx.rest.v21.URL
+        else:  # pragma: no cover
+            raise NotImplementedError(f"Query against {self.versions}")
 
     # Hooks
     def handle_response(

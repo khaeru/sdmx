@@ -2,6 +2,7 @@
 
 `Documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v1.5.0/v2_1/ws/rest/docs>`_.
 """
+from warnings import warn
 
 from . import common
 from .common import PathParameter, QueryParameter, QueryType
@@ -114,7 +115,11 @@ class URL(common.URL):
         )
 
     def handle_data(self) -> None:
+        if self._params.pop("agency_id", None):
+            warn("'agency_id' argument is redundant for data queries", UserWarning, 2)
+
         super().handle_data()
+
         self.handle_query_params(
             "start_period end_period updated_after first_n_observations "
             "last_n_observations dimension_at_observation detail include_history"

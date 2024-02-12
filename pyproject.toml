@@ -97,9 +97,8 @@ ignore = ["E501", "W191"]
 
 [tool.ruff.mccabe]
 # Exceptions:
-# - .client.Client._request_from_args: 16
 # - .writer.pandas._maybe_convert_datetime: 27
-max-complexity = 13
+max-complexity = 12
 
 [tool.setuptools.packages]
 find = {}

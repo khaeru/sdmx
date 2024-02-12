@@ -121,8 +121,9 @@ class TestClient:
 
     def test_request_from_args(self, caplog, client):
         # Raises for invalid resource type
+        # TODO Move this test; this error is no longer handled in _request_from_args()
         kwargs = dict(resource_type="foo")
-        with pytest.raises(ValueError, match=r"resource_type \('foo'\) must be in"):
+        with pytest.raises(AttributeError):
             client._request_from_args(kwargs)
 
         # Raises for not implemented endpoint
@@ -198,7 +199,7 @@ def test_request_get_args():
     assert ESTAT.data(**args).url == url
 
     # Giving 'provider' is redundant for a data request, causes a warning
-    with pytest.warns(UserWarning, match="'provider' argument is redundant"):
+    with pytest.warns(UserWarning, match="'agency_id' argument is redundant"):
         ESTAT.data(
             "UNE_RT_A",
             key={"geo": "EL+ES+IE"},
