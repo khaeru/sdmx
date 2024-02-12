@@ -4,7 +4,7 @@ import re
 from copy import copy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Mapping, Optional
 from urllib.parse import urlsplit, urlunsplit
 
 if TYPE_CHECKING:
@@ -242,18 +242,52 @@ PARAM: Dict[str, Parameter] = {
     "resource_id": PathParameter("resource_id", set(), "all"),
     #
     # Query parameters
-    # §4.4 Data queries
-    "start_period": QueryParameter("start_period"),  # Also availability
-    "end_period": QueryParameter("end_period"),  # Also availability
-    "updated_after": QueryParameter("updated_after"),  # Also availability
-    "first_n_observations": PositiveIntParam("first_n_observations"),
-    "last_n_observations": PositiveIntParam("last_n_observations"),
     "dimension_at_observation": QueryParameter("dimension_at_observation"),
+    "first_n_observations": PositiveIntParam("first_n_observations"),
     "include_history": QueryParameter("include_history", {True, False}),
-    # §4.5 Schema queries — may be 2.1 only
-    "explicit_measure": QueryParameter("explicit_measure", {True, False}),
-    # §4.6 Availability queries — may be 2.1 only
+    "last_n_observations": PositiveIntParam("last_n_observations"),
     "mode": QueryParameter("mode", {"available", "exact"}),
+    "references_a": QueryParameter(
+        "references",
+        {
+            "all",
+            "codelist",
+            "conceptscheme",
+            "dataflow",
+            "dataproviderscheme",
+            "datastructure",
+            "none",
+        },
+    ),
+    "updated_after": QueryParameter("updated_after"),  # Also availability
+}
+
+#: Common lists of names used in both :data:`.v21.PARAM` and :data:`.v30.PARAM`. The
+#: parameters in the latter generally have 1 or more additional entries.
+NAMES = {
+    "context": {
+        "dataflow",
+        "datastructure",
+        "metadataflow",
+        "metadatastructure",
+        "provisionagreement",
+    },
+    "detail_s": {
+        "allcompletestubs",
+        "allstubs",
+        "full",
+        "referencecompletestubs",
+        "referencepartial",
+        "referencestubs",
+    },
+    "references_s": {
+        "all",
+        "children",
+        "descendants",
+        "none",
+        "parents",
+        "parentsandsibling",
+    },
 }
 
 
@@ -285,7 +319,7 @@ class URL(abc.ABC):
     #: Keyword arguments to the constructor
     _params: dict
 
-    _all_parameters: ClassVar[Dict[Any, Parameter]]
+    _all_parameters: ClassVar[Mapping[Any, Parameter]]
 
     def __init__(self, source: "sdmx.source.Source", resource_type: Resource, **kwargs):
         # Store the keyword arguments
@@ -299,12 +333,21 @@ class URL(abc.ABC):
         self.source = source
         self.resource_type = resource_type
 
-        self.identify_query_type()
+        # Identify a QueryType` given arguments
+        # TODO handle availability for v21, registration for v30
+        try:
+            # data, metadata, schema
+            self.query_type = QueryType[resource_type.name]
+        except KeyError:
+            if resource_type == Resource.availableconstraint:
+                self.query_type = QueryType.availability
+            else:
+                self.query_type = QueryType.structure
 
         self._path = dict()
         self._query = dict()
 
-        # Dispatch to a method appropriate to the query type
+        # Dispatch to a method appropriate to the Version and QueryType
         getattr(self, f"handle_{self.query_type.name}")()
 
         if len(self._params):
@@ -315,20 +358,15 @@ class URL(abc.ABC):
 
     def handle_path_params(self, expr: str) -> None:
         """Extend :attr:`.path` with parts from `expr`, a "/"-delimited string."""
-        for name in expr.split("/"):
-            p = self._all_parameters[name]
+        for p in map(self._all_parameters.__getitem__, expr.split("/")):
             self._path.update(p.handle(self._params, self.source))
 
     def handle_query_params(self, expr: str) -> None:
-        """Extend :attr:`.query` with parts from `expr`, a " "-delimited string.
-
-        - Uses distinct :class:`.Parameter` per :attr:`.query_type`.
-        """
-        for name in expr.split():
-            p = self._all_parameters[(name, self.query_type)]
+        """Extend :attr:`.query` with parts from `expr`, a " "-delimited string."""
+        for p in map(self._all_parameters.__getitem__, expr.split()):
             self._query.update(p.handle(self._params))
 
-    # Handlers for different types of queries
+    # Handlers for different QueryTypes
     @abc.abstractmethod
     def handle_availability(self) -> None:
         pass
@@ -345,25 +383,16 @@ class URL(abc.ABC):
 
     handle_metadata = handle_data
 
+    def handle_registration(self) -> None:
+        raise NotImplementedError
+
     def handle_schema(self) -> None:
         self._path.update({self.resource_type.name: None})
         self.handle_path_params("context/agency_id/resource_id/version")
 
-    @abc.abstractmethod
     def handle_structure(self) -> None:
-        pass
-
-    def identify_query_type(self):
-        """Identify a :class:`.QueryType` given arguments."""
-        # TODO handle availability for v21, registration for v30
-        try:
-            # data, metadata, schema
-            self.query_type = QueryType[self.resource_type.name]
-        except KeyError:
-            if self.resource_type == Resource.availableconstraint:
-                self.query_type = QueryType.availability
-            else:
-                self.query_type = QueryType.structure
+        self.handle_path_params("agency_id/resource_id/version")
+        self.handle_query_params("detail_s references_s")
 
     def join(self) -> str:
         """Join the URL parts, returning a complete URL."""

@@ -133,7 +133,13 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
         "hierarchicalcodelist/A0/ID0/latest",
         "structure/hierarchicalcodelist/A0/ID0/+",
     ),
-    (R.metadata, {}, "metadata/ID0", "metadata/ID0"),
+    (
+        R.metadata,
+        {},
+        "metadata/ID0",
+        # "metadata/ID0",
+        None,
+    ),
     (
         R.metadataflow,
         {},

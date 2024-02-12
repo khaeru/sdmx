@@ -2,69 +2,53 @@
 
 `Documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`_.
 """
-from . import common
-from .common import PathParameter, QueryParameter, QueryType
+from collections import ChainMap
+from typing import Dict
 
-PARAM = {
-    # Common path parameters
-    "agency_id": common.PARAM["agency_id"],
-    "resource_id": common.PARAM["resource_id"],
-    # Common query parameters
-    ("c", QueryType.data): QueryParameter("c"),  # TODO complete
-    ("updated_after", QueryType.data): common.PARAM["updated_after"],
-    ("first_n_observations", QueryType.data): common.PARAM["first_n_observations"],
-    ("last_n_observations", QueryType.data): common.PARAM["last_n_observations"],
-    ("dimension_at_observation", QueryType.data): common.PARAM[
-        "dimension_at_observation"
-    ],
-    ("attributes", QueryType.data): QueryParameter("attributes"),  # TODO complete
-    ("measures", QueryType.data): QueryParameter("measures"),  # TODO complete
-    ("include_history", QueryType.data): common.PARAM["include_history"],
-    ("dimension_at_observation", QueryType.schema): common.PARAM[
-        "dimension_at_observation"
-    ],
-    #
-    # v3.0 specific path parameters
+from . import common
+from .common import PathParameter, QueryParameter
+
+#: v2.1.0 specific parameters
+PARAM: Dict[str, common.Parameter] = {
+    # Path parameters
     "context": PathParameter(
-        "context",
-        {
-            "dataflow",
-            "datastructure",
-            "metadataflow",
-            "metadataprovisionagreement",
-            "metadatastructure",
-            "provisionagreement",
-        },
+        "context", common.NAMES["context"] | {"metadataprovisionagreement"}
     ),
     "version": PathParameter("version", set(), "+"),
     #
-    # v3.0 specific query parameters
-    ("detail", QueryType.data): QueryParameter("detail"),  # TODO complete
-    ("detail", QueryType.structure): QueryParameter("detail"),  # TODO complete
-    ("references", QueryType.structure): QueryParameter("references"),  # TODO complete
+    # Query parameters
+    "attributes": QueryParameter("attributes"),  # TODO complete
+    "c": QueryParameter("c"),  # TODO complete
+    "detail_s": QueryParameter("detail", common.NAMES["detail_s"] | {"raw"}),
+    "measures": QueryParameter("measures"),  # TODO complete
+    "references_s": QueryParameter(
+        "references", common.NAMES["references_s"] | {"ancestors"}
+    ),
 }
 
 
 class URL(common.URL):
     """Utility class to build SDMX 3.0 REST web service URLs."""
 
-    _all_parameters = PARAM
+    _all_parameters = ChainMap(common.PARAM, PARAM)
 
-    def handle_availability(self) -> None:
+    def handle_availability(self):
         raise NotImplementedError
 
-    def handle_data(self) -> None:
+    def handle_data(self):
         super().handle_data()
         self.handle_query_params(
             "c updated_after first_n_observations last_n_observations "
             "dimension_at_observation attributes measures include_history"
         )
 
-    def handle_schema(self) -> None:
+    def handle_metadata(self):
+        raise NotImplementedError
+
+    def handle_schema(self):
         super().handle_schema()
         self.handle_query_params("dimension_at_observation")
 
-    def handle_structure(self) -> None:
+    def handle_structure(self):
         self._path.update({"structure": None, self.resource_type.name: None})
-        self.handle_path_params("agency_id/resource_id/version")
-        self.handle_query_params("detail references")
+        super().handle_structure()
