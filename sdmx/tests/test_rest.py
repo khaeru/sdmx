@@ -65,7 +65,7 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
     (
         R.categoryscheme,
         {},
-        "categoryscheme/A0/ID0/latest",
+        "categoryscheme/A0/ID0/latest?references=parentsandsiblings",
         "structure/categoryscheme/A0/ID0/+",
     ),
     # All other parameters explicit
@@ -114,7 +114,12 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
         "dataconsumerscheme/A0/ID0/latest",
         "structure/dataconsumerscheme/A0/ID0/+",
     ),
-    (R.dataflow, {}, "dataflow/A0/ID0/latest", "structure/dataflow/A0/ID0/+"),
+    (
+        R.dataflow,
+        {},
+        "dataflow/A0/ID0/latest?references=all",
+        "structure/dataflow/A0/ID0/+",
+    ),
     (
         R.dataproviderscheme,
         {},
@@ -124,7 +129,7 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
     (
         R.datastructure,
         {},
-        "datastructure/A0/ID0/latest",
+        "datastructure/A0/ID0/latest?references=all",
         "structure/datastructure/A0/ID0/+",
     ),
     (
