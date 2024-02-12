@@ -273,7 +273,12 @@ class TestESTAT3(DataSourceTest):
     # https://wikis.ec.europa.eu/display/EUROSTATHELP/API+-+Getting+started+with+SDMX3.0+API
     endpoint_args = {
         "codelist": dict(resource_id="FREQ"),
+        "conceptscheme": dict(resource_id="TESEM160"),
+        "data": dict(
+            context="dataflow", resource_id="ISOC_CI_ID_H", last_n_observations=100
+        ),
         "dataflow": dict(resource_id="ISOC_CI_ID_H", version="1.0"),
+        "datastructure": dict(resource_id="PRC_DAP13", params=dict(references="none")),
     }
 
 
