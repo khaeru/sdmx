@@ -179,21 +179,18 @@ class Client:
 
     def _request_from_args(self, kwargs):
         """Validate arguments and prepare pieces for a request."""
-        parameters = kwargs.pop("params", {})
         headers = kwargs.pop("headers", {})
 
         # Resource arguments
         resource_type = kwargs.pop("resource_type", None)
         resource_id = kwargs.pop("resource_id", None)
 
-        # Identify the URL class
-        # TODO specify API version for sources that support multiple API versions at the
-        #      same URL
-        URL = self.source.get_url_class()
-
         # Assemble keyword arguments for URL
         kw = dict(
-            source=self.source, resource_type=resource_type, resource_id=resource_id
+            source=self.source,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            params=kwargs.pop("params", {}),
         )
         if provider := kwargs.pop("provider", None):
             warn("provider= keyword argument; use agency_id", DeprecationWarning, 2)
@@ -204,8 +201,9 @@ class Client:
         key = kwargs.pop("key", None)
         dsd = kwargs.pop("dsd", None)
 
-        if len(kwargs):
-            raise ValueError(f"unrecognized arguments: {kwargs!r}")
+        # Pass remaining `kwargs` to URL to either handle or raise
+        kw.update(kwargs)
+        kwargs.clear()
 
         if isinstance(key, dict):
             # Make the key, and retain the DSD (if any) for use in parsing
@@ -218,13 +216,21 @@ class Client:
             kw.update(key=key)
 
         # Headers: use headers from source config if not given by the caller
-        if not headers and self.source and resource_type:
-            headers = self.source.headers.get(resource_type.name, {})
+        if not headers:
+            try:
+                headers.update(self.source.headers.get(resource_type.name, {}))
+            except AttributeError:
+                pass
 
-        # Assemble final URL, perform the request
-        url = URL(**kw)
+        # Identify the URL class; handle the `kw`
+        # TODO specify API version for sources that support multiple API versions at the
+        #      same URL
+        url = self.source.get_url_class()(**kw)
 
-        return requests.Request("get", url.join(), params=parameters, headers=headers)
+        # Allow requests to keep track of the query parameters and rest of the URL
+        return requests.Request(
+            "get", url.join(with_query=False), params=url.query, headers=headers
+        )
 
     def _request_from_url(self, kwargs):
         url = kwargs.pop("url")

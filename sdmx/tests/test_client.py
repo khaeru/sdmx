@@ -115,6 +115,16 @@ class TestClient:
         expected |= set(ep.name for ep in sdmx.Resource)
         assert set(filter(lambda s: not s.startswith("_"), dir(client))) == expected
 
+    def test_get(self, client):
+        """:meth:`.get` handles mixed query parameters correctly."""
+        req = client.get(
+            "dataflow", detail="full", params={"references": "none"}, dry_run=True
+        )
+        assert (
+            "https://example.com/sdmx-rest/dataflow/TEST/all/latest?detail=full&"
+            "references=none" == req.url
+        )
+
     def test_getattr(self, client):
         with pytest.raises(AttributeError):
             client.notanendpoint()

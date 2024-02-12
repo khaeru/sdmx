@@ -317,7 +317,7 @@ class URL(abc.ABC):
     _path: Dict[str, Optional[str]]
 
     #: Pieces for the query component of the URL.
-    _query: Dict[str, str]
+    query: Dict[str, str]
 
     # Keyword arguments to the constructor
     _params: dict
@@ -340,7 +340,7 @@ class URL(abc.ABC):
 
         # Internal
         self._path = dict()
-        self._query = dict()
+        self.query = dict()
 
         if resource_type.name in {
             "data",
@@ -372,7 +372,7 @@ class URL(abc.ABC):
     def handle_query_params(self, expr: str) -> None:
         """Extend :attr:`.query` with parts from `expr`, a " "-delimited string."""
         for p in map(self._all_parameters.__getitem__, expr.split()):
-            self._query.update(p.handle(self._params))
+            self.query.update(p.handle(self._params))
 
     # Handlers for different QueryTypes
     @abc.abstractmethod
@@ -401,7 +401,7 @@ class URL(abc.ABC):
         self.handle_path_params("agency_id/resource_id/version")
         self.handle_query_params("detail_s references_s")
 
-    def join(self) -> str:
+    def join(self, *, with_query: bool = True) -> str:
         """Join the URL parts, returning a complete URL."""
 
         # Keep the URL scheme, netloc, and any path from the source's base URL
@@ -410,7 +410,8 @@ class URL(abc.ABC):
         parts[2] = re.sub("([^/])$", r"\1/", parts[2] or "") + "/".join(
             (value or name) for name, value in self._path.items()
         )
-        # Assemble query string
-        parts[3] = "&".join(f"{k}={v}" for k, v in self._query.items())
+        if with_query:
+            # Assemble query string
+            parts[3] = "&".join(f"{k}={v}" for k, v in self.query.items())
 
         return urlunsplit(parts)

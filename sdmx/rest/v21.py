@@ -87,6 +87,6 @@ class URL(common.URL):
             self.resource_type in {Resource.dataflow, Resource.datastructure}
             and self._path["resource_id"] != "all"
         ):
-            self._query.setdefault("references", "all")
+            self.query.setdefault("references", "all")
         elif self.resource_type in {Resource.categoryscheme}:
-            self._query.setdefault("references", "parentsandsiblings")
+            self.query.setdefault("references", "parentsandsiblings")

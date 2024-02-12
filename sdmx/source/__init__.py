@@ -61,7 +61,7 @@ class Source:
     #: :attr:`~.IdentifiableArtefact.id` of the :attr:`DataProvider`.
     id: str
 
-    #: Base URL (API endpoint) for queries.
+    #: Base URL (API entry point) for queries.
     url: str
 
     #: Human-readable name of the data source.
@@ -179,7 +179,7 @@ class Source:
                 kwargs.setdefault("headers", {})
                 kwargs["headers"].setdefault(
                     "Accept",
-                    "application/vnd.sdmx.structurespecificdata+xml;" "version=2.1",
+                    "application/vnd.sdmx.structurespecificdata+xml;version=2.1",
                 )
 
 
