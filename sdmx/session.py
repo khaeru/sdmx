@@ -102,6 +102,15 @@ class ResponseIO(BufferedIOBase):
 
     def __init__(self, response, tee: Union[IO, "os.PathLike", None] = None):
         self.response = response
+
+        content_disposition = response.headers.get("Content-Disposition", "")
+        if content_disposition.endswith('.gz"'):
+            import gzip
+
+            content = gzip.GzipFile(fileobj=BytesIO(response.content)).read()
+        else:
+            content = response.content
+
         if tee is None:
             tee = BytesIO()
         # If tee is a file-like object or tempfile, then use it as cache
@@ -110,7 +119,7 @@ class ResponseIO(BufferedIOBase):
         else:
             # So tee must be str or os.FilePath
             self.tee = open(tee, "w+b")
-        self.tee.write(response.content)
+        self.tee.write(content)
         self.tee.seek(0)
 
     def readable(self):
