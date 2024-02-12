@@ -21,8 +21,7 @@ class Reference(v21.Reference):
             result.update(target_id=result["item_id"] or result["id"])
         except ValueError:
             # Bare string that is the ID of e.g. a component (dimension)
-            id = elem.text.strip()
-            if id:
+            if id := (elem.text or "").strip():
                 result = {"id": id, "target_id": id, "class": None, "package": None}
             else:
                 raise v21.NotReference

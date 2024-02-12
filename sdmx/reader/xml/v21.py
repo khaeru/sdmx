@@ -1303,7 +1303,7 @@ def _contact_start(reader, elem):
 
 
 @end("mes:Contact str:Contact", only=False)
-def _contact(reader, elem):
+def _contact_end(reader, elem):
     contact = model.Contact(
         telephone=reader.pop_single("Telephone"),
         uri=reader.pop_all("URI"),
@@ -1710,7 +1710,9 @@ def _obs(reader, elem):
 @end(":Obs")
 def _obs_ss(reader, elem):
     # True if the user failed to provide a DSD to use in parsing structure-specific data
-    extend = reader.peek("SS without structure")
+    ss_without_structure = reader.peek("SS without structure")
+    if ss_without_structure:
+        dim_at_obs = reader.get_single(message.DataMessage).observation_dimension
 
     # Retrieve the PrimaryMeasure from the DSD for the current data set
     dsd = reader.get_single("DataSet").structured_by
@@ -1721,27 +1723,33 @@ def _obs_ss(reader, elem):
         pm = dsd.measures[0]
     except IndexError:
         # No measures in the DSD
-        if extend:
+        if ss_without_structure:
             # Create one, assuming the ID OBS_VALUE
             # TODO also add an external reference to the SDMX cross-domain concept
-            pm = model.PrimaryMeasure(id="OBS_VALUE")
-            dsd.measures.append(pm)
+            pm = dsd.measures.getdefault(id="OBS_VALUE")
         else:  # pragma: no cover
             raise  # DSD was provided but lacks a PrimaryMeasure
 
     # StructureSpecificData message—all information stored as XML attributes of the
     # <Observation>
-    attrib = copy(elem.attrib)
-
     # Observation value from an attribute; usually "OBS_VALUE"
-    value = attrib.pop(pm.id, None)
+    value = elem.attrib.pop(pm.id, None)
 
-    # Extend the DSD if the user failed to provide it
-    key = dsd.make_key(model.Key, attrib, extend=extend)
-
-    # Remove attributes from the Key to be attached to the Observation
-    aa = key.attrib
-    key.attrib = {}
+    if ss_without_structure and dim_at_obs is not model.AllDimensions:
+        # Create the observation key
+        key = dsd.make_key(model.Key, {dim_at_obs.id: elem.attrib.pop(dim_at_obs.id)})
+        # Remaining element attributes are SDMX attribute values
+        aa = {}
+        for ak, av in elem.attrib.items():
+            # Create the DataAttribute in the DSD
+            da = dsd.attributes.getdefault(id=ak)
+            aa[ak] = model.AttributeValue(value_for=da, value=av)
+    else:
+        # Use all remaining attributes as dimensions; extend the DSD if appropriate
+        key = dsd.make_key(model.Key, elem.attrib, extend=ss_without_structure)
+        # Remove attributes from the Key to be attached to the Observation
+        aa = key.attrib
+        key.attrib = {}
 
     return model.Observation(
         dimension=key, value=value, value_for=pm, attached_attribute=aa
