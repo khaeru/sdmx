@@ -36,19 +36,6 @@ RESPONSE_CODE = {
 }
 
 
-class QueryType(str, Enum):
-    """High-level types of SDMX REST queries."""
-
-    availability = "availability"
-    data = "data"
-    metadata = "metadata"
-    schema = "schema"
-    structure = "structure"
-
-    # SDMX 3.0 only
-    registration = "registration"
-
-
 class Resource(str, Enum):
     """Enumeration of SDMX-REST API resources.
 
@@ -123,6 +110,7 @@ class Resource(str, Enum):
     organisationunitscheme = "organisationunitscheme"
     process = "process"
     provisionagreement = "provisionagreement"
+    registration = "registration"
     reportingtaxonomy = "reportingtaxonomy"
     rulesetscheme = "rulesetscheme"
     schema = "schema"
@@ -325,8 +313,6 @@ class URL(abc.ABC):
     #: Type of resource to be retrieved; a member of :class:`.Resource`.
     resource_type: Resource
 
-    query_type: QueryType
-
     #: Pieces for the hierarchical path component of the URL.
     _path: Dict[str, Optional[str]]
 
@@ -339,33 +325,38 @@ class URL(abc.ABC):
     _all_parameters: ClassVar[Mapping[Any, Parameter]]
 
     def __init__(self, source: "sdmx.source.Source", resource_type: Resource, **kwargs):
-        # Store the keyword arguments
+        # Check for duplicates in kwargs["params"] and kwargs directly
         params = copy(kwargs)
         params_dict = params.pop("params", {})
         if overlap := set(params) & set(params_dict):
             raise ValueError(f"Duplicate values for query parameters {overlap}")
         params.update(params_dict)
 
-        self._params = params
         self.source = source
         self.resource_type = resource_type
 
-        # Identify a QueryType` given arguments
-        # TODO handle availability for v21, registration for v30
-        try:
-            # data, metadata, schema
-            self.query_type = QueryType[resource_type.name]
-        except KeyError:
-            if resource_type == Resource.availableconstraint:
-                self.query_type = QueryType.availability
-            else:
-                self.query_type = QueryType.structure
+        # Store the keyword arguments
+        self._params = params
 
+        # Internal
         self._path = dict()
         self._query = dict()
 
+        if resource_type.name in {
+            "data",
+            "metadata",
+            "schema",
+            "structure",
+            "registration",
+        }:
+            query_type = resource_type.name
+        elif resource_type.name in {"availableconstraint"}:
+            query_type = "availability"
+        else:
+            query_type = "structure"
+
         # Dispatch to a method appropriate to the Version and QueryType
-        getattr(self, f"handle_{self.query_type.name}")()
+        getattr(self, f"handle_{query_type}")()
 
         if len(self._params):
             # print(f"{self.path = }\n{self.query = }")
@@ -392,10 +383,13 @@ class URL(abc.ABC):
     def handle_data(self) -> None:
         pass
 
-    handle_metadata = handle_data
+    @abc.abstractmethod
+    def handle_metadata(self) -> None:
+        pass
 
+    @abc.abstractmethod
     def handle_registration(self) -> None:
-        raise NotImplementedError
+        pass
 
     def handle_schema(self) -> None:
         self._params.setdefault("agency_id", self.source.id)
@@ -413,8 +407,8 @@ class URL(abc.ABC):
         # Keep the URL scheme, netloc, and any path from the source's base URL
         parts = list(urlsplit(self.source.url)[:3]) + [None, None]
         # Assemble path string
-        parts[2] = "/".join(
-            [parts[2] or ""] + [(value or name) for name, value in self._path.items()]
+        parts[2] = re.sub("([^/])$", r"\1/", parts[2] or "") + "/".join(
+            (value or name) for name, value in self._path.items()
         )
         # Assemble query string
         parts[3] = "&".join(f"{k}={v}" for k, v in self._query.items())
