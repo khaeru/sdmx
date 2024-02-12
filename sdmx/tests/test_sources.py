@@ -78,7 +78,7 @@ class DataSourceTest:
     @pytest.mark.network
     def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
         # See sdmx.testing._generate_endpoint_tests() for values of `endpoint`
-        cache = cache_path.with_suffix(f".{endpoint}.xml")
+        cache = cache_path.with_suffix(f".{endpoint.name}.xml")
 
         try:
             message = client.get(endpoint, tofile=cache, **args)
