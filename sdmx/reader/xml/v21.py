@@ -1711,8 +1711,7 @@ def _obs(reader, elem):
 def _obs_ss(reader, elem):
     # True if the user failed to provide a DSD to use in parsing structure-specific data
     ss_without_structure = reader.peek("SS without structure")
-    if ss_without_structure:
-        dim_at_obs = reader.get_single(message.DataMessage).observation_dimension
+    dim_at_obs = reader.get_single(message.DataMessage).observation_dimension
 
     # Retrieve the PrimaryMeasure from the DSD for the current data set
     dsd = reader.get_single("DataSet").structured_by
@@ -1734,6 +1733,14 @@ def _obs_ss(reader, elem):
     # <Observation>
     # Observation value from an attribute; usually "OBS_VALUE"
     value = elem.attrib.pop(pm.id, None)
+
+    # Transform an attribute like xsi:type="{ns}:{value}" to {dim_at_obs.id}={value}
+    try:
+        tmp = elem.attrib.pop(reader.qname("xsi:type"))
+    except KeyError:
+        pass
+    else:
+        elem.attrib[dim_at_obs.id] = reader.qname(tmp).localname
 
     if ss_without_structure and dim_at_obs is not model.AllDimensions:
         # Create the observation key
