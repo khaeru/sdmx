@@ -214,17 +214,6 @@ class Client:
         if key is not None:
             kw.update(key=key)
 
-        # Parameters: set 'references' to sensible defaults
-        # TODO Push down into URL class
-        if "references" not in parameters:
-            if (
-                resource_type in [Resource.dataflow, Resource.datastructure]
-                and resource_id
-            ):
-                parameters["references"] = "all"
-            elif resource_type == Resource.categoryscheme:
-                parameters["references"] = "parentsandsiblings"
-
         # Headers: use headers from source config if not given by the caller
         if not headers and self.source and resource_type:
             headers = self.source.headers.get(resource_type.name, {})

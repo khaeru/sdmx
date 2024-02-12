@@ -1,15 +1,18 @@
 """SDMX-REST API v1.5.0.
 
-`Documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v1.5.0/v2_1/ws/rest/docs>`_.
+Note that version 1.5.0 of the REST API corresponds to version 2.1 of the overall SDMX
+standards. See the
+`documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v1.5.0/v2_1/ws/rest/docs>`_
+for further details.
 """
 from collections import ChainMap
 from typing import Dict
 from warnings import warn
 
 from . import common
-from .common import OptionalPath, PathParameter, QueryParameter
+from .common import OptionalPath, PathParameter, QueryParameter, Resource
 
-#: v1.5.0 specific parameters
+#: RESTv1.5.0 specific parameters
 PARAM: Dict[str, common.Parameter] = {
     # Path parameters
     # NB the text and YAML OpenAPI specification disagree on whether this is required
@@ -61,7 +64,14 @@ class URL(common.URL):
         )
 
     def handle_metadata(self):
+        """Not implemented."""
         raise NotImplementedError
+
+    def handle_registration(self) -> None:
+        """This type of query is not included in SDMX-REST v1.5.0."""
+        raise ValueError(
+            "/registration/… queries not supported in the SDMX-REST v1.5.0 API"
+        )
 
     def handle_schema(self):
         super().handle_schema()
@@ -70,3 +80,13 @@ class URL(common.URL):
     def handle_structure(self):
         self._path.update({self.resource_type.name: None})
         super().handle_structure()
+
+        # Moved from Client._request_from_args()
+        # TODO Consider deprecating and eventually removing these defaults
+        if (
+            self.resource_type in {Resource.dataflow, Resource.datastructure}
+            and self._path["resource_id"] != "all"
+        ):
+            self._query.setdefault("references", "all")
+        elif self.resource_type in {Resource.categoryscheme}:
+            self._query.setdefault("references", "parentsandsiblings")

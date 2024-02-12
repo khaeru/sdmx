@@ -1,6 +1,9 @@
-"""SDMX-REST API v2.0.0.
+"""SDMX-REST API v2.1.0.
 
-`Documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`_.
+Note that version 2.1.0 of the REST API corresponds to version 3.0.0 of the overall
+SDMX standards. See the
+`documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`_ for further
+details.
 """
 from collections import ChainMap
 from typing import Dict
@@ -20,10 +23,10 @@ PARAM: Dict[str, common.Parameter] = {
     "version": PathParameter("version", set(), "+"),
     #
     # Query parameters
-    "attributes": QueryParameter("attributes"),  # TODO complete
-    "c": QueryParameter("c"),  # TODO complete
+    "attributes": QueryParameter("attributes"),
+    "c": QueryParameter("c"),
     "detail_s": QueryParameter("detail", common.NAMES["detail_s"] | {"raw"}),
-    "measures": QueryParameter("measures"),  # TODO complete
+    "measures": QueryParameter("measures"),
     "references_s": QueryParameter(
         "references", common.NAMES["references_s"] | {"ancestors"}
     ),
@@ -36,6 +39,7 @@ class URL(common.URL):
     _all_parameters = ChainMap(common.PARAM, PARAM)
 
     def handle_availability(self):
+        """Not implemented."""
         raise NotImplementedError
 
     def handle_data(self):
@@ -48,6 +52,11 @@ class URL(common.URL):
         )
 
     def handle_metadata(self):
+        """Not implemented."""
+        raise NotImplementedError
+
+    def handle_registration(self):
+        """Not implemented."""
         raise NotImplementedError
 
     def handle_schema(self):
