@@ -102,7 +102,7 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
         "structure/customtypescheme/A0/ID0/+",
     ),
     # No extra parameters
-    (R.data, {}, "data/ID0", "data/ID0"),
+    (R.data, {}, "data/ID0", "data/*/A0/ID0/+"),
     # Different ways of expressing the same query
     (R.data, dict(start_period="2024-02-12"), f"data/ID0{_S}", None),
     (R.data, dict(startPeriod="2024-02-12"), f"data/ID0{_S}", None),
@@ -133,13 +133,7 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
         "hierarchicalcodelist/A0/ID0/latest",
         "structure/hierarchicalcodelist/A0/ID0/+",
     ),
-    (
-        R.metadata,
-        {},
-        "metadata/ID0",
-        # "metadata/ID0",
-        None,
-    ),
+    (R.metadata, {}, "metadata/ID0", "metadata/ID0"),
     (
         R.metadataflow,
         {},

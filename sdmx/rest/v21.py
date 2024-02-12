@@ -7,12 +7,16 @@ from typing import Dict
 from warnings import warn
 
 from . import common
-from .common import PathParameter, QueryParameter
+from .common import OptionalPath, PathParameter, QueryParameter
 
 #: v1.5.0 specific parameters
 PARAM: Dict[str, common.Parameter] = {
     # Path parameters
+    # NB the text and YAML OpenAPI specification disagree on whether this is required
+    "component_id": OptionalPath("component_id"),
     "context": PathParameter("context", common.NAMES["context"]),
+    "flow": OptionalPath("resource_id"),
+    "provider": OptionalPath("provider"),
     "version": PathParameter("version", set(), "latest"),
     #
     # Query parameters
@@ -40,14 +44,7 @@ class URL(common.URL):
 
     def handle_availability(self):
         self._path.update({self.resource_type.name: None})
-
-        self._path["flow_ref"] = self._params.pop("resource_id")
-
-        if "key" in self._params:
-            self._path["key"] = self._params.pop("key")
-
-        # TODO handle providerRef
-        # TODO handle componentID
+        self.handle_path_params("flow/key/provider/component_id")
         self.handle_query_params(
             "start_period end_period updated_after references_a mode"
         )
@@ -56,12 +53,15 @@ class URL(common.URL):
         if self._params.pop("agency_id", None):
             warn("'agency_id' argument is redundant for data queries", UserWarning, 2)
 
-        super().handle_data()
-
+        self._path.update({self.resource_type.name: None})
+        self.handle_path_params("flow/key/provider")
         self.handle_query_params(
             "start_period end_period updated_after first_n_observations "
             "last_n_observations dimension_at_observation detail_d include_history"
         )
+
+    def handle_metadata(self):
+        raise NotImplementedError
 
     def handle_schema(self):
         super().handle_schema()

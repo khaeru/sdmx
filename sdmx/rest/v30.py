@@ -14,6 +14,9 @@ PARAM: Dict[str, common.Parameter] = {
     "context": PathParameter(
         "context", common.NAMES["context"] | {"metadataprovisionagreement"}
     ),
+    "context_d": PathParameter(
+        "context", {"datastructure", "dataflow", "provisionagreement", "*"}, "*"
+    ),
     "version": PathParameter("version", set(), "+"),
     #
     # Query parameters
@@ -36,7 +39,9 @@ class URL(common.URL):
         raise NotImplementedError
 
     def handle_data(self):
-        super().handle_data()
+        self._params.setdefault("agency_id", self.source.id)
+        self._path.update({self.resource_type.name: None})
+        self.handle_path_params("context_d/agency_id/resource_id/version/key")
         self.handle_query_params(
             "c updated_after first_n_observations last_n_observations "
             "dimension_at_observation attributes measures include_history"

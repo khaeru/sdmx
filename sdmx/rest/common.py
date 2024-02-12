@@ -155,6 +155,7 @@ class Resource(str, Enum):
 class Parameter(abc.ABC):
     """SDMX query parameter."""
 
+    #: Keyword argument to :class:`.URL` understood by this parameter.
     name: str
 
     #: Allowable values.
@@ -176,15 +177,39 @@ class PathParameter(Parameter):
         """Return a length-1 dict to update :attr:`.URL.path`."""
         # Retrieve the value from `parameters`
         value = parameters.pop(self.name, None) or self.default
+
         # Check against allowable values
-        assert value in self.values or 0 == len(self.values)
+        if len(self.values) and value not in self.values:
+            raise ValueError(f"{self.name}={self.value!r} not among {self.values}")
+        elif value is None:
+            raise ValueError(f"Missing required parameter {self.name!r}")
+
         # Return
         return {self.name: value}
 
 
 @dataclass
+class OptionalPath(Parameter):
+    """Like :class:`.PathParameter`, but optional.
+
+    If the corresponding keyword is missing
+    """
+
+    def handle(self, parameters):
+        if value := parameters.pop(self.name, None):
+            assert value in self.values or 0 == len(self.values)
+            return {self.name: value}
+        else:
+            return {}
+
+
+@dataclass
 class QueryParameter(PathParameter):
-    """SDMX query parameter appearing as part of the query string component of a URL."""
+    """SDMX query parameter appearing as part of the query string component of a URL.
+
+    This version also responds to, for instance, :py:`fooBar="..."` when the
+    :attr:`.name` is :py:`"foo_bar"`.
+    """
 
     def __post_init__(self):
         # Convert self.name to lowerCamelCase as appearing in query strings
@@ -229,6 +254,7 @@ class PositiveIntParam(QueryParameter):
 PARAM: Dict[str, Parameter] = {
     # Path parameters
     "agency_id": PathParameter("agency_id"),
+    "key": OptionalPath("key"),
     "resource_id": PathParameter("resource_id", set(), "all"),
     #
     # Query parameters
@@ -362,15 +388,9 @@ class URL(abc.ABC):
     def handle_availability(self) -> None:
         pass
 
+    @abc.abstractmethod
     def handle_data(self) -> None:
-        self._path.update({self.resource_type.name: None})
-
-        self._path["flow_ref"] = self._params.pop("resource_id")
-
-        if "key" in self._params:
-            self._path["key"] = self._params.pop("key")
-
-        # TODO handle providerRef
+        pass
 
     handle_metadata = handle_data
 
