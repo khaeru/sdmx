@@ -226,12 +226,13 @@ class PositiveIntParam(QueryParameter):
             k = list(result)[0]
         except IndexError:
             return result
+        try:
+            assert result[k] > 0
+            result[k] = str(result[k])
+        except (AssertionError, TypeError):
+            raise ValueError(f"{k} must be positive integer; got {result[k]}")
         else:
-            if result[k] <= 0:
-                raise ValueError(f"{k} must be positive integer; got {result[k]}")
-            else:
-                result[k] = str(k)
-                return result
+            return result
 
 
 # Todo: transcribe:
