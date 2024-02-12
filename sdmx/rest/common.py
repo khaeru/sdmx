@@ -164,7 +164,7 @@ class Parameter(abc.ABC):
     default: Optional[str] = None
 
     @abc.abstractmethod
-    def handle(self, parameters: Dict[str, Any], *args) -> Dict[str, str]:
+    def handle(self, parameters: Dict[str, Any]) -> Dict[str, str]:
         """Return a dict to update :attr:`.URL.path` or :attr:`.URL.query`."""
 
 
@@ -172,7 +172,7 @@ class Parameter(abc.ABC):
 class PathParameter(Parameter):
     """SDMX query parameter appearing as a part of the path component of a URL."""
 
-    def handle(self, parameters, *args):
+    def handle(self, parameters):
         """Return a length-1 dict to update :attr:`.URL.path`."""
         # Retrieve the value from `parameters`
         value = parameters.pop(self.name, None) or self.default
@@ -190,7 +190,7 @@ class QueryParameter(PathParameter):
         # Convert self.name to lowerCamelCase as appearing in query strings
         self.camelName = re.sub(r"_([a-z])", lambda x: x.group(1).upper(), self.name)
 
-    def handle(self, parameters, *args):
+    def handle(self, parameters):
         """Return a length-0 or -1 dict to update :attr:`.URL.query`."""
         if present := {self.name, self.camelName} & set(parameters):
             if 2 == len(present):
@@ -204,20 +204,10 @@ class QueryParameter(PathParameter):
 
 
 @dataclass
-class AgencyParam(PathParameter):
-    """Handle the ``agencyID`` parameter."""
-
-    def handle(self, parameters, source, *args):
-        """Default to the ID of :attr:`.URL.source`."""
-        parameters.setdefault(self.name, getattr(source, "id", None))
-        return super().handle(parameters)
-
-
-@dataclass
 class PositiveIntParam(QueryParameter):
     """A query parameter that must be a positive integer."""
 
-    def handle(self, parameters, *args):
+    def handle(self, parameters):
         result = super().handle(parameters)
         try:
             k = list(result)[0]
@@ -238,7 +228,7 @@ class PositiveIntParam(QueryParameter):
 
 PARAM: Dict[str, Parameter] = {
     # Path parameters
-    "agency_id": AgencyParam("agency_id"),
+    "agency_id": PathParameter("agency_id"),
     "resource_id": PathParameter("resource_id", set(), "all"),
     #
     # Query parameters
@@ -313,10 +303,11 @@ class URL(abc.ABC):
 
     #: Pieces for the hierarchical path component of the URL.
     _path: Dict[str, Optional[str]]
+
     #: Pieces for the query component of the URL.
     _query: Dict[str, str]
 
-    #: Keyword arguments to the constructor
+    # Keyword arguments to the constructor
     _params: dict
 
     _all_parameters: ClassVar[Mapping[Any, Parameter]]
@@ -359,7 +350,7 @@ class URL(abc.ABC):
     def handle_path_params(self, expr: str) -> None:
         """Extend :attr:`.path` with parts from `expr`, a "/"-delimited string."""
         for p in map(self._all_parameters.__getitem__, expr.split("/")):
-            self._path.update(p.handle(self._params, self.source))
+            self._path.update(p.handle(self._params))
 
     def handle_query_params(self, expr: str) -> None:
         """Extend :attr:`.query` with parts from `expr`, a " "-delimited string."""
@@ -387,10 +378,12 @@ class URL(abc.ABC):
         raise NotImplementedError
 
     def handle_schema(self) -> None:
+        self._params.setdefault("agency_id", self.source.id)
         self._path.update({self.resource_type.name: None})
         self.handle_path_params("context/agency_id/resource_id/version")
 
     def handle_structure(self) -> None:
+        self._params.setdefault("agency_id", self.source.id)
         self.handle_path_params("agency_id/resource_id/version")
         self.handle_query_params("detail_s references_s")
 
