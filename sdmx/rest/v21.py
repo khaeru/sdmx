@@ -11,6 +11,10 @@ PARAM = {
     "agency_id": common.PARAM["agency_id"],
     "resource_id": common.PARAM["resource_id"],
     # Common query parameters
+    ("start_period", QueryType.availability): common.PARAM["start_period"],
+    ("end_period", QueryType.availability): common.PARAM["end_period"],
+    ("updated_after", QueryType.availability): common.PARAM["updated_after"],
+    ("mode", QueryType.availability): common.PARAM["mode"],
     ("start_period", QueryType.data): common.PARAM["start_period"],
     ("end_period", QueryType.data): common.PARAM["end_period"],
     ("updated_after", QueryType.data): common.PARAM["updated_after"],
@@ -94,6 +98,20 @@ class URL(common.URL):
     """
 
     _all_parameters = PARAM
+
+    def handle_availability(self) -> None:
+        self._path.update({self.resource_type.name: None})
+
+        self._path["flow_ref"] = self._params.pop("resource_id")
+
+        if "key" in self._params:
+            self._path["key"] = self._params.pop("key")
+
+        # TODO handle providerRef
+        # TODO handle componentID
+        self.handle_query_params(
+            "start_period end_period updated_after references mode"
+        )
 
     def handle_data(self) -> None:
         super().handle_data()

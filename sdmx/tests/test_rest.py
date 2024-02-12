@@ -50,6 +50,13 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
         "structure/attachementconstraint/A0/ID0/+",
     ),
     (
+        R.availableconstraint,
+        dict(key="111+134.PCPIHA_IX.*"),
+        "availableconstraint/ID0/111+134.PCPIHA_IX.*",
+        # "availability/dataflow/ID0/111+134.PCPIHA_IX.*",
+        None,
+    ),
+    (
         R.categorisation,
         {},
         "categorisation/A0/ID0/latest",

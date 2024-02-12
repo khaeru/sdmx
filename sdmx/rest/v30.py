@@ -50,6 +50,9 @@ class URL(common.URL):
 
     _all_parameters = PARAM
 
+    def handle_availability(self) -> None:
+        raise NotImplementedError
+
     def handle_data(self) -> None:
         super().handle_data()
         self.handle_query_params(

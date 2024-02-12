@@ -328,6 +328,11 @@ class URL(abc.ABC):
             p = self._all_parameters[(name, self.query_type)]
             self._query.update(p.handle(self._params))
 
+    # Handlers for different types of queries
+    @abc.abstractmethod
+    def handle_availability(self) -> None:
+        pass
+
     def handle_data(self) -> None:
         self._path.update({self.resource_type.name: None})
 
@@ -350,12 +355,15 @@ class URL(abc.ABC):
 
     def identify_query_type(self):
         """Identify a :class:`.QueryType` given arguments."""
-        # TODO handle availability
+        # TODO handle availability for v21, registration for v30
         try:
             # data, metadata, schema
             self.query_type = QueryType[self.resource_type.name]
         except KeyError:
-            self.query_type = QueryType["structure"]
+            if self.resource_type == Resource.availableconstraint:
+                self.query_type = QueryType.availability
+            else:
+                self.query_type = QueryType.structure
 
     def join(self) -> str:
         """Join the URL parts, returning a complete URL."""
