@@ -1,7 +1,11 @@
 from io import BufferedIOBase, BytesIO
 from operator import itemgetter
+from typing import IO, TYPE_CHECKING, Union
 
 from sdmx.util import HAS_REQUESTS_CACHE, MaybeCachedSession
+
+if TYPE_CHECKING:
+    import os
 
 #: Known keyword arguments for requests_cache.CachedSession.
 CACHE_KW = [
@@ -96,12 +100,12 @@ class ResponseIO(BufferedIOBase):
         *tee* is exposed as *self.tee* and not closed explicitly.
     """
 
-    def __init__(self, response, tee=None):
+    def __init__(self, response, tee: Union[IO, "os.PathLike", None] = None):
         self.response = response
         if tee is None:
             tee = BytesIO()
         # If tee is a file-like object or tempfile, then use it as cache
-        if isinstance(tee, BufferedIOBase) or hasattr(tee, "file"):
+        if isinstance(tee, IO):
             self.tee = tee
         else:
             # So tee must be str or os.FilePath

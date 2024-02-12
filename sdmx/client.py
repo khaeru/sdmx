@@ -1,11 +1,10 @@
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, Any, Dict
+from typing import IO, TYPE_CHECKING, Any, Dict, Optional, Union
 from warnings import warn
 
 import requests
 
-from sdmx.message import Message
 from sdmx.model import common
 from sdmx.model.v21 import DataStructureDefinition
 from sdmx.reader import get_reader_for_media_type
@@ -14,6 +13,10 @@ from sdmx.session import ResponseIO, Session
 from sdmx.source import NoSource, list_sources, sources
 
 if TYPE_CHECKING:
+    import io
+    import os
+
+    import sdmx.message
     import sdmx.source
 
 log = logging.getLogger(__name__)
@@ -53,7 +56,7 @@ class Client:
 
     """
 
-    cache: Dict[str, Message] = {}
+    cache: Dict[str, "sdmx.message.Message"] = {}
 
     #: :class:`.source.Source` for requests sent from the instance.
     source: "sdmx.source.Source"
@@ -309,13 +312,13 @@ class Client:
 
     def get(
         self,
-        resource_type=None,
-        resource_id=None,
-        tofile=None,
-        use_cache=False,
-        dry_run=False,
+        resource_type: Union[str, Resource, None] = None,
+        resource_id: Optional[str] = None,
+        tofile: Union["os.PathLike", IO, None] = None,
+        use_cache: bool = False,
+        dry_run: bool = False,
         **kwargs,
-    ):
+    ) -> "sdmx.message.Message":
         """Retrieve SDMX data or metadata.
 
         (Meta)data is retrieved from the :attr:`source` of the current Client. The
@@ -464,7 +467,7 @@ class Client:
                 raise
 
         # Maybe copy the response to file as it's received
-        response_content = ResponseIO(response, tee=tofile)
+        response_content: "io.IOBase" = ResponseIO(response, tee=tofile)
 
         # Allow a source class to modify the response (e.g. headers) or content
         response, response_content = self.source.handle_response(
