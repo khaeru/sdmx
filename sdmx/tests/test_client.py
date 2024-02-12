@@ -115,7 +115,7 @@ class TestClient:
         expected |= set(ep.name for ep in sdmx.Resource)
         assert set(filter(lambda s: not s.startswith("_"), dir(client))) == expected
 
-    def test_get(self, client):
+    def test_get0(self, client):
         """:meth:`.get` handles mixed query parameters correctly."""
         req = client.get(
             "dataflow", detail="full", params={"references": "none"}, dry_run=True
@@ -124,6 +124,13 @@ class TestClient:
             "https://example.com/sdmx-rest/dataflow/TEST/all/latest?detail=full&"
             "references=none" == req.url
         )
+
+    def test_get1(self, client):
+        """Exceptions are raised on invalid arguments."""
+        # Exception is raised on unrecognized arguments
+        exc = "Unexpected/unhandled parameters {'foo': 'bar'}"
+        with pytest.raises(ValueError, match=exc):
+            client.get("datastructure", foo="bar")
 
     def test_getattr(self, client):
         with pytest.raises(AttributeError):
@@ -171,20 +178,6 @@ class TestClient:
             client.get("data", resource_id=df_id, key=key)
 
 
-def test_request_get_exceptions():
-    """Tests of Client.get() that don't require remote data."""
-    ESTAT = sdmx.Client("ESTAT")
-
-    # Exception is raised on unrecognized arguments
-    exc = "unrecognized arguments: {'foo': 'bar'}"
-    with pytest.raises(ValueError, match=exc):
-        ESTAT.get("datastructure", foo="bar")
-
-    exc = r"{'foo': 'bar'} supplied with get\(url=...\)"
-    with pytest.raises(ValueError, match=exc):
-        sdmx.read_url("https://example.com", foo="bar")
-
-
 @pytest.mark.network
 def test_request_get_args():
     ESTAT = sdmx.Client("ESTAT")
@@ -225,12 +218,20 @@ def test_request_get_args():
 
 
 @pytest.mark.network
-def test_read_url():
-    # URL can be queried without instantiating Client
+def test_read_url0():
+    """URL can be queried without instantiating Client."""
     sdmx.read_url(
         "https://sdw-wsrest.ecb.europa.eu/service/datastructure/ECB/ECB_EXR1/latest?"
         "references=all"
     )
+
+
+def test_read_url1():
+    """Exception is raised on invalid arguments."""
+    with pytest.raises(
+        ValueError, match=r"{'foo': 'bar'} supplied with get\(url=...\)"
+    ):
+        sdmx.read_url("https://example.com", foo="bar")
 
 
 # @pytest.mark.skip(reason="Temporarily offline on 2021-03-23")
