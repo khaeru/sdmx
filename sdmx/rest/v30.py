@@ -1,34 +1,67 @@
-from dataclasses import dataclass
+"""SDMX-REST API v2.0.0.
 
-from sdmx.rest.common import URL as BaseURL
+`Documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`_.
+"""
+from . import common
+from .common import PathParameter, QueryParameter, QueryType
+
+PARAM = {
+    # Common path parameters
+    "agency_id": common.PARAM["agency_id"],
+    "resource_id": common.PARAM["resource_id"],
+    # Common query parameters
+    ("c", QueryType.data): QueryParameter("c"),  # TODO complete
+    ("updated_after", QueryType.data): common.PARAM["updated_after"],
+    ("first_n_observations", QueryType.data): common.PARAM["first_n_observations"],
+    ("last_n_observations", QueryType.data): common.PARAM["last_n_observations"],
+    ("dimension_at_observation", QueryType.data): common.PARAM[
+        "dimension_at_observation"
+    ],
+    ("attributes", QueryType.data): QueryParameter("attributes"),  # TODO complete
+    ("measures", QueryType.data): QueryParameter("measures"),  # TODO complete
+    ("include_history", QueryType.data): common.PARAM["include_history"],
+    ("dimension_at_observation", QueryType.schema): common.PARAM[
+        "dimension_at_observation"
+    ],
+    #
+    # v3.0 specific path parameters
+    "context": PathParameter(
+        "context",
+        {
+            "dataflow",
+            "datastructure",
+            "metadataflow",
+            "metadataprovisionagreement",
+            "metadatastructure",
+            "provisionagreement",
+        },
+    ),
+    "version": PathParameter("version", set(), "+"),
+    #
+    # v3.0 specific query parameters
+    ("detail", QueryType.data): QueryParameter("detail"),  # TODO complete
+    ("detail", QueryType.structure): QueryParameter("detail"),  # TODO complete
+    ("references", QueryType.structure): QueryParameter("references"),  # TODO complete
+}
 
 
-@dataclass
-class URL(BaseURL):
+class URL(common.URL):
     """Utility class to build SDMX 3.0 REST web service URLs."""
 
-    def join(self) -> str:
-        """Join the URL parts, returning a complete URL."""
-        resource_id = "all" if self.resource_id is None else self.resource_id
-        version = "+" if self.version is None else self.version
+    _all_parameters = PARAM
 
-        parts = [self.source.url]
+    def handle_data(self) -> None:
+        super().handle_data()
+        self.handle_query_params(
+            "c updated_after first_n_observations last_n_observations "
+            "dimension_at_observation attributes measures include_history"
+        )
 
-        if self.resource_type in self._resource_types_with_key:
-            parts.extend([self.resource_type.name, self.resource_id])
-            if self.key:
-                parts.append(self.key)
-        else:
-            parts.extend(
-                [
-                    "structure",
-                    self.resource_type.name,
-                    self.agency_id,
-                    resource_id,
-                    version.replace("latest", "+"),
-                ]
-            )
+    def handle_schema(self) -> None:
+        super().handle_schema()
+        self.handle_query_params("dimension_at_observation")
 
-        assert None not in parts, parts
-
-        return "/".join(parts)
+    def handle_structure(self) -> None:
+        self._path.update({"structure": None, self.resource_type.name: None})
+        self.handle_path_params("agency_id/resource_id/version")
+        self.handle_query_params("detail references")
