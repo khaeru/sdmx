@@ -100,8 +100,19 @@ class ResponseIO(BufferedIOBase):
         *tee* is exposed as *self.tee* and not closed explicitly.
     """
 
+    tee: IO
+
     def __init__(self, response, tee: Union[IO, "os.PathLike", None] = None):
         self.response = response
+
+        if tee is None:
+            self.tee = BytesIO()
+        elif isinstance(tee, IO):
+            # If tee is a file-like object or tempfile, then use it as cache
+            self.tee = tee
+        else:
+            # So tee must be str, pathlib.Path, or similar
+            self.tee = open(tee, "w+b")
 
         content_disposition = response.headers.get("Content-Disposition", "")
         if content_disposition.endswith('.gz"'):
@@ -111,14 +122,6 @@ class ResponseIO(BufferedIOBase):
         else:
             content = response.content
 
-        if tee is None:
-            tee = BytesIO()
-        # If tee is a file-like object or tempfile, then use it as cache
-        if isinstance(tee, IO):
-            self.tee = tee
-        else:
-            # So tee must be str or os.FilePath
-            self.tee = open(tee, "w+b")
         self.tee.write(content)
         self.tee.seek(0)
 
