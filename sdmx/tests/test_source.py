@@ -6,11 +6,12 @@ from sdmx.source import Source, add_source, list_sources, sources
 
 def test_list_sources():
     source_ids = list_sources()
-    assert len(source_ids) == 29
+    # Correct number of sources, excluding those created for testing
+    assert 29 == len(set(source_ids) - {"MOCK", "TEST"})
 
     # Listed alphabetically
-    assert source_ids[0] == "ABS"
-    assert source_ids[-1] == "WB_WDI"
+    assert "ABS" == source_ids[0]
+    assert "WB_WDI" == source_ids[-1]
 
 
 def test_source_support():
