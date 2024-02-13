@@ -168,7 +168,7 @@ class PathParameter(Parameter):
 
         # Check against allowable values
         if len(self.values) and value not in self.values:
-            raise ValueError(f"{self.name}={self.value!r} not among {self.values}")
+            raise ValueError(f"{self.name}={value!r} not among {self.values}")
         elif value is None:
             raise ValueError(f"Missing required parameter {self.name!r}")
 
@@ -366,9 +366,21 @@ class URL(abc.ABC):
     # General-purpose methods
 
     def handle_path_params(self, expr: str) -> None:
-        """Extend :attr:`.path` with parts from `expr`, a "/"-delimited string."""
-        for p in map(self._all_parameters.__getitem__, expr.split("/")):
-            self._path.update(p.handle(self._params))
+        """Extend :attr:`.path` with parts from `expr`, a "/"-delimited string.
+
+        In an `expr` such as :py:`"/foo/{param}/"`:
+
+        - Parts enclosed in braces like :py:`"{param}"` are looked up in
+          :attr:`._all_parameters``, and the resulting :class:`.Parameter` instance
+          consumes a keyword argument.
+        - Parts that are plain strings like :py:`"foo"` are passed through directly.
+        """
+        for part in expr.split("/"):
+            if part.startswith("{"):
+                param = self._all_parameters[part.strip("{}")]
+                self._path.update(param.handle(self._params))
+            else:
+                self._path.update({part: None})
 
     def handle_query_params(self, expr: str) -> None:
         """Extend :attr:`.query` with parts from `expr`, a " "-delimited string."""
@@ -395,13 +407,15 @@ class URL(abc.ABC):
     def handle_schema(self) -> None:
         """Handle URL parameters for schema endpoints."""
         self._params.setdefault("agency_id", self.source.id)
-        self._path.update({self.resource_type.name: None})
-        self.handle_path_params("context/agency_id/resource_id/version")
+        self.handle_path_params(
+            self.rt + "/{context}/{agency_id}/{resource_id}/{version}"
+        )
+        self.handle_query_params("dimension_at_observation")
 
     def handle_structure(self) -> None:
         """Handle URL parameters for structure endpoints."""
         self._params.setdefault("agency_id", self.source.id)
-        self.handle_path_params("agency_id/resource_id/version")
+        self.handle_path_params("{agency_id}/{resource_id}/{version}")
         self.handle_query_params("detail_s references_s")
 
     def join(self, *, with_query: bool = True) -> str:
@@ -425,3 +439,8 @@ class URL(abc.ABC):
             parts[3] = "&".join(f"{k}={v}" for k, v in self.query.items())
 
         return urlunsplit(parts)
+
+    @property
+    def rt(self) -> str:
+        """Shorthand access to :class:`str` name of :attr:`.resource_type`."""
+        return self.resource_type.name

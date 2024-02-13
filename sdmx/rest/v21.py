@@ -43,18 +43,18 @@ class URL(common.URL):
     _all_parameters = ChainMap(common.PARAM, PARAM)
 
     def handle_availability(self):
-        self._path.update({self.resource_type.name: None})
-        self.handle_path_params("flow/key/provider/component_id")
+        """Handle URL parameters for availability endpoints."""
+        self.handle_path_params(self.rt + "/{flow}/{key}/{provider}/{component_id}")
         self.handle_query_params(
             "start_period end_period updated_after references_a mode"
         )
 
     def handle_data(self):
+        """Handle URL parameters for data endpoints."""
         if self._params.pop("agency_id", None):
             warn("'agency_id' argument is redundant for data queries", UserWarning, 2)
 
-        self._path.update({self.resource_type.name: None})
-        self.handle_path_params("flow/key/provider")
+        self.handle_path_params(self.rt + "/{flow}/{key}/{provider}")
         self.handle_query_params(
             "start_period end_period updated_after first_n_observations "
             "last_n_observations dimension_at_observation detail_d include_history"
@@ -86,11 +86,31 @@ class URL(common.URL):
         )
 
     def handle_schema(self):
+        """Handle URL parameters for schema endpoints."""
         super().handle_schema()
-        self.handle_query_params("dimension_at_observation explicit_measure")
+        self.handle_query_params("explicit_measure")
 
     def handle_structure(self):
-        self._path.update({self.resource_type.name: None})
+        """Handle URL parameters for structure endpoints.
+
+        .. warning::
+
+           This method currently preserves the behaviour of :meth:`.Client.get` as of
+           :mod:`sdmx` version 2.13.1 and earlier. Namely, defaults are supplied for the
+           ``?references=…`` query parameter in the following cases:
+
+           - :attr:`.Resource.dataflow` or :attr:`.Resource.datastructure` **and** a
+             specific ``resource_id`` is given (that is, not "all") → default
+             ``?references=all``.
+           - :attr:`.Resource.categoryscheme` → default
+             ``?references=parentsandsiblings``.
+
+           These differ from the SDMX-REST v1.5.0 standard, which states the default
+           should be ``none`` in all cases. The :mod:`sdmx`-specific defaults **may** be
+           deprecated and removed in future versions; to ensure stable behaviour, give
+           the parameter explicitly.
+        """
+        self.handle_path_params(self.rt)
         super().handle_structure()
 
         # Moved from Client._request_from_args()

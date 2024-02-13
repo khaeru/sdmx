@@ -48,14 +48,17 @@ class URL(common.URL):
         """Handle URL parameters for availability endpoints."""
         self._params.setdefault("agency_id", self.source.id)
         self.handle_path_params(
-            "context_d/agency_id/resource_id/version/key/component_id"
+            "availability/{context_d}/{agency_id}/{resource_id}/{version}/{key}/"
+            "{component_id}"
         )
         self.handle_query_params("c mode references_a updated_after")
 
     def handle_data(self):
+        """Handle URL parameters for data endpoints."""
         self._params.setdefault("agency_id", self.source.id)
-        self._path.update({self.resource_type.name: None})
-        self.handle_path_params("context_d/agency_id/resource_id/version/key")
+        self.handle_path_params(
+            self.rt + "/{context_d}/{agency_id}/{resource_id}/{version}/{key}"
+        )
         self.handle_query_params(
             "c updated_after first_n_observations last_n_observations "
             "dimension_at_observation attributes measures include_history"
@@ -65,36 +68,29 @@ class URL(common.URL):
         """Handle URL parameters for metadata endpoints."""
         self._path.update({"metadata": None})
         if self.resource_type == common.Resource.metadataflow:
-            self._path.update({self.resource_type.name: None})
-            self.handle_path_params("agency_id/resource_id/version/provider_id")
+            self.handle_path_params(
+                "metadataflow/{agency_id}/{resource_id}/{version}/{provider_id}"
+            )
         elif self.resource_type == common.Resource.metadata:
-            self._path.update({"metadataset": None})
-            self.handle_path_params("provider_id/resource_id/version")
+            self.handle_path_params("metadataset/{provider_id}/{resource_id}/{version}")
         else:
-            self._path.update({self.resource_type.name: None})
-            self.handle_path_params("agency_id/resource_id/version")
+            self.handle_path_params(self.rt + "/{agency_id}/{resource_id}/{version}")
         self.handle_query_params("detail_s")
 
     def handle_registration(self):
         """Handle URL parameters for registration endpoints."""
         self.handle_path_params("registration")
         if "context" in self._params:
-            self._path.update({"id": None})
-            self.handle_path_params("context_d/agency_id/resource_id/version")
+            self.handle_path_params("{context_d}/{agency_id}/{resource_id}/{version}")
             self.handle_query_params("updated_after updated_before")
         elif "agency_id" in self._params:
-            self._path.update({"provider": None})
-            self.handle_path_params("agency_id/provider_id")
+            self.handle_path_params("provider/{agency_id}/{provider_id}")
             self.handle_query_params("updated_after updated_before")
         else:
-            self._path.update({"id": None})
-            self.handle_path_params("resource_id")  # "registrationID" in the spec
+            self.handle_path_params("id/{resource_id}")  # "registrationID" in the spec
             # No query parameters
 
-    def handle_schema(self):
-        super().handle_schema()
-        self.handle_query_params("dimension_at_observation")
-
     def handle_structure(self):
-        self._path.update({"structure": None, self.resource_type.name: None})
+        """Handle URL parameters for structure endpoints."""
+        self.handle_path_params(f"structure/{self.rt}")
         super().handle_structure()
