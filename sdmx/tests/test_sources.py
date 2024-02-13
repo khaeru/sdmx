@@ -103,6 +103,11 @@ class TestMOCK(DataSourceTest):
         "schema": dict(context="datastructure"),
     }
 
+    xfail = {
+        "metadata": NotImplementedError,  # In .rest.v21.URL.handle_metadata()
+        "registration": ValueError,  # In .rest.v21.URL.handle_registration()
+    }
+
     @pytest.fixture(scope="class")
     def client(self, mock_service_adapter):
         """Return a client with mocked responses."""
@@ -113,8 +118,8 @@ class TestMOCK(DataSourceTest):
         yield c
 
     # Same as above, but without the "source" or "network" marks
-    def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
-        super().test_endpoint(pytestconfig, cache_path, client, endpoint, args)
+    def test_endpoint(self, client, endpoint, args):
+        client.get(endpoint, **args)
 
 
 class TestABS(DataSourceTest):
