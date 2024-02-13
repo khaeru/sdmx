@@ -32,7 +32,7 @@ tr.result > td.fail {
   background: pink;
 }
 tr.result > td.xfail {
-  background: orange;
+  background: tan;
 }
 tr.result > td.not-implemented {
   background: lightgrey;
@@ -69,12 +69,16 @@ tr.result > td.not-implemented {
     {% endfor %}
   </tr>
 </thead>
-{% for source_id, results in data.items() %}
+{% for source_id, results in data.items() | sort %}
 <tr class="result">
   <td><strong>{{ source_id }}</strong></td>
   {% for resource in resources %}
   {% set result = results.get(resource) %}
+  {% if result in abbrev %}
   <td class="{{ result }}">{{ abbrev.get(result) }}</td>
+  {% else %}
+  <td class="fail"><abbr title="{{result}}">{{ abbrev.get("fail") }}</abbr></td>
+  {% endif %}
   {% endfor %}
 </tr>
 {% endfor %}
@@ -91,7 +95,7 @@ tr.result > td.not-implemented {
   <td style="text-align: left">Unexpected failure.</td>
 </tr>
 <tr class="result">
-  <td class="xfail">✔</td>
+  <td class="xfail"> </td>
   <td style="text-align: left">
     <p>Known/expected failure. See GitHub for any related issue(s).</p>
     <p>Includes the case where the data source is known to not implement this resource,
@@ -118,7 +122,7 @@ tr.result > td.not-implemented {
 ABBREV = {
     "not-implemented": "",
     "pass": "✔",
-    "xfail": "✔",
+    "xfail": "",
     "fail": "✘",
     None: "—",
 }
@@ -155,7 +159,7 @@ class ServiceReporter:
             elif xfail_classes:
                 result = "xfail" if call.excinfo.type in xfail_classes else "fail"
             else:
-                result = str(call.excinfo.type)
+                result = repr(call.excinfo.value)
         except AttributeError:
             result = "pass"
 
@@ -186,9 +190,6 @@ if __name__ == "__main__":  # pragma: no cover
         # Update `data` with the file contents
         with open(path) as f:
             data.update(json.load(f))
-
-        # Remove the JSON file so it is not published
-        path.unlink()
 
     # Compile list of resources that were tested
     resources = set(chain(*[v.keys() for v in data.values()]))
