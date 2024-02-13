@@ -1,4 +1,4 @@
-from io import BufferedIOBase, BytesIO
+from io import BufferedIOBase, BufferedRandom, BytesIO
 from operator import itemgetter
 from typing import IO, TYPE_CHECKING, Union
 
@@ -107,7 +107,7 @@ class ResponseIO(BufferedIOBase):
 
         if tee is None:
             self.tee = BytesIO()
-        elif isinstance(tee, IO):
+        elif isinstance(tee, (IO, BufferedRandom)):
             # If tee is a file-like object or tempfile, then use it as cache
             self.tee = tee
         else:
