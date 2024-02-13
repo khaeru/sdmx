@@ -64,10 +64,15 @@ class URL(common.URL):
         )
 
     def handle_metadata(self):
-        """Not implemented."""
+        """Not implemented.
+
+        Although it is described in the standards, there are no known SDMX REST data
+        sources that support this API endpoint. If you are aware of one, please
+        `open an issue <https://github.com/khaeru/sdmx/issues/new>`__.
+        """
         raise NotImplementedError
 
-    def handle_registration(self) -> None:
+    def handle_registration(self):
         """This type of query is not included in SDMX-REST v1.5.0."""
         raise ValueError(
             "/registration/… queries not supported in the SDMX-REST v1.5.0 API"
