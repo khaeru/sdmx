@@ -210,7 +210,9 @@ class QueryParameter(PathParameter):
                 raise ValueError(f"Cannot give both {self.name} and {self.camelName}")
 
             value = parameters.pop(present.pop())
-            assert value in self.values or 0 == len(self.values)
+            if len(self.values) and value not in self.values:
+                raise ValueError(f"{self.name}={value!r} not among {self.values}")
+
             return {self.camelName: value}
         else:
             return {}
