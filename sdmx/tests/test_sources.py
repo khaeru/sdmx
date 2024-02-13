@@ -260,6 +260,9 @@ class TestESTAT(DataSourceTest):
     def test_gh_116(self, caplog, cache_path, client):
         """Test of https://github.com/khaeru/sdmx/issues/116.
 
+        As of 2024-02-13, the actual web service no longer returns multiple versions of
+        the same artefacts.
+
         See also
         --------
         .test_reader_xml.test_gh_116
@@ -269,21 +272,26 @@ class TestESTAT(DataSourceTest):
         )
 
         # Both versions of the GEO codelist are accessible in the message
-        cl1 = msg.codelist["ESTAT:GEO(13.0)"]
-        cl2 = msg.codelist["ESTAT:GEO(13.1)"]
+        print(msg.codelist.keys())
+        if cl1 := msg.codelist.get("ESTAT:GEO(13.0)"):
+            cl2 = msg.codelist["ESTAT:GEO(13.1)"]
 
-        # cl1 is complete and items are available
-        assert not cl1.is_partial and 0 < len(cl1)
-        # cl2 is partial, and fewer codes are included than in cl1
-        assert cl2.is_partial and 0 < len(cl2) < len(cl1)
+            # cl1 is complete and items are available
+            assert not cl1.is_partial and 0 < len(cl1)
+            # cl2 is partial, and fewer codes are included than in cl1
+            assert cl2.is_partial and 0 < len(cl2) < len(cl1)
+        else:
+            assert msg.codelist["GEO"]
 
-        cl3 = msg.codelist["ESTAT:UNIT(15.1)"]
-        cl4 = msg.codelist["ESTAT:UNIT(15.2)"]
+        if cl3 := msg.codelist.get("ESTAT:UNIT(15.1)"):
+            cl4 = msg.codelist["ESTAT:UNIT(15.2)"]
 
-        # cl3 is complete and items are available
-        assert not cl3.is_partial and 0 < len(cl3)
-        # cl4 is partial, and fewer codes are included than in cl1
-        assert cl4.is_partial and 0 < len(cl4) < len(cl3)
+            # cl3 is complete and items are available
+            assert not cl3.is_partial and 0 < len(cl3)
+            # cl4 is partial, and fewer codes are included than in cl1
+            assert cl4.is_partial and 0 < len(cl4) < len(cl3)
+        else:
+            assert msg.codelist["UNIT"]
 
 
 class TestESTAT3(DataSourceTest):
