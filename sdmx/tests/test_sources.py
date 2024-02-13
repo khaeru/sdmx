@@ -15,9 +15,6 @@ import sdmx
 from sdmx import Client
 from sdmx.exceptions import HTTPError, XMLParseError
 
-# Mark the whole file so the tests can be excluded/included
-pytestmark = pytest.mark.source
-
 log = logging.getLogger(__name__)
 
 
@@ -75,6 +72,7 @@ class DataSourceTest:
     #         self.source_id, cache_name=str(cache_path), backend="sqlite", verify=False
     #     )
 
+    @pytest.mark.source
     @pytest.mark.network
     def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
         # See sdmx.testing._generate_endpoint_tests() for values of `endpoint`
@@ -96,6 +94,27 @@ class DataSourceTest:
 
         # All parsed contents can also be converted to pandas
         sdmx.to_pandas(message)
+
+
+class TestMOCK(DataSourceTest):
+    source_id = "MOCK"
+
+    endpoint_args = {
+        "schema": dict(context="datastructure"),
+    }
+
+    @pytest.fixture(scope="class")
+    def client(self, mock_service_adapter):
+        """Return a client with mocked responses."""
+
+        c = Client(self.source_id)
+        c.session.mount("mock://", mock_service_adapter)
+
+        yield c
+
+    # Same as above, but without the "source" or "network" marks
+    def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
+        super().test_endpoint(pytestconfig, cache_path, client, endpoint, args)
 
 
 class TestABS(DataSourceTest):
