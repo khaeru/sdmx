@@ -234,22 +234,6 @@ In order to identify available data flows:
 SDMX-ML —
 `Website <https://ilostat.ilo.org/resources/sdmx-tools/>`__
 
-- :class:`sdmx.source.ilo.Source` handles some particularities of the ILO web service, including:
-
-  - The ``references=`` query parameter is not supported; any value is discarded with a warning.
-
-  Others that are not handled:
-
-  - Data flow IDs take on the role of a filter.
-    E.g., there are dataflows for individual countries, ages, sexes etc. rather than merely for different indicators.
-  - The service returns 413 Payload Too Large errors for some queries, with messages like: "Too many results, please specify codelist ID".
-    Test for :class:`sdmx.exceptions.HTTPError` (= :class:`requests.exceptions.HTTPError`) and/or specify a ``resource_id``.
-
-- It is highly recommended to read the “ILOSTAT SDMX User Guide” linked from the above webpage.
-
-.. autoclass:: sdmx.source.ilo.Source()
-   :members:
-
 
 .. _IMF:
 
