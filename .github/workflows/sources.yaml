@@ -70,14 +70,14 @@ jobs:
         cache-dependency-path: "**/pyproject.toml"
 
     - name: Install the Python package and dependencies
-      run: pip install .[cache,tests]
+      run: pip install .[cache,tests] pytest-regex
 
     - name: Tests of ${{ matrix.source }} data source
       continue-on-error: true
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
-        pytest -m network -k Test${{ matrix.source }} \
+        pytest -m network --regex '.*Test${{ matrix.source }}:' \
           --color=yes --durations=30 -rA --verbose \
           --cov-report=xml \
           --numprocesses=auto
