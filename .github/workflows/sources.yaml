@@ -54,16 +54,16 @@ jobs:
     name: ${{ matrix.source }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     # TODO avoid requiring this; it's not used in this workflow
     - name: Checkout test data
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: khaeru/sdmx-test-data
         path: sdmx-test-data
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.x
         cache: pip
@@ -83,13 +83,14 @@ jobs:
           --numprocesses=auto
 
     - name: Upload ${{ matrix.source }} results as a build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: source-tests
         path: source-tests/*.json
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
+      with: { token: "${{ secrets.CODECOV_TOKEN }}" }
 
   collect:
     needs: source
@@ -97,9 +98,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.x
         cache: pip
@@ -109,7 +110,7 @@ jobs:
       run: pip install .[cache,tests]
 
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: source-tests
         path: source-tests
@@ -118,7 +119,7 @@ jobs:
       run: python -m sdmx.testing.report
 
     - name: Upload report as a pages artifact
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact@v3
       with:
         path: source-tests
 
@@ -136,7 +137,7 @@ jobs:
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v2
+      uses: actions/deploy-pages@v4
 
     # Deploy to the gh-pages environment
     environment:
