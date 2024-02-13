@@ -29,7 +29,7 @@ class TestResource:
 _S = "?startPeriod=2024-02-12"
 
 R = Resource
-PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
+PARAMS: Tuple[Tuple[Resource, Dict[str, Any], Optional[str], Optional[str]], ...] = (
     # (R.actualconstraint, {}, "actualconstraint/ID0", "actualconstraint/ID0"),
     (
         R.agencyscheme,
@@ -49,12 +49,19 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
         "attachementconstraint/A0/ID0/latest",
         "structure/attachementconstraint/A0/ID0/+",
     ),
+    # v21 only
     (
         R.availableconstraint,
         dict(key="111+134.PCPIHA_IX.*"),
         "availableconstraint/ID0/111+134.PCPIHA_IX.*",
-        # "availability/dataflow/ID0/111+134.PCPIHA_IX.*",
         None,
+    ),
+    # v30 only
+    (
+        R.availableconstraint,
+        dict(key="111+134.PCPIHA_IX.*", component_id="*", context="dataflow"),
+        None,
+        "availability/dataflow/A0/ID0/+/111+134.PCPIHA_IX.*/*",
     ),
     (
         R.categorisation,
@@ -138,7 +145,15 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], str, Optional[str]], ...] = (
         "hierarchicalcodelist/A0/ID0/latest",
         "structure/hierarchicalcodelist/A0/ID0/+",
     ),
-    (R.metadata, {}, "metadata/ID0", "metadata/ID0"),
+    (
+        R.metadata,
+        dict(
+            provider_id="*",
+        ),
+        # "metadata/ID0",
+        None,  # Not implemented; no reference implementation available
+        "metadata/metadataset/*/ID0/+",
+    ),
     (
         R.metadataflow,
         {},
