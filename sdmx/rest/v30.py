@@ -10,7 +10,7 @@ from collections import ChainMap
 from typing import Dict
 
 from . import common
-from .common import PathParameter, QueryParameter
+from .common import PathParameter, QueryParameter, Resource
 
 #: v2.1.0-specific path and query parameters.
 PARAM: Dict[str, common.Parameter] = {
@@ -32,7 +32,7 @@ PARAM: Dict[str, common.Parameter] = {
     "detail_s": QueryParameter("detail", common.NAMES["detail_s"] | {"raw"}),
     "measures": QueryParameter("measures"),
     "references_s": QueryParameter(
-        "references", common.NAMES["references_s"] | {"ancestors"}
+        "references", common.NAMES["references_s"] | {"ancestors"} | set(Resource)
     ),
     "updated_after": QueryParameter("update_after"),
     "updated_before": QueryParameter("update_before"),

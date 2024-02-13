@@ -29,8 +29,9 @@ PARAM: Dict[str, common.Parameter] = {
         "detail", {"dataonly", "full", "nodata", "serieskeysonly"}
     ),
     "detail_s": QueryParameter("detail", common.NAMES["detail_s"]),
-    # TODO handle allowable values like "codelist"
-    "references_s": QueryParameter("references", common.NAMES["references_s"]),
+    "references_s": QueryParameter(
+        "references", common.NAMES["references_s"] | set(Resource)
+    ),
     "start_period": QueryParameter("start_period"),
     "end_period": QueryParameter("end_period"),
     "explicit_measure": QueryParameter("explicit_measure", {True, False}),
