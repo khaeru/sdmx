@@ -76,11 +76,12 @@ jobs:
       continue-on-error: true
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
+      # NB Cannot use --numprocesses=auto (pytest-xdist) here, as
+      #    it interferes with collating results
       run: |
         pytest -m "network" -k Test${{ matrix.source }} \
           --color=yes --durations=30 -rA --verbose \
-          --cov-report=xml \
-          --numprocesses=auto
+          --cov-report=xml
 
     - name: Upload ${{ matrix.source }} results as a build artifact
       uses: actions/upload-artifact@v4
