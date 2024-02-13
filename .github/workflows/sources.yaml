@@ -29,6 +29,7 @@ jobs:
         - ECB
         - EMPL
         - ESTAT
+        - ESTAT3
         - ESTAT_COMEXT
         - GROW
         - ILO
@@ -40,6 +41,7 @@ jobs:
         - NB
         - NBB
         - OECD
+        - OECD_JSON
         - SGR
         - SPC
         - STAT_EE
