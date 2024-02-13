@@ -2,6 +2,7 @@ import json
 import os
 from itertools import chain
 from pathlib import Path
+from typing import Dict
 
 from jinja2 import Template
 
@@ -171,9 +172,13 @@ class ServiceReporter:
         base_path = session.config.invocation_params.dir.joinpath("source-tests")
         base_path.mkdir(exist_ok=True)
 
+        # Distinct file name suffix for each worker if using pytest-xdist
+        pxw = os.environ.get("PYTEST_XDIST_WORKER")
+        suffix = "" if pxw is None else f"-{pxw}"
+
         for source_id, data in self.data.items():
-            # File path for this particular source
-            path = base_path.joinpath(source_id).with_suffix(".json")
+            # File path for this particular source & worker
+            path = base_path.joinpath(source_id + suffix).with_suffix(".json")
             # Dump the data for this source only
             with open(path, "w") as f:
                 json.dump({source_id: data}, f)
@@ -185,11 +190,15 @@ if __name__ == "__main__":  # pragma: no cover
     base_path = Path.cwd().joinpath("source-tests")
 
     # Locate, read, and merge JSON files
-    data = {}
+    data: Dict[str, Dict[str, str]] = {}
     for path in base_path.glob("**/*.json"):
         # Update `data` with the file contents
         with open(path) as f:
-            data.update(json.load(f))
+            for source_id, source_data in json.load(f).items():
+                data.setdefault(source_id, {}).update(source_data)
+
+    with open(base_path.joinpath("all-data.json"), "w") as f:
+        json.dump(data, f)
 
     # Compile list of resources that were tested
     resources = set(chain(*[v.keys() for v in data.values()]))
