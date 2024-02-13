@@ -291,7 +291,7 @@ NAMES = {
         "descendants",
         "none",
         "parents",
-        "parentsandsibling",
+        "parentsandsiblings",
     },
 }
 
