@@ -73,7 +73,8 @@ class Source:
     #: :class:`.DataContentType` indicating the type of data returned by the source.
     data_content_type: DataContentType = DataContentType.XML
 
-    #: SDMX REST API version(s) supported.
+    #: SDMX REST API version(s) supported. Default: :class:`.Version["2.1"] <.Version>`
+    #: only.
     versions: Set[Version] = field(default_factory=lambda: {Version["2.1"]})
 
     #: Mapping from :class:`.Resource` values to :class:`bool` indicating support for
@@ -121,7 +122,12 @@ class Source:
             )
 
     def get_url_class(self) -> Type["sdmx.rest.common.URL"]:
-        """Return a class for constructing URLs for this Source."""
+        """Return a class for constructing URLs for this Source.
+
+        - If :attr:`.versions` includes *only* SDMX 3.0.0, return :class:`.v30.URL`.
+        - If :attr:`.versions` includes SDMX 2.1, return :class:`.v21.URL`.
+        - Raise an exception for other :attr:`.versions` that are not supported.
+        """
         if {Version["3.0.0"]} == self.versions:
             import sdmx.rest.v30
 

@@ -1,8 +1,10 @@
 """SDMX-REST API v1.5.0.
 
 Note that version 1.5.0 of the REST API corresponds to version 2.1 of the overall SDMX
-standards. See the
-`documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v1.5.0/v2_1/ws/rest/docs>`_
+standards. See the `documentation
+<https://github.com/sdmx-twg/sdmx-rest/tree/v1.5.0/v2_1/ws/rest/docs>`_ and `OpenAPI
+specification
+<https://github.com/sdmx-twg/sdmx-rest/blob/v1.5.0/v2_1/ws/rest/src/sdmx-rest.yaml>`_
 for further details.
 """
 from collections import ChainMap
@@ -12,7 +14,7 @@ from warnings import warn
 from . import common
 from .common import OptionalPath, PathParameter, QueryParameter, Resource
 
-#: RESTv1.5.0 specific parameters
+#: v1.5.0-specific path and query parameters.
 PARAM: Dict[str, common.Parameter] = {
     # Path parameters
     # NB the text and YAML OpenAPI specification disagree on whether this is required
@@ -36,12 +38,7 @@ PARAM: Dict[str, common.Parameter] = {
 
 
 class URL(common.URL):
-    """Utility class to build SDMX 2.1 REST web service URLs.
-
-    See also
-    --------
-    https://github.com/sdmx-twg/sdmx-rest/blob/v1.5.0/v2_1/ws/rest/src/sdmx-rest.yaml
-    """
+    """Utility class to build SDMX-REST API v1.5.0 URLs."""
 
     _all_parameters = ChainMap(common.PARAM, PARAM)
 
@@ -64,16 +61,26 @@ class URL(common.URL):
         )
 
     def handle_metadata(self):
-        """Not implemented.
+        """Handle URL parameters for metadata endpoints.
 
-        Although it is described in the standards, there are no known SDMX REST data
-        sources that support this API endpoint. If you are aware of one, please
-        `open an issue <https://github.com/khaeru/sdmx/issues/new>`__.
+        Raises
+        ------
+        NotImplementedError
+            Although it is described in the standards, there are no known SDMX REST data
+            sources that support this API endpoint to confirm behaviour. If you are
+            aware of one, please `open an issue
+            <https://github.com/khaeru/sdmx/issues/new>`_.
         """
         raise NotImplementedError
 
     def handle_registration(self):
-        """This type of query is not included in SDMX-REST v1.5.0."""
+        """Handle URL parameters for registration endpoints.
+
+        Raises
+        ------
+        ValueError
+            Always. This type of query is not included in SDMX-REST v1.5.0.
+        """
         raise ValueError(
             "/registration/… queries not supported in the SDMX-REST v1.5.0 API"
         )

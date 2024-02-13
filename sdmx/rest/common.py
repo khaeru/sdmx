@@ -297,7 +297,7 @@ NAMES = {
 
 
 class URL(abc.ABC):
-    """Utility class to build URLs for SDMX REST web service queries.
+    """Abstract base utility class to build SDMX-REST API URLs.
 
     Parameters
     ----------
@@ -314,7 +314,7 @@ class URL(abc.ABC):
     #: Type of resource to be retrieved; a member of :class:`.Resource`.
     resource_type: Resource
 
-    #: Pieces for the hierarchical path component of the URL.
+    #: Pieces for the hierarchical path component of the URL. If
     _path: Dict[str, Optional[str]]
 
     #: Pieces for the query component of the URL.
@@ -343,6 +343,7 @@ class URL(abc.ABC):
         self._path = dict()
         self.query = dict()
 
+        # Identify the query type
         if resource_type.name in {
             "data",
             "metadata",
@@ -360,7 +361,6 @@ class URL(abc.ABC):
         getattr(self, f"handle_{query_type}")()
 
         if len(self._params):
-            # print(f"{self.path = }\n{self.query = }")
             raise ValueError(f"Unexpected/unhandled parameters {self._params}")
 
     # General-purpose methods
@@ -378,39 +378,48 @@ class URL(abc.ABC):
     # Handlers for different QueryTypes
     @abc.abstractmethod
     def handle_availability(self) -> None:
-        pass
+        """Handle URL parameters for availability endpoints (abstract method)."""
 
     @abc.abstractmethod
     def handle_data(self) -> None:
-        pass
+        """Handle URL parameters for data endpoints (abstract method)."""
 
     @abc.abstractmethod
     def handle_metadata(self) -> None:
-        pass
+        """Handle URL parameters for metadata endpoints (abstract method)."""
 
     @abc.abstractmethod
     def handle_registration(self) -> None:
-        pass
+        """Handle URL parameters for registration endpoints (abstract method)."""
 
     def handle_schema(self) -> None:
+        """Handle URL parameters for schema endpoints."""
         self._params.setdefault("agency_id", self.source.id)
         self._path.update({self.resource_type.name: None})
         self.handle_path_params("context/agency_id/resource_id/version")
 
     def handle_structure(self) -> None:
+        """Handle URL parameters for structure endpoints."""
         self._params.setdefault("agency_id", self.source.id)
         self.handle_path_params("agency_id/resource_id/version")
         self.handle_query_params("detail_s references_s")
 
     def join(self, *, with_query: bool = True) -> str:
-        """Join the URL parts, returning a complete URL."""
+        """Join the URL parts, returning a complete URL.
 
+        Parameters
+        ----------
+        with_query : bool
+            If :any:`False`, omit :attr:`.query` from the joined URL.
+        """
         # Keep the URL scheme, netloc, and any path from the source's base URL
         parts = list(urlsplit(self.source.url)[:3]) + [None, None]
+
         # Assemble path string
         parts[2] = re.sub("([^/])$", r"\1/", parts[2] or "") + "/".join(
             (value or name) for name, value in self._path.items()
         )
+
         if with_query:
             # Assemble query string
             parts[3] = "&".join(f"{k}={v}" for k, v in self.query.items())

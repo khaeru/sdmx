@@ -11,11 +11,13 @@ SDMX makes a distinction between data providers and sources:
 Each data *source* might aggregate and provide data or metadata from multiple data *providers*.
 Or, an agency might operate a data source that only contains information they provide themselves; in this case, the source and provider are identical.
 
-:mod:`sdmx` identifies each data source using a string such as ``'ABS'``, and has built-in support for a number of data sources.
+:mod:`sdmx` identifies each data source using a string such as :py:`"ABS"`, and has built-in support for a number of data sources.
 Use :meth:`list_sources` to list these.
 Read the following sections, or the file :file:`sources.json` in the package source code, for more details.
 
 :mod:`sdmx` also supports adding other data sources; see :meth:`add_source` and :class:`~.source.Source`.
+
+.. _data-source-limitations:
 
 Data source limitations
 -----------------------
@@ -57,7 +59,7 @@ Please `open an issue <https://github.com/khaeru/sdmx/issues/new>`__ if the supp
   This means that the service fails to even give a proper 501 response (see below).
 
   :meth:`.Client.get` will refuse to query these sources at all, instead raising :class:`NotImplementedError`.
-  You can override this behaviour by giving the `force` argument to :meth:`~.Client.get`.
+  You can override this behaviour by giving :py:`force=True` as an argument to :meth:`~.Client.get`.
 
 - The test suite (:mod:`test_sources`) includes notation of all endpoints for which services return **400 Bad syntax** or **501 Not implemented** response codes.
   :mod:`sdmx` will make an actual query to these endpoints, but raise built-in Python exceptions that can be caught and handled by user code:
@@ -74,19 +76,18 @@ Please `open an issue <https://github.com/khaeru/sdmx/issues/new>`__ if the supp
 
 .. _source-matrix:
 
-- Because of the large number of services and endpoints, the matrix of support is only periodically updated.
-  To mitigate: https://khaeru.github.io/sdmx/ displays a summary of every SDMX 2.1 REST API endpoint for every data source built-in to :mod:`sdmx`; this summary is updated daily by an automatic run of the test suite.
-  These include all endpoints known to return a non-404 reply, even if the reply is an error message of some sort.
+- Because of the large number of services and endpoints, this matrix of support is only periodically updated.
+  To mitigate: https://khaeru.github.io/sdmx/ displays a summary of every SDMX-REST API endpoint for every data source built-in to :mod:`sdmx`; this summary is updated daily by an automatic run of the test suite.
+  These include all endpoints known to return a reply, even if the reply is an error message of some sort.
 
-
-SDMX-JSON versus SDMX-ML services
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SDMX-JSON—only services
+~~~~~~~~~~~~~~~~~~~~~~~
 
 A key difference is between sources offering SDMX-ML and SDMX-JSON content.
-Although the SDMX-JSON format includes structure messages, initial/draft versions of it, and so many web services that return SDMX-JSON still do not support structure queries; only data queries.
-As well, the SDMX-REST standard allows services to respond to the HTTP ``Accepts:`` header and return either SDMX-ML or SDMX-JSON, only a few services actually implement this feature.
+Although the SDMX-JSON 2.0 format (corresponding to SDMX 3.0) includes structure messages, many web services that return SDMX-JSON still do not provide such content or support structure queries; only data queries.
+The SDMX-REST standard specifies how services should respond to the HTTP ``Accepts:`` header and return either SDMX-ML or SDMX-JSON, but implementation of this feature is inconsistent across known sources.
 
-Where data structures are not available, :mod:`sdmx` cannot automatically validate keys.
+Where data structures are not available, :mod:`sdmx` cannot automatically construct keys.
 For such services, start by browsing the source's website to identify a dataflow of interest.
 Then identify the key format and construct a key for the desired data request.
 
@@ -183,6 +184,9 @@ Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=40708145>`__
 
 .. automodule:: sdmx.source.estat
    :members: Source, handle_references_param
+
+.. automodule:: sdmx.source.estat3
+   :members: Source
 
 .. _ESTAT_COMEXT:
 

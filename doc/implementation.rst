@@ -12,38 +12,38 @@ For those purposes, see :doc:`resources`; or the :doc:`walkthrough`, which inclu
 SDMX versions 2.0, 2.1, and 3.0
 ===============================
 
-Multiple versions of the SDMX standards have been published:
+Multiple versions of the SDMX standards have been adopted:
 
 - 2.0 in November 2005.
 - 2.1 in August 2011; published at the International Standards Organization (ISO) in January 2013; and revised multiple times since.
 - 3.0 in October 2022.
 
-For the current package, :mod:`sdmx`:
+Parts of the standard are versioned differently; see :ref:`sdmx-csv`, :ref:`sdmx-json`, and :ref:`sdmx-rest` below.
 
-- SDMX 2.0 is not implemented, and no implementation is currently planned.
+For the current Python package, :mod:`sdmx`:
+
+- **SDMX 2.0** is not implemented, and no implementation is currently planned.
 
   - Some data providers still exist which only offer SDMX-ML 2.0 and/or an SDMX 2.0 REST web service.
     These implementations of SDMX 2.0 can be incomplete, inconsistent, or not fully compliant with the standard.
     This makes it more difficulty and costly to support them.
   - While no SDMX 2.0 implementation is planned, contributions from new developers are possible and welcome.
 
-- SDMX 2.1 is implemented, as described on this page.
-- SDMX 3.0 is partly implemented, and a full implementation is planned.
-  As of v2.11.0, :mod:`sdmx` implements:
+- **SDMX 2.1 and 3.0** are implemented as described on this page, with exhaustive implementation as the design goal for :mod:`sdmx`.
 
-  - The SDMX 3.0 information model (:mod:`.model.v30`) to the same extent as SDMX 2.1.
-  - Reading of SDMX-ML 3.0 (:mod:`.reader.xml.v30`).
+For SDMX 3.0 in particular, as of v2.14.0, :mod:`sdmx` implements:
 
-  Also:
+- The SDMX 3.0 information model (:mod:`.model.v30`) to the same extent as SDMX 2.1.
+- Reading of SDMX-ML 3.0 (:mod:`.reader.xml.v30`).
+- Construction of URLs and querying SDMX-REST API v2.1.0 data sources (:mod:`.rest.v30`).
 
-  - :mod:`sdmx` recognizes web services implementing the SDMX 3.0 REST API as distinct from 2.1 versions, and will clearly indicate (e.g. with standard Python :class:`NotImplementedError`) where support is not yet implemented.
-  - Writing SDMX-ML 3.0 is not yet supported.
-  - Reading and writing SDMX-JSON 2.0 is not yet supported. [1]_
+This implies:
 
-- Support for SDMX 3.0 will be expanded incrementally.
-  Follow the :doc:`whatsnew`; :issue:`87`; and other GitHub issues and pull requests for details.
-- As of 2023-03-10, none of the :doc:`data sources <sources>` pre-packaged with :mod:`sdmx` are known operate a SDMX 3.0 web service or provide SDMX-{ML,JSON} 3.0 data and metadata.
-  Please `open an issue <https://github.com/khaeru/sdmx/issues>`__ on GitHub to report “live” examples and specimens of real-world SDMX 3.0 data and services that can be added.
+- Writing SDMX-ML 3.0 is not yet supported.
+- Reading and writing SDMX-JSON 2.0 is not yet supported. [1]_
+
+Follow the :doc:`whatsnew`; :issue:`87`; and other GitHub issues and pull requests for details.
+Please `open an issue <https://github.com/khaeru/sdmx/issues>`_ on GitHub to report “live” examples and specimens of real-world SDMX 3.0 data and services that can be added.
 
 .. [1] See :ref:`sdmx-json`.
 
@@ -211,13 +211,12 @@ Formats
 =======
 
 The IM provides terms and concepts for data and metadata, but does not specify *how that (meta)data is stored or represented*.
-The SDMX standards include multiple ways to store data, in the following formats.
+The SDMX standards include multiple formats for storing data, metadata, and structures.
 In general, :mod:`sdmx`:
 
 - reads most SDMX-ML 2.1 and 3.0 and SDMX-JSON 1.0 messages.
 - uses, via `sdmx-test-data <https://github.com/khaeru/sdmx-test-data/>`_, specimens of messages in both data formats.
   These are used by the test suite to check that the code functions as intended, but can also be viewed to understand the data formats.
-
 
 SDMX-ML
     Based on eXtensible Markup Language (XML).
@@ -233,7 +232,7 @@ SDMX-ML
 
 SDMX-JSON
     Based on JavaScript Object Notation (JSON).
-    The SDMX-JSON *format* is versioned differently from the overall SDMX *standard*: SDMX-JSON 1.0 corresponds to SDMX 2.1, and SDMX-JSON 2.0 corresponds to SDMX 3.0.
+    The SDMX-JSON *format* is versioned differently from the overall SDMX *standard*: SDMX-JSON 1.0 corresponds to SDMX 2.1, and SDMX-JSON 2.0.0 corresponds to SDMX 3.0.0.
 
     SDMX-JSON 1.0 supports only data and not structures or metadata; SDMX-JSON 2.0 adds support for structure information.
 
@@ -243,7 +242,7 @@ SDMX-JSON
 
     .. versionadded:: 0.5
 
-       Support for SDMX-JSON.
+       Support for SDMX-JSON 1.0.
 
 .. _sdmx-csv:
 
@@ -263,31 +262,44 @@ SDMX-CSV
     See :issue:`34`.
 
 
+.. _sdmx-rest:
 .. _web-service:
 
-Web services
-============
+REST web service API
+====================
 
 The SDMX standards describe both `RESTful <https://en.wikipedia.org/wiki/Representational_state_transfer>`_ and `SOAP <https://en.wikipedia.org/wiki/SOAP>`_ web service APIs.
+:mod:`sdmx` does not support SDMX-SOAP, and no support is planned.
+
 See :doc:`resources` for the SDMG Technical Working Group's specification of the REST API.
-The Eurostat and ECB help materials provide descriptions and examples of HTTP using URLs, parameters and headers to construct queries.
+The help materials from many data providers—for instance, :ref:`ESTAT` and :ref:`ECB`—provide varying descriptions and examples of constructing query URLs and headers.
+These generally elaborate the SDMX standards, but in some cases also document source-specific quirks and errata.
 
-:mod:`sdmx` supports:
+.. _sdmx-rest-versions:
 
-- REST web services but not SOAP web services;
-- Data retrieved in SDMX version 2.1 :ref:`formats <formats>`.
+The SDMX-REST *web service API* is versioned differently from the overall SDMX *standard*:
+
+- SDMX-REST API v1.5.0 and earlier corresponding to SDMX 2.1 and earlier.
+- SDMX-REST API v2.0.0 and later corresponding to SDMX 3.0 and later.
+
+:mod:`sdmx` aims to support:
+
+- SDMX-REST API versions in the 1.x series from v1.5.0 and later
+- SDMX-REST API versions in the 2.x series from v2.1.0 and later.
+- Data retrieved in SDMX 2.1 and 3.0 :ref:`formats <formats>`.
   Some existing services offer a parameter to select SDMX 2.1 *or* 2.0 format; :mod:`sdmx` does not support the latter.
-  Other services *only* provide SDMX 2.0-formatted data; these cannot be used with :mod:`sdmx` (:ref:`see here <sdmx-version-policy>`).
+  Other services *only* provide SDMX 2.0-formatted data; these cannot be used with :mod:`sdmx` (:ref:`see above <sdmx-version-policy>`).
 
-:class:`.Client` constructs valid URLs and automatically add some parameter and header values.
-These can be overridden; see :meth:`.Client.get`.
-In some cases, Client will make an additional HTTP request to fetch metadata and validate a query.
+:class:`.Client` constructs valid URLs (using :class:`~.rest.URL` subclasses :class:`.v21.URL` and :class:`.v30.URL`).
 
-:class:`.sdmx.Source` and its subclasses handle idiosyncrasies of the web services operated by different agencies, such as:
+- For example, :meth:`.Client.get` automatically adds the HTTP header ``Accept: application/vnd.sdmx.structurespecificdata+xml;`` when a :py:`structure=...` argument is provided and the data source supports this content type.
+- :class:`.v21.URL` supplies some default parameters in certain cases.
+- Query parameters and headers can always be specified exactly via :meth:`.Client.get`.
+
+:class:`.sdmx.Source` and its subclasses handle documented or well-known idiosyncrasies/quirks/errata of the web services operated by different agencies, such as:
 
 - parameters or headers that are not supported, or must take very specific, non-standard values, or
 - unusual ways of returning data.
 
-For data sources that support it, :mod:`sdmx` automatically adds the HTTP header ``Accept: application/vnd.sdmx.structurespecificdata+xml;`` when the `dsd` argument is provided to :meth:`.Client.get`.
-
-See :doc:`sources` and the source code for the details for each data source.
+See :ref:`data-source-limitations`, :doc:`sources`, and the source code for the details for each data source.
+Please `open an issue`_ with reports of or information about data source–specific quirks that may be in scope for :mod:`sdmx` to handle, or a pull request to contribute code.

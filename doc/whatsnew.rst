@@ -6,9 +6,17 @@ What's new?
 Next release
 ============
 
+- Add support for :ref:`SDMX 3.0 REST APIs <sdmx-rest>` (:pull:`158`).
+  (Note that SDMX-REST v2.1.0 corresponds to version 3.0 of the overall SDMX standards; see the docs.)
+
+  - Add :class:`.v21.URL` and :class:`.v30.URL` to construct URLs for different API versions.
+  - Add :class:`Resource.availableconstraint <.Resource>` and construct (meta)data availability queries per the SDMX 2.1 (REST API v1.5.0) standard (:pull:`161`; thanks :gh-user:`FedorYatsenko`).
+  - Add :attr:`.source.Source.version` attribute to identify REST API versions supported by each source, and :meth:`.Source.get_url_class`.
+  - Add :class:`ESTAT3 <.estat3.Source>`, a separate :ref:`ESTAT <ESTAT>` data source that makes SDMX 3.0 (REST API v2.1.0) queries.
+
+- Add four new :ref:`ESTAT <ESTAT>`-related data sources: :ref:`ESTAT_COMEXT` and :ref:`COMP` (:pull:`130`).
 - Automatically handle unsupported values of the ``?references=...`` query parameter for the :ref:`COMP` data sources (:issue:`162`, :pull:`163`).
 - Bug fix for reading SDMX-ML 2.1: some associations (particularly, :attr:`.core_representation`) not stored correctly if a message contained two :class:`.MaintainableArtefact` with the same ID but different maintainer/version (:pull:`165`, thanks :gh-user:`sychsergiy` for :issue:`164`).
-- :class:`.Resource` extended with the ``availableconstraint`` resource from the SDMX 2.1 standard (:pull:`161`).
 
 v2.13.1 (2024-01-24)
 ====================

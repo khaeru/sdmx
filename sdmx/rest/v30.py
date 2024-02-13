@@ -1,8 +1,9 @@
 """SDMX-REST API v2.1.0.
 
 Note that version 2.1.0 of the REST API corresponds to version 3.0.0 of the overall
-SDMX standards. See the
-`documentation <https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`_ for further
+SDMX standards. See the `documentation
+<https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`_ and `OpenAPI specification
+<https://github.com/sdmx-twg/sdmx-rest/blob/v2.1.0/api/sdmx-rest.yaml>`_ for further
 details.
 """
 from collections import ChainMap
@@ -11,7 +12,7 @@ from typing import Dict
 from . import common
 from .common import PathParameter, QueryParameter
 
-#: v2.1.0 specific parameters
+#: v2.1.0-specific path and query parameters.
 PARAM: Dict[str, common.Parameter] = {
     # Path parameters
     "component_id": PathParameter("component_id"),
@@ -39,14 +40,13 @@ PARAM: Dict[str, common.Parameter] = {
 
 
 class URL(common.URL):
-    """Utility class to build SDMX 3.0 REST web service URLs."""
+    """Utility class to build SDMX-REST API v2.1.0 URLs."""
 
     _all_parameters = ChainMap(common.PARAM, PARAM)
 
     def handle_availability(self):
-        """Not implemented."""
+        """Handle URL parameters for availability endpoints."""
         self._params.setdefault("agency_id", self.source.id)
-        self._path.update({"availability": None})
         self.handle_path_params(
             "context_d/agency_id/resource_id/version/key/component_id"
         )
@@ -62,7 +62,7 @@ class URL(common.URL):
         )
 
     def handle_metadata(self):
-        """Not implemented."""
+        """Handle URL parameters for metadata endpoints."""
         self._path.update({"metadata": None})
         if self.resource_type == common.Resource.metadataflow:
             self._path.update({self.resource_type.name: None})
@@ -76,8 +76,8 @@ class URL(common.URL):
         self.handle_query_params("detail_s")
 
     def handle_registration(self):
-        """Not implemented."""
-        self._path.update({"registration": None})
+        """Handle URL parameters for registration endpoints."""
+        self.handle_path_params("registration")
         if "context" in self._params:
             self._path.update({"id": None})
             self.handle_path_params("context_d/agency_id/resource_id/version")
