@@ -228,7 +228,7 @@ class Reader(metaclass=DispatchingReader):
         # NB this should not ever be used directly; rather the .reader.xml.Reader method
         return content.startswith(b"<")  # pragma: no cover
 
-    def read_message(
+    def read_message(  # noqa: C901 TODO reduce complexity 12 → ≤11
         self,
         source,
         structure: Optional[common.Structure] = None,

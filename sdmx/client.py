@@ -244,7 +244,7 @@ class Client:
 
         return requests.Request("get", url, params=parameters, headers=headers)
 
-    def _handle_get_kwargs(self, kwargs):
+    def _handle_get_kwargs(self, kwargs):  # noqa: C901 TODO reduce complexity 12 → ≤11
         if kwargs.pop("validate", None) is not None:
             warn("validate= keyword argument to Client.get()", DeprecationWarning)
 
