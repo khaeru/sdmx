@@ -80,11 +80,7 @@ class DataSourceTest:
         # See sdmx.testing._generate_endpoint_tests() for values of `endpoint`
         cache = cache_path.with_suffix(f".{endpoint.name}.xml")
 
-        try:
-            message = client.get(endpoint, tofile=cache, **args)
-        except HTTPError as e:  # For debugging/test development
-            print(e)
-            raise
+        message = client.get(endpoint, tofile=cache, **args)
 
         if pytestconfig.getoption("verbose"):
             print(repr(message))
