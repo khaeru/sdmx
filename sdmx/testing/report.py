@@ -204,7 +204,7 @@ class ServiceReporter:
 
 def main(base_path: Optional[Path] = None):
     """Collate results from multiple JSON files."""
-    base_path = Path.cwd().joinpath("source-tests")
+    base_path = base_path or Path.cwd().joinpath("source-tests")
 
     # Locate, read, and merge JSON files
     data: Dict[str, Dict[str, str]] = {}
