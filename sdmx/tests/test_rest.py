@@ -1,10 +1,13 @@
 import re
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
 import pytest
 
 from sdmx import Resource
 from sdmx.rest.common import PathParameter, PositiveIntParam, QueryParameter
+
+if TYPE_CHECKING:
+    import _pytest
 
 
 class TestResource:
@@ -74,7 +77,13 @@ class TestPositiveIntParam:
 _S = "?startPeriod=2024-02-12"
 
 R = Resource
-PARAMS: Tuple[Tuple[Resource, Dict[str, Any], Optional[str], Optional[str]], ...] = (
+PARAMS: Tuple[
+    Union[
+        Tuple[Resource, Dict[str, Any], Optional[str], Optional[str]],
+        "_pytest.mark.ParameterSet",
+    ],
+    ...,
+] = (
     # (R.actualconstraint, {}, "actualconstraint/ID0", "actualconstraint/ID0"),
     (
         R.agencyscheme,
@@ -236,6 +245,20 @@ PARAMS: Tuple[Tuple[Resource, Dict[str, Any], Optional[str], Optional[str]], ...
         "provisionagreement/A0/ID0/latest",
         "structure/provisionagreement/A0/ID0/+",
     ),
+    (
+        R.registration,
+        dict(context="dataflow", agency_id="A0"),
+        None,
+        "registration/dataflow/A0/ID0/+",
+    ),
+    pytest.param(
+        R.registration,
+        dict(agency_id="A0", provider_id="P0"),
+        None,
+        "registration/provider/A0/P0",
+        marks=pytest.mark.xfail(raises=ValueError),
+    ),
+    (R.registration, {}, None, "registration/id/ID0"),
     (
         R.reportingtaxonomy,
         {},
