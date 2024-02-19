@@ -261,7 +261,7 @@ class TestESTAT(DataSourceTest):
         """Test of https://github.com/khaeru/sdmx/issues/116.
 
         As of 2024-02-13, the actual web service no longer returns multiple versions of
-        the same artefacts.
+        the same artefacts for this query.
 
         See also
         --------
@@ -271,9 +271,8 @@ class TestESTAT(DataSourceTest):
             "dataflow", "GOV_10Q_GGNFA", params=dict(detail="referencepartial")
         )
 
-        # Both versions of the GEO codelist are accessible in the message
-        print(msg.codelist.keys())
-        if cl1 := msg.codelist.get("ESTAT:GEO(13.0)"):
+        if cl1 := msg.codelist.get("ESTAT:GEO(13.0)"):  # pragma: no cover
+            # Both versions of the GEO codelist are accessible in the message
             cl2 = msg.codelist["ESTAT:GEO(13.1)"]
 
             # cl1 is complete and items are available
@@ -283,7 +282,8 @@ class TestESTAT(DataSourceTest):
         else:
             assert msg.codelist["GEO"]
 
-        if cl3 := msg.codelist.get("ESTAT:UNIT(15.1)"):
+        if cl3 := msg.codelist.get("ESTAT:UNIT(15.1)"):  # pragma: no cover
+            # Both versions of the UNIT codelist are accessible in the message
             cl4 = msg.codelist["ESTAT:UNIT(15.2)"]
 
             # cl3 is complete and items are available
@@ -369,14 +369,18 @@ class TestILO(DataSourceTest):
 
     @pytest.mark.network
     def test_gh_96(self, caplog, cache_path, client):
+        """Test of https://github.com/khaeru/sdmx/issues/96.
+
+        As of 2024-02-13, the web service no longer has the prior limitations on
+        the `references` query parameter, so the special handling is removed.
+        """
         client.get("codelist", "CL_ECO", params=dict(references="parentsandsiblings"))
-        return
 
         # As of 2024-02-13, no longer needed
-        assert (
-            "ILO does not support references='parentsandsiblings'; discarded"
-            in caplog.messages
-        )
+        # assert (
+        #     "ILO does not support references='parentsandsiblings'; discarded"
+        #     in caplog.messages
+        # )
 
 
 class TestIMF(DataSourceTest):
