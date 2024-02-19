@@ -11,12 +11,14 @@ Next release
 
   - Add :class:`.v21.URL` and :class:`.v30.URL` to construct URLs for different API versions.
   - Add :class:`Resource.availableconstraint <.Resource>` and construct (meta)data availability queries per the SDMX 2.1 (REST API v1.5.0) standard (:pull:`161`; thanks :gh-user:`FedorYatsenko`).
-  - Add :attr:`.source.Source.version` attribute to identify REST API versions supported by each source, and :meth:`.Source.get_url_class`.
+  - Add :attr:`.source.Source.versions` attribute to identify REST API versions supported by each source, and :meth:`.Source.get_url_class`.
   - Add :class:`ESTAT3 <.estat3.Source>`, a separate :ref:`ESTAT <ESTAT>` data source that makes SDMX 3.0 (REST API v2.1.0) queries.
 
 - Add four new :ref:`ESTAT <ESTAT>`-related data sources: :ref:`ESTAT_COMEXT` and :ref:`COMP` (:pull:`130`).
 - Automatically handle unsupported values of the ``?references=...`` query parameter for the :ref:`COMP` data sources (:issue:`162`, :pull:`163`).
 - Bug fix for reading SDMX-ML 2.1: some associations (particularly, :attr:`.core_representation`) not stored correctly if a message contained two :class:`.MaintainableArtefact` with the same ID but different maintainer/version (:pull:`165`, thanks :gh-user:`sychsergiy` for :issue:`164`).
+- Drop quirks handling for :ref:`ILO` added in :ref:`v2.6.3` (:pull:`158`).
+  The source no longer exhibits the same limitations.
 
 v2.13.1 (2024-01-24)
 ====================
@@ -259,6 +261,8 @@ v2.7.0 (2022-11-14)
   Every REST API endpoint is queried for every data source, even if it is known to be not implemented.
   This allows to spot when source implementations change.
 - Sort entries in :file:`sources.json` (:pull:`109`).
+
+.. _v2.6.3:
 
 v2.6.3 (2022-09-29)
 ===================
