@@ -41,7 +41,7 @@ cache = ["requests-cache"]
 docs = ["IPython", "sphinx >=4", "sphinx-book-theme"]
 tests = [
   "Jinja2",
-  "pyarrow",              # Suppress a warning from pandas >=2.2, <3.0
+  "pyarrow",  # Suppress a warning from pandas >=2.2, <3.0
   "pytest >= 5",
   "pytest-cov",
   "pytest-xdist",
@@ -91,15 +91,15 @@ markers = [
   "source: slower, network tests of individual SDMX web services",
 ]
 
-[tool.ruff]
+[tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]
 ignore = ["E501", "W191"]
-
-[tool.ruff.mccabe]
 # Exceptions:
-# - .client.Client._request_from_args: 16
+# - .client._handle_get_kwargs: 12
+# - .reader.xml.v21.read_message: 12
 # - .writer.pandas._maybe_convert_datetime: 27
-max-complexity = 13
+# - .writer.pandas.write_dataset: 12
+mccabe.max-complexity = 11
 
 [tool.setuptools.packages]
 find = {}

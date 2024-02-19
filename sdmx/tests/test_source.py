@@ -6,11 +6,12 @@ from sdmx.source import Source, add_source, list_sources, sources
 
 def test_list_sources():
     source_ids = list_sources()
-    assert len(source_ids) == 28
+    # Correct number of sources, excluding those created for testing
+    assert 29 == len(set(source_ids) - {"MOCK", "TEST"})
 
     # Listed alphabetically
-    assert source_ids[0] == "ABS"
-    assert source_ids[-1] == "WB_WDI"
+    assert "ABS" == source_ids[0]
+    assert "WB_WDI" == source_ids[-1]
 
 
 def test_source_support():
@@ -53,6 +54,12 @@ class TestSource:
     def s(self):
         """An instance of the class."""
         yield Source(id="FOO", name="Test source", url="https://example.com")
+
+    def test_get_url_class(self):
+        """get_url_class() returns :class:`.v30.URL` as appropriate."""
+        from sdmx.rest import v30
+
+        assert issubclass(sources["ESTAT3"].get_url_class(), v30.URL)
 
     def test_modify_request_args(self, s):
         kwargs = dict(dsd=model.DataStructureDefinition())

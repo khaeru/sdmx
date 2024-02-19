@@ -76,9 +76,23 @@ SDMX-ML
    :exclude-members: Resource
    :show-inheritance:
 
+``rest.v21``
+------------
 
-``session``: Access SDMX REST web services
-==========================================
+.. automodule:: sdmx.rest.v21
+   :members:
+   :show-inheritance:
+
+``rest.v30``
+------------
+
+.. automodule:: sdmx.rest.v30
+   :members:
+   :show-inheritance:
+
+
+``session``: HTTP sessions and responses
+========================================
 .. autoclass:: sdmx.session.Session
 .. autoclass:: sdmx.session.ResponseIO
 

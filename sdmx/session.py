@@ -1,7 +1,11 @@
-from io import BufferedIOBase, BytesIO
+from io import BufferedIOBase, BufferedRandom, BytesIO
 from operator import itemgetter
+from typing import IO, TYPE_CHECKING, Union
 
 from sdmx.util import HAS_REQUESTS_CACHE, MaybeCachedSession
+
+if TYPE_CHECKING:
+    import os
 
 #: Known keyword arguments for requests_cache.CachedSession.
 CACHE_KW = [
@@ -96,17 +100,29 @@ class ResponseIO(BufferedIOBase):
         *tee* is exposed as *self.tee* and not closed explicitly.
     """
 
-    def __init__(self, response, tee=None):
+    tee: IO
+
+    def __init__(self, response, tee: Union[IO, "os.PathLike", None] = None):
         self.response = response
+
         if tee is None:
-            tee = BytesIO()
-        # If tee is a file-like object or tempfile, then use it as cache
-        if isinstance(tee, BufferedIOBase) or hasattr(tee, "file"):
+            self.tee = BytesIO()
+        elif isinstance(tee, (IO, BufferedRandom)):
+            # If tee is a file-like object or tempfile, then use it as cache
             self.tee = tee
         else:
-            # So tee must be str or os.FilePath
+            # So tee must be str, pathlib.Path, or similar
             self.tee = open(tee, "w+b")
-        self.tee.write(response.content)
+
+        content_disposition = response.headers.get("Content-Disposition", "")
+        if content_disposition.endswith('.gz"'):
+            import gzip
+
+            content = gzip.GzipFile(fileobj=BytesIO(response.content)).read()
+        else:
+            content = response.content
+
+        self.tee.write(content)
         self.tee.seek(0)
 
     def readable(self):

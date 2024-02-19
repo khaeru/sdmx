@@ -15,9 +15,6 @@ import sdmx
 from sdmx import Client
 from sdmx.exceptions import HTTPError, XMLParseError
 
-# Mark the whole file so the tests can be excluded/included
-pytestmark = pytest.mark.source
-
 log = logging.getLogger(__name__)
 
 
@@ -54,7 +51,14 @@ class DataSourceTest:
 
     @pytest.fixture
     def client(self, cache_path):
-        return Client(self.source_id, cache_name=str(cache_path), backend="sqlite")
+        from sdmx.util import HAS_REQUESTS_CACHE
+
+        if HAS_REQUESTS_CACHE:
+            kw = dict(cache_name=str(cache_path), backend="sqlite")
+        else:
+            kw = {}
+
+        return Client(self.source_id, **kw)
 
     # NB the following can be added to any subclass below for SSL failures. Update the
     #    docstring to describe the nature of the problem.
@@ -68,16 +72,13 @@ class DataSourceTest:
     #         self.source_id, cache_name=str(cache_path), backend="sqlite", verify=False
     #     )
 
+    @pytest.mark.source
     @pytest.mark.network
     def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
         # See sdmx.testing._generate_endpoint_tests() for values of `endpoint`
-        cache = cache_path.with_suffix(f".{endpoint}.xml")
+        cache = cache_path.with_suffix(f".{endpoint.name}.xml")
 
-        try:
-            message = client.get(endpoint, tofile=cache, **args)
-        except HTTPError as e:  # For debugging/test development
-            print(e)
-            raise
+        message = client.get(endpoint, tofile=cache, **args)
 
         if pytestconfig.getoption("verbose"):
             print(repr(message))
@@ -93,6 +94,32 @@ class DataSourceTest:
 
         # All parsed contents can also be converted to pandas
         sdmx.to_pandas(message)
+
+
+class TestMOCK(DataSourceTest):
+    source_id = "MOCK"
+
+    endpoint_args = {
+        "schema": dict(context="datastructure"),
+    }
+
+    xfail = {
+        "metadata": NotImplementedError,  # In .rest.v21.URL.handle_metadata()
+        "registration": ValueError,  # In .rest.v21.URL.handle_registration()
+    }
+
+    @pytest.fixture(scope="class")
+    def client(self, mock_service_adapter):
+        """Return a client with mocked responses."""
+
+        c = Client(self.source_id)
+        c.session.mount("mock://", mock_service_adapter)
+
+        yield c
+
+    # Same as above, but without the "source" or "network" marks
+    def test_endpoint(self, client, endpoint, args):
+        client.get(endpoint, **args)
 
 
 class TestABS(DataSourceTest):
@@ -233,6 +260,9 @@ class TestESTAT(DataSourceTest):
     def test_gh_116(self, caplog, cache_path, client):
         """Test of https://github.com/khaeru/sdmx/issues/116.
 
+        As of 2024-02-13, the actual web service no longer returns multiple versions of
+        the same artefacts for this query.
+
         See also
         --------
         .test_reader_xml.test_gh_116
@@ -241,22 +271,43 @@ class TestESTAT(DataSourceTest):
             "dataflow", "GOV_10Q_GGNFA", params=dict(detail="referencepartial")
         )
 
-        # Both versions of the GEO codelist are accessible in the message
-        cl1 = msg.codelist["ESTAT:GEO(13.0)"]
-        cl2 = msg.codelist["ESTAT:GEO(13.1)"]
+        if cl1 := msg.codelist.get("ESTAT:GEO(13.0)"):  # pragma: no cover
+            # Both versions of the GEO codelist are accessible in the message
+            cl2 = msg.codelist["ESTAT:GEO(13.1)"]
 
-        # cl1 is complete and items are available
-        assert not cl1.is_partial and 0 < len(cl1)
-        # cl2 is partial, and fewer codes are included than in cl1
-        assert cl2.is_partial and 0 < len(cl2) < len(cl1)
+            # cl1 is complete and items are available
+            assert not cl1.is_partial and 0 < len(cl1)
+            # cl2 is partial, and fewer codes are included than in cl1
+            assert cl2.is_partial and 0 < len(cl2) < len(cl1)
+        else:
+            assert msg.codelist["GEO"]
 
-        cl3 = msg.codelist["ESTAT:UNIT(15.1)"]
-        cl4 = msg.codelist["ESTAT:UNIT(15.2)"]
+        if cl3 := msg.codelist.get("ESTAT:UNIT(15.1)"):  # pragma: no cover
+            # Both versions of the UNIT codelist are accessible in the message
+            cl4 = msg.codelist["ESTAT:UNIT(15.2)"]
 
-        # cl3 is complete and items are available
-        assert not cl3.is_partial and 0 < len(cl3)
-        # cl4 is partial, and fewer codes are included than in cl1
-        assert cl4.is_partial and 0 < len(cl4) < len(cl3)
+            # cl3 is complete and items are available
+            assert not cl3.is_partial and 0 < len(cl3)
+            # cl4 is partial, and fewer codes are included than in cl1
+            assert cl4.is_partial and 0 < len(cl4) < len(cl3)
+        else:
+            assert msg.codelist["UNIT"]
+
+
+class TestESTAT3(DataSourceTest):
+    source_id = "ESTAT3"
+
+    # Examples from
+    # https://wikis.ec.europa.eu/display/EUROSTATHELP/API+-+Getting+started+with+SDMX3.0+API
+    endpoint_args = {
+        "codelist": dict(resource_id="FREQ"),
+        "conceptscheme": dict(resource_id="TESEM160"),
+        "data": dict(
+            context="dataflow", resource_id="ISOC_CI_ID_H", last_n_observations=100
+        ),
+        "dataflow": dict(resource_id="ISOC_CI_ID_H", version="1.0"),
+        "datastructure": dict(resource_id="PRC_DAP13", params=dict(references="none")),
+    }
 
 
 class TestESTAT_COMEXT(DataSourceTest):
@@ -318,11 +369,18 @@ class TestILO(DataSourceTest):
 
     @pytest.mark.network
     def test_gh_96(self, caplog, cache_path, client):
+        """Test of https://github.com/khaeru/sdmx/issues/96.
+
+        As of 2024-02-13, the web service no longer has the prior limitations on
+        the `references` query parameter, so the special handling is removed.
+        """
         client.get("codelist", "CL_ECO", params=dict(references="parentsandsiblings"))
-        assert (
-            "ILO does not support references='parentsandsiblings'; discarded"
-            in caplog.messages
-        )
+
+        # As of 2024-02-13, no longer needed
+        # assert (
+        #     "ILO does not support references='parentsandsiblings'; discarded"
+        #     in caplog.messages
+        # )
 
 
 class TestIMF(DataSourceTest):
@@ -513,6 +571,13 @@ class TestOECD_JSON(DataSourceTest):
 
 class TestSGR(DataSourceTest):
     source_id = "SGR"
+
+
+class TestSGR3(DataSourceTest):
+    """Query the `SGR` source using SDMX 3.0."""
+
+    source_id = "SGR"
+    endpoint_args = {"codelist": dict(params=dict(format="sdmx-3.0"))}
 
 
 class TestSPC(DataSourceTest):

@@ -29,6 +29,7 @@ jobs:
         - ECB
         - EMPL
         - ESTAT
+        - ESTAT3
         - ESTAT_COMEXT
         - GROW
         - ILO
@@ -40,6 +41,7 @@ jobs:
         - NB
         - NBB
         - OECD
+        - OECD_JSON
         - SGR
         - SPC
         - STAT_EE
@@ -52,42 +54,44 @@ jobs:
     name: ${{ matrix.source }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     # TODO avoid requiring this; it's not used in this workflow
     - name: Checkout test data
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: khaeru/sdmx-test-data
         path: sdmx-test-data
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.x
         cache: pip
         cache-dependency-path: "**/pyproject.toml"
 
     - name: Install the Python package and dependencies
-      run: pip install .[cache,tests]
+      run: pip install .[cache,tests] pytest-regex
 
     - name: Tests of ${{ matrix.source }} data source
       continue-on-error: true
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
-        pytest -m "network" -k Test${{ matrix.source }} \
+        pytest -m network --regex '.*Test${{ matrix.source }}:' \
           --color=yes --durations=30 -rA --verbose \
           --cov-report=xml \
           --numprocesses=auto
 
     - name: Upload ${{ matrix.source }} results as a build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: source-tests
+        name: source-tests-${{ matrix.source }}
         path: source-tests/*.json
+        compression-level: 1
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
+      with: { token: "${{ secrets.CODECOV_TOKEN }}" }
 
   collect:
     needs: source
@@ -95,9 +99,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.x
         cache: pip
@@ -107,18 +111,18 @@ jobs:
       run: pip install .[cache,tests]
 
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: source-tests
         path: source-tests
+        pattern: source-tests-*
+        merge-multiple: true
 
     - name: Compile report
       run: python -m sdmx.testing.report
 
     - name: Upload report as a pages artifact
-      uses: actions/upload-pages-artifact@v1
-      with:
-        path: source-tests
+      uses: actions/upload-pages-artifact@v3
+      with: { path: source-tests }
 
   # This job is as described at https://github.com/actions/deploy-pages
   deploy:
@@ -134,7 +138,7 @@ jobs:
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v2
+      uses: actions/deploy-pages@v4
 
     # Deploy to the gh-pages environment
     environment:

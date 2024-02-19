@@ -83,6 +83,16 @@ def pytest_configure(config):
     setattr(config, "sdmx_test_data", sdmx_test_data)
     setattr(config, "sdmx_specimens", SpecimenCollection(sdmx_test_data))
 
+    # Add a source globally for use with mock_service_adapter
+    # TODO Deduplicate between this and the "testsource" fixture
+    info = dict(
+        id="MOCK",
+        name="Mock source",
+        url="mock://example.com/",
+        supports={feature: True for feature in list(Resource)},
+    )
+    add_source(info)
+
 
 def pytest_generate_tests(metafunc):
     """Generate tests.
@@ -382,6 +392,59 @@ def test_data_path(pytestconfig):
 def specimen(pytestconfig):
     """Fixture: the :class:`SpecimenCollection`."""
     yield pytestconfig.sdmx_specimens
+
+
+@pytest.fixture(scope="session")
+def mock_service_adapter():
+    from requests_mock import Adapter
+
+    import sdmx
+    from sdmx.format import MediaType
+    from sdmx.message import StructureMessage
+
+    a = Adapter()
+
+    common = dict(
+        content=sdmx.to_xml(StructureMessage()),
+        status_code=200,
+        headers={"Content-Type": repr(MediaType("generic", "xml", "2.1"))},
+    )
+    for path in (
+        "actualconstraint/MOCK/all/latest",
+        "agencyscheme/MOCK/all/latest",
+        "allowedconstraint/MOCK/all/latest",
+        "attachementconstraint/MOCK/all/latest",
+        "availableconstraint",
+        "categorisation/MOCK/all/latest",
+        "categoryscheme/MOCK/all/latest",
+        "codelist/MOCK/all/latest",
+        "conceptscheme/MOCK/all/latest",
+        "contentconstraint/MOCK/all/latest",
+        "customtypescheme/MOCK/all/latest",
+        "dataconsumerscheme/MOCK/all/latest",
+        "dataflow/MOCK/all/latest",
+        "dataproviderscheme/MOCK/all/latest",
+        "datastructure/MOCK/all/latest",
+        "hierarchicalcodelist/MOCK/all/latest",
+        "metadataflow/MOCK/all/latest",
+        "metadatastructure/MOCK/all/latest",
+        "namepersonalisationscheme/MOCK/all/latest",
+        "organisationscheme/MOCK/all/latest",
+        "organisationunitscheme/MOCK/all/latest",
+        "process/MOCK/all/latest",
+        "provisionagreement/MOCK/all/latest",
+        "reportingtaxonomy/MOCK/all/latest",
+        "rulesetscheme/MOCK/all/latest",
+        "schema/datastructure/MOCK/all/latest",
+        "structure/MOCK/all/latest",
+        "structureset/MOCK/all/latest",
+        "transformationscheme/MOCK/all/latest",
+        "userdefinedoperatorscheme/MOCK/all/latest",
+        "vtlmappingscheme/MOCK/all/latest",
+    ):
+        a.register_uri("GET", f"mock://example.com/{path}", **common)
+
+    yield a
 
 
 @pytest.fixture(scope="class")

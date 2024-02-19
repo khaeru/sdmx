@@ -115,14 +115,32 @@ class TestClient:
         expected |= set(ep.name for ep in sdmx.Resource)
         assert set(filter(lambda s: not s.startswith("_"), dir(client))) == expected
 
+    def test_get0(self, client):
+        """:meth:`.get` handles mixed query parameters correctly."""
+        req = client.get(
+            "dataflow", detail="full", params={"references": "none"}, dry_run=True
+        )
+        assert (
+            "https://example.com/sdmx-rest/dataflow/TEST/all/latest?detail=full&"
+            "references=none" == req.url
+        )
+
+    def test_get1(self, client):
+        """Exceptions are raised on invalid arguments."""
+        # Exception is raised on unrecognized arguments
+        exc = "Unexpected/unhandled parameters {'foo': 'bar'}"
+        with pytest.raises(ValueError, match=exc):
+            client.get("datastructure", foo="bar")
+
     def test_getattr(self, client):
         with pytest.raises(AttributeError):
             client.notanendpoint()
 
     def test_request_from_args(self, caplog, client):
         # Raises for invalid resource type
+        # TODO Move this test; this error is no longer handled in _request_from_args()
         kwargs = dict(resource_type="foo")
-        with pytest.raises(ValueError, match=r"resource_type \('foo'\) must be in"):
+        with pytest.raises(AttributeError):
             client._request_from_args(kwargs)
 
         # Raises for not implemented endpoint
@@ -160,20 +178,6 @@ class TestClient:
             client.get("data", resource_id=df_id, key=key)
 
 
-def test_request_get_exceptions():
-    """Tests of Client.get() that don't require remote data."""
-    ESTAT = sdmx.Client("ESTAT")
-
-    # Exception is raised on unrecognized arguments
-    exc = "unrecognized arguments: {'foo': 'bar'}"
-    with pytest.raises(ValueError, match=exc):
-        ESTAT.get("datastructure", foo="bar")
-
-    exc = r"{'foo': 'bar'} supplied with get\(url=...\)"
-    with pytest.raises(ValueError, match=exc):
-        sdmx.read_url("https://example.com", foo="bar")
-
-
 @pytest.mark.network
 def test_request_get_args():
     ESTAT = sdmx.Client("ESTAT")
@@ -198,7 +202,7 @@ def test_request_get_args():
     assert ESTAT.data(**args).url == url
 
     # Giving 'provider' is redundant for a data request, causes a warning
-    with pytest.warns(UserWarning, match="'provider' argument is redundant"):
+    with pytest.warns(UserWarning, match="'agency_id' argument is redundant"):
         ESTAT.data(
             "UNE_RT_A",
             key={"geo": "EL+ES+IE"},
@@ -214,12 +218,20 @@ def test_request_get_args():
 
 
 @pytest.mark.network
-def test_read_url():
-    # URL can be queried without instantiating Client
+def test_read_url0():
+    """URL can be queried without instantiating Client."""
     sdmx.read_url(
         "https://sdw-wsrest.ecb.europa.eu/service/datastructure/ECB/ECB_EXR1/latest?"
         "references=all"
     )
+
+
+def test_read_url1():
+    """Exception is raised on invalid arguments."""
+    with pytest.raises(
+        ValueError, match=r"{'foo': 'bar'} supplied with get\(url=...\)"
+    ):
+        sdmx.read_url("https://example.com", foo="bar")
 
 
 # @pytest.mark.skip(reason="Temporarily offline on 2021-03-23")

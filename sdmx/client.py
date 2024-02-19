@@ -1,18 +1,22 @@
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, Any, Dict
+from typing import IO, TYPE_CHECKING, Any, Dict, Optional, Union
 from warnings import warn
 
 import requests
 
-from sdmx.message import Message
-from sdmx.model.v21 import DataStructureDefinition, MaintainableArtefact
+from sdmx.model import common
+from sdmx.model.v21 import DataStructureDefinition
 from sdmx.reader import get_reader_for_media_type
-from sdmx.rest import URL, Resource
+from sdmx.rest import Resource
 from sdmx.session import ResponseIO, Session
 from sdmx.source import NoSource, list_sources, sources
 
 if TYPE_CHECKING:
+    import io
+    import os
+
+    import sdmx.message
     import sdmx.source
 
 log = logging.getLogger(__name__)
@@ -52,7 +56,7 @@ class Client:
 
     """
 
-    cache: Dict[str, Message] = {}
+    cache: Dict[str, "sdmx.message.Message"] = {}
 
     #: :class:`.source.Source` for requests sent from the instance.
     source: "sdmx.source.Source"
@@ -173,67 +177,33 @@ class Client:
 
         return cc.to_query_string(dsd), dsd
 
-    def _request_from_args(self, kwargs):  # noqa: C901
+    def _request_from_args(self, kwargs):
         """Validate arguments and prepare pieces for a request."""
-        # TODO Simplify this method to reduce its McCabe complexity from 16 to <= 13
-        parameters = kwargs.pop("params", {})
         headers = kwargs.pop("headers", {})
 
         # Resource arguments
-        resource = kwargs.pop("resource", None)
         resource_type = kwargs.pop("resource_type", None)
         resource_id = kwargs.pop("resource_id", None)
 
-        try:
-            if resource_type:
-                resource_type = Resource[resource_type]
-        except KeyError:
-            raise ValueError(
-                f"resource_type ({resource_type!r}) must be in {Resource.describe()}"
-            ) from None
-
-        if resource:
-            # Resource object is given
-            assert isinstance(resource, MaintainableArtefact)
-
-            # Class of the object
-            if resource_type:
-                assert resource_type == Resource.from_obj(resource)
-            else:
-                resource_type = Resource.from_obj(resource)
-            if resource_id:
-                assert resource_id == resource.id, (
-                    f"mismatch between resource_id={resource_id!r} and "
-                    f"resource={resource!r}"
-                )
-            else:
-                resource_id = resource.id
-
-        force = kwargs.pop("force", False)
-        if not (force or self.source.supports[resource_type]):
-            raise NotImplementedError(
-                f"{self.source.id} does not implement or support the {resource_type!r} "
-                "API endpoint. Use force=True to override"
-            )
-
-        # Construct the URL
-        url = URL(
+        # Assemble keyword arguments for URL
+        kw = dict(
             source=self.source,
             resource_type=resource_type,
             resource_id=resource_id,
-            provider=kwargs.pop("provider", None),
-            version=kwargs.pop("version", None),
+            params=kwargs.pop("params", {}),
         )
+        if provider := kwargs.pop("provider", None):
+            warn("provider= keyword argument; use agency_id", DeprecationWarning, 2)
+            kw.update(agency_id=provider)
+        if version := kwargs.pop("version", None):
+            kw.update(version=version)
 
         key = kwargs.pop("key", None)
         dsd = kwargs.pop("dsd", None)
 
-        if "validate" in kwargs:
-            warn("validate= keyword argument to Client.get()", DeprecationWarning)
-            kwargs.pop("validate")
-
-        if len(kwargs):
-            raise ValueError(f"unrecognized arguments: {kwargs!r}")
+        # Pass remaining `kwargs` to URL to either handle or raise
+        kw.update(kwargs)
+        kwargs.clear()
 
         if isinstance(key, dict):
             # Make the key, and retain the DSD (if any) for use in parsing
@@ -242,24 +212,25 @@ class Client:
         elif not (key is None or isinstance(key, str)):
             raise TypeError(f"key must be str or dict; got {key.__class__.__name__}")
 
-        url.key = key
-
-        # Parameters: set 'references' to sensible defaults
-        if "references" not in parameters:
-            if (
-                resource_type in [Resource.dataflow, Resource.datastructure]
-                and resource_id
-            ):
-                parameters["references"] = "all"
-            elif resource_type == Resource.categoryscheme:
-                parameters["references"] = "parentsandsiblings"
+        if key is not None:
+            kw.update(key=key)
 
         # Headers: use headers from source config if not given by the caller
-        if not headers and self.source and resource_type:
-            headers = self.source.headers.get(resource_type.name, {})
+        if not headers:
+            try:
+                headers.update(self.source.headers.get(resource_type.name, {}))
+            except AttributeError:
+                pass
 
-        # Assemble final URL, perform the request
-        return requests.Request("get", url.join(), params=parameters, headers=headers)
+        # Identify the URL class; handle the `kw`
+        # TODO specify API version for sources that support multiple API versions at the
+        #      same URL
+        url = self.source.get_url_class()(**kw)
+
+        # Allow requests to keep track of the query parameters and rest of the URL
+        return requests.Request(
+            "get", url.join(with_query=False), params=url.query, headers=headers
+        )
 
     def _request_from_url(self, kwargs):
         url = kwargs.pop("url")
@@ -273,11 +244,44 @@ class Client:
 
         return requests.Request("get", url, params=parameters, headers=headers)
 
-    def _handle_get_kwargs(self, kwargs):
-        # Ensure a member of the Enum
-        resource_type = kwargs.get("resource_type")
-        if resource_type is not None:
-            kwargs["resource_type"] = Resource[resource_type]
+    def _handle_get_kwargs(self, kwargs):  # noqa: C901 TODO reduce complexity 12 → ≤11
+        if kwargs.pop("validate", None) is not None:
+            warn("validate= keyword argument to Client.get()", DeprecationWarning)
+
+        # "resource_type", if given, should be a member of the Resource enum
+        if resource_type := kwargs.pop("resource_type", None):
+            try:
+                resource_type = Resource[resource_type]
+            except KeyError:
+                raise KeyError(
+                    f"resource_type {resource_type!r} not in {Resource.describe()}"
+                ) from None
+            else:
+                kwargs.update(resource_type=resource_type)
+
+        # "resource", if an object is given, should satisfy certain conditions
+        if resource := kwargs.pop("resource", None):
+            assert isinstance(resource, common.MaintainableArtefact)
+
+            # Class of the object
+            resource_type = kwargs.setdefault(
+                "resource_type", Resource.from_obj(resource)
+            )
+            assert kwargs["resource_type"] == Resource.from_obj(resource)
+
+            # ID of the object
+            kwargs.update(resource_id=kwargs.get("resource_id") or resource.id)
+            assert kwargs["resource_id"] == resource.id, (
+                f"mismatch between resource_id={kwargs['resource_id']!r} and "
+                f"resource={resource!r}"
+            )
+
+        force = kwargs.pop("force", False)
+        if resource_type and not (self.source.supports[resource_type] or force):
+            raise NotImplementedError(
+                f"{self.source.id} does not implement or support the "
+                f"{resource_type!r} API endpoint. Use force=True to override"
+            )
 
         # Allow Source class to modify request args
         # TODO this should occur after most processing, defaults, checking etc. are
@@ -314,13 +318,13 @@ class Client:
 
     def get(
         self,
-        resource_type=None,
-        resource_id=None,
-        tofile=None,
-        use_cache=False,
-        dry_run=False,
+        resource_type: Union[str, Resource, None] = None,
+        resource_id: Optional[str] = None,
+        tofile: Union["os.PathLike", IO, None] = None,
+        use_cache: bool = False,
+        dry_run: bool = False,
         **kwargs,
-    ):
+    ) -> "sdmx.message.Message":
         """Retrieve SDMX data or metadata.
 
         (Meta)data is retrieved from the :attr:`source` of the current Client. The
@@ -469,7 +473,7 @@ class Client:
                 raise
 
         # Maybe copy the response to file as it's received
-        response_content = ResponseIO(response, tee=tofile)
+        response_content: "io.IOBase" = ResponseIO(response, tee=tofile)
 
         # Allow a source class to modify the response (e.g. headers) or content
         response, response_content = self.source.handle_response(
@@ -489,7 +493,7 @@ class Client:
         reader = Reader()
 
         # Parse the message, using any provided or auto-queried DSD
-        msg = reader.read_message(response_content, dsd=kwargs.get("dsd", None))
+        msg = reader.read_message(response_content, structure=kwargs.get("dsd", None))
 
         # Store the HTTP response with the message
         msg.response = response

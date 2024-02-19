@@ -209,7 +209,7 @@ def _rp(obj: model.RangePeriod, **kwargs):
 
 
 @writer
-def write_dataset(
+def write_dataset(  # noqa: C901 TODO reduce complexity 12 → ≤11
     obj: model.DataSet,
     attributes="",
     dtype=np.float64,

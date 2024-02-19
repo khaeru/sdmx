@@ -7,7 +7,7 @@ from sdmx.message import Message
 @pytest.mark.parametrize_specimens("path", format="xml")
 def test_read_xml(path) -> None:
     """XML specimens can be read."""
-    if "esms_structured" in path.name or "query" in str(path):
+    if "esms_structured" in path.name or "query_" in str(path):
         pytest.xfail("Not implemented")
 
     result = sdmx.read_sdmx(path)
@@ -20,6 +20,7 @@ def test_read_xml(path) -> None:
         # Structure-specific data; same as test_reader_xml_v21.test_read_ss_xml but
         # without additional assertions
         ("M.USD.EUR.SP00.A.xml", "ECB_EXR/1/structure.xml", "ECB_EXR1"),
+        ("demography_xs.xml", "demography.xml", "DEMOGRAPHY"),
         # Structure-specific metadata
         ("esms_structured.xml", "v21/xml/demography/esms.xml", "ESMS_SIMPLE"),
     ),
