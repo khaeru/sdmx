@@ -55,6 +55,12 @@ class TestSource:
         """An instance of the class."""
         yield Source(id="FOO", name="Test source", url="https://example.com")
 
+    def test_get_url_class(self):
+        """get_url_class() returns :class:`.v30.URL` as appropriate."""
+        from sdmx.rest import v30
+
+        assert issubclass(sources["ESTAT3"].get_url_class(), v30.URL)
+
     def test_modify_request_args(self, s):
         kwargs = dict(dsd=model.DataStructureDefinition())
 
