@@ -1,6 +1,14 @@
+import sys
+
+import pytest
+
 from sdmx.testing.report import main
 
 
+@pytest.mark.skipif(
+    sys.version_info.minor < 9,
+    reason="Uses dict() | other, not available in Python 3.8",
+)
 def test_report_main(tmp_path):
     # Function runs
     main(tmp_path)
