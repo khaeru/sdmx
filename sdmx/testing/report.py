@@ -221,16 +221,15 @@ def main(base_path: Optional[Path] = None):
     resources = set(chain(*[v.keys() for v in data.values()]))
 
     # Render and write report
-    path_out = base_path.joinpath("index.html")
-    with open(path_out, "w") as f:
-        f.write(
-            TEMPLATE.render(
-                data=data,
-                abbrev=ABBREV,
-                resources=sorted(resources),
-                env=dict(GITHUB_REPOSITORY="", GITHUB_RUN_ID="") | os.environ,
-            )
-        )
+    base_path.joinpath("index.html").write_text(
+        TEMPLATE.render(
+            data=data,
+            abbrev=ABBREV,
+            resources=sorted(resources),
+            env=dict(GITHUB_REPOSITORY="", GITHUB_RUN_ID="") | os.environ,
+        ),
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":  # pragma: no cover
