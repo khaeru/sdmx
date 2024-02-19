@@ -167,10 +167,10 @@ class PathParameter(Parameter):
         value = parameters.pop(self.name, None) or self.default
 
         # Check against allowable values
-        if len(self.values) and value not in self.values:
-            raise ValueError(f"{self.name}={value!r} not among {self.values}")
-        elif value is None:
+        if value is None:
             raise ValueError(f"Missing required parameter {self.name!r}")
+        elif len(self.values) and value not in self.values:
+            raise ValueError(f"{self.name}={value!r} not among {self.values}")
 
         # Return
         return {self.name: value}
@@ -210,7 +210,9 @@ class QueryParameter(PathParameter):
                 raise ValueError(f"Cannot give both {self.name} and {self.camelName}")
 
             value = parameters.pop(present.pop())
-            if len(self.values) and value not in self.values:
+            if value is None:
+                return {}
+            elif len(self.values) and value not in self.values:
                 raise ValueError(f"{self.name}={value!r} not among {self.values}")
 
             return {self.camelName: value}

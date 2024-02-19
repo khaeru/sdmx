@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 import pytest
 
 from sdmx import Resource
+from sdmx.rest.common import PathParameter, PositiveIntParam, QueryParameter
 
 
 class TestResource:
@@ -24,6 +25,50 @@ class TestResource:
         assert re.fullmatch(
             "{actualconstraint .* vtlmappingscheme}", Resource.describe()
         )
+
+
+class TestPathParameter:
+    @pytest.fixture
+    def p(self):
+        yield PathParameter("name", {"foo", "bar"})
+
+    def test_handle(self, p):
+        p.handle({"name": "foo"})
+
+        with pytest.raises(ValueError, match="Missing required parameter 'name'"):
+            p.handle({})
+
+        with pytest.raises(ValueError, match="name='baz' not among "):
+            p.handle({"name": "baz"})
+
+
+class TestQueryParameter:
+    @pytest.fixture
+    def p(self):
+        yield QueryParameter("snake_name", {1, 2})
+
+    def test_handle(self, p):
+        params = {"snake_name": None}
+        p.handle(params)
+        assert 0 == len(params)
+
+        with pytest.raises(ValueError, match="Cannot give both"):
+            p.handle({"snake_name": 1, "snakeName": 2})
+
+        with pytest.raises(ValueError, match="snake_name=3 not among "):
+            p.handle({"snakeName": 3})
+
+
+class TestPositiveIntParam:
+    @pytest.fixture
+    def p(self):
+        yield PositiveIntParam("name")
+
+    def test_handle(self, p):
+        with pytest.raises(ValueError, match="must be positive integer; got"):
+            p.handle({"name": -3})
+
+        p.handle({"name": 1})
 
 
 _S = "?startPeriod=2024-02-12"
