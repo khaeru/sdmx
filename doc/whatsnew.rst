@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.14.0 (2024-02-20)
+====================
 
 - Add support for :ref:`SDMX 3.0 REST APIs <sdmx-rest>` (:pull:`158`).
   (Note that SDMX-REST v2.1.0 corresponds to version 3.0 of the overall SDMX standards; see the docs.)
