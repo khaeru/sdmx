@@ -1,21 +1,7 @@
-"""Information Model classes common to SDMX 2.1 and 3.0.
+"""Information Model classes common to SDMX 2.1 and 3.0."""
+# Class definitions are grouped by section of the spec, but these sections occasionally
+# appear out of order so that classes are defined before they are referenced by others.
 
-This module implements many of the classes described in the SDMX-IM specification
-('spec'), which is available from:
-
-- https://sdmx.org/?page_id=5008
-- https://sdmx.org/wp-content/uploads/SDMX_2-1-1_SECTION_2_InformationModel_201108.pdf
-
-Details of the implementation:
-
-- Python dataclasses and type hinting are used to enforce the types of attributes that
-  reference instances of other classes.
-- Some classes have convenience attributes not mentioned in the spec, to ease navigation
-  between related objects. These are marked “:mod:`sdmx` extension not in the IM.”
-- Class definitions are grouped by section of the spec, but these sections occasionally
-  appear out of order so that classes are defined before they are referenced by others.
-
-"""
 import logging
 import sys
 from abc import ABC, abstractmethod

@@ -20,7 +20,7 @@ Working with statistical data often includes some or all of the following steps.
       Using :mod:`sdmx`, analyze the structural metadata, by directly inspecting objects or converting them to :mod:`pandas` types.
 5. Download the actual data.
       Using :mod:`sdmx`, specify the needed portions of the data from the data flow by constructing a selection ('key') of series and a period/time range.
-      Then, retrieve the data using :meth:`Client.get`.
+      Then, retrieve the data using :meth:`.Client.get`.
 6. Analyze or manipulate the data.
       Convert to :mod:`pandas` types using :func:`sdmx.to_pandas` and use the result in further Python code and scripts.
 
@@ -58,7 +58,7 @@ The :attr:`~.Client.session` attribute is a :class:`.Session` object that can be
 
     ecb_via_proxy.session.proxies
 
-For convenience, :attr:`~.Session.timeout` stores the timeout in seconds for HTTP requests, and is passed automatically for all queries.
+For convenience, :class:`Session.timeout <.Session>` stores the timeout in seconds for HTTP requests, and is passed automatically for all queries.
 
 Cache HTTP responses and parsed objects
 ---------------------------------------
@@ -337,9 +337,9 @@ The SDMX REST API offers two ways to narrow a data request:
 
 - specify a **key**, i.e. values for 1 or more dimensions to be matched by returned Observations and SeriesKeys.
   The key is included as part of the URL constructed for the query.
-  Using :mod:`sdmx`, a key is specified by the `key=` argument to :mod:`.Client.get`.
+  Using :mod:`sdmx`, a key is specified by the `key=` argument to :meth:`.Client.get`.
 - limit the time period, using the HTTP parameters 'startPeriod' and 'endPeriod'.
-  Using :mod:`sdmx`, these are specified using the `params=` argument to :mod:`.Client.get`.
+  Using :mod:`sdmx`, these are specified using the `params=` argument to :meth:`.Client.get`.
 
 From the ECB's dataflow on exchange rates, we specify the ``CURRENCY`` dimension to contain either of the codes 'USD' or 'JPY'.
 The documentation for :meth:`.Client.get` describes the multiple forms of the `key` argument and the validation applied.
@@ -416,7 +416,7 @@ Select columns using the model API
 
 As we want to write data to a pandas DataFrame rather than an iterator of pandas Series, we avoid mixing up different frequencies as pandas may raise an error when passed data with incompatible frequencies.
 Therefore, we single out the series with daily data.
-:func:`to_pandas` method accepts an optional iterable to select a subset of the series contained in the dataset.
+:func:`.to_pandas` accepts an optional iterable to select a subset of the series contained in the dataset.
 Thus we can now generate our pandas DataFrame from daily exchange rate data only:
 
 .. ipython:: python
@@ -449,7 +449,7 @@ An example, using the same data flow as above:
    params = dict(startPeriod="2019-01", endPeriod="2019-06")
    data = ecb.data("EXR", key=key, params=params).data[0]
 
-Without date-time conversion, :meth:`~.to_pandas` produces a MultiIndex:
+Without date-time conversion, :func:`.to_pandas` produces a MultiIndex:
 
 .. ipython:: python
 

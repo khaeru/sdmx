@@ -44,7 +44,7 @@ def to_csv(
     Other parameters
     ----------------
     kwargs :
-        Keyword arugments passed to :func:`.dataset`.
+        Keyword arguments passed to :func:`.dataset`.
 
     Returns
     -------

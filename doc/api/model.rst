@@ -7,6 +7,8 @@
 SDMX Information Model
 **********************
 
+See the :ref:`implementation notes <im>`.
+
 Quick links to classes common to SDMX 2.1 and 3.0 (in alphabetical order):
 
 .. include:: model-common-list.rst

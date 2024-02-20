@@ -1,34 +1,32 @@
 Statistical Data and Metadata eXchange (SDMX) in Python
 *******************************************************
 
-:mod:`sdmx` is a `Python <http://www.python.org>`_ package that implements `SDMX <http://www.sdmx.org>`_  2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0, which are standards and formats for exchange of **statistical data and metadata** that are developed and used by national statistical agencies, central banks, and international organisations.
+:mod:`sdmx` (`‘sdmx1’ on PyPI <https://pypi.org/project/sdmx1>`_) is a Python implementation of the `SDMX <http://www.sdmx.org>`_  2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0 standards for **Statistical Data and Metadata eXchange**.
+The SDMX standards are developed and used by national statistical agencies, central banks, and international organisations.
 
 :mod:`sdmx` can be used to:
 
-- explore the data available from :doc:`data providers <sources>` such as the World Bank, International Monetary Fund, Eurostat, OECD, and United Nations;
-- read and write data and metadata in SDMX formats including SDMX-ML (XML) and SDMX-JSON, either:
-
-  - from local files, or
-  - retrieved from SDMX web services, with query validation and caching;
-
-- convert data and metadata into `pandas <http://pandas.pydata.org>`_ objects, for use with the analysis, plotting, and other tools in the Python data science ecosystem;
-- apply the :doc:`SDMX Information Model <implementation>` to your own data;
+- Explore and retrieve data available from SDMX-REST :doc:`web services <sources>` operated by providers including the World Bank, International Monetary Fund, Eurostat, OECD, and United Nations;
+- Read and write data and metadata in file formats including SDMX-ML (XML), SDMX-JSON, and SDMX-CSV;
+- Convert data and metadata into `pandas <http://pandas.pydata.org>`_ objects, for use with the analysis, plotting, and other tools in the Python data science ecosystem;
+- Apply the :doc:`SDMX information model (IM) <implementation>` to structure and publish your own data;
 
 …and much more.
 
 Get started
 ===========
 
-The SDMX standards are designed to be flexible enough to accommodate almost *any* data.
-To do this, they include a large number of abstract concepts for describing data, metadata, and their relationships.
-These are collectively called the SDMX **Information Model** (**IM**).
+The SDMX standards are designed to be flexible enough to accommodate nearly *any* data.
+To do this, they include a large number of abstract concepts for describing data, metadata, and their structure and relationships.
+These are collectively called the **information model** (**IM**) of SDMX.
 
 .. _not-the-standard:
 
-This documentation does not repeat full descriptions of SDMX, the IM, or SDMX web services; it focuses on the Python implementation in :mod:`sdmx` itself.
-Detailed knowledge of the IM is not needed to use :mod:`sdmx`; see a :doc:`usage example in only 10 lines of code <example>` or a longer, narrative :doc:`walkthrough <walkthrough>`.
+The documentation you are reading does not (and could not) repeat full descriptions of the IM or other parts of the SDMX standards.
+Instead, it focuses on the :doc:`precise, Pythonic, and useful implementation <implementation>` that this :mod:`sdmx` package aims to provide.
 
-To learn about SDMX in more detail, use the :doc:`list of resources and references <resources>`, or read the :doc:`API documentation <api>` and :doc:`implementation notes <implementation>` for the :mod:`sdmx.model` and :mod:`sdmx.message` modules that fully implement the IM in Python.
+Detailed knowledge of the IM is not needed to use :mod:`sdmx`; see a :doc:`usage example in only 10 lines of code <example>` or a longer, narrative :doc:`walkthrough <walkthrough>`.
+To learn about SDMX in more detail, use the :doc:`list of resources and references <resources>`, or read the :doc:`API documentation <api>` in detail.
 
 .. toctree::
    :maxdepth: 1
@@ -55,7 +53,7 @@ To learn about SDMX in more detail, use the :doc:`list of resources and referenc
 Contributing and getting help
 =============================
 
-- Ask usage questions (“How do I?”) on `Stack Overflow <https://stackoverflow.com/questions/tagged/python-sdmx+or+sdmx>`_ using the tag ``[python-sdmx]``.
+- Ask usage questions (“How do I?”) on `Stack Overflow <https://stackoverflow.com/questions/tagged/python-sdmx+or+sdmx>`_ using the tags ``[sdmx] [python]``.
 - Report bugs, suggest features, or view the source code on
   `GitHub <https://github.com/khaeru/sdmx>`_.
 - The older `sdmx-python <https://groups.google.com/forum/?hl=en#!forum/sdmx-python>`_ Google Group may have answers for some questions.

@@ -248,7 +248,7 @@ def install_schemas(
 
     Parameters
     ----------
-    schema_dir : Path, optional
+    schema_dir : .Path, optional
         The directory where XSD schemas will be downloaded to. Default: a subdirectory
         named :file:`sdmx/{version}` within the :meth:`platformdirs.user_cache_path`.
     version : str or Version, optional
@@ -257,7 +257,7 @@ def install_schemas(
 
     Returns
     -------
-    Path
+    .Path
         The path containing the installed schemas. If `schema_dir` is given, the return
         value is identical to the parameter.
     """

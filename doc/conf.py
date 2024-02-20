@@ -80,7 +80,7 @@ def linkcode_resolve(domain, info):
 
 # -- Options for sphinx.ext.napoleon ---------------------------------------------------
 
-napolean_preprocess_types = True
+napoleon_preprocess_types = True
 
 # -- Options for sphinx.ext.todo -------------------------------------------------------
 

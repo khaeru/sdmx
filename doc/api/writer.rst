@@ -1,7 +1,12 @@
 .. currentmodule:: sdmx.writer
 
-Convert ``sdmx`` objects to other formats
-*****************************************
+Writer/convert :mod:`sdmx` objects
+**********************************
+
+The term **write** refers to both:
+
+- Converting :mod:`sdmx.message` and :mod:`sdmx.model` objects to the SDMX standard file formats.
+- Converting :mod:`sdmx.model` objects to :mod:`pandas` objects.
 
 .. _writer-csv:
 

@@ -1,5 +1,5 @@
-Parse SDMX file formats
-***********************
+Read SDMX file formats
+**********************
 
 SDMX-ML
 =======
@@ -31,8 +31,6 @@ Implementation details:
 
 .. automodule:: sdmx.reader.xml.v30
    :members:
-
-
 
 SDMX-JSON
 =========
