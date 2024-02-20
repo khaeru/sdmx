@@ -20,18 +20,15 @@ sdmx: Statistical data and metadata exchange
 `Source code @ Github <https://github.com/khaeru/sdmx/>`_ —
 `Authors <https://github.com/khaeru/sdmx/graphs/contributors>`_
 
-`sdmx` is a Python package that implements `SDMX <http://www.sdmx.org>`_ 2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0, which are standards and formats for exchange of **statistical data and metadata** that are developed and used by national statistical agencies, central banks, and international organisations.
+``sdmx`` (`‘sdmx1’ on PyPI <https://pypi.org/project/sdmx1>`_) is a Python implementation of the `SDMX <http://www.sdmx.org>`_ 2.1 (`ISO 17369:2013 <https://www.iso.org/standard/52500.html>`_) and 3.0 standards for **statistical data and metadata exchange**.
+The SDMX standards are developed and used by national statistical agencies, central banks, and international organisations.
 
-`sdmx` can be used to:
+``sdmx`` can be used to:
 
-- explore the data available from `data providers <https://sdmx1.rtfd.io/en/latest/sources.html>`_ such as the World Bank, International Monetary Fund, Eurostat, OECD, and United Nations;
-- read and write data and metadata in SDMX formats including SDMX-ML (XML) and SDMX-JSON, either:
-
-  - from local files, or
-  - retrieved from SDMX web services, with query validation and caching;
-
-- convert data and metadata into `pandas <https://pandas.pydata.org>`_ objects, for use with the analysis, plotting, and other tools in the Python data science ecosystem;
-- apply the `SDMX Information Model <https://sdmx1.rtfd.io/en/latest/api.rst#api-model>`_ to your own data;
+- Explore and retrieve data available from SDMX-REST `web services <https://sdmx1.rtfd.io/en/latest/sources.html>`_ operated by providers including the World Bank, International Monetary Fund, Eurostat, OECD, and United Nations;
+- Read and write data and metadata in file formats including SDMX-ML (XML), SDMX-JSON, and SDMX-CSV;
+- Convert data and metadata into `pandas <https://pandas.pydata.org>`_ objects, for use with the analysis, plotting, and other tools in the Python data science ecosystem;
+- Apply the `SDMX information model <https://sdmx1.rtfd.io/en/latest/api.rst#api-model>`_ to structure and publish your own data;
 
 …and much more.
 

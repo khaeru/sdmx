@@ -7,13 +7,17 @@ Contributions are welcome!
 - For current development priorities, see the list of `GitHub milestones <https://github.com/khaeru/sdmx/milestones>`_ and issues/PRs targeted to each.
 - For wishlist features, see issues on GitHub tagged `‘enh’ <https://github.com/khaeru/sdmx/labels/enh>`_ or `‘wishlist’ <https://github.com/khaeru/sdmx/labels/wishlist>`_.
 
+.. _code-style:
+
 Code style
 ==========
 
 - This project uses, via `pre-commit <https://pre-commit.com>`_:
 
-  - `black <https://black.readthedocs.io>`_ code style,
-  - `ruff <https://beta.ruff.rs/docs/>`_ to ensure `PEP 8 <https://www.python.org/dev/peps/pep-0008>`_ compliance and consistent order for imports (superseding `flake8 <https://flake8.pycqa.org>`_ and `isort <https://pypi.org/project/isort/>`_), and
+  - `ruff <https://beta.ruff.rs/docs/>`_ for code style and linting, including:
+
+     - ensure `PEP 8 <https://www.python.org/dev/peps/pep-0008>`_ compliance, and
+     - ensure a consistent order for imports (superseding `flake8 <https://flake8.pycqa.org>`_ and `isort <https://pypi.org/project/isort/>`_).
   - `mypy <https://mypy.readthedocs.io>`_ for static type checking.
 
   These **must** be applied to new or modified code.
@@ -157,6 +161,7 @@ Internal code reference
    :noindex:
    :undoc-members:
    :show-inheritance:
+
 
 Inline TODOs
 ============

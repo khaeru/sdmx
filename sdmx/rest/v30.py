@@ -2,8 +2,8 @@
 
 Note that version 2.1.0 of the REST API corresponds to version 3.0.0 of the overall
 SDMX standards. See the `documentation
-<https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`_ and `OpenAPI specification
-<https://github.com/sdmx-twg/sdmx-rest/blob/v2.1.0/api/sdmx-rest.yaml>`_ for further
+<https://github.com/sdmx-twg/sdmx-rest/tree/v2.1.0/doc>`__ and `OpenAPI specification
+<https://github.com/sdmx-twg/sdmx-rest/blob/v2.1.0/api/sdmx-rest.yaml>`__ for further
 details.
 """
 from collections import ChainMap

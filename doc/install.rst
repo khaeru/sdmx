@@ -7,8 +7,7 @@ Dependencies
 :mod:`sdmx` is a pure `Python <https://python.org>`_ package requiring Python 3.8 or higher, which can be installed:
 
 - from `the Python website <https://www.python.org/downloads/>`_, or
-- using a scientific Python distribution that includes other packages useful
-  for data analysis, such as
+- using a scientific Python distribution that includes other packages useful for data analysis, such as
   `Anaconda <https://store.continuum.io/cshop/anaconda/>`_,
   `Canopy <https://www.enthought.com/products/canopy/>`_, or others listed on
   `the Python wiki <https://wiki.python.org/moin/PythonDistributions>`_.
@@ -29,7 +28,7 @@ Optional dependencies for extra features
 Instructions
 ============
 
-0. (optional) If using Anaconda, use ``source activate [ENV]`` to activate the environment in which to install :mod:`sdmx`.
+0. (optional) If using Anaconda, use :program:`source activate [ENV]` to activate the environment in which to install :mod:`sdmx`.
 1. From the command line, issue::
 
     $ pip install sdmx1
@@ -45,7 +44,7 @@ From source
 1. Download the latest code:
 
    - `from PyPI <https://pypi.org/project/sdmx1/#files>`_,
-   - `from Github <https://github.com/khaeru/sdmx>`_ as a zip archive, or
+   - `from Github <https://github.com/khaeru/sdmx>`_ as a ZIP archive, or
    - by cloning the Github repository::
 
      $ git clone git@github.com:khaeru/sdmx.git
@@ -64,7 +63,7 @@ From source
     $ pip install --editable .[cache,docs,tests]  # all extras
 
 
-.. note:: The pip ``--editable`` flag is recommended for development, so that changes to your code are reflected the next time :mod:`sdmx` is imported.
+.. note:: The pip :program:`--editable` flag is recommended for development, so that changes to your code are reflected the next time :mod:`sdmx` is imported.
 
 Running tests
 =============
@@ -79,4 +78,4 @@ To also run these tests, use::
 
     $ pytest -m source
 
-Pytest offers many command-line options to control test invocation; see ``pytest --help`` or the `documentation <https://pytest.org>`_.
+Pytest offers many command-line options to control test invocation; see :program:`pytest --help` or the `documentation <https://pytest.org>`_.
