@@ -3,17 +3,19 @@
 Data sources
 ============
 
-SDMX makes a distinction between data providers and sources:
+SDMX distinguishes:
 
-- a **data provider** is the original publisher of statistical information and metadata.
-- a **data source** is a specific web service that provides access to statistical information.
+- a **data provider** —the original publisher or maintainer of statistical information and metadata.
+- a **data source** —a specific web service that provides access to SDMX content via a standard API.
 
-Each data *source* might aggregate and provide data or metadata from multiple data *providers*.
-Or, an agency might operate a data source that only contains information they provide themselves; in this case, the source and provider are identical.
+A single data *source* might aggregate and provide data or metadata from many data *providers*.
+Or, an agency might operate a data source that only contains information they provide themselves; in this case, the source and provider are matched one-to-one.
 
-:mod:`sdmx` identifies each data source using a string such as :py:`"ABS"`, and has built-in support for a number of data sources.
-Use :meth:`list_sources` to list these.
-Read the following sections, or the file :file:`sources.json` in the package source code, for more details.
+:mod:`sdmx` has built-in support for a number of data sources, each identified with a string such as :py:`"ABS"`.
+Use :meth:`list_sources` to list these, or see the file :file:`sources.json` in the package source code.
+
+https://khaeru.github.io/sdmx displays a summary of every SDMX-REST API endpoint for every data source known to :mod:`sdmx`; this summary is `updated daily by an automatic run <https://github.com/khaeru/sdmx/actions/workflows/sources.yaml>`_ of the test suite.
+Read the following sections, for more details on how the limitations and quirks of particular sources are handled.
 
 :mod:`sdmx` also supports adding other data sources; see :meth:`add_source` and :class:`~.source.Source`.
 
@@ -77,8 +79,7 @@ Please `open an issue <https://github.com/khaeru/sdmx/issues/new>`__ if the supp
 .. _source-matrix:
 
 - Because of the large number of services and endpoints, this matrix of support is only periodically updated.
-  To mitigate: https://khaeru.github.io/sdmx/ displays a summary of every SDMX-REST API endpoint for every data source built-in to :mod:`sdmx`; this summary is updated daily by an automatic run of the test suite.
-  These include all endpoints known to return a reply, even if the reply is an error message of some sort.
+  https://khaeru.github.io/sdmx includes all endpoints known to return a reply, even if the reply is an error message of some sort.
 
 SDMX-JSON—only services
 ~~~~~~~~~~~~~~~~~~~~~~~
