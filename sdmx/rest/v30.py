@@ -6,6 +6,7 @@ SDMX standards. See the `documentation
 <https://github.com/sdmx-twg/sdmx-rest/blob/v2.1.0/api/sdmx-rest.yaml>`__ for further
 details.
 """
+
 from collections import ChainMap
 from typing import Dict
 

@@ -465,8 +465,7 @@ class BaseConstraint(ABC, MaintainableArtefact):
     """ABC for SDMX 2.1 and 3.0 Constraint."""
 
     @abstractmethod
-    def __contains__(self, name):
-        ...
+    def __contains__(self, name): ...
 
 
 # §3.4: Data Types
@@ -634,12 +633,12 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     def __getattr__(self, name: str) -> IT:
         # Provided to pass test_dsd.py
         try:
-            return self.__getitem__(name)
+            return self.__dict__["items"][name]
         except KeyError:
             raise AttributeError(name)
 
     def __getitem__(self, name: str) -> IT:
-        return self.items[name]
+        return self.__dict__["items"][name]
 
     def get_hierarchical(self, id: str) -> IT:
         """Get an Item by its :attr:`~.Item.hierarchical_id`."""
@@ -1296,9 +1295,9 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
     dimensions: DimensionDescriptor = field(default_factory=DimensionDescriptor)
     #: Mapping from  :attr:`.GroupDimensionDescriptor.id` to
     #: :class:`.GroupDimensionDescriptor`.
-    group_dimensions: DictLikeDescriptor[
-        str, GroupDimensionDescriptor
-    ] = DictLikeDescriptor()
+    group_dimensions: DictLikeDescriptor[str, GroupDimensionDescriptor] = (
+        DictLikeDescriptor()
+    )
 
     # Specific types to be used in concrete subclasses
     MemberValue: ClassVar[Type["BaseMemberValue"]]
@@ -2181,9 +2180,9 @@ class HierarchicalCode(IdentifiableArtefact):
 
     level: Optional[Level] = None
 
-    parent: Optional[
-        Union["HierarchicalCode", Any]
-    ] = None  # NB second element is "Hierarchy"
+    parent: Optional[Union["HierarchicalCode", Any]] = (
+        None  # NB second element is "Hierarchy"
+    )
     child: List["HierarchicalCode"] = field(default_factory=list)
 
 

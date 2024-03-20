@@ -377,7 +377,7 @@ def _dataset_compat(df, datetime, kwargs):
     return df, datetime, kwargs
 
 
-def _maybe_convert_datetime(df, arg, obj, dsd=None):  # noqa: C901
+def _maybe_convert_datetime(df, arg, obj, dsd=None):  # noqa: C901  TODO reduce complexity 23 → ≤11
     """Helper for :meth:`.write_dataset` to handle datetime indices.
 
     Parameters

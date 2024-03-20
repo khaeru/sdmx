@@ -1,4 +1,5 @@
 """SDMX 2.1 Information Model."""
+
 import logging
 
 # TODO for complete implementation of the IM, enforce TimeKeyValue (instead of KeyValue)

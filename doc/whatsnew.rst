@@ -3,8 +3,13 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Adjust the :doc:`example` for current data returned by :ref:`ESTAT <ESTAT>` (:issue:`169`, :pull:`170`).
+- :meth:`.StructureMessage.get` can match on :meth:`.IdentifiableArtefact.urn` (:pull:`170`).
+  This makes the method more useful in the case that a message includes artefacts with the same ID but different :attr:`~.MaintainableArtefact.maintainer` and/or :attr:`~.VersionableArtefact.version`.
+- Bugfix: :class:`.ItemScheme` could not be :func:`copy.deepcopy` 'd (:pull:`170`).
 
 v2.14.0 (2024-02-20)
 ====================

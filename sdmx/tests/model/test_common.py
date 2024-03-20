@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 
 import pytest
@@ -249,6 +250,12 @@ class TestItemScheme:
         is2.append(Item(id="bar"))
 
         assert is0.compare(is2) is False
+
+    def test_deepcopy(self) -> None:
+        """ItemScheme may be :func:`.deepcopy`'d."""
+        is0: ItemScheme = ItemScheme(id="is0")
+
+        deepcopy(is0)
 
     def test_get_hierarchical(self) -> None:
         is0: ItemScheme = ItemScheme(id="is0")

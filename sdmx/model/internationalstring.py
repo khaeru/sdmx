@@ -47,10 +47,12 @@ class InternationalString:
 
     """
 
+    __slots__ = ("localizations",)
+
     # Types that can be converted into InternationalString
     _CONVERTIBLE = Union[str, Sequence, Mapping, Iterable[Tuple[str, str]]]
 
-    localizations: Dict[str, str] = {}
+    localizations: Dict[str, str]
 
     def __init__(self, value: Optional[_CONVERTIBLE] = None, **kwargs):
         # Handle initial values according to type
@@ -91,7 +93,7 @@ class InternationalString:
     # Duplicate of __getitem__, to pass existing tests in test_dsd.py
     def __getattr__(self, name):
         try:
-            return self.__dict__["localizations"][name]
+            return self.__getattribute__("localizations")[name]
         except KeyError:
             raise AttributeError(name) from None
 

@@ -7,6 +7,7 @@ specification
 <https://github.com/sdmx-twg/sdmx-rest/blob/v1.5.0/v2_1/ws/rest/src/sdmx-rest.yaml>`_
 for further details.
 """
+
 from collections import ChainMap
 from typing import Dict
 from warnings import warn

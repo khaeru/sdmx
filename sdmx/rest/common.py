@@ -1,4 +1,5 @@
 """Information related to the SDMX-REST web service standard."""
+
 import abc
 import re
 from copy import copy

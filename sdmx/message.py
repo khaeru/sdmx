@@ -6,14 +6,18 @@
 :mod:`sdmx` also uses :class:`DataMessage` to encapsulate SDMX-JSON data returned by
 data sources.
 """
+
 import logging
+import re
 from dataclasses import dataclass, field, fields
 from datetime import datetime
+from itertools import chain
 from operator import attrgetter
 from typing import TYPE_CHECKING, List, Optional, Text, Type, Union, get_args
 
 from sdmx import model
-from sdmx.dictlike import DictLike, DictLikeDescriptor, summarize_dictlike
+from sdmx.dictlike import DictLike, summarize_dictlike
+from sdmx.dictlike import DictLikeDescriptor as DLD
 from sdmx.format import Version
 from sdmx.model import common, v21, v30
 from sdmx.model.internationalstring import (
@@ -185,73 +189,57 @@ class ErrorMessage(Message):
 
 @dataclass
 class StructureMessage(Message):
+    """SDMX StructureMessage."""
+
     #: Collection of :class:`.Categorisation`.
-    categorisation: DictLikeDescriptor[str, model.Categorisation] = DictLikeDescriptor()
+    categorisation: DLD[str, model.Categorisation] = DLD()
     #: Collection of :class:`.CategoryScheme`.
-    category_scheme: DictLikeDescriptor[
-        str, model.CategoryScheme
-    ] = DictLikeDescriptor()
+    category_scheme: DLD[str, model.CategoryScheme] = DLD()
     #: Collection of :class:`.Codelist`.
-    codelist: DictLikeDescriptor[str, model.Codelist] = DictLikeDescriptor()
-    #: Collection of :class:`.HierarchicalCodelist`.
-    hierarchical_codelist: DictLikeDescriptor[
-        str, v21.HierarchicalCodelist
-    ] = DictLikeDescriptor()
-    #: Collection of :class:`.v30.Hierarchy`.
-    hierarchy: DictLikeDescriptor[str, v30.Hierarchy] = DictLikeDescriptor()
+    codelist: DLD[str, model.Codelist] = DLD()
     #: Collection of :class:`.ConceptScheme`.
-    concept_scheme: DictLikeDescriptor[str, model.ConceptScheme] = DictLikeDescriptor()
+    concept_scheme: DLD[str, model.ConceptScheme] = DLD()
     #: Collection of :class:`.ContentConstraint`.
-    constraint: DictLikeDescriptor[str, model.BaseConstraint] = DictLikeDescriptor()
+    constraint: DLD[str, model.BaseConstraint] = DLD()
+    #: Collection of :class:`.CustomTypeScheme`.
+    custom_type_scheme: DLD[str, model.CustomTypeScheme] = DLD()
     #: Collection of :class:`Dataflow(Definition) <.BaseDataflow>`.
-    dataflow: DictLikeDescriptor[str, model.BaseDataflow] = DictLikeDescriptor()
+    dataflow: DLD[str, model.BaseDataflow] = DLD()
+    #: Collection of :class:`.HierarchicalCodelist`.
+    hierarchical_codelist: DLD[str, v21.HierarchicalCodelist] = DLD()
+    #: Collection of :class:`.v30.Hierarchy`.
+    hierarchy: DLD[str, v30.Hierarchy] = DLD()
+    #: Collection of :class:`Metadataflow(Definition) <.BaseMetadataflow>`.
+    metadataflow: DLD[str, model.BaseMetadataflow] = DLD()
     #: Collection of :class:`MetadataStructureDefinition
     #: <.BaseMetadataStructureDefinition>`.
-    metadatastructure: DictLikeDescriptor[
-        str, model.BaseMetadataStructureDefinition
-    ] = DictLikeDescriptor()
-    #: Collection of :class:`Metadataflow(Definition) <.BaseMetadataflow>`.
-    metadataflow: DictLikeDescriptor[str, model.BaseMetadataflow] = DictLikeDescriptor()
-    #: Collection of :class:`DataStructureDefinition <.BaseDataStructureDefinition>`.
-    structure: DictLikeDescriptor[
-        str, model.BaseDataStructureDefinition
-    ] = DictLikeDescriptor()
-    #: Collection of :class:`.StructureSet`.
-    structureset: DictLikeDescriptor[str, v21.StructureSet] = DictLikeDescriptor()
-    #: Collection of :class:`.OrganisationScheme`.
-    organisation_scheme: DictLikeDescriptor[
-        str, model.OrganisationScheme
-    ] = DictLikeDescriptor()
-    #: Collection of :class:`.ProvisionAgreement`.
-    provisionagreement: DictLikeDescriptor[
-        str, model.ProvisionAgreement
-    ] = DictLikeDescriptor()
-
-    #: Collection of :class:`.CustomTypeScheme`.
-    custom_type_scheme: DictLikeDescriptor[
-        str, model.CustomTypeScheme
-    ] = DictLikeDescriptor()
+    metadatastructure: DLD[str, model.BaseMetadataStructureDefinition] = DLD()
     #: Collection of :class:`.NamePersonalisationScheme`.
-    name_personalisation_scheme: DictLikeDescriptor[
-        str, model.NamePersonalisationScheme
-    ] = DictLikeDescriptor()
+    name_personalisation_scheme: DLD[str, model.NamePersonalisationScheme] = DLD()
+    #: Collection of :class:`.OrganisationScheme`.
+    organisation_scheme: DLD[str, model.OrganisationScheme] = DLD()
+    #: Collection of :class:`.ProvisionAgreement`.
+    provisionagreement: DLD[str, model.ProvisionAgreement] = DLD()
     #: Collection of :class:`.RulesetScheme`.
-    ruleset_scheme: DictLikeDescriptor[str, model.RulesetScheme] = DictLikeDescriptor()
-    #: Collection of :class:`.VTLMappingScheme`.
-    vtl_mapping_scheme: DictLikeDescriptor[
-        str, model.VTLMappingScheme
-    ] = DictLikeDescriptor()
+    ruleset_scheme: DLD[str, model.RulesetScheme] = DLD()
+    #: Collection of :class:`DataStructureDefinition <.BaseDataStructureDefinition>`.
+    structure: DLD[str, model.BaseDataStructureDefinition] = DLD()
+    #: Collection of :class:`.StructureSet`.
+    structureset: DLD[str, v21.StructureSet] = DLD()
     #: Collection of :class:`.TransformationScheme`.
-    transformation_scheme: DictLikeDescriptor[
-        str, model.TransformationScheme
-    ] = DictLikeDescriptor()
+    transformation_scheme: DLD[str, model.TransformationScheme] = DLD()
     #: Collection of :class:`.UserDefinedOperatorScheme`.
-    user_defined_operator_scheme: DictLikeDescriptor[
-        str, model.UserDefinedOperatorScheme
-    ] = DictLikeDescriptor()
-
+    user_defined_operator_scheme: DLD[str, model.UserDefinedOperatorScheme] = DLD()
     #: Collection of :class:`.ValueList` (SDMX 3.0 only).
-    valuelist: DictLikeDescriptor[str, v30.ValueList] = DictLikeDescriptor()
+    valuelist: DLD[str, v30.ValueList] = DLD()
+    #: Collection of :class:`.VTLMappingScheme`.
+    vtl_mapping_scheme: DLD[str, model.VTLMappingScheme] = DLD()
+
+    def __post_init__(self):
+        # Construct a list referencing all of the collections
+        self._collections = [
+            getattr(self, f.name) for f in direct_fields(self.__class__)
+        ]
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -287,7 +275,8 @@ class StructureMessage(Message):
         ----------
         obj_or_id : str or .IdentifiableArtefact
             If an IdentifiableArtefact, return an object of the same class and
-            :attr:`~.IdentifiableArtefact.id`; if :class:`str`, an object with this ID.
+            :attr:`~.IdentifiableArtefact.id`; if :class:`str`, an object with this ID
+            *or* this string as part of its :attr:`~.IdentifiableArtefact.urn`.
 
         Returns
         -------
@@ -299,24 +288,25 @@ class StructureMessage(Message):
         Raises
         ------
         ValueError
-            if `obj_or_id` is a string and there are ≥2 objects (of different classes)
-            with the same ID.
+            if there are ≥2 objects with the same `obj_or_id`; for instance, two objects
+            of different classes, or two objects of the same class with different
+            :attr:`~.MaintainableArtefact.maintainer` or
+            :attr:`~.VersionableArtefact.version`.
         """
-        id = (
+        id_ = (
             obj_or_id.id
             if isinstance(obj_or_id, model.IdentifiableArtefact)
             else obj_or_id
         )
 
-        candidates: List[model.IdentifiableArtefact] = list(
-            filter(
-                None,
-                map(
-                    lambda f: getattr(self, f.name).get(id),
-                    direct_fields(self.__class__),
-                ),
-            )
-        )
+        # Expression for matching URN. Ensure `id_` appears immediately after one of the
+        # separator characters
+        urn_expr = re.compile(rf"[=:]{re.escape(id_)}")
+
+        candidates: List[model.IdentifiableArtefact] = []
+        for key, obj in chain(*[c.items() for c in self._collections]):
+            if id_ in (key, obj.id) or urn_expr.search(obj.urn or ""):
+                candidates.append(obj)
 
         if len(candidates) > 1:
             raise ValueError(f"ambiguous; {repr(obj_or_id)} matches {repr(candidates)}")

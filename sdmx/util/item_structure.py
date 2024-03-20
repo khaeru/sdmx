@@ -1,4 +1,5 @@
 """Parse structure information from item description."""
+
 import logging
 import operator
 import re

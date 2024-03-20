@@ -1,4 +1,5 @@
 """Tests for pandasdmx/writer.py."""
+
 import pandas as pd
 import pytest
 from pytest import raises

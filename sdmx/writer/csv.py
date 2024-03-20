@@ -2,6 +2,7 @@
 
 See :ref:`sdmx-csv`.
 """
+
 from os import PathLike
 from typing import Literal, Optional, Type, Union
 
