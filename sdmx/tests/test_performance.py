@@ -1,4 +1,5 @@
 """Speed and memory usage tests."""
+
 from sdmx.model.v21 import AttributeValue, DataAttribute, DataStructureDefinition
 
 
