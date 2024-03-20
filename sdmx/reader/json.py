@@ -1,4 +1,5 @@
 """SDMX-JSON v2.1 reader"""
+
 import json
 import logging
 from typing import Mapping, MutableMapping
@@ -36,8 +37,7 @@ class Reader(BaseReader):
     def detect(cls, content):
         return content.startswith(b"{")
 
-    # FIXME Reduce complexity from 17 → 13
-    def read_message(self, source, dsd=None):  # noqa: C901
+    def read_message(self, source, dsd=None):  # noqa: C901  TODO reduce complexity 15 → ≤11
         # Initialize message instance
         msg = DataMessage()
 

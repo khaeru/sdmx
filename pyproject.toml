@@ -96,8 +96,8 @@ select = ["C9", "E", "F", "I", "W"]
 ignore = ["E501", "W191"]
 # Exceptions:
 # - .client._handle_get_kwargs: 12
-# - .reader.xml.v21.read_message: 12
-# - .writer.pandas._maybe_convert_datetime: 27
+# - .reader.xml.v21.read_message: 15
+# - .writer.pandas._maybe_convert_datetime: 23
 # - .writer.pandas.write_dataset: 12
 mccabe.max-complexity = 11
 
