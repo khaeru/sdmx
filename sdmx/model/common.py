@@ -633,12 +633,12 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     def __getattr__(self, name: str) -> IT:
         # Provided to pass test_dsd.py
         try:
-            return self.__getitem__(name)
+            return self.__dict__["items"][name]
         except KeyError:
             raise AttributeError(name)
 
     def __getitem__(self, name: str) -> IT:
-        return self.items[name]
+        return self.__dict__["items"][name]
 
     def get_hierarchical(self, id: str) -> IT:
         """Get an Item by its :attr:`~.Item.hierarchical_id`."""
