@@ -8,8 +8,10 @@ data sources.
 """
 
 import logging
+import re
 from dataclasses import dataclass, field, fields
 from datetime import datetime
+from itertools import chain
 from operator import attrgetter
 from typing import TYPE_CHECKING, List, Optional, Text, Type, Union, get_args
 
@@ -273,7 +275,8 @@ class StructureMessage(Message):
         ----------
         obj_or_id : str or .IdentifiableArtefact
             If an IdentifiableArtefact, return an object of the same class and
-            :attr:`~.IdentifiableArtefact.id`; if :class:`str`, an object with this ID.
+            :attr:`~.IdentifiableArtefact.id`; if :class:`str`, an object with this ID
+            *or* this string as part of its :attr:`~.IdentifiableArtefact.urn`.
 
         Returns
         -------
@@ -285,24 +288,25 @@ class StructureMessage(Message):
         Raises
         ------
         ValueError
-            if `obj_or_id` is a string and there are ≥2 objects (of different classes)
-            with the same ID.
+            if there are ≥2 objects with the same `obj_or_id`; for instance, two objects
+            of different classes, or two objects of the same class with different
+            :attr:`~.MaintainableArtefact.maintainer` or
+            :attr:`~.VersionableArtefact.version`.
         """
-        id = (
+        id_ = (
             obj_or_id.id
             if isinstance(obj_or_id, model.IdentifiableArtefact)
             else obj_or_id
         )
 
-        candidates: List[model.IdentifiableArtefact] = list(
-            filter(
-                None,
-                map(
-                    lambda f: getattr(self, f.name).get(id),
-                    direct_fields(self.__class__),
-                ),
-            )
-        )
+        # Expression for matching URN. Ensure `id_` appears immediately after one of the
+        # separator characters
+        urn_expr = re.compile(rf"[=:]{re.escape(id_)}")
+
+        candidates: List[model.IdentifiableArtefact] = []
+        for key, obj in chain(*[c.items() for c in self._collections]):
+            if id_ in (key, obj.id) or urn_expr.search(obj.urn or ""):
+                candidates.append(obj)
 
         if len(candidates) > 1:
             raise ValueError(f"ambiguous; {repr(obj_or_id)} matches {repr(candidates)}")
