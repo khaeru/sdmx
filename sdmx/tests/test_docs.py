@@ -5,6 +5,7 @@ these tests, a command-line argument must be given:
 
 $ pytest -m network [...]
 """
+
 import re
 
 import numpy as np
@@ -25,32 +26,35 @@ def test_doc_example():
 
     estat = sdmx.Client("ESTAT")
 
-    metadata = estat.datastructure("UNE_RT_A")
+    sm = estat.datastructure("UNE_RT_A")
 
-    for cl in "AGE", "UNIT":
-        print(sdmx.to_pandas(metadata.codelist[cl]))
+    for cl in (
+        "AGE",
+        "SEX",
+        # "UNIT",  # As of 2024-03-15, the service returns versions 22.0 and 28.0 of
+        # #          this artefact, so a lookup by ID alone is ambiguous
+    ):
+        print(sdmx.to_pandas(sm.get(cl)))
 
-    resp = estat.data(
-        "UNE_RT_A", key={"geo": "EL+ES+IE"}, params={"startPeriod": "2007"}
-    )
+    dm = estat.data("UNE_RT_A", key={"geo": "EL+ES+IE"}, params={"startPeriod": "2007"})
 
-    data = sdmx.to_pandas(resp).xs("Y15-74", level="age", drop_level=False)
+    data = sdmx.to_pandas(dm).xs("Y15-74", level="age", drop_level=False)
 
     data.loc[("A", "Y15-74", "PC_ACT", "T")]
 
     # Further checks per https://github.com/dr-leo/pandaSDMX/issues/157
 
     # DimensionDescriptor for the structure message
-    dd1 = metadata.structure.UNE_RT_A.dimensions
+    dd1 = sm.structure.UNE_RT_A.dimensions
 
     # DimensionDescriptor retrieved whilst validating the data message
-    dd2 = resp.data[0].structured_by.dimensions
+    dd2 = dm.data[0].structured_by.dimensions
 
     # DimensionDescriptors have same ID, components and order
     assert dd1 == dd2
 
     # One SeriesKey from the data message
-    sk = list(resp.data[0].series.keys())[0]
+    sk = list(dm.data[0].series.keys())[0]
 
     # Key values have same order as in the DSD
     assert dd1.order_key(sk) == sk
@@ -58,21 +62,19 @@ def test_doc_example():
 
 @pytest.mark.network
 def test_doc_index1():
-    """First code example in index.rst."""
+    """A code example that formerly appeared in doc/index.rst."""
     estat = Client("ESTAT")
-    flow_response = estat.dataflow("UNE_RT_A")
+    sm0 = estat.dataflow("UNE_RT_A")
 
     with pytest.raises(TypeError):
         # This presumes the DataStructureDefinition instance can conduct a
         # network request for its own content
-        structure_response = flow_response.dataflow.UNE_RT_A.structure(
-            request=True, target_only=False
-        )
+        sm1 = sm0.dataflow.UNE_RT_A.structure(request=True, target_only=False)
 
     # Same effect
-    structure_response = estat.get(
+    sm1 = estat.get(
         "datastructure",
-        flow_response.dataflow.UNE_RT_A.structure.id,
+        sm0.dataflow.UNE_RT_A.structure.id,
         params=dict(references="descendants"),
     )
 
@@ -80,7 +82,7 @@ def test_doc_index1():
     # structure = estat.get(flow_response.dataflow.UNE_RT_A.structure)
 
     # Show some codelists
-    s = sdmx.to_pandas(structure_response)
+    s = sdmx.to_pandas(sm1)
     expected = pd.Series(
         {
             "ACP": "African, Caribbean and Pacific Group of States, signatories of the "
@@ -93,11 +95,16 @@ def test_doc_index1():
         name="Geopolitical entity (reporting)",
     ).rename_axis("GEO")
 
-    # Codelists are converted to a DictLike
+    # StructureMessage is converted to DictLike
+    assert isinstance(s, DictLike)
+    # "codelist" key retrieves a second-level DictLike
     assert isinstance(s.codelist, DictLike)
 
     # Same effect
-    assert_pd_equal(s.codelist["GEO"].sort_index().head(), expected)
+    # NB We use get() because, as of 2024-03-15, this query retrieves multiple versions
+    #    of similar artefacts. This may need updating as ESTAT's versioning advances.
+    s = sdmx.to_pandas(sm1.get("ESTAT:GEO(17.0)"))
+    assert_pd_equal(s.sort_index().head(), expected)
 
 
 @pytest.mark.network
