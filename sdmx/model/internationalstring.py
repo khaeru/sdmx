@@ -93,7 +93,7 @@ class InternationalString:
     # Duplicate of __getitem__, to pass existing tests in test_dsd.py
     def __getattr__(self, name):
         try:
-            return self.__dict__["localizations"][name]
+            return self.__getattribute__("localizations")[name]
         except KeyError:
             raise AttributeError(name) from None
 
