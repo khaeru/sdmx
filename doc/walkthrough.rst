@@ -100,6 +100,9 @@ Suppose we are looking for time-series on exchange rates, and we know that the E
 We *could* search the Internet for the dataflow ID or browse the ECB's website.
 However, we can also use :mod:`sdmx` to retrieve metadata and get a complete overview of the data flows the ECB provides.
 
+
+.. _walkthrough-dataflow:
+
 Get information about the source's data flows
 ---------------------------------------------
 
