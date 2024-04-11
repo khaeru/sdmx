@@ -480,6 +480,9 @@ class Client:
             response, response_content
         )
 
+        if len(response.content) == 0:
+            return None
+
         # Select reader class
         content_type = response.headers.get("content-type", None)
         try:
