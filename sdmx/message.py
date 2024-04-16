@@ -352,10 +352,9 @@ class StructureMessage(Message):
 class DataMessage(Message):
     """SDMX Data Message.
 
-    .. note:: A DataMessage may contain zero or more :class:`.DataSet`, so
-       :attr:`data` is a list. To retrieve the first (and possibly only)
-       data set in the message, access the first element of the list:
-       ``msg.data[0]``.
+    .. note:: A DataMessage may contain zero or more :class:`.DataSet`, so :attr:`data`
+       is a list. To retrieve the first (and possibly only) data set in the message,
+       access the first element of the list: :py:`msg.data[0]`.
     """
 
     #: :class:`list` of :class:`.DataSet`.
@@ -426,6 +425,74 @@ class DataMessage(Message):
             and len(self.data) == len(other.data)
             and all(ds[0].compare(ds[1], strict) for ds in zip(self.data, other.data))
         )
+
+    def update(self) -> None:
+        """Update :attr:`.observation_dimension`.
+
+        The observation dimensions (or dimension observation) is determined
+        automatically if:
+
+        1. There is at least 1 :class:`DataSet <.BaseDataSet>` in the message.
+        2. For at least 1 data set:
+
+           - :attr:`~.BaseDataSet.structured_by` is defined.
+           - There is at least 1 :class:`.Observation` in the data set. (:meth:`.update`
+             checks only the first observation.)
+           - The :attr:`.Observation.dimension` is a :class:`.Key` referring to exactly
+             1 dimension.
+
+        3. The dimension indicated by (2) is the same for all DataSets in the message.
+
+        If not all these conditions are met, messages are logged with level DEBUG, and
+        :attr:`.observation_dimension` is set to :any:`None`.
+
+        .. note:: :meth:`.update` is not automatically called when data sets are added
+           to or removed from :attr:`.data`. User code **should** call :meth:`.update`
+           to reflect such changes.
+        """
+        if not self.data:
+            log.debug("No DataSet in message")
+            self.observation_dimension = None
+            return
+
+        dims = set()
+        for ds in self.data:
+            try:
+                assert ds.structured_by
+
+                # Use the first observation
+                assert len(ds.obs)
+                o0 = ds.obs[0]
+                assert o0.dimension
+
+                # Identify the dimensions specified per-observation
+                d_a_o = tuple(o0.dimension.values.keys())
+
+                if 1 == len(d_a_o):
+                    # Single dimension-at-observation
+                    # Record as an attribute of the DataMessage
+                    dims.add(ds.structured_by.dimensions.get(d_a_o[0]))
+                else:
+                    dims.add(d_a_o)
+            except AssertionError:
+                continue
+
+        if len(dims) == 1 and not all(isinstance(d, tuple) for d in dims):
+            self.observation_dimension = dims.pop()
+        else:
+            if len(dims) == 1:
+                log.debug(f"More than 1 dimension at observation level: {dims.pop()}")
+            elif len(dims) > 1:
+                log.debug(
+                    f"Multiple data sets with different observation dimension: {dims}"
+                )
+            elif not dims:
+                log.debug(
+                    f"Unable to determine observation dimension for {len(self.data)} "
+                    "data set(s). Data set(s) may lack structure reference or "
+                    "observations."
+                )
+            self.observation_dimension = None
 
 
 @dataclass
