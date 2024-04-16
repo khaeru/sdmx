@@ -1,21 +1,22 @@
 sdmx: Statistical data and metadata exchange
 ********************************************
+|pypi| |rtd| |services| |gha| |codecov|
 
-.. image:: https://github.com/khaeru/sdmx/actions/workflows/pytest.yaml/badge.svg
-   :target: https://github.com/khaeru/sdmx/actions
-   :alt: Status badge for the "pytest" continuous integration workflow
-.. image:: https://codecov.io/gh/khaeru/sdmx/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/khaeru/sdmx
-   :alt: Codecov test coverage badge
-.. image:: https://readthedocs.org/projects/sdmx1/badge/?version=latest
-   :target: https://sdmx1.readthedocs.io/en/latest
-   :alt: Documentation status badge
-.. image:: https://img.shields.io/pypi/v/sdmx1.svg
+.. |pypi| image:: https://img.shields.io/pypi/v/sdmx1.svg
    :target: https://pypi.org/project/sdmx1
    :alt: PyPI version badge
-.. image:: https://img.shields.io/badge/services-status-informational
+.. |rtd| image:: https://readthedocs.org/projects/sdmx1/badge/?version=latest
+   :target: https://sdmx1.readthedocs.io/en/latest
+   :alt: Documentation status badge
+.. |services| image:: https://img.shields.io/badge/services-status-informational
    :target: https://khaeru.github.io/sdmx/
    :alt: Status of supported service endpoints
+.. |gha| image:: https://github.com/khaeru/sdmx/actions/workflows/pytest.yaml/badge.svg
+   :target: https://github.com/khaeru/sdmx/actions
+   :alt: Status badge for the "pytest" continuous integration workflow
+.. |codecov| image:: https://codecov.io/gh/khaeru/sdmx/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/khaeru/sdmx
+   :alt: Codecov test coverage badge
 
 `Source code @ Github <https://github.com/khaeru/sdmx/>`_ —
 `Authors <https://github.com/khaeru/sdmx/graphs/contributors>`_
