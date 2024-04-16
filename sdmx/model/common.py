@@ -2543,8 +2543,20 @@ class BaseContentConstraint:
 PACKAGE = dict()
 
 _PACKAGE_CLASS: Dict[str, set] = {
-    "base": {"Agency", "AgencyScheme", "DataProvider", "DataProviderScheme"},
-    "categoryscheme": {"Category", "Categorisation", "CategoryScheme"},
+    "base": {
+        "Agency",
+        "AgencyScheme",
+        "DataProvider",
+        "DataConsumerScheme",
+        "DataProviderScheme",
+        "OrganisationScheme",
+    },
+    "categoryscheme": {
+        "Category",
+        "Categorisation",
+        "CategoryScheme",
+        "ReportingTaxonomy",
+    },
     "codelist": {
         "Code",
         "Codelist",
@@ -2571,7 +2583,9 @@ _PACKAGE_CLASS: Dict[str, set] = {
         "CustomTypeScheme",
         "NamePersonalisationScheme",
         "RulesetScheme",
+        "TransformationScheme",
         "UserDefinedOperatorScheme",
+        "VTLMappingScheme",
     },
 }
 
