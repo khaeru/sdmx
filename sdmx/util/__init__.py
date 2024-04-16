@@ -62,6 +62,8 @@ def parse_content_type(value: str) -> Tuple[str, Dict[str, Any]]:
 
     Modified from :mod:`requests.util`.
     """
+    # FIXME handle a value like text/html,application/xhtml+xml,application/xml;q=0.9,
+    #       image/avif,image/webp,*/*;q=0.8
     tokens = value.split(";")
     content_type, params_raw = tokens[0].strip(), tokens[1:]
     params = {}
