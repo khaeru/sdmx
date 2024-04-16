@@ -956,9 +956,12 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
         return component
 
     # Properties of components
-    def __getitem__(self, key) -> CT:
-        """Convenience access to components."""
-        return self.components[key]
+    def __getitem__(self, index: int) -> CT:
+        """Convenience access to :attr:`components` by index.
+
+        To retrieve components by ID, use :meth:`get`.
+        """
+        return self.components[index]
 
     def __len__(self):
         return len(self.components)
