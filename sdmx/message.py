@@ -13,7 +13,17 @@ from dataclasses import dataclass, field, fields
 from datetime import datetime
 from itertools import chain
 from operator import attrgetter
-from typing import TYPE_CHECKING, List, Optional, Text, Type, Union, get_args
+from typing import (
+    TYPE_CHECKING,
+    Generator,
+    List,
+    Optional,
+    Text,
+    Tuple,
+    Type,
+    Union,
+    get_args,
+)
 
 from sdmx import model
 from sdmx.dictlike import DictLike, summarize_dictlike
@@ -166,7 +176,7 @@ class Message:
         lines.extend(_summarize(self, ["footer", "response"]))
         return "\n  ".join(lines)
 
-    def compare(self, other, strict=True):
+    def compare(self, other, strict=True) -> bool:
         """Return :obj:`True` if `self` is the same as `other`.
 
         Two Messages are the same if their :attr:`header` and :attr:`footer` compare
@@ -179,7 +189,7 @@ class Message:
         """
         return self.header.compare(other.header, strict) and (
             self.footer is other.footer is None
-            or self.footer.compare(other.footer, strict)
+            or self.footer.compare(other.footer, strict)  # type: ignore [union-attr]
         )
 
 
@@ -313,10 +323,20 @@ class StructureMessage(Message):
 
         return candidates[0] if len(candidates) == 1 else None
 
-    def iter_collections(self):
+    def iter_collections(self) -> Generator[Tuple[str, type], None, None]:
         """Iterate over collections."""
         for f in direct_fields(self.__class__):
             yield f.name, get_args(f.type)[1]
+
+    def iter_objects(
+        self, external_reference: bool = True
+    ) -> Generator[common.MaintainableArtefact, None, None]:
+        """Iterate over all objects in the message."""
+        for _, cls in self.iter_collections():
+            for obj in self.objects(cls).values():
+                if not external_reference and obj.is_external_reference:
+                    continue
+                yield obj
 
     def objects(self, cls):
         """Get a reference to the attribute for objects of type `cls`.
