@@ -302,6 +302,8 @@ class StructureMessage(Message):
             of different classes, or two objects of the same class with different
             :attr:`~.MaintainableArtefact.maintainer` or
             :attr:`~.VersionableArtefact.version`.
+
+        .. todo:: Support passing a URN.
         """
         id_ = (
             obj_or_id.id

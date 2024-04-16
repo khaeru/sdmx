@@ -908,6 +908,7 @@ def _structures(reader, elem):
             for obj in reader.pop_all(name, subclass=True)
         }
 
+        # TODO Move this to StructureMessage
         # Construct string IDs
         if len(set(k[0:2] for k in tmp.keys())) < len(tmp):
             # Some non-unique (maintainer ID, object ID) pairs; include version
