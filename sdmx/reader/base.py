@@ -1,9 +1,13 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import List
+from typing import TYPE_CHECKING, List, Optional
+from warnings import warn
 
 from sdmx.format import MediaType
+
+if TYPE_CHECKING:
+    import sdmx.model.common
 
 log = logging.getLogger(__name__)
 
@@ -41,15 +45,22 @@ class BaseReader(ABC):
         return value.lower() in cls.suffixes
 
     @abstractmethod
-    def read_message(self, source, dsd=None):
+    def read_message(
+        self,
+        source,
+        structure: Optional["sdmx.model.common.Structure"] = None,
+        **kwargs,
+    ):
         """Read message from *source*.
 
         Parameters
         ----------
         source : file-like
             Message content.
-        dsd : :class:`DataStructureDefinition <.BaseDataStructureDefinition>`, optional
-            DSD for aid in reading `source`.
+        structure :
+            :class:`DataStructure <.BaseDataStructureDefinition>` or
+            :class:`MetadataStructure <.BaseMetadataStructureDefinition>`
+            for aid in reading `source`.
 
         Returns
         -------
@@ -57,3 +68,21 @@ class BaseReader(ABC):
             An instance of a Message subclass.
         """
         pass  # pragma: no cover
+
+    @classmethod
+    def _handle_deprecated_kwarg(
+        cls, structure: Optional["sdmx.model.common.Structure"], kwargs
+    ) -> Optional["sdmx.model.common.Structure"]:
+        try:
+            dsd = kwargs.pop("dsd")
+        except KeyError:
+            dsd = None
+        else:
+            warn(
+                "Reader.read_message(…, dsd=…) keyword argument; use structure=…",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if structure and structure is not dsd:
+                raise ValueError(f"Mismatched structure={structure}, dsd={dsd}")
+        return structure or dsd

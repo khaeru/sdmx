@@ -232,9 +232,9 @@ class Reader(metaclass=DispatchingReader):
     def read_message(  # noqa: C901 TODO reduce complexity 12 → ≤11
         self,
         source,
-        structure: Optional[common.Structure] = None,
-        dsd: Optional[common.BaseDataStructureDefinition] = None,
+        structure=None,
         _events=None,
+        **kwargs,
     ) -> message.Message:
         # Initialize stacks
         self.stack: Dict[Union[Type, str], Dict[Union[str, int], Any]] = defaultdict(
@@ -246,10 +246,9 @@ class Reader(metaclass=DispatchingReader):
 
         # If calling code provided a {Metad,D}ataStructureDefinition, add it to a stack,
         # and let it be ignored when parsing finishes
+        structure = self._handle_deprecated_kwarg(structure, kwargs)
         self.push(structure)
         self.ignore.add(id(structure))
-        self.push(dsd)
-        self.ignore.add(id(dsd))
 
         if _events is None:
             events = cast(
