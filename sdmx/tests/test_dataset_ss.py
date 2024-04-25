@@ -24,15 +24,15 @@ class StructuredMessageTest(MessageTest):
 
     @pytest.fixture(scope="class")
     def msg(self, path, dsd):
-        yield sdmx.read_sdmx(path / self.filename, dsd=dsd)
+        yield sdmx.read_sdmx(path / self.filename, structure=dsd)
 
     # Tests for every class
     def test_msg(self, caplog, path, dsd):
         # The message can be parsed
         with caplog.at_level(logging.WARNING):
-            sdmx.read_sdmx(path / self.filename, dsd=dsd)
+            sdmx.read_sdmx(path / self.filename, structure=dsd)
 
-        # No warnings are emitted per missing dsd= argument (khaeru/sdmx#146)
+        # No warnings are emitted per missing structure= argument (khaeru/sdmx#146)
         assert [] == caplog.messages
 
     def test_structured_by(self, dsd, msg):

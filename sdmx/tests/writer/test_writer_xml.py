@@ -239,14 +239,14 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
 
     # Read data from file, using the DSD
     with specimen(data_id) as f:
-        msg0 = sdmx.read_sdmx(f, dsd=dsd)
+        msg0 = sdmx.read_sdmx(f, structure=dsd)
 
     # Write to file
     path = tmp_path / "output.xml"
     path.write_bytes(sdmx.to_xml(msg0, pretty_print=True))
 
     # Read again, using the same DSD
-    msg1 = sdmx.read_sdmx(path, dsd=dsd)
+    msg1 = sdmx.read_sdmx(path, structure=dsd)
 
     # Contents are identical
     assert msg0.compare(msg1, strict=True), (
