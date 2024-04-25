@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, ClassVar, List, Optional
 from warnings import warn
 
 from sdmx.format import MediaType
@@ -14,10 +14,10 @@ log = logging.getLogger(__name__)
 
 class BaseReader(ABC):
     #: List of media types handled by the reader.
-    media_types: List[MediaType] = []
+    media_types: ClassVar[List[MediaType]] = []
 
     #: List of file name suffixes handled by the reader.
-    suffixes: List[str] = []
+    suffixes: ClassVar[List[str]] = []
 
     @classmethod
     def detect(cls, content: bytes) -> bool:
