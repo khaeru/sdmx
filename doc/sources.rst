@@ -235,6 +235,9 @@ In order to identify available data flows:
 SDMX-ML —
 `Website <https://ilostat.ilo.org/resources/sdmx-tools/>`__
 
+- Sometime before 2024-04-26, the base URL of this source changed from ``https://www.ilo.org/sdmx/rest`` to ``https://sdmx.ilo.org/rest``.
+  The "SDMX query builder" at the above URL reflects the change, but the documentation still shows the prior URL, and there does not appear to be any announcement whether the new URL is permanent.
+  Thanks :gh-user:`SebaJeku` for the tip (:issue:`177`).
 
 .. _IMF:
 
