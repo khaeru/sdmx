@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.15.0 (2024-04-28)
+====================
 
 - Adjust the :doc:`example` for current data returned by :ref:`ESTAT <ESTAT>` (:issue:`169`, :pull:`170`).
 - Update the base URL of the :ref:`ILO <ILO>` source (:pull:`175`; thanks :gh-user:`SebaJeku` for :issue:`177`).
