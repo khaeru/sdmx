@@ -5,7 +5,7 @@ import pytest
 
 import sdmx
 from sdmx import message
-from sdmx.model import v21 as model
+from sdmx.model import common, v21
 
 
 @pytest.mark.parametrize(
@@ -24,7 +24,7 @@ class TestDataMessage:
         dm = message.DataMessage()
 
         # A data structure with 3 dimensions
-        dsd = model.DataStructureDefinition()
+        dsd = v21.DataStructureDefinition()
         dim_foo = dsd.dimensions.getdefault("FOO")
         dsd.dimensions.getdefault("BAR")
         dsd.dimensions.getdefault("BAZ")
@@ -36,7 +36,7 @@ class TestDataMessage:
         caplog.clear()
 
         # 1 data set, 0 observations
-        ds0 = model.DataSet(structured_by=dsd)
+        ds0 = v21.DataSet(structured_by=dsd)
         dm.data.append(ds0)
 
         dm.update()
@@ -45,8 +45,8 @@ class TestDataMessage:
         caplog.clear()
 
         # 1 data set, 1 observation, 3 dimensions at observation ('flat')
-        obs0 = model.Observation(
-            dimension=dsd.make_key(model.Key, {"FOO": "f", "BAR": "b", "BAZ": "b"})
+        obs0 = v21.Observation(
+            dimension=dsd.make_key(common.Key, {"FOO": "f", "BAR": "b", "BAZ": "b"})
         )
         ds0.add_obs([obs0])
 
@@ -56,15 +56,15 @@ class TestDataMessage:
         caplog.clear()
 
         # 1 data set, 1 observation, 1 dimension at observation
-        obs0.dimension = dsd.make_key(model.Key, {"FOO": "f"})
+        obs0.dimension = dsd.make_key(common.Key, {"FOO": "f"})
 
         dm.update()
         assert dim_foo is dm.observation_dimension
         assert 0 == len(caplog.messages)
 
         # 2 data sets, 1 dimension at observation, but different
-        ds1 = model.DataSet(structured_by=dsd)
-        obs1 = model.Observation(dimension=dsd.make_key(model.Key, {"BAR": "b"}))
+        ds1 = v21.DataSet(structured_by=dsd)
+        obs1 = v21.Observation(dimension=dsd.make_key(common.Key, {"BAR": "b"}))
         ds1.add_obs([obs1])
         dm.data.append(ds1)
 
@@ -75,7 +75,7 @@ class TestDataMessage:
 
 class TestStructureMessage:
     def test_add_contains_get(self):
-        dsd = model.DataStructureDefinition(id="foo")
+        dsd = v21.DataStructureDefinition(id="foo")
         msg = message.StructureMessage()
 
         # add() stores the object
@@ -89,7 +89,7 @@ class TestStructureMessage:
         assert dsd is msg.get("foo")
 
         # add() with an object not collected in a StructureMessage raises TypeError
-        item = model.Item(id="bar")
+        item = common.Item(id="bar")
         with pytest.raises(TypeError):
             msg.add(item)
 
@@ -98,12 +98,12 @@ class TestStructureMessage:
             item in msg
 
         # get() with two objects of the same ID raises ValueError
-        msg.add(model.DataflowDefinition(id="foo"))
+        msg.add(v21.DataflowDefinition(id="foo"))
         with pytest.raises(ValueError):
             msg.get("foo")
 
     def test_dictlike_attribute_access(self):
-        dsd = model.DataStructureDefinition(id="foo")
+        dsd = v21.DataStructureDefinition(id="foo")
         msg = message.StructureMessage()
         msg.add(dsd)
 
@@ -115,13 +115,13 @@ class TestStructureMessage:
         msg = message.StructureMessage()
 
         # Add several objects
-        msg.add(model.Codelist(id="CL_FOO"))
-        msg.add(model.Codelist(id="CL_BAR", is_external_reference=True))
-        msg.add(model.Codelist(id="CL_BAZ"))
+        msg.add(common.Codelist(id="CL_FOO"))
+        msg.add(common.Codelist(id="CL_BAR", is_external_reference=True))
+        msg.add(common.Codelist(id="CL_BAZ"))
 
-        msg.add(model.ConceptScheme(id="CS_FOO"))
-        msg.add(model.ConceptScheme(id="CS_BAR", is_external_reference=True))
-        msg.add(model.ConceptScheme(id="CS_BAZ"))
+        msg.add(common.ConceptScheme(id="CS_FOO"))
+        msg.add(common.ConceptScheme(id="CS_BAR", is_external_reference=True))
+        msg.add(common.ConceptScheme(id="CS_BAZ"))
 
         # Method accepts external_reference arg; runs; returns an iterator
         result = msg.iter_objects()
@@ -137,14 +137,14 @@ class TestStructureMessage:
     def test_objects(self):
         """:meth:`.objects` can be used to access a collection according to class."""
         msg = message.StructureMessage()
-        cl = model.Codelist(id="foo")
+        cl = common.Codelist(id="foo")
         msg.add(cl)
 
-        assert cl is msg.objects(model.Codelist)["foo"]
+        assert cl is msg.objects(common.Codelist)["foo"]
 
         with pytest.raises(TypeError):
             # TypeError is raised for classes not collected in this message
-            msg.objects(model.DataSet)
+            msg.objects(v21.DataSet)
 
 
 EXPECTED = [
