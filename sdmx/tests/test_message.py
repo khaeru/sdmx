@@ -19,6 +19,60 @@ def test_compare(cls):
     assert A.compare(B) is True
 
 
+class TestDataMessage:
+    def test_update(self, caplog):
+        dm = message.DataMessage()
+
+        # A data structure with 3 dimensions
+        dsd = model.DataStructureDefinition()
+        dim_foo = dsd.dimensions.getdefault("FOO")
+        dsd.dimensions.getdefault("BAR")
+        dsd.dimensions.getdefault("BAZ")
+
+        # 0 data sets
+        dm.update()
+        assert None is dm.observation_dimension
+        assert re.match("No DataSet in message", caplog.messages[-1])
+        caplog.clear()
+
+        # 1 data set, 0 observations
+        ds0 = model.DataSet(structured_by=dsd)
+        dm.data.append(ds0)
+
+        dm.update()
+        assert None is dm.observation_dimension
+        assert re.match(r"^Unable to .* 1 data set\(s\)", caplog.messages[-1])
+        caplog.clear()
+
+        # 1 data set, 1 observation, 3 dimensions at observation ('flat')
+        obs0 = model.Observation(
+            dimension=dsd.make_key(model.Key, {"FOO": "f", "BAR": "b", "BAZ": "b"})
+        )
+        ds0.add_obs([obs0])
+
+        dm.update()
+        assert None is dm.observation_dimension
+        assert re.match(r"^More than 1 dimension at observation", caplog.messages[-1])
+        caplog.clear()
+
+        # 1 data set, 1 observation, 1 dimension at observation
+        obs0.dimension = dsd.make_key(model.Key, {"FOO": "f"})
+
+        dm.update()
+        assert dim_foo is dm.observation_dimension
+        assert 0 == len(caplog.messages)
+
+        # 2 data sets, 1 dimension at observation, but different
+        ds1 = model.DataSet(structured_by=dsd)
+        obs1 = model.Observation(dimension=dsd.make_key(model.Key, {"BAR": "b"}))
+        ds1.add_obs([obs1])
+        dm.data.append(ds1)
+
+        dm.update()
+        assert None is dm.observation_dimension
+        assert re.match("Multiple data sets with different observ", caplog.messages[-1])
+
+
 class TestStructureMessage:
     def test_add_contains_get(self):
         dsd = model.DataStructureDefinition(id="foo")
