@@ -80,8 +80,9 @@ class BaseReference:
             # class above
             target_cls = cls_hint
 
-        if target_cls is None:
-            print(f"{info = }")
+        # DEBUG
+        # if target_cls is None:
+        #     print(f"{info = }")
 
         self.maintainable = issubclass(target_cls, common.MaintainableArtefact)
 
@@ -498,7 +499,7 @@ class XMLEventReader(BaseReader):
             except KeyError:
                 if isinstance(parent, common.ItemScheme):
                     return parent.get_hierarchical(ref.target_id)
-                raise
+                raise  # pragma: no cover
 
     def annotable(self, cls, elem, **kwargs):
         """Create a AnnotableArtefact of `cls` from `elem` and `kwargs`.
