@@ -56,6 +56,30 @@ class TestStructureMessage:
         # Attribute access works when added to the default, empty DictLike
         assert msg.structure.foo is dsd
 
+    def test_iter_objects(self):
+        """:meth:`.iter_objects` can be used to iterate over all objects."""
+        msg = message.StructureMessage()
+
+        # Add several objects
+        msg.add(model.Codelist(id="CL_FOO"))
+        msg.add(model.Codelist(id="CL_BAR", is_external_reference=True))
+        msg.add(model.Codelist(id="CL_BAZ"))
+
+        msg.add(model.ConceptScheme(id="CS_FOO"))
+        msg.add(model.ConceptScheme(id="CS_BAR", is_external_reference=True))
+        msg.add(model.ConceptScheme(id="CS_BAZ"))
+
+        # Method accepts external_reference arg; runs; returns an iterator
+        result = msg.iter_objects()
+
+        # All objects
+        assert 6 == len(list(result))
+
+        # All objects that are not external references are included
+        assert {"CL_FOO", "CL_BAZ", "CS_FOO", "CS_BAZ"} == set(
+            obj.id for obj in msg.iter_objects(external_reference=False)
+        )
+
     def test_objects(self):
         """:meth:`.objects` can be used to access a collection according to class."""
         msg = message.StructureMessage()
