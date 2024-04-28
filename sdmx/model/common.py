@@ -956,9 +956,12 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
         return component
 
     # Properties of components
-    def __getitem__(self, key) -> CT:
-        """Convenience access to components."""
-        return self.components[key]
+    def __getitem__(self, index: int) -> CT:
+        """Convenience access to :attr:`components` by index.
+
+        To retrieve components by ID, use :meth:`get`.
+        """
+        return self.components[index]
 
     def __len__(self):
         return len(self.components)
@@ -2543,8 +2546,20 @@ class BaseContentConstraint:
 PACKAGE = dict()
 
 _PACKAGE_CLASS: Dict[str, set] = {
-    "base": {"Agency", "AgencyScheme", "DataProvider", "DataProviderScheme"},
-    "categoryscheme": {"Category", "Categorisation", "CategoryScheme"},
+    "base": {
+        "Agency",
+        "AgencyScheme",
+        "DataProvider",
+        "DataConsumerScheme",
+        "DataProviderScheme",
+        "OrganisationScheme",
+    },
+    "categoryscheme": {
+        "Category",
+        "Categorisation",
+        "CategoryScheme",
+        "ReportingTaxonomy",
+    },
     "codelist": {
         "Code",
         "Codelist",
@@ -2571,7 +2586,9 @@ _PACKAGE_CLASS: Dict[str, set] = {
         "CustomTypeScheme",
         "NamePersonalisationScheme",
         "RulesetScheme",
+        "TransformationScheme",
         "UserDefinedOperatorScheme",
+        "VTLMappingScheme",
     },
 }
 

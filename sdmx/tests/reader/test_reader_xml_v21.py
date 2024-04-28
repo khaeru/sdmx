@@ -40,7 +40,7 @@ def test_read_ss_xml(specimen):
     dsd = sdmx.read_sdmx(dsd_path).structure["ECB_EXR1"]
 
     # Read a data message
-    msg = sdmx.read_sdmx(msg_path, dsd=dsd)
+    msg = sdmx.read_sdmx(msg_path, structure=dsd)
     ds = msg.data[0]
 
     # The dataset in the message is structured by the DSD
@@ -84,7 +84,7 @@ def test_gh_104(caplog, specimen):
     dsd.id = "FOO"
 
     # Read a data message; use is logged
-    sdmx.read_sdmx(msg_path, dsd=dsd)
+    sdmx.read_sdmx(msg_path, structure=dsd)
     assert re.match(
         r"Use provided <DataStructureDefinition IT1:FOO\(1\.0\): .* for "
         'structureRef="IT1_DCIS_POPRES1_1_0" not defined in message',

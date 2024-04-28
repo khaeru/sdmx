@@ -13,7 +13,17 @@ from dataclasses import dataclass, field, fields
 from datetime import datetime
 from itertools import chain
 from operator import attrgetter
-from typing import TYPE_CHECKING, List, Optional, Text, Type, Union, get_args
+from typing import (
+    TYPE_CHECKING,
+    Generator,
+    List,
+    Optional,
+    Text,
+    Tuple,
+    Type,
+    Union,
+    get_args,
+)
 
 from sdmx import model
 from sdmx.dictlike import DictLike, summarize_dictlike
@@ -166,7 +176,7 @@ class Message:
         lines.extend(_summarize(self, ["footer", "response"]))
         return "\n  ".join(lines)
 
-    def compare(self, other, strict=True):
+    def compare(self, other, strict=True) -> bool:
         """Return :obj:`True` if `self` is the same as `other`.
 
         Two Messages are the same if their :attr:`header` and :attr:`footer` compare
@@ -179,7 +189,7 @@ class Message:
         """
         return self.header.compare(other.header, strict) and (
             self.footer is other.footer is None
-            or self.footer.compare(other.footer, strict)
+            or self.footer.compare(other.footer, strict)  # type: ignore [union-attr]
         )
 
 
@@ -292,6 +302,8 @@ class StructureMessage(Message):
             of different classes, or two objects of the same class with different
             :attr:`~.MaintainableArtefact.maintainer` or
             :attr:`~.VersionableArtefact.version`.
+
+        .. todo:: Support passing a URN.
         """
         id_ = (
             obj_or_id.id
@@ -313,10 +325,20 @@ class StructureMessage(Message):
 
         return candidates[0] if len(candidates) == 1 else None
 
-    def iter_collections(self):
+    def iter_collections(self) -> Generator[Tuple[str, type], None, None]:
         """Iterate over collections."""
         for f in direct_fields(self.__class__):
             yield f.name, get_args(f.type)[1]
+
+    def iter_objects(
+        self, external_reference: bool = True
+    ) -> Generator[common.MaintainableArtefact, None, None]:
+        """Iterate over all objects in the message."""
+        for _, cls in self.iter_collections():
+            for obj in self.objects(cls).values():
+                if not external_reference and obj.is_external_reference:
+                    continue
+                yield obj
 
     def objects(self, cls):
         """Get a reference to the attribute for objects of type `cls`.
@@ -352,10 +374,9 @@ class StructureMessage(Message):
 class DataMessage(Message):
     """SDMX Data Message.
 
-    .. note:: A DataMessage may contain zero or more :class:`.DataSet`, so
-       :attr:`data` is a list. To retrieve the first (and possibly only)
-       data set in the message, access the first element of the list:
-       ``msg.data[0]``.
+    .. note:: A DataMessage may contain zero or more :class:`.DataSet`, so :attr:`data`
+       is a list. To retrieve the first (and possibly only) data set in the message,
+       access the first element of the list: :py:`msg.data[0]`.
     """
 
     #: :class:`list` of :class:`.DataSet`.
@@ -426,6 +447,74 @@ class DataMessage(Message):
             and len(self.data) == len(other.data)
             and all(ds[0].compare(ds[1], strict) for ds in zip(self.data, other.data))
         )
+
+    def update(self) -> None:
+        """Update :attr:`.observation_dimension`.
+
+        The observation dimensions (or dimension observation) is determined
+        automatically if:
+
+        1. There is at least 1 :class:`DataSet <.BaseDataSet>` in the message.
+        2. For at least 1 data set:
+
+           - :attr:`~.BaseDataSet.structured_by` is defined.
+           - There is at least 1 :class:`.Observation` in the data set. (:meth:`.update`
+             checks only the first observation.)
+           - The :attr:`.Observation.dimension` is a :class:`.Key` referring to exactly
+             1 dimension.
+
+        3. The dimension indicated by (2) is the same for all DataSets in the message.
+
+        If not all these conditions are met, messages are logged with level DEBUG, and
+        :attr:`.observation_dimension` is set to :any:`None`.
+
+        .. note:: :meth:`.update` is not automatically called when data sets are added
+           to or removed from :attr:`.data`. User code **should** call :meth:`.update`
+           to reflect such changes.
+        """
+        if not self.data:
+            log.debug("No DataSet in message")
+            self.observation_dimension = None
+            return
+
+        dims = set()
+        for ds in self.data:
+            try:
+                assert ds.structured_by
+
+                # Use the first observation
+                assert len(ds.obs)
+                o0 = ds.obs[0]
+                assert o0.dimension
+
+                # Identify the dimensions specified per-observation
+                d_a_o = tuple(o0.dimension.values.keys())
+
+                if 1 == len(d_a_o):
+                    # Single dimension-at-observation
+                    # Record as an attribute of the DataMessage
+                    dims.add(ds.structured_by.dimensions.get(d_a_o[0]))
+                else:
+                    dims.add(d_a_o)
+            except AssertionError:
+                continue
+
+        if len(dims) == 1 and not all(isinstance(d, tuple) for d in dims):
+            self.observation_dimension = dims.pop()
+        else:
+            if len(dims) == 1:
+                log.debug(f"More than 1 dimension at observation level: {dims.pop()}")
+            elif len(dims) > 1:
+                log.debug(
+                    f"Multiple data sets with different observation dimension: {dims}"
+                )
+            elif not dims:
+                log.debug(
+                    f"Unable to determine observation dimension for {len(self.data)} "
+                    "data set(s). Data set(s) may lack structure reference or "
+                    "observations."
+                )
+            self.observation_dimension = None
 
 
 @dataclass

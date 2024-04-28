@@ -37,10 +37,11 @@ class Reader(BaseReader):
     def detect(cls, content):
         return content.startswith(b"{")
 
-    def read_message(self, source, dsd=None):  # noqa: C901  TODO reduce complexity 15 → ≤11
+    def read_message(self, source, structure=None, **kwargs):  # noqa: C901  TODO reduce complexity 15 → ≤11
         # Initialize message instance
         msg = DataMessage()
 
+        dsd = self._handle_deprecated_kwarg(structure, kwargs)
         if dsd:  # pragma: no cover
             # Store explicit DSD, if any
             msg.dataflow.structure = dsd

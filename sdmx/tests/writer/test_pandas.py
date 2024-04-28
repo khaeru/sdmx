@@ -170,7 +170,7 @@ def test_write_dataset_datetime(specimen):
 
     # Load data, two ways
     with specimen("IPI-2010-A21.xml") as f:
-        msg = sdmx.read_sdmx(f, dsd=dsd)
+        msg = sdmx.read_sdmx(f, structure=dsd)
         ds = msg.data[0]
     with specimen("IPI-2010-A21.xml") as f:
         msg_no_structure = sdmx.read_sdmx(f)

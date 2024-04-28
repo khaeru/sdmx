@@ -7,9 +7,14 @@ Next release
 ============
 
 - Adjust the :doc:`example` for current data returned by :ref:`ESTAT <ESTAT>` (:issue:`169`, :pull:`170`).
-- :meth:`.StructureMessage.get` can match on :meth:`.IdentifiableArtefact.urn` (:pull:`170`).
+- Update the base URL of the :ref:`ILO <ILO>` source (:pull:`175`; thanks :gh-user:`SebaJeku` for :issue:`177`).
+- :meth:`.StructureMessage.get` can match on :attr:`.IdentifiableArtefact.urn` (:pull:`170`).
   This makes the method more useful in the case that a message includes artefacts with the same ID but different :attr:`~.MaintainableArtefact.maintainer` and/or :attr:`~.VersionableArtefact.version`.
+- :func:`.urn.make` can handle :class:`.DataConsumerScheme`, :class:`.OrganisationScheme`, :class:`.ReportingTaxonomy`, :class:`.TransformationScheme`, and :class:`.VTLMappingScheme` (:pull:`175`).
+- New method :meth:`.StructureMessage.iter_objects` (:pull:`175`).
+- New method :meth:`.DataMessage.update` (:pull:`175`).
 - Bugfix: :class:`.ItemScheme` could not be :func:`copy.deepcopy` 'd (:pull:`170`).
+- Bugfix: :class:`.TypeError` was raised on :meth:`.Client.get` from an SDMX-JSON source (:pull:`175`).
 
 v2.14.0 (2024-02-20)
 ====================

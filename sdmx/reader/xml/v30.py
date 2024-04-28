@@ -3,14 +3,15 @@
 from typing import Any, Dict
 
 import sdmx.urn
-from sdmx.format import Version, list_media_types
+from sdmx.format import Version
 from sdmx.model import common
 from sdmx.model import v30 as model
 
 from . import v21
+from .common import BaseReference, XMLEventReader
 
 
-class Reference(v21.Reference):
+class Reference(BaseReference):
     """Parse SDMX-ML 3.0 references."""
 
     @classmethod
@@ -30,9 +31,10 @@ class Reference(v21.Reference):
         return result
 
 
-class Reader(v21.Reader):
-    xml_version = Version["3.0.0"]
-    media_types = list_media_types(base="xml", version=xml_version)
+class Reader(XMLEventReader):
+    """SDMX-ML 3.0 reader."""
+
+    xml_version = Version["3.0"]
     Reference = Reference
 
 

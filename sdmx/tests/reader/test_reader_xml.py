@@ -50,6 +50,6 @@ def test_read_xml_ss(specimen, message_path, structure_path, structure_id) -> No
 
     # The (meta)data message can be read using its associated structure
     with specimen(message_path) as f:
-        result = sdmx.read_sdmx(f, dsd=s)
+        result = sdmx.read_sdmx(f, structure=s)
 
     assert isinstance(result, Message)

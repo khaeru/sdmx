@@ -1,7 +1,9 @@
 import pytest
 
 from sdmx.format import Flag, MediaType
+from sdmx.model import v21
 from sdmx.reader.base import BaseReader
+from sdmx.reader.xml.v21 import Reader as XMLv21Reader
 
 
 class TestBaseReader:
@@ -18,6 +20,16 @@ class TestBaseReader:
                 pass  # pragma: no cover
 
         return cls
+
+    def test_deprecated_kwarg(self):
+        r = XMLv21Reader()
+
+        dsd0 = v21.DataStructureDefinition(id="FOO")
+        dsd1 = v21.DataStructureDefinition(id="BAR")
+        with pytest.warns(
+            DeprecationWarning, match="dsd=.* keyword argument; use structure="
+        ), pytest.raises(ValueError, match="Mismatched structure=FOO, dsd=BAR"):
+            r.read_message(None, structure=dsd0, dsd=dsd1)
 
     def test_detect(self, MinimalReader):
         assert False is MinimalReader.detect(b"foo")
