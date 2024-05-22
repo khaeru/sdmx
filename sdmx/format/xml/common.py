@@ -175,24 +175,26 @@ def _extracted_zipball(version: Version) -> Path:
     import requests
 
     # Map SDMX-ML schema versions to repo paths
+    version_path = {Version["2.1"]: "v2.1", Version["3.0.0"]: "v3.0.0"}[version]
+
     # Check the latest release to get the URL to the schema zip
-    url = (
-        "https://api.github.com/repos/sdmx-twg/sdmx-ml/releases/tags/"
-        + {Version["2.1"]: "v2.1", Version["3.0.0"]: "v3.0.0"}[version]
-    )
-    gh_headers = {
+    url_base = "https://api.github.com/repos/sdmx-twg/sdmx-ml"
+    headers = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    release_json = requests.get(url=url, headers=gh_headers).json()
+    release_json = requests.get(
+        url=f"{url_base}/releases/tags/{version_path}", headers=headers
+    ).json()
     try:
         zipball_url = release_json["zipball_url"]
     except KeyError:  # pragma: no cover
-        log.debug(release_json)
-        raise RuntimeError("Failed to download SDMX-ML schema bundle")
+        zipball_url = f"{url_base}/zipball/{version_path}"
+        log.debug(f"Could not determine zipball_url from:\n{release_json}\n")
+        log.debug(f"Fall back to {zipball_url}")
 
     # Make a request for the zipball
-    resp = requests.get(url=zipball_url, headers=gh_headers)
+    resp = requests.get(url=zipball_url, headers=headers)
 
     # Filename indicated by the HTTP response
     filename = resp.headers["content-disposition"].split("filename=")[-1]
