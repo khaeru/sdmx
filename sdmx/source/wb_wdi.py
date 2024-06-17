@@ -1,4 +1,5 @@
-from . import Source as BaseSource
+from sdmx.rest import Resource
+from sdmx.source import Source as BaseSource
 
 
 class Source(BaseSource):
@@ -8,12 +9,23 @@ class Source(BaseSource):
         """World Bank's agency ID."""
         super().modify_request_args(kwargs)
 
-        if kwargs["resource_type"] == "categoryscheme":
+        if kwargs.get("resource_type") == Resource.categoryscheme:
             # Service does not respond to requests for "WB" category schemes
             kwargs["provider"] = "all"
-        elif kwargs["resource_type"] != "data":
+        elif kwargs.get("resource_type") == Resource.data:
             # Provider's own ID differs from its ID in this package
             kwargs.setdefault("provider", "WB")
+        elif kwargs.get("resource_type") == Resource.dataflow:
+            # Here we have no agency_id (/all/latest is allowed).
+            # Unless set, it is added automatically, use url to avoid that.
+            kwargs.pop("resource_type")
+            if not all(value is None for value in kwargs.values()):
+                raise ValueError(
+                    "WDI dataflow is a unique endpoint and doesn't support arguments"
+                )
+            kwargs.setdefault(
+                "url", "https://api.worldbank.org/v2/sdmx/rest/dataflow"
+            )
 
         try:
             if isinstance(kwargs["key"], str):

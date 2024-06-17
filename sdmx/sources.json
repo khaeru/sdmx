@@ -442,7 +442,7 @@
       "conceptscheme": false,
       "contentconstraint": false,
       "dataconsumerscheme": false,
-      "dataflow": false,
+      "dataflow": true,
       "dataproviderscheme": false,
       "datastructure": false,
       "hierarchicalcodelist": false,
