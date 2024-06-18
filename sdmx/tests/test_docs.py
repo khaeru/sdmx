@@ -7,6 +7,7 @@ $ pytest -m network [...]
 """
 
 import re
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,9 @@ from sdmx import Client
 from sdmx.dictlike import DictLike
 from sdmx.model.v21 import GenericDataSet
 from sdmx.testing import assert_pd_equal
+
+if TYPE_CHECKING:
+    import sdmx.message
 
 
 @pytest.mark.network
@@ -72,7 +76,7 @@ def test_doc_index1():
         sm1 = sm0.dataflow.UNE_RT_A.structure(request=True, target_only=False)
 
     # Same effect
-    sm1 = estat.get(
+    sm1: "sdmx.message.StructureMessage" = estat.get(
         "datastructure",
         sm0.dataflow.UNE_RT_A.structure.id,
         params=dict(references="descendants"),
@@ -101,9 +105,10 @@ def test_doc_index1():
     assert isinstance(s.codelist, DictLike)
 
     # Same effect
-    # NB We use get() because, as of 2024-03-15, this query retrieves multiple versions
-    #    of similar artefacts. This may need updating as ESTAT's versioning advances.
-    s = sdmx.to_pandas(sm1.get("ESTAT:GEO(17.0)"))
+    # NB At some times (e.g. between 2024-03-15 and 2024-06-18) this query retrieves
+    #    multiple versions of similar artefacts. A more explicit argument to get() that
+    #    includes the version (like get("GEO(21.0)")) may be temporarily needed.
+    s = sdmx.to_pandas(sm1.get("GEO"))
     assert_pd_equal(s.sort_index().head(), expected)
 
 
