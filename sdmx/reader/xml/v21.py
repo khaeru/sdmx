@@ -69,7 +69,7 @@ class Reference(BaseReference):
             for k in ("class", "package"):
                 result[k] = elem.attrib.get(k, None)
         elif elem.tag == "URN":
-            result = sdmx.urn.match(elem.text)
+            result = sdmx.urn.match(elem.text.strip())
             # If the URN doesn't specify an item ID, it is probably a reference to a
             # MaintainableArtefact, so target_id and id are the same
             result.update(target_id=result["item_id"] or result["id"])
@@ -355,7 +355,7 @@ def _st(reader, elem):
 
 @end("mes:Extracted mes:Prepared mes:ReportingBegin mes:ReportingEnd")
 def _datetime(reader, elem):
-    text, n = re.subn(r"(.*\.)(\d{6})\d+(\+.*)", r"\1\2\3", elem.text)
+    text, n = re.subn(r"(.*\.)(\d{6})\d+(\+.*)", r"\1\2\3", elem.text.strip())
     if n > 0:
         log.debug(f"Truncate sub-microsecond time in <{QName(elem).localname}>")
 
@@ -371,7 +371,10 @@ def _datetime(reader, elem):
 def _localization(reader, elem):
     reader.push(
         elem,
-        (elem.attrib.get(reader.qname("xml:lang"), model.DEFAULT_LOCALE), elem.text),
+        (
+            elem.attrib.get(reader.qname("xml:lang"), model.DEFAULT_LOCALE),
+            elem.text.strip(),
+        ),
     )
 
 
@@ -753,7 +756,7 @@ def _key0(reader, elem):
             "ToVtlSubSpace": model.ToVTLSpaceKey,
         }[parent]
 
-        return cls(key=elem.text)
+        return cls(key=elem.text.strip())
 
 
 @end("str:DataKeySet")
@@ -769,7 +772,7 @@ def _p(reader, elem):
     reader.push(
         elem,
         model.Period(
-            is_inclusive=elem.attrib["isInclusive"], period=isoparse(elem.text)
+            is_inclusive=elem.attrib["isInclusive"], period=isoparse(elem.text.strip())
         ),
     )
 
