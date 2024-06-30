@@ -106,3 +106,6 @@ find = {}
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
+
+[tool.setuptools.data-files]
+sdmx = ["sdmx/sources.json"]
