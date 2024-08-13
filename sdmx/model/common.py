@@ -1996,9 +1996,12 @@ class BaseDataSet(AnnotableArtefact):
     action: Optional[ActionType] = None
     #:
     valid_from: Optional[str] = None
-    #:
+
+    #: Association to the :class:`Dataflow <.BaseDataflow>` that contains the data set.
     described_by: Optional[BaseDataflow] = None
-    #:
+
+    #: Association to the :class:`DataStructure <.BaseDataStructureDefinition` that
+    #: defines the structure of the data set.
     structured_by: Optional[BaseDataStructureDefinition] = None
 
     #: All observations in the DataSet.
