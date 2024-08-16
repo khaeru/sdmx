@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.16.0 (2024-08-16)
+====================
 
 - New module :mod:`sdmx.model.version`, class :class:`.Version`, and convenience functions :func:`.version.increment` and :func:`.version.parse` (:pull:`189`).
 - New functions :func:`.urn.expand`, :func:`.urn.normalize`, :func:`.urn.shorten` and supporting class :class:`.URN` (:pull:`189`).
