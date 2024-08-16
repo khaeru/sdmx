@@ -65,7 +65,7 @@ def test_doc_example():
 
 
 @pytest.mark.network
-def test_doc_index1():
+def test_doc_index1() -> None:
     """A code example that formerly appeared in doc/index.rst."""
     estat = Client("ESTAT")
     sm0 = estat.dataflow("UNE_RT_A")
@@ -73,14 +73,15 @@ def test_doc_index1():
     with pytest.raises(TypeError):
         # This presumes the DataStructureDefinition instance can conduct a
         # network request for its own content
-        sm1 = sm0.dataflow.UNE_RT_A.structure(request=True, target_only=False)
+        sm0.dataflow.UNE_RT_A.structure(request=True, target_only=False)
 
     # Same effect
-    sm1: "sdmx.message.StructureMessage" = estat.get(
+    sm1 = estat.get(
         "datastructure",
         sm0.dataflow.UNE_RT_A.structure.id,
         params=dict(references="descendants"),
     )
+    assert isinstance(sm1, sdmx.message.StructureMessage)
 
     # Even better: Client.get(…) should examine the class and ID of the object
     # structure = estat.get(flow_response.dataflow.UNE_RT_A.structure)
@@ -102,7 +103,7 @@ def test_doc_index1():
     # StructureMessage is converted to DictLike
     assert isinstance(s, DictLike)
     # "codelist" key retrieves a second-level DictLike
-    assert isinstance(s.codelist, DictLike)
+    assert isinstance(s.codelist, DictLike)  # type: ignore [attr-defined]
 
     # Same effect
     # NB At some times (e.g. between 2024-03-15 and 2024-06-18) this query retrieves
