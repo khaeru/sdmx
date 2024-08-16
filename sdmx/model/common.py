@@ -1121,7 +1121,7 @@ class Structure(MaintainableArtefact):
         field = None
         for f in fields(self):
             is_dictlike = get_origin(f.type) is DictLikeDescriptor
-            if f.type == type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
+            if f.type is type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
                 field = f
                 break
 
@@ -1996,9 +1996,12 @@ class BaseDataSet(AnnotableArtefact):
     action: Optional[ActionType] = None
     #:
     valid_from: Optional[str] = None
-    #:
+
+    #: Association to the :class:`Dataflow <.BaseDataflow>` that contains the data set.
     described_by: Optional[BaseDataflow] = None
-    #:
+
+    #: Association to the :class:`DataStructure <.BaseDataStructureDefinition` that
+    #: defines the structure of the data set.
     structured_by: Optional[BaseDataStructureDefinition] = None
 
     #: All observations in the DataSet.
@@ -2542,7 +2545,7 @@ class BaseContentConstraint:
 
 # Internal
 
-#: The SDMX-IM defines 'packages'; these are used in URNs.
+#: The SDMX-IM groups classes into 'packages'; these are used in :class:`URNs <.URN>`.
 PACKAGE = dict()
 
 _PACKAGE_CLASS: Dict[str, set] = {

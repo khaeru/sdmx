@@ -1,7 +1,7 @@
 .. currentmodule:: sdmx.writer
 
-Writer/convert :mod:`sdmx` objects
-**********************************
+Write/convert :mod:`sdmx` objects
+*********************************
 
 The term **write** refers to both:
 
