@@ -17,7 +17,7 @@ class Reference(BaseReference):
     @classmethod
     def info_from_element(cls, elem):
         try:
-            result = sdmx.urn.match(elem.text)
+            result = sdmx.urn.match(elem.text.strip())
             # If the URN doesn't specify an item ID, it is probably a reference to a
             # MaintainableArtefact, so target_id and id are the same
             result.update(target_id=result["item_id"] or result["id"])
@@ -84,13 +84,13 @@ end("str:Observation")(v21._ar_kind)
 @end("str:Codelist")
 def _cl(reader, elem):
     try:
-        sdmx.urn.match(elem.text)
+        sdmx.urn.match(elem.text.strip())
     except ValueError:
         result = v21._itemscheme(reader, elem)
         result.extends = reader.pop_all(model.CodelistExtension)
         return result
     else:
-        reader.push(elem, elem.text)
+        reader.push(elem, elem.text.strip())
 
 
 @end("str:CodelistExtension")
@@ -111,7 +111,7 @@ def _code_selection(reader, elem):
 
 @end("str:MemberValue")
 def _mv(reader, elem):
-    return reader.model.MemberValue(value=elem.text)
+    return reader.model.MemberValue(value=elem.text.strip())
 
 
 @end("str:GeoGridCodelist")
