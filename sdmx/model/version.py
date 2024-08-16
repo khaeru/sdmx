@@ -1,5 +1,3 @@
-"""Handle SDMX version identifiers."""
-
 import operator
 import re
 from typing import Callable, Optional, Union
@@ -35,7 +33,21 @@ def _cmp_method(op: Callable) -> Callable:
 
 
 class Version(packaging.version.Version):
-    """Version.
+    """Class representing a version.
+
+    This class extends :class:`packaging.version.Version`, which provides a complete
+    interface for interacting with Python version specifiers. The extensions implement
+    the particular form of versioning laid out by the SDMX standards. Specifically:
+
+    - :attr:`kind` to identify whether the version is an SDMX 2.1, SDMX 3.0, or Python-
+      style version string.
+    - Attribute aliases for particular terms used in the SDMX 3.0 standards:
+      :attr:`patch` and :attr:`ext`.
+    - The :class:`str` representation of a Version uses the SDMX 3.0 style of separating
+      the :attr:`ext` with a hyphen ("1.0.0-dev1"), which differs from the Python style
+      of using no separator for a ‘post-release’ ("1.0.0dev1") or a plus symbol for a
+      ‘local part’ ("1.0.0+dev1").
+    - The class is comparable with :class:`str` version expressions.
 
     Parameters
     ----------
@@ -107,14 +119,15 @@ class Version(packaging.version.Version):
 
     @property
     def patch(self) -> int:
-        """Alias for :attr:`.Version.micro`."""
+        """Alias for :any:`Version.micro <packaging.version.Version.micro>`."""
         return self.micro
 
     @property
     def ext(self) -> Optional[str]:
         """SDMX 3.0 version 'extension'.
 
-        For :py:`kind="py"`, this is equivalent to :attr:`.Version.local`.
+        For :py:`kind="py"`, this is equivalent to :attr:`Version.local
+        <packaging.version.Version.local>`.
         """
         if self._version.local is None:
             return None
@@ -128,18 +141,20 @@ class Version(packaging.version.Version):
 
         Parameters
         ----------
-        major : bool or int, *optional*
-            If given, increment the :attr:`.Version.major` part.
-        minor : bool or int, *optional*
-            If given, increment the :attr:`.Version.minor` part.
-        patch : bool or int, *optional*
+        major : bool or int, optional
+            If given, increment the :attr:`Version.major
+            <packaging.version.Version.major>` part.
+        minor : bool or int, optional
+            If given, increment the :attr:`Version.minor
+            <packaging.version.Version.minor>` part.
+        patch : bool or int, optional
             If given, increment the :attr:`.Version.patch` part.
-        micro : bool or int, *optional*
+        micro : bool or int, optional
             Alias for `patch`.
-        ext : bool or int, *optional*
+        ext : bool or int, optional
             If given, increment the :attr:`.Version.ext` part. If this part is not
             present, add "dev1".
-        local: bool or int, *optional*
+        local: bool or int, optional
             Alias for `ext`.
         """
         if not kwargs:

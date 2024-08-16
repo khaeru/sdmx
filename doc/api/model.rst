@@ -30,6 +30,10 @@ Common to SDMX 2.1 and 3.0
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: sdmx.model.version
+   :members:
+   :show-inheritance:
+
 .. automodule:: sdmx.model.common
    :members:
    :ignore-module-all:

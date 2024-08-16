@@ -2545,7 +2545,7 @@ class BaseContentConstraint:
 
 # Internal
 
-#: The SDMX-IM defines 'packages'; these are used in URNs.
+#: The SDMX-IM groups classes into 'packages'; these are used in :class:`URNs <.URN>`.
 PACKAGE = dict()
 
 _PACKAGE_CLASS: Dict[str, set] = {

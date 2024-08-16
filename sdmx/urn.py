@@ -26,10 +26,20 @@ class URN:
 
     #: SDMX :data:`.PACKAGE` corresponding to :attr:`klass`.
     package: str
+
+    #: SDMX object class.
     klass: str
+
+    #: ID of the :class:`.Agency` that is the :attr:`.MaintainableArtefact.maintainer`.
     agency: str
+
+    #: ID of the :class:`.MaintainableArtefact`.
     id: str
+
+    #: :attr:`.VersionableArtefact.version` of the maintainable artefact.parent.
     version: str
+
+    #: ID of an item within a maintainable parent. Optional.
     item_id: Optional[str]
 
     def __init__(self, value, **kwargs) -> None:
@@ -67,22 +77,21 @@ class URN:
 def expand(value: str) -> str:
     """Return the full URN for `value`.
 
+    Example
+    -------
+    >>> expand("Code=BAZ:FOO(1.2.3).BAR")
+    "urn:sdmx:org.sdmx.infomodel.codelist.Code=BAZ:FOO(1.2.3).BAR"
+
     Parameters
     ----------
     value : str
-        Either the final part of a valid SDMX URN, for example
-        `Codelist=BAZ:FOO(1.2.3)`, or a full URN.
+        Either the final / :func:`.shorten`'d part of a valid SDMX URN, or a full URN.
 
     Returns
     -------
     str
         The full SDMX URN. If `value` is not a partial or full URN, it is returned
         unmodified.
-
-    Raises
-    ------
-    ValueError
-        If `value` is not a valid part of a SDMX URN.
     """
     for candidate in (value, f"urn:sdmx:org.sdmx.infomodel.package.{value}"):
         try:
@@ -134,6 +143,18 @@ def make(
 def match(value: str) -> Dict[str, str]:
     """Match :data:`URN` in `value`, returning a :class:`dict` with the match groups.
 
+    Example
+    -------
+    >>> match("urn:sdmx:org.sdmx.infomodel.codelist.Code=BAZ:FOO(1.2.3).BAR")
+    {
+        "package": "codelist",
+        "class": "Code",
+        "agency": "BAZ",
+        "id": "FOO",
+        "version": "1.2.3",
+        "item_id": "BAR",
+    }
+
     Raises
     ------
     ValueError
@@ -143,7 +164,7 @@ def match(value: str) -> Dict[str, str]:
 
 
 def normalize(value: str) -> str:
-    """Normalize URNs.
+    """‘Normalize’ a URN.
 
     Handle "…DataFlow=…" (SDMX 3.0) vs. "…DataFlowDefinition=…" (SDMX 2.1) in URNs;
     prefer the former.
@@ -154,10 +175,15 @@ def normalize(value: str) -> str:
 def shorten(value: str) -> str:
     """Return a partial URN based on `value`.
 
+    Example
+    -------
+    >>> shorten("urn:sdmx:org.sdmx.infomodel.codelist.Code=BAZ:FOO(1.2.3).BAR")
+    "Code=BAZ:FOO(1.2.3).BAR"
+
     Parameters
     ----------
     value : str
-        A full SDMX URN. If the value is not a URN, it is returned unmodified.
+        A full SDMX URN. If `value` is not a URN, it is returned unmodified.
 
     Returns
     -------

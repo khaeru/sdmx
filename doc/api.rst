@@ -17,6 +17,13 @@ Some parts of the API are described on separate pages:
 
 See also the :doc:`implementation`.
 
+On this page:
+
+.. contents::
+   :local:
+   :depth: 1
+   :backlinks: none
+
 Top-level methods and classes
 =============================
 
@@ -99,6 +106,7 @@ SDMX-ML
 
 ``urn``: Uniform Resource Names (URNs) for SDMX objects
 =======================================================
+
 .. automodule:: sdmx.urn
    :members:
 

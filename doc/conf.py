@@ -62,6 +62,7 @@ extlinks = {
 
 intersphinx_mapping = {
     "np": ("https://numpy.org/doc/stable/", None),
+    "packaging": ("https://packaging.pypa.io/en/stable", None),
     "pd": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "py": ("https://docs.python.org/3/", None),
     "requests": ("https://requests.readthedocs.io/en/latest/", None),
