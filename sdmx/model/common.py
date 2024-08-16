@@ -1121,7 +1121,7 @@ class Structure(MaintainableArtefact):
         field = None
         for f in fields(self):
             is_dictlike = get_origin(f.type) is DictLikeDescriptor
-            if f.type == type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
+            if f.type is type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
                 field = f
                 break
 
