@@ -260,6 +260,7 @@ class SpecimenCollection:
             for parts in [
                 ("INSEE", "CNA-2010-CONSO-SI-A17.xml"),
                 ("INSEE", "IPI-2010-A21.xml"),
+                ("ESTAT", "esms.xml"),
                 ("ESTAT", "footer.xml"),
                 ("ESTAT", "NAMA_10_GDP-ss.xml"),
             ]
@@ -274,6 +275,7 @@ class SpecimenCollection:
                 ("ECB", "orgscheme.xml"),
                 ("ECB", "structureset-0.xml"),
                 ("ESTAT", "apro_mk_cola-structure.xml"),
+                ("ESTAT", "esms-structure.xml"),
                 ("ESTAT", "GOV_10Q_GGNFA.xml"),
                 ("ESTAT", "HCL_WSTATUS_SCL_BNSPART.xml"),
                 ("ESTAT", "HCL_WSTATUS_SCL_WSTATUSPR.xml"),
