@@ -2570,6 +2570,7 @@ _PACKAGE_CLASS: Dict[str, set] = {
         "HierarchicalCodelist",  # SDMX 2.1
         "Hierarchy",
         "Level",
+        "ValueList",  # SDMX 3.0
     },
     "conceptscheme": {"Concept", "ConceptScheme"},
     "datastructure": {

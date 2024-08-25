@@ -225,8 +225,18 @@ def test_complete(module, extra):
         ),
     ],
 )
-def test_get_class(args, expected):
+def test_get_class_v21(args, expected) -> None:
     assert expected is model.v21.get_class(**args)
+
+
+@pytest.mark.parametrize("args, expected", ((dict(name="ValueList"), v30.ValueList),))
+def test_get_class_v30(args, expected) -> None:
+    assert expected is model.v30.get_class(**args)
+
+
+@pytest.mark.parametrize("klass, expected", (("ValueList", "codelist"),))
+def test_package(klass, expected) -> None:
+    assert expected == model.v30.PACKAGE[klass]
 
 
 def test_deprecated_import():
