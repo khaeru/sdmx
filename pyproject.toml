@@ -50,9 +50,9 @@ tests = [
 ]
 
 [project.urls]
-homepage = "https://github.com/khaeru/sdmx"
-repository = "https://github.com/khaeru/sdmx"
-documentation = "https://sdmx1.readthedocs.io/en/latest"
+Homepage = "https://github.com/khaeru/sdmx"
+Repository = "https://github.com/khaeru/sdmx"
+Documentation = "https://sdmx1.readthedocs.io/en/latest"
 
 [tool.coverage.run]
 omit = [
