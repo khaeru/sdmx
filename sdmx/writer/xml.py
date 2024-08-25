@@ -6,7 +6,7 @@
 # - writer functions for sdmx.model classes, in the same order as model.py
 
 import logging
-from typing import Iterable, List, Literal
+from typing import Iterable, List, Literal, MutableMapping
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -740,3 +740,93 @@ def _ds(obj: model.DataSet):
         elem.append(writer.recurse(obs, struct_spec=struct_spec))
 
     return elem
+
+
+# SDMX 2.1 §7.4: Metadata Set
+
+
+@writer
+def _mds(obj: model.MetadataSet):
+    attrib = {}
+    if obj.structured_by:
+        attrib["structureRef"] = obj.structured_by.id
+    return Element(
+        "mes:MetadataSet", *[writer.recurse(mdr) for mdr in obj.report], **attrib
+    )
+
+
+@writer
+def _mdr(obj: model.MetadataReport):
+    # TODO Write the id=… attribute
+    elem = Element("md:Report")
+
+    if obj.target:
+        elem.append(writer.recurse(obj.target))
+    if obj.attaches_to:
+        elem.append(writer.recurse(obj.attaches_to))
+
+    elem.append(
+        Element("md:AttributeSet", *[writer.recurse(ra) for ra in obj.metadata])
+    )
+
+    return elem
+
+
+@writer
+def _tok(obj: model.TargetObjectKey):
+    # TODO Write the id=… attribute
+    return Element(
+        "md:Target", *[writer.recurse(tov) for tov in obj.key_values.values()]
+    )
+
+
+@writer
+def _tov(obj: model.TargetObjectValue):
+    if isinstance(obj.value_for, str):
+        id_: str = obj.value_for
+    else:
+        id_ = obj.value_for.id
+
+    elem = Element("md:ReferenceValue", id=id_)
+
+    if isinstance(obj, model.TargetReportPeriod):
+        elem.append(Element("md:ReportPeriod", obj.report_period))
+    elif isinstance(obj, model.TargetIdentifiableObject):
+        elem.append(
+            Element("md:ObjectReference", Element("URN", sdmx.urn.make(obj.obj)))
+        )
+    else:
+        assert False
+
+    return elem
+
+
+@writer
+def _ra(obj: model.ReportedAttribute):
+    child = []
+    attrib: MutableMapping[str, str] = dict()
+
+    if isinstance(obj.value_for, str):
+        # NB value_for should be MetadataAttribute, but currently not due to limitations
+        #    of .reader.xml.v21
+        attrib.update(id=obj.value_for)
+    else:
+        attrib.update(id=obj.value_for.id)
+
+    if isinstance(obj, model.OtherNonEnumeratedAttributeValue):
+        # Only write the "value" attribute if defined; some attributes are only
+        # containers for child attributes
+        if obj.value:
+            attrib.update(value=obj.value)
+    elif isinstance(obj, model.XHTMLAttributeValue):
+        child.append(Element("com:StructuredText", obj.value))
+    else:
+        raise NotImplementedError
+
+    if len(obj.child):
+        # Add child ReportedAttribute within an AttributeSet
+        child.append(
+            Element("md:AttributeSet", *[writer.recurse(ra) for ra in obj.child])
+        )
+
+    return Element("md:ReportedAttribute", *child, **attrib)
