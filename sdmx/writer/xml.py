@@ -400,16 +400,15 @@ def _concept(obj: model.Concept, **kwargs):
 
 @writer
 def _contact(obj: model.Contact):
-    elem = Element("str:Contact")
-    elem.extend(
-        i11lstring(obj.name, "com:Name")
-        + i11lstring(obj.org_unit, "str:Department")
-        + i11lstring(obj.responsibility, "str:Role")
-        + ([Element("str:Telephone", obj.telephone)] if obj.telephone else [])
-        + [Element("str:URI", value) for value in obj.uri]
-        + [Element("str:Email", value) for value in obj.email]
+    return Element(
+        "str:Contact",
+        *i11lstring(obj.name, "com:Name"),
+        *i11lstring(obj.org_unit, "str:Department"),
+        *i11lstring(obj.responsibility, "str:Role"),
+        *([Element("str:Telephone", obj.telephone)] if obj.telephone else []),
+        *[Element("str:URI", value) for value in obj.uri],
+        *[Element("str:Email", value) for value in obj.email],
     )
-    return elem
 
 
 # §3.3: Basic Inheritance
@@ -449,9 +448,7 @@ def _component(obj: model.Component, dsd):
 
 @writer
 def _cl(obj: model.ComponentList, *args):
-    elem = identifiable(obj)
-    elem.extend(writer.recurse(c, *args) for c in obj.components)
-    return elem
+    return identifiable(obj, *[writer.recurse(c, *args) for c in obj.components])
 
 
 # §4.5: CategoryScheme
@@ -459,14 +456,11 @@ def _cl(obj: model.ComponentList, *args):
 
 @writer
 def _cat(obj: model.Categorisation):
-    elem = maintainable(obj)
-    elem.extend(
-        [
-            reference(obj.artefact, tag="str:Source", style="Ref"),
-            reference(obj.category, tag="str:Target", style="Ref"),
-        ]
+    return maintainable(
+        obj,
+        reference(obj.artefact, tag="str:Source", style="Ref"),
+        reference(obj.category, tag="str:Target", style="Ref"),
     )
-    return elem
 
 
 # §10.3: Constraints
@@ -506,9 +500,11 @@ def _ms(obj: model.MemberSelection):
 
 @writer
 def _cr(obj: model.CubeRegion):
-    elem = Element("str:CubeRegion", include=str(obj.included).lower())
-    elem.extend(writer.recurse(ms) for ms in obj.member.values())
-    return elem
+    return Element(
+        "str:CubeRegion",
+        *[writer.recurse(ms) for ms in obj.member.values()],
+        include=str(obj.included).lower(),
+    )
 
 
 @writer
