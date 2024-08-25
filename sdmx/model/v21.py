@@ -455,10 +455,11 @@ class NonEnumeratedAttributeValue(ReportedAttribute):
     """SDMX 2.1 NonEnumeratedAttributeValue."""
 
 
+@dataclass
 class OtherNonEnumeratedAttributeValue(NonEnumeratedAttributeValue):
     """SDMX 2.1 OtherNonEnumeratedAttributeValue."""
 
-    value: str
+    value: Optional[str] = None
 
 
 class TextAttributeValue(NonEnumeratedAttributeValue, common.BaseTextAttributeValue):
