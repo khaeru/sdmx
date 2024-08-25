@@ -11,7 +11,7 @@ import re
 from copy import copy
 from itertools import chain
 from sys import maxsize
-from typing import Any, Dict, Type, cast
+from typing import Any, Dict, MutableMapping, Type, cast
 
 from dateutil.parser import isoparse
 from lxml import etree
@@ -98,7 +98,6 @@ start(
     "gen:ObsDimension gen:ObsValue gen:Value "
     # Tags that are bare containers for other XML elements
     """
-    :AttributeSet md:AttributeSet
     str:Categorisations str:CategorySchemes str:Codelists str:Concepts
     str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
     str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
@@ -1296,11 +1295,11 @@ def _rv(reader: Reader, elem):
     if cls is v21.TargetReportPeriod:
         args["report_period"] = reader.pop_single("ReportPeriod")
     elif cls is model.TargetIdentifiableObject:
-        args["obj"] = reader.pop_single("ObjectReference")
+        or_ = reader.pop_resolved_ref("ObjectReference")
+        reader.ignore.add(id(or_.parent))
+        args["obj"] = or_
 
-    obj = cls(**args)
-
-    return obj
+    return cls(**args)
 
 
 def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
@@ -1308,8 +1307,7 @@ def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
 
     # TODO these persist after reading a particular message; avoid this
     def _add_events_for_ma(ma: model.MetadataAttribute):
-        reader.start(f":{ma.id}", only=False)(_ra_start)
-        reader.end(f":{ma.id}", only=False)(_ra_end)
+        reader.end(f":{ma.id}")(_ra)
         for child in ma.child:
             _add_events_for_ma(child)
 
@@ -1318,33 +1316,55 @@ def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
             _add_events_for_ma(ma)
 
 
-@start("md:ReportedAttribute", only=False)
-def _ra_start(reader: Reader, elem):
+@start(":AttributeSet md:AttributeSet", only=False)
+def _as_start(reader: Reader, elem):
     # Avoid collecting previous/sibling ReportedAttribute as children of this one
-    reader.stash(model.ReportedAttribute)
+    reader.stash("ReportedAttribute")
 
 
-@end("md:ReportedAttribute", only=False)
-def _ra_end(reader: Reader, elem):
-    cls = reader.class_for_tag(elem.tag)
-    if cls is None:
-        cls = reader.class_for_tag("md:ReportedAttribute")
-        value_for = elem.tag
-    else:
-        value_for = elem.attrib["id"]
-
-    # Pop all child elements
-    args = dict(child=reader.pop_all(cls, subclass=True), value_for=value_for)
-
-    xhtml = reader.pop_single("StructuredText")
-    if xhtml:
-        cls = v21.XHTMLAttributeValue
-        args["value"] = xhtml
-
-    obj = cls(**args)
-
+@end(":AttributeSet md:AttributeSet", only=False)
+def _as_end(reader: Reader, elem):
+    # Collect ReportedAttributes from the current AttributeSet in a list
+    reader.push("AttributeSet", reader.pop_all("ReportedAttribute"))
+    # Unstash others from the same level
     reader.unstash()
-    return obj
+
+
+@end("md:ReportedAttribute")
+def _ra(reader: Reader, elem):
+    args: MutableMapping[str, Any] = dict()
+
+    # Unstash and retrieve child ReportedAttribute
+    child = reader.pop_single("AttributeSet")
+    if child:
+        args.update(child=child)
+
+    # TODO Match value_for to specific common.MetadataAttribute in the ReportStructure
+    # # Retrieve the current MetadataSet, MDSD, and ReportStructure
+    # mds = cast(model.MetadataSet, reader.get_single("MetadataSet"))
+
+    try:
+        # Set `value_for` using the "id" attribute
+        args["value_for"] = elem.attrib["id"]
+    except KeyError:
+        args["value_for"] = elem.tag
+
+    # Identify a concrete subclass of model.ReportedAttribute
+    xhtml_value_root_elem = reader.pop_single("StructuredText")
+    if xhtml_value_root_elem is not None:
+        cls: type = v21.XHTMLAttributeValue
+        args["value"] = xhtml_value_root_elem
+    else:
+        # TODO Distinguish model.EnumeratedAttributeValue
+        cls = model.OtherNonEnumeratedAttributeValue
+        try:
+            args["value"] = elem.attrib["value"]
+        except KeyError:
+            if not child:
+                raise
+
+    # Push onto a common ReportedAttribute stack; not a subclass-specific stack
+    reader.push("ReportedAttribute", cls(**args))
 
 
 # §8: Hierarchical Code List
