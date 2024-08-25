@@ -765,19 +765,14 @@ def _dks(reader, elem):
 
 @end("com:StartPeriod com:EndPeriod")
 def _p(reader, elem):
-    # Store by element tag name
-    reader.push(
-        elem,
-        model.Period(
-            is_inclusive=elem.attrib["isInclusive"], period=isoparse(elem.text)
-        ),
-    )
+    cls = reader.class_for_tag(elem.tag)
+    return cls(is_inclusive=elem.attrib["isInclusive"], period=isoparse(elem.text))
 
 
 @end("com:TimeRange")
 def _tr(reader, elem):
-    return model.RangePeriod(
-        start=reader.pop_single("StartPeriod"), end=reader.pop_single("EndPeriod")
+    return v21.RangePeriod(
+        start=reader.pop_single(v21.StartPeriod), end=reader.pop_single(v21.EndPeriod)
     )
 
 
