@@ -216,6 +216,7 @@ def test_ErrorMessage(errormessage):
         ("ECB_EXR/1/M.USD.EUR.SP00.A.xml", "ECB_EXR/1/structure.xml"),
         ("ECB_EXR/ng-ts.xml", "ECB_EXR/ng-structure-full.xml"),
         ("ECB_EXR/ng-ts-ss.xml", "ECB_EXR/ng-structure-full.xml"),
+        ("ESTAT/esms.xml", "ESTAT/esms-structure.xml"),
         # DSD reference does not round-trip correctly
         pytest.param(
             "ECB_EXR/rg-xs.xml",
