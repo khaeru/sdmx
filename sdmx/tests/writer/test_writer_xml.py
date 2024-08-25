@@ -268,6 +268,7 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("INSEE/CNA-2010-CONSO-SI-A17-structure.xml", False),
         ("INSEE/IPI-2010-A21-structure.xml", False),
         ("INSEE/dataflow.xml", False),
+        ("OECD/actualconstraint-0.xml", True),
         ("SGR/common-structure.xml", True),
         ("UNSD/codelist_partial.xml", True),
         ("TEST/gh-149.xml", False),
