@@ -119,12 +119,18 @@ def reference(obj, parent=None, tag=None, *, style: RefStyle):
 
 @writer
 def _dm(obj: message.DataMessage):
-    struct_spec = len(obj.data) and isinstance(
+    """DataMessage, including MetadataMessage."""
+    # Identify root tag
+    if len(obj.data) and isinstance(
         obj.data[0],
         (model.StructureSpecificDataSet, model.StructureSpecificTimeSeriesDataSet),
-    )
+    ):
+        tag = "mes:StructureSpecificData"
+    else:
+        tag = tag_for_class(type(obj))
 
-    elem = Element("mes:StructureSpecificData" if struct_spec else "mes:GenericData")
+    # Create the root element
+    elem = Element(tag)
 
     header = writer.recurse(obj.header)
     elem.append(header)
