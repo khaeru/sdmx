@@ -284,6 +284,8 @@ def _a(obj: model.Annotation):
 def annotable(obj, *args, **kwargs) -> etree._Element:
     # Determine tag
     tag = kwargs.pop("_tag", tag_for_class(obj.__class__))
+    if tag is None:
+        raise NotImplementedError(f"Write {obj.__class__} to SDMX-ML")
 
     # Write Annotations
     e_anno = Element("com:Annotations", *[writer.recurse(a) for a in obj.annotations])
