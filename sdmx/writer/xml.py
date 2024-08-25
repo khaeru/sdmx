@@ -6,7 +6,7 @@
 # - writer functions for sdmx.model classes, in the same order as model.py
 
 import logging
-from typing import Iterable, List, Literal, cast
+from typing import Iterable, List, Literal
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -479,9 +479,32 @@ def _dk(obj: model.DataKey):
 
 @writer
 def _dks(obj: model.DataKeySet):
-    elem = Element("str:DataKeySet", isIncluded=str(obj.included).lower())
-    elem.extend(writer.recurse(dk) for dk in obj.keys)
-    return elem
+    return Element(
+        "str:DataKeySet",
+        *[writer.recurse(dk) for dk in obj.keys],
+        isIncluded=str(obj.included).lower(),
+    )
+
+
+@writer
+def _mv(obj: model.MemberValue):
+    return Element("com:Value", obj.value)
+
+
+@writer
+def _rp(obj: model.RangePeriod):
+    return Element("com:TimeRange", writer.recurse(obj.start), writer.recurse(obj.end))
+
+
+@writer
+def _period(obj: common.Period):
+    """Includes :class:`.v21.StartPeriod` and :class:`.v21.EndPeriod`."""
+    return Element(
+        f"com:{obj.__class__.__name__}",
+        # `period` attribute as text
+        obj.period.isoformat(),
+        isInclusive=str(obj.is_inclusive).lower(),
+    )
 
 
 @writer
@@ -491,13 +514,9 @@ def _ms(obj: model.MemberSelection):
         model.DataAttribute: "Attribute",
     }[type(obj.values_for)]
 
-    elem = Element(f"com:{tag}", id=obj.values_for.id)
-    elem.extend(
-        # cast(): as of PR#30, only MemberValue is supported here
-        Element("com:Value", cast(model.MemberValue, mv).value)
-        for mv in obj.values
+    return Element(
+        f"com:{tag}", *[writer.recurse(v) for v in obj.values], id=obj.values_for.id
     )
-    return elem
 
 
 @writer
