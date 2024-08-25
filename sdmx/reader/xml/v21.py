@@ -349,7 +349,7 @@ def _text(reader, elem):
 @start("com:StructuredText")
 def _st(reader, elem):
     """Contained XHTML."""
-    reader.push(elem, etree.tostring(elem[0], pretty_print=True))
+    reader.push(elem, elem[0])
 
 
 @end("mes:Extracted mes:Prepared mes:ReportingBegin mes:ReportingEnd")
