@@ -1248,6 +1248,7 @@ def _mds_start(reader, elem):
 
 @end("mes:MetadataSet", only=False)
 def _mds_end(reader, elem):
+    # Retrieve the current MetadataSet
     mds = reader.pop_single("MetadataSet")
 
     # Collect the contained MetadataReports
@@ -1260,24 +1261,20 @@ def _mds_end(reader, elem):
 @end(":Report md:Report")
 def _md_report(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
-
-    obj = cls(
+    return cls(
         attaches_to=reader.pop_single(model.TargetObjectKey),
-        metadata=reader.pop_all(model.ReportedAttribute, subclass=True),
+        metadata=reader.pop_single("AttributeSet"),
     )
-    return obj
 
 
 @end(":Target md:Target")
 def _tov(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
-
-    obj = cls(
+    return cls(
         key_values={
             v.value_for: v for v in reader.pop_all(v21.TargetObjectValue, subclass=True)
         }
     )
-    return obj
 
 
 @end(":ReferenceValue md:ReferenceValue")
