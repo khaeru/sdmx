@@ -579,10 +579,13 @@ class XMLEventReader(BaseReader):
         existing = self.get_single(cls, obj.id, version=obj.version)
 
         if existing and (
-            existing.compare(obj, strict=True) or existing.urn == sdmx.urn.make(obj)
+            existing.compare(obj, strict=True)
+            or (existing.urn or sdmx.urn.make(existing)) == sdmx.urn.make(obj)
         ):
             if elem is not None:
                 # Previously an external reference, now concrete
+                # FIXME Handle the case where a MaintainableArtefact is included in a
+                #       StructureMessage, with is_external_reference explicitly True
                 existing.is_external_reference = False
 
                 # Update `existing` from `obj` to preserve references
@@ -616,6 +619,7 @@ def matching_class(cls):
 
 
 def setdefault_attrib(target, elem, *names):
+    """Update `target` from :py:`elem.attrib` for the given `names`."""
     try:
         for name in names:
             try:
