@@ -465,10 +465,16 @@ def _item_end(reader: Reader, elem):
             # Found 1 child XML element with same tag → claim 1 child object
             item.append_child(reader.pop_single(cls))
 
-    # (2) through <str:Parent>
-    parent = reader.pop_resolved_ref("Parent")
-    if parent:
-        parent.append_child(item)
+    # (2) through <str:Parent>. These may be backward or forward references. Backward
+    # references can be resolved through pop_resolved_ref(), but forward references
+    # cannot.
+    if parent := reader.pop_resolved_ref("Parent"):
+        if getattr(parent.get_scheme(), "is_external_reference", False):
+            # Forward reference
+            reader.push("item parent", (item.id, parent.id))
+        else:
+            # Backward reference
+            parent.append_child(item)
 
     # Agency only
     try:
@@ -515,6 +521,14 @@ def _itemscheme(reader: Reader, elem):
             # TODO "no cover" since this doesn't occur in the test suite; check whether
             #      this try/except can be removed.
             pass
+
+    # Add deferred forward references
+    for child_id, parent_id in reader.pop_all("item parent"):
+        try:
+            is_[parent_id].append_child(is_[child_id])
+        except KeyError:
+            if not is_.is_partial:
+                raise
 
     return is_
 
