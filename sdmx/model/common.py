@@ -997,9 +997,14 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
         strict : bool, optional
             Passed to :func:`.compare` and :meth:`.IdentifiableArtefact.compare`.
         """
-        return super().compare(other, strict) and all(
-            c.compare(other.get(c.id), strict) for c in self.components
-        )
+        result = True
+        for c in self.components:
+            try:
+                result &= c.compare(other.get(c.id), strict)
+            except KeyError:
+                log.debug(f"{other} has no component with ID {c.id!r}")
+                result = False
+        return result and super().compare(other, strict)
 
 
 # §4.5: Category Scheme

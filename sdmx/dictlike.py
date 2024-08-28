@@ -98,11 +98,12 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
             Passed to :func:`compare` for the values.
         """
         if set(self.keys()) != set(other.keys()):
-            log.info(f"Not identical: {sorted(self.keys())} / {sorted(other.keys())}")
+            log.debug(f"Not identical: {sorted(self.keys())} / {sorted(other.keys())}")
             return False
 
         for key, value in self.items():
             if not value.compare(other[key], strict):
+                log.debug(f"Not identical: {value} / {other[key]}")
                 return False
 
         return True
