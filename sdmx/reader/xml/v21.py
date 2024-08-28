@@ -11,7 +11,7 @@ import re
 from copy import copy
 from itertools import chain
 from sys import maxsize
-from typing import Any, Dict, MutableMapping, Type, cast
+from typing import Any, Dict, MutableMapping, Optional, Type, cast
 
 from dateutil.parser import isoparse
 from lxml import etree
@@ -598,10 +598,14 @@ def _component_start(reader: Reader, elem):
     reader.stash(reader.class_for_tag(elem.tag))
 
 
+def _maybe_unbounded(value: str) -> Optional[int]:
+    return None if value == "unbounded" else int(value)
+
+
 @end(COMPONENT, only=False)
 @possible_reference(unstash=True)
 def _component_end(reader: Reader, elem):
-    # Object class: {,Measure,Time}Dimension or DataAttribute
+    # Object class: {,Measure,Time}Dimension; DataAttribute; MetadataAttribute
     cls = reader.class_for_tag(elem.tag)
 
     args = dict(
@@ -613,24 +617,30 @@ def _component_end(reader: Reader, elem):
         args["order"] = int(elem.attrib["position"])
     except KeyError:
         pass
+
     # DataAttributeOnly
-    us = elem.attrib.get("assignmentStatus")
-    if us:
+    if us := elem.attrib.get("assignmentStatus"):
         args["usage_status"] = model.UsageStatus[us.lower()]
 
-    cr = reader.pop_resolved_ref("ConceptRole")
-    if cr:
+    if cr := reader.pop_resolved_ref("ConceptRole"):
         args["concept_role"] = cr
 
     # DataAttribute only
-    ar = reader.pop_all(model.AttributeRelationship, subclass=True)
-    if len(ar):
+    if ar := reader.pop_all(model.AttributeRelationship, subclass=True):
         assert len(ar) == 1, ar
         args["related_to"] = ar[0]
 
-    # MetadataAttribute.child only
-    if children := reader.pop_all(cls):
-        args["child"] = children
+    if cls is v21.MetadataAttribute:
+        setdefault_attrib(args, elem, "isPresentational", "maxOccurs", "minOccurs")
+        if "is_presentational" in args:
+            args["is_presentational"] = bool(args["is_presentational"])
+
+        if "max_occurs" in args:
+            args["max_occurs"] = _maybe_unbounded(args["max_occurs"])
+        if "min_occurs" in args:
+            args["min_occurs"] = _maybe_unbounded(args["min_occurs"])
+        if children := reader.pop_all(cls):
+            args["child"] = children
 
     reader.unstash()
 
@@ -639,10 +649,7 @@ def _component_end(reader: Reader, elem):
     # assumed to be the same as the identifier of the concept referenced from the
     # concept identity.”
     if args["id"] is common.MissingID:
-        try:
-            args["id"] = args["concept_identity"].id
-        except AttributeError:
-            pass
+        args["id"] = getattr(args["concept_identity"], "id", None) or args["id"]
 
     return reader.identifiable(cls, elem, **args)
 
