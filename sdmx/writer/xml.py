@@ -14,7 +14,7 @@ from lxml.builder import ElementMaker
 import sdmx.urn
 from sdmx import message
 from sdmx.format.xml.v21 import NS, qname, tag_for_class
-from sdmx.model import common
+from sdmx.model import common, v21
 from sdmx.model import v21 as model
 from sdmx.writer.base import BaseWriter
 
@@ -191,14 +191,17 @@ def _sm(obj: message.StructureMessage):
         ("concept_scheme", "Concepts"),
         ("structure", "DataStructures"),
         ("constraint", "Constraints"),
+        ("metadatastructure", "MetadataStructures"),
         ("provisionagreement", "ProvisionAgreements"),
     ]:
         coll = getattr(obj, attr)
         if not len(coll):
             continue
         container = Element(f"str:{tag}")
+
         for s in filter(lambda s: not s.is_external_reference, coll.values()):
             container.append(writer.recurse(s))
+
         if len(container):
             structures.append(container)
 
@@ -738,6 +741,39 @@ def _ds(obj: model.DataSet):
     # Observations not in any series
     for obs in filter(lambda o: id(o) in obs_to_write, obj.obs):
         elem.append(writer.recurse(obs, struct_spec=struct_spec))
+
+    return elem
+
+
+# SDMX 2.1 §7.3: Metadata Structure Definition
+
+
+@writer
+def _mdsd(obj: v21.MetadataStructureDefinition):
+    msc = Element(
+        "str:MetadataStructureComponents",
+        *[writer.recurse(mdt, obj) for mdt in obj.target.values()],
+        *[writer.recurse(rs, obj) for rs in obj.report_structure.values()],
+    )
+
+    return maintainable(obj, msc)
+
+
+@writer
+def _mda(obj: v21.MetadataAttribute, *args):
+    # Use the generic _component function to handle several common features
+    elem = _component(obj, *args)
+
+    # MetadataAttribute class properties
+    if obj.is_presentational is not None:
+        elem.attrib["isPresentational"] = str(obj.is_presentational).lower()
+    if obj.min_occurs is not None:
+        elem.attrib["minOccurs"] = str(obj.min_occurs)
+    if obj.max_occurs is not None:
+        elem.attrib["maxOccurs"] = str(obj.max_occurs)
+
+    # Recurse children
+    elem.extend([writer.recurse(mda, *args) for mda in obj.child])
 
     return elem
 
