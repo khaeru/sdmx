@@ -352,11 +352,9 @@ def maintainable(obj, *args, **kwargs) -> etree._Element:
 def _item(obj: model.Item, **kwargs):
     elem = nameable(obj, **kwargs)
 
+    # Reference to parent Item
     if isinstance(obj.parent, obj.__class__):
-        # Reference to parent Item
-        e_parent = Element("str:Parent")
-        e_parent.append(Element(":Ref", id=obj.parent.id, style="Ref"))
-        elem.append(e_parent)
+        elem.append(Element("str:Parent", Element(":Ref", id=obj.parent.id)))
 
     if isinstance(obj, common.Organisation):
         elem.extend(writer.recurse(c) for c in obj.contact)
