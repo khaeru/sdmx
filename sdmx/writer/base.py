@@ -1,6 +1,10 @@
 from functools import singledispatch
 
 
+class NoWriterImplementation(NotImplementedError):
+    pass
+
+
 class BaseWriter:
     """Base class for recursive writers.
 
@@ -32,9 +36,7 @@ class BaseWriter:
         # Create the single-dispatch function
         @singledispatch
         def func(obj, *args, **kwargs):
-            raise NotImplementedError(
-                f"write {obj.__class__.__name__} to " f"{format_name}"
-            )
+            raise NoWriterImplementation(f"write {type(obj).__name__} to {format_name}")
 
         self._dispatcher = func
 
@@ -44,20 +46,21 @@ class BaseWriter:
         If there is no :meth:`register` 'ed function to write the class of `obj`, then
         the parent class of `obj` is used to find a method.
         """
-        # TODO use a cache to speed up, so the MRO does not need to be traversed for
-        #      every object instance
-
         dispatcher = getattr(self, "_dispatcher")
+
         try:
             # Let the single dispatch function choose the overload
             return dispatcher(obj, *args, **kwargs)
-        except NotImplementedError as exc:
+        except NoWriterImplementation as exc:
             try:
-                # Use the object's parent class to get a different overload
-                func = dispatcher.registry[obj.__class__.mro()[1]]
+                # Use the object's parent class to get a different implementation
+                cls = type(obj).mro()[1]
+                func = dispatcher.registry[cls]
             except KeyError:
-                # Overload for the parent class did not exist
-                raise exc
+                raise exc  # No implementation for the parent class
+            else:
+                # Success; register the function so it is found directly next time
+                dispatcher.register(type(obj), func)
 
             return func(obj, *args, **kwargs)
 
