@@ -287,7 +287,8 @@ class IdentifiableArtefact(AnnotableArtefact):
         return (
             compare("id", self, other, strict)
             and compare("uri", self, other, strict)
-            and compare("urn", self, other, strict)
+            # Allow non-strict comparison if self.urn is None
+            and compare("urn", self, other, strict and self.urn is not None)
         )
 
     def __hash__(self):
