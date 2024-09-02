@@ -128,7 +128,7 @@ def test_doc_usage_structure():
         )
     )
 
-    msg1 = ecb.categoryscheme(provider="all")
+    msg1 = ecb.categoryscheme(agency_id="all")
 
     assert msg1.response.url == (
         "https://data-api.ecb.europa.eu/service/categoryscheme/all/all/latest"
