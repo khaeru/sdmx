@@ -4,6 +4,10 @@ import pytest
 import sdmx
 from sdmx.model import v21 as m
 
+MARKS = {
+    "ESTAT/esms.xml": pytest.mark.xfail(raises=NotImplementedError),
+}
+
 
 def _add_test_dsd(ds: m.DataSet) -> None:
     if ds.described_by is None:
@@ -17,7 +21,7 @@ def _add_test_dsd(ds: m.DataSet) -> None:
             )
 
 
-@pytest.mark.parametrize_specimens("path", kind="data")
+@pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
 def test_write_data(tmp_path, specimen, path):
     msg = sdmx.read_sdmx(path)
 
