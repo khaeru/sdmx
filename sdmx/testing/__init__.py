@@ -2,7 +2,7 @@ import logging
 import os
 from collections import ChainMap
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -260,6 +260,7 @@ class SpecimenCollection:
             for parts in [
                 ("INSEE", "CNA-2010-CONSO-SI-A17.xml"),
                 ("INSEE", "IPI-2010-A21.xml"),
+                ("ESTAT", "esms.xml"),
                 ("ESTAT", "footer.xml"),
                 ("ESTAT", "NAMA_10_GDP-ss.xml"),
             ]
@@ -274,6 +275,7 @@ class SpecimenCollection:
                 ("ECB", "orgscheme.xml"),
                 ("ECB", "structureset-0.xml"),
                 ("ESTAT", "apro_mk_cola-structure.xml"),
+                ("ESTAT", "esms-structure.xml"),
                 ("ESTAT", "GOV_10Q_GGNFA.xml"),
                 ("ESTAT", "HCL_WSTATUS_SCL_BNSPART.xml"),
                 ("ESTAT", "HCL_WSTATUS_SCL_WSTATUSPR.xml"),
@@ -347,13 +349,17 @@ class SpecimenCollection:
         `format` and `kind` arguments (if any). Marks are attached to each param from
         `marks`, wherein the keys are partial paths.
         """
+        # Transform `marks` into a platform-independent mapping from path parts
+        _marks = {PurePosixPath(k).parts: v for k, v in marks.items()}
+
         for path, f, k in self.specimens:
             if (format and format != f) or (kind and kind != k):
                 continue
+            p_rel = path.relative_to(self.base_path)
             yield pytest.param(
                 path,
-                id=str(path.relative_to(self.base_path)),
-                marks=marks.get(path, tuple()),
+                id=str(p_rel),  # String ID for this specimen
+                marks=_marks.get(p_rel.parts, tuple()),  # Look up marks via path parts
             )
 
     def expected_data(self, path):

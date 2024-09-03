@@ -6,7 +6,7 @@
 # - writer functions for sdmx.model classes, in the same order as model.py
 
 import logging
-from typing import Iterable, List, Literal, cast
+from typing import Iterable, List, Literal, MutableMapping, Optional
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -14,8 +14,9 @@ from lxml.builder import ElementMaker
 import sdmx.urn
 from sdmx import message
 from sdmx.format.xml.v21 import NS, qname, tag_for_class
-from sdmx.model import common
+from sdmx.model import common, v21
 from sdmx.model import v21 as model
+from sdmx.util import ucfirst
 from sdmx.writer.base import BaseWriter
 
 _element_maker = ElementMaker(nsmap={k: v for k, v in NS.items() if v is not None})
@@ -119,12 +120,18 @@ def reference(obj, parent=None, tag=None, *, style: RefStyle):
 
 @writer
 def _dm(obj: message.DataMessage):
-    struct_spec = len(obj.data) and isinstance(
+    """DataMessage, including MetadataMessage."""
+    # Identify root tag
+    if len(obj.data) and isinstance(
         obj.data[0],
         (model.StructureSpecificDataSet, model.StructureSpecificTimeSeriesDataSet),
-    )
+    ):
+        tag = "mes:StructureSpecificData"
+    else:
+        tag = tag_for_class(type(obj))
 
-    elem = Element("mes:StructureSpecificData" if struct_spec else "mes:GenericData")
+    # Create the root element
+    elem = Element(tag)
 
     header = writer.recurse(obj.header)
     elem.append(header)
@@ -185,14 +192,17 @@ def _sm(obj: message.StructureMessage):
         ("concept_scheme", "Concepts"),
         ("structure", "DataStructures"),
         ("constraint", "Constraints"),
+        ("metadatastructure", "MetadataStructures"),
         ("provisionagreement", "ProvisionAgreements"),
     ]:
         coll = getattr(obj, attr)
         if not len(coll):
             continue
         container = Element(f"str:{tag}")
+
         for s in filter(lambda s: not s.is_external_reference, coll.values()):
             container.append(writer.recurse(s))
+
         if len(container):
             structures.append(container)
 
@@ -284,6 +294,8 @@ def _a(obj: model.Annotation):
 def annotable(obj, *args, **kwargs) -> etree._Element:
     # Determine tag
     tag = kwargs.pop("_tag", tag_for_class(obj.__class__))
+    if tag is None:  # pragma: no cover
+        raise NotImplementedError(f"Write {obj.__class__} to SDMX-ML")
 
     # Write Annotations
     e_anno = Element("com:Annotations", *[writer.recurse(a) for a in obj.annotations])
@@ -341,11 +353,9 @@ def maintainable(obj, *args, **kwargs) -> etree._Element:
 def _item(obj: model.Item, **kwargs):
     elem = nameable(obj, **kwargs)
 
+    # Reference to parent Item
     if isinstance(obj.parent, obj.__class__):
-        # Reference to parent Item
-        e_parent = Element("str:Parent")
-        e_parent.append(Element(":Ref", id=obj.parent.id, style="Ref"))
-        elem.append(e_parent)
+        elem.append(Element("str:Parent", Element(":Ref", id=obj.parent.id)))
 
     if isinstance(obj, common.Organisation):
         elem.extend(writer.recurse(c) for c in obj.contact)
@@ -355,7 +365,10 @@ def _item(obj: model.Item, **kwargs):
 
 @writer
 def _is(obj: model.ItemScheme):
-    elem = maintainable(obj)
+    kw = dict()
+    if obj.is_partial is not None:
+        kw["isPartial"] = str(obj.is_partial).lower()
+    elem = maintainable(obj, **kw)
 
     # Pass _with_urn to identifiable(): don't generate URNs for Items in `obj` which do
     # not already have them
@@ -368,8 +381,12 @@ def _is(obj: model.ItemScheme):
 
 @writer
 def _facet(obj: model.Facet):
-    # TODO textType should be CamelCase
-    return Element("str:TextFormat", textType=getattr(obj.value_type, "name", None))
+    attrib: MutableMapping[str, str] = dict()
+    try:
+        attrib.update(textType=ucfirst(obj.value_type.name))
+    except AttributeError:  # pragma: no cover
+        pass
+    return Element("str:TextFormat", **attrib)
 
 
 @writer
@@ -400,25 +417,24 @@ def _concept(obj: model.Concept, **kwargs):
 
 @writer
 def _contact(obj: model.Contact):
-    elem = Element("str:Contact")
-    elem.extend(
-        i11lstring(obj.name, "com:Name")
-        + i11lstring(obj.org_unit, "str:Department")
-        + i11lstring(obj.responsibility, "str:Role")
-        + ([Element("str:Telephone", obj.telephone)] if obj.telephone else [])
-        + [Element("str:URI", value) for value in obj.uri]
-        + [Element("str:Email", value) for value in obj.email]
+    return Element(
+        "str:Contact",
+        *i11lstring(obj.name, "com:Name"),
+        *i11lstring(obj.org_unit, "str:Department"),
+        *i11lstring(obj.responsibility, "str:Role"),
+        *([Element("str:Telephone", obj.telephone)] if obj.telephone else []),
+        *[Element("str:URI", value) for value in obj.uri],
+        *[Element("str:Email", value) for value in obj.email],
     )
-    return elem
 
 
 # §3.3: Basic Inheritance
 
 
 @writer
-def _component(obj: model.Component, dsd):
+def _component(obj: model.Component, dsd, *, attrib: Optional[dict] = None):
     child = []
-    attrib = dict()
+    attrib = attrib or dict()
 
     try:
         child.append(
@@ -449,9 +465,7 @@ def _component(obj: model.Component, dsd):
 
 @writer
 def _cl(obj: model.ComponentList, *args):
-    elem = identifiable(obj)
-    elem.extend(writer.recurse(c, *args) for c in obj.components)
-    return elem
+    return identifiable(obj, *[writer.recurse(c, *args) for c in obj.components])
 
 
 # §4.5: CategoryScheme
@@ -459,14 +473,11 @@ def _cl(obj: model.ComponentList, *args):
 
 @writer
 def _cat(obj: model.Categorisation):
-    elem = maintainable(obj)
-    elem.extend(
-        [
-            reference(obj.artefact, tag="str:Source", style="Ref"),
-            reference(obj.category, tag="str:Target", style="Ref"),
-        ]
+    return maintainable(
+        obj,
+        reference(obj.artefact, tag="str:Source", style="Ref"),
+        reference(obj.category, tag="str:Target", style="Ref"),
     )
-    return elem
 
 
 # §10.3: Constraints
@@ -483,9 +494,32 @@ def _dk(obj: model.DataKey):
 
 @writer
 def _dks(obj: model.DataKeySet):
-    elem = Element("str:DataKeySet", isIncluded=str(obj.included).lower())
-    elem.extend(writer.recurse(dk) for dk in obj.keys)
-    return elem
+    return Element(
+        "str:DataKeySet",
+        *[writer.recurse(dk) for dk in obj.keys],
+        isIncluded=str(obj.included).lower(),
+    )
+
+
+@writer
+def _mv(obj: model.MemberValue):
+    return Element("com:Value", obj.value)
+
+
+@writer
+def _rp(obj: model.RangePeriod):
+    return Element("com:TimeRange", writer.recurse(obj.start), writer.recurse(obj.end))
+
+
+@writer
+def _period(obj: common.Period):
+    """Includes :class:`.v21.StartPeriod` and :class:`.v21.EndPeriod`."""
+    return Element(
+        f"com:{obj.__class__.__name__}",
+        # `period` attribute as text
+        obj.period.isoformat(),
+        isInclusive=str(obj.is_inclusive).lower(),
+    )
 
 
 @writer
@@ -495,20 +529,18 @@ def _ms(obj: model.MemberSelection):
         model.DataAttribute: "Attribute",
     }[type(obj.values_for)]
 
-    elem = Element(f"com:{tag}", id=obj.values_for.id)
-    elem.extend(
-        # cast(): as of PR#30, only MemberValue is supported here
-        Element("com:Value", cast(model.MemberValue, mv).value)
-        for mv in obj.values
+    return Element(
+        f"com:{tag}", *[writer.recurse(v) for v in obj.values], id=obj.values_for.id
     )
-    return elem
 
 
 @writer
 def _cr(obj: model.CubeRegion):
-    elem = Element("str:CubeRegion", include=str(obj.included).lower())
-    elem.extend(writer.recurse(ms) for ms in obj.member.values())
-    return elem
+    return Element(
+        "str:CubeRegion",
+        *[writer.recurse(ms) for ms in obj.member.values()],
+        include=str(obj.included).lower(),
+    )
 
 
 @writer
@@ -717,3 +749,160 @@ def _ds(obj: model.DataSet):
         elem.append(writer.recurse(obs, struct_spec=struct_spec))
 
     return elem
+
+
+# SDMX 2.1 §7.3: Metadata Structure Definition
+
+
+@writer
+def _mdsd(obj: v21.MetadataStructureDefinition):
+    msc = Element(
+        "str:MetadataStructureComponents",
+        *[writer.recurse(mdt, obj) for mdt in obj.target.values()],
+        *[writer.recurse(rs) for rs in obj.report_structure.values()],
+    )
+
+    return maintainable(obj, msc)
+
+
+@writer
+def _rs(obj: v21.ReportStructure):
+    elem = _cl(obj, None)
+    elem.extend(
+        [
+            Element("str:MetadataTarget", Element(":Ref", id=mdt.id))
+            for mdt in obj.report_for
+        ]
+    )
+    return elem
+
+
+@writer
+def _mda(obj: v21.MetadataAttribute, *args):
+    # MetadataAttribute class properties
+    attrib = dict()
+    if obj.is_presentational is not None:
+        attrib["isPresentational"] = str(obj.is_presentational).lower()
+    if obj.min_occurs is not None:
+        attrib["minOccurs"] = str(obj.min_occurs)
+    if obj.max_occurs is not None:
+        attrib["maxOccurs"] = str(obj.max_occurs)
+
+    # Use the generic _component function to handle several common features
+    elem = _component(obj, *args, attrib=attrib)
+
+    # Recurse children
+    elem.extend([writer.recurse(mda, *args) for mda in obj.child])
+
+    return elem
+
+
+@writer
+def _iot(obj: v21.IdentifiableObjectTarget, *args):
+    # IdentifiableObjectTarget class properties
+    attrib: MutableMapping[str, str] = dict()
+    if obj.object_type:
+        attrib.update(objectType=str(obj.object_type.__name__))
+
+    # Use the generic _component function to handle several common features
+    return _component(obj, *args, attrib=attrib)
+
+
+@writer
+def _rpt(obj: v21.ReportPeriodTarget, *args):
+    elem = _component(obj, *args)
+    # Do not write "id" attribute
+    elem.attrib.pop("id")
+    return elem
+
+
+# SDMX 2.1 §7.4: Metadata Set
+
+
+@writer
+def _mds(obj: model.MetadataSet):
+    attrib = {}
+    if obj.structured_by:
+        attrib["structureRef"] = obj.structured_by.id
+    return Element(
+        "mes:MetadataSet", *[writer.recurse(mdr) for mdr in obj.report], **attrib
+    )
+
+
+@writer
+def _mdr(obj: model.MetadataReport):
+    # TODO Write the id=… attribute
+    elem = Element("md:Report")
+
+    if obj.target:  # pragma: no cover
+        elem.append(writer.recurse(obj.target))
+    if obj.attaches_to:
+        elem.append(writer.recurse(obj.attaches_to))
+
+    elem.append(
+        Element("md:AttributeSet", *[writer.recurse(ra) for ra in obj.metadata])
+    )
+
+    return elem
+
+
+@writer
+def _tok(obj: model.TargetObjectKey):
+    # TODO Write the id=… attribute
+    return Element(
+        "md:Target", *[writer.recurse(tov) for tov in obj.key_values.values()]
+    )
+
+
+@writer
+def _tov(obj: model.TargetObjectValue):
+    if isinstance(obj.value_for, str):
+        # NB value_for should be MetadataAttribute, but currently not due to limitations
+        #    of .reader.xml.v21
+        id_: str = obj.value_for
+    else:  # pragma: no cover
+        id_ = obj.value_for.id
+
+    elem = Element("md:ReferenceValue", id=id_)
+
+    if isinstance(obj, model.TargetReportPeriod):
+        elem.append(Element("md:ReportPeriod", obj.report_period))
+    elif isinstance(obj, model.TargetIdentifiableObject):
+        elem.append(
+            Element("md:ObjectReference", Element("URN", sdmx.urn.make(obj.obj)))
+        )
+    else:  # pragma: no cover
+        raise NotImplementedError(type(obj))
+
+    return elem
+
+
+@writer
+def _ra(obj: model.ReportedAttribute):
+    child = []
+    attrib: MutableMapping[str, str] = dict()
+
+    if isinstance(obj.value_for, str):
+        # NB value_for should be MetadataAttribute, but currently not due to limitations
+        #    of .reader.xml.v21
+        attrib.update(id=obj.value_for)
+    else:  # pragma: no cover
+        attrib.update(id=obj.value_for.id)
+
+    if isinstance(obj, model.OtherNonEnumeratedAttributeValue):
+        # Only write the "value" attribute if defined; some attributes are only
+        # containers for child attributes
+        if obj.value:
+            attrib.update(value=obj.value)
+    elif isinstance(obj, model.XHTMLAttributeValue):
+        child.append(Element("com:StructuredText", obj.value))
+    else:  # pragma: no cover
+        raise NotImplementedError
+
+    if len(obj.child):
+        # Add child ReportedAttribute within an AttributeSet
+        child.append(
+            Element("md:AttributeSet", *[writer.recurse(ra) for ra in obj.child])
+        )
+
+    return Element("md:ReportedAttribute", *child, **attrib)

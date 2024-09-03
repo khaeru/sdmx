@@ -545,7 +545,13 @@ def _mv(obj: model.MemberValue):
 
 
 @writer
-def _na(obj: model.NameableArtefact):
+def _mds(obj: model.MetadataSet, **kwargs):
+    raise NotImplementedError(f"write {type(obj).__name__} to pandas")
+
+
+@writer
+def _na(obj: model.NameableArtefact, **kwargs):
+    """Fallback for NameableArtefact: only its name."""
     return str(obj.name)
 
 

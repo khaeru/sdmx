@@ -3,8 +3,25 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- :class:`MetadataStructureDefinition <.BaseMetadataStructureDefinition>` and :class:`MetadataSet <.BaseMetadataSet>` can be written to and read from SDMX-ML (:pull:`192`).
+
+  - Clarify differences between :attr:`.v21.MetadataSet.structured_by` and :attr:`.v30.MetadataSet.structured_by`, according to the respective standards documents.
+  - Read and write :class:`.MetadataAttribute`, :class:`.MetadataReport`, :class:`.ReportedAttribute`, :class:`.Period`, and associated classes and subclasses.
+  - :class:`.XHTMLAttributeValue` contents are stored as :mod:`lxml.etree` nodes.
+  - MetadataStructureDefinition is included when writing :class:`.StructureMessage`.
+
+- Update base url for :ref:`WB_WDI` source to use HTTPS instead of plain HTTP (:issue:`191`, :pull:`192`).
+- Improvements to :mod:`.reader.xml` and :mod:`.reader.xml.v21` (:pull:`192`).
+
+  - Correctly associate :class:`.Item` in :class:`.ItemScheme` with its parent, even if the parent is defined after the child (“forward reference”).
+  - Bugfix: correctly handle a :class:`.MaintainableArtefact` that is explicitly included in a message (that is, not merely referenced), but with :py:`is_external_reference = True`; the value given in the file is preserved.
+  - Bugfix: :class:`.FacetValueType` is written in UpperCamelCase per the standard.
+    The standard specifies lowerCamelCase only in the Information Model.
+  - Bugfix: erroneous extra :xml:`<Ref ... style="Ref"/>` attribute is no longer written.
+- Expand logged information in :meth:`.ComponentList.compare` (:pull:`192`).
 
 v2.16.0 (2024-08-16)
 ====================

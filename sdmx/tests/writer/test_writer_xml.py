@@ -216,6 +216,7 @@ def test_ErrorMessage(errormessage):
         ("ECB_EXR/1/M.USD.EUR.SP00.A.xml", "ECB_EXR/1/structure.xml"),
         ("ECB_EXR/ng-ts.xml", "ECB_EXR/ng-structure-full.xml"),
         ("ECB_EXR/ng-ts-ss.xml", "ECB_EXR/ng-structure-full.xml"),
+        ("ESTAT/esms.xml", "ESTAT/esms-structure.xml"),
         # DSD reference does not round-trip correctly
         pytest.param(
             "ECB_EXR/rg-xs.xml",
@@ -260,6 +261,7 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("ECB/orgscheme.xml", True),
         ("ECB_EXR/1/structure-full.xml", False),
         ("ESTAT/apro_mk_cola-structure.xml", True),
+        ("ESTAT/esms-structure.xml", True),
         pytest.param(
             "ISTAT/47_850-structure.xml", True, marks=[pytest.mark.skip(reason="Slow")]
         ),
@@ -267,6 +269,7 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("INSEE/CNA-2010-CONSO-SI-A17-structure.xml", False),
         ("INSEE/IPI-2010-A21-structure.xml", False),
         ("INSEE/dataflow.xml", False),
+        ("OECD/actualconstraint-0.xml", True),
         ("SGR/common-structure.xml", True),
         ("UNSD/codelist_partial.xml", True),
         ("TEST/gh-149.xml", False),

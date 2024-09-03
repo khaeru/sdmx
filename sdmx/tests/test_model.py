@@ -216,6 +216,7 @@ def test_complete(module, extra):
         (dict(name=Resource.conceptscheme), model.ConceptScheme),
         (dict(name=Resource.contentconstraint), v21.ContentConstraint),
         (dict(name=Resource.dataflow), v21.DataflowDefinition),
+        (dict(name=Resource.metadatastructure), v21.MetadataStructureDefinition),
         (dict(name=Resource.organisationscheme), model.OrganisationScheme),
         (dict(name=Resource.provisionagreement), v21.ProvisionAgreement),
         pytest.param(
@@ -225,8 +226,18 @@ def test_complete(module, extra):
         ),
     ],
 )
-def test_get_class(args, expected):
+def test_get_class_v21(args, expected) -> None:
     assert expected is model.v21.get_class(**args)
+
+
+@pytest.mark.parametrize("args, expected", ((dict(name="ValueList"), v30.ValueList),))
+def test_get_class_v30(args, expected) -> None:
+    assert expected is model.v30.get_class(**args)
+
+
+@pytest.mark.parametrize("klass, expected", (("ValueList", "codelist"),))
+def test_package(klass, expected) -> None:
+    assert expected == model.v30.PACKAGE[klass]
 
 
 def test_deprecated_import():

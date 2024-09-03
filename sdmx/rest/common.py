@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 CLASS_NAME = {
     "dataflow": "DataflowDefinition",
     "datastructure": "DataStructureDefinition",
+    "metadatastructure": "MetadataStructureDefinition",
 }
 
 # Inverse of :data:`CLASS_NAME`.

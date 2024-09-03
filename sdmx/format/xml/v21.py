@@ -25,6 +25,8 @@ FORMAT = XMLFormat(
         ("model.TargetReportPeriod", "md:ReportPeriod"),
         ("model.MetadataReport", ":Report"),
         ("model.MetadataReport", "md:Report"),
+        ("model.StartPeriod", "com:StartPeriod"),
+        ("model.EndPeriod", "com:EndPeriod"),
     ]
     + [
         (f"model.{name}", f"str:{name}")

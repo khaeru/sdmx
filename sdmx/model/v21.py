@@ -19,6 +19,7 @@ from typing import (
 )
 
 from sdmx.dictlike import DictLikeDescriptor
+from sdmx.util import compare
 
 from . import common
 from .common import (
@@ -344,8 +345,28 @@ class DimensionDescriptorValuesTarget(TargetObject):
     """SDMX 2.1 DimensionDescriptorValuesTarget."""
 
 
+@dataclass
 class IdentifiableObjectTarget(TargetObject):
     """SDMX 2.1 IdentifiableObjectTarget."""
+
+    #: Type of :class:`.IdentifiableArtefact` that is targeted.
+    object_type: Optional[Type[IdentifiableArtefact]] = None
+
+    def compare(self, other, strict=True):
+        """Return :obj:`True` if `self` is the same as `other`.
+
+        Two IdentifiableObjectTargets are the same if
+        :meth:`.IdentifiableArtefact.compare` is :obj:`True` and they have the same
+        :attr:`object_type`.
+
+        Parameters
+        ----------
+        strict : bool, optional
+            Passed to :func:`.compare`.
+        """
+        return super().compare(other, strict) and compare(
+            "object_type", self, other, strict
+        )
 
 
 class ReportPeriodTarget(TargetObject):
@@ -455,10 +476,11 @@ class NonEnumeratedAttributeValue(ReportedAttribute):
     """SDMX 2.1 NonEnumeratedAttributeValue."""
 
 
+@dataclass
 class OtherNonEnumeratedAttributeValue(NonEnumeratedAttributeValue):
     """SDMX 2.1 OtherNonEnumeratedAttributeValue."""
 
-    value: str
+    value: Optional[str] = None
 
 
 class TextAttributeValue(NonEnumeratedAttributeValue, common.BaseTextAttributeValue):
@@ -491,6 +513,9 @@ class MetadataSet(NameableArtefact, common.BaseMetadataSet):
 
     described_by: Optional[MetadataflowDefinition] = None
     # described_by: Optional[ReportStructure] = None
+
+    #: .. seealso::
+    #:    :attr:`.v30.MetadataSet.structured_by`, which has different semantics.
     structured_by: Optional[MetadataStructureDefinition] = None
 
     #: Analogous to :attr:`.v30.MetadataSet.provided_by`.

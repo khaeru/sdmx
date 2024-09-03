@@ -11,7 +11,7 @@ import re
 from copy import copy
 from itertools import chain
 from sys import maxsize
-from typing import Any, Dict, Type, cast
+from typing import Any, Dict, MutableMapping, Optional, Type, cast
 
 from dateutil.parser import isoparse
 from lxml import etree
@@ -98,7 +98,6 @@ start(
     "gen:ObsDimension gen:ObsValue gen:Value "
     # Tags that are bare containers for other XML elements
     """
-    :AttributeSet md:AttributeSet
     str:Categorisations str:CategorySchemes str:Codelists str:Concepts
     str:ConstraintAttachment str:Constraints str:CustomTypes str:Dataflows
     str:DataStructureComponents str:DataStructures str:FromVtlSuperSpace
@@ -350,7 +349,7 @@ def _text(reader, elem):
 @start("com:StructuredText")
 def _st(reader, elem):
     """Contained XHTML."""
-    reader.push(elem, etree.tostring(elem[0], pretty_print=True))
+    reader.push(elem, elem[0])
 
 
 @end("mes:Extracted mes:Prepared mes:ReportingBegin mes:ReportingEnd")
@@ -466,10 +465,16 @@ def _item_end(reader: Reader, elem):
             # Found 1 child XML element with same tag → claim 1 child object
             item.append_child(reader.pop_single(cls))
 
-    # (2) through <str:Parent>
-    parent = reader.pop_resolved_ref("Parent")
-    if parent:
-        parent.append_child(item)
+    # (2) through <str:Parent>. These may be backward or forward references. Backward
+    # references can be resolved through pop_resolved_ref(), but forward references
+    # cannot.
+    if parent := reader.pop_resolved_ref("Parent"):
+        if getattr(parent.get_scheme(), "is_external_reference", False):
+            # Forward reference
+            reader.push("item parent", (item.id, parent.id))
+        else:
+            # Backward reference
+            parent.append_child(item)
 
     # Agency only
     try:
@@ -516,6 +521,14 @@ def _itemscheme(reader: Reader, elem):
             # TODO "no cover" since this doesn't occur in the test suite; check whether
             #      this try/except can be removed.
             pass
+
+    # Add deferred forward references
+    for child_id, parent_id in reader.pop_all("item parent"):
+        try:
+            is_[parent_id].append_child(is_[child_id])
+        except KeyError:
+            if not is_.is_partial:  # pragma: no cover
+                raise
 
     return is_
 
@@ -585,10 +598,14 @@ def _component_start(reader: Reader, elem):
     reader.stash(reader.class_for_tag(elem.tag))
 
 
+def _maybe_unbounded(value: str) -> Optional[int]:
+    return None if value == "unbounded" else int(value)
+
+
+# TODO Reduce complexity from 12 → 11, by adding separate parsers for certain COMPONENTs
 @end(COMPONENT, only=False)
 @possible_reference(unstash=True)
-def _component_end(reader: Reader, elem):
-    # Object class: {,Measure,Time}Dimension or DataAttribute
+def _component_end(reader: Reader, elem):  # noqa: C901
     cls = reader.class_for_tag(elem.tag)
 
     args = dict(
@@ -596,28 +613,32 @@ def _component_end(reader: Reader, elem):
         concept_identity=reader.pop_resolved_ref("ConceptIdentity"),
         local_representation=reader.pop_single(common.Representation),
     )
-    try:
-        args["order"] = int(elem.attrib["position"])
-    except KeyError:
-        pass
+    if position := elem.attrib.get("position"):
+        args["order"] = int(position)
+
     # DataAttributeOnly
-    us = elem.attrib.get("assignmentStatus")
-    if us:
+    if us := elem.attrib.get("assignmentStatus"):
         args["usage_status"] = model.UsageStatus[us.lower()]
 
-    cr = reader.pop_resolved_ref("ConceptRole")
-    if cr:
+    if cr := reader.pop_resolved_ref("ConceptRole"):
         args["concept_role"] = cr
 
     # DataAttribute only
-    ar = reader.pop_all(model.AttributeRelationship, subclass=True)
-    if len(ar):
+    if ar := reader.pop_all(model.AttributeRelationship, subclass=True):
         assert len(ar) == 1, ar
         args["related_to"] = ar[0]
 
-    # MetadataAttribute.child only
-    if children := reader.pop_all(cls):
-        args["child"] = children
+    if cls is v21.MetadataAttribute:
+        setdefault_attrib(args, elem, "isPresentational", "maxOccurs", "minOccurs")
+        if "is_presentational" in args:
+            args["is_presentational"] = bool(args["is_presentational"])
+        for name in "max_occurs", "min_occurs":
+            if name in args:
+                args[name] = _maybe_unbounded(args[name])
+        if children := reader.pop_all(cls):
+            args["child"] = children
+    elif cls is v21.IdentifiableObjectTarget:
+        args["object_type"] = model.get_class(elem.attrib["objectType"])
 
     reader.unstash()
 
@@ -626,10 +647,7 @@ def _component_end(reader: Reader, elem):
     # assumed to be the same as the identifier of the concept referenced from the
     # concept identity.”
     if args["id"] is common.MissingID:
-        try:
-            args["id"] = args["concept_identity"].id
-        except AttributeError:
-            pass
+        args["id"] = getattr(args["concept_identity"], "id", None) or args["id"]
 
     return reader.identifiable(cls, elem, **args)
 
@@ -765,19 +783,14 @@ def _dks(reader, elem):
 
 @end("com:StartPeriod com:EndPeriod")
 def _p(reader, elem):
-    # Store by element tag name
-    reader.push(
-        elem,
-        model.Period(
-            is_inclusive=elem.attrib["isInclusive"], period=isoparse(elem.text)
-        ),
-    )
+    cls = reader.class_for_tag(elem.tag)
+    return cls(is_inclusive=elem.attrib["isInclusive"], period=isoparse(elem.text))
 
 
 @end("com:TimeRange")
 def _tr(reader, elem):
-    return model.RangePeriod(
-        start=reader.pop_single("StartPeriod"), end=reader.pop_single("EndPeriod")
+    return v21.RangePeriod(
+        start=reader.pop_single(v21.StartPeriod), end=reader.pop_single(v21.EndPeriod)
     )
 
 
@@ -1253,6 +1266,7 @@ def _mds_start(reader, elem):
 
 @end("mes:MetadataSet", only=False)
 def _mds_end(reader, elem):
+    # Retrieve the current MetadataSet
     mds = reader.pop_single("MetadataSet")
 
     # Collect the contained MetadataReports
@@ -1265,24 +1279,20 @@ def _mds_end(reader, elem):
 @end(":Report md:Report")
 def _md_report(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
-
-    obj = cls(
+    return cls(
         attaches_to=reader.pop_single(model.TargetObjectKey),
-        metadata=reader.pop_all(model.ReportedAttribute, subclass=True),
+        metadata=reader.pop_single("AttributeSet"),
     )
-    return obj
 
 
 @end(":Target md:Target")
 def _tov(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
-
-    obj = cls(
+    return cls(
         key_values={
             v.value_for: v for v in reader.pop_all(v21.TargetObjectValue, subclass=True)
         }
     )
-    return obj
 
 
 @end(":ReferenceValue md:ReferenceValue")
@@ -1304,11 +1314,11 @@ def _rv(reader: Reader, elem):
     if cls is v21.TargetReportPeriod:
         args["report_period"] = reader.pop_single("ReportPeriod")
     elif cls is model.TargetIdentifiableObject:
-        args["obj"] = reader.pop_single("ObjectReference")
+        or_ = reader.pop_resolved_ref("ObjectReference")
+        reader.ignore.add(id(or_.parent))
+        args["obj"] = or_
 
-    obj = cls(**args)
-
-    return obj
+    return cls(**args)
 
 
 def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
@@ -1316,8 +1326,7 @@ def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
 
     # TODO these persist after reading a particular message; avoid this
     def _add_events_for_ma(ma: model.MetadataAttribute):
-        reader.start(f":{ma.id}", only=False)(_ra_start)
-        reader.end(f":{ma.id}", only=False)(_ra_end)
+        reader.end(f":{ma.id}")(_ra)
         for child in ma.child:
             _add_events_for_ma(child)
 
@@ -1326,33 +1335,55 @@ def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
             _add_events_for_ma(ma)
 
 
-@start("md:ReportedAttribute", only=False)
-def _ra_start(reader: Reader, elem):
+@start(":AttributeSet md:AttributeSet", only=False)
+def _as_start(reader: Reader, elem):
     # Avoid collecting previous/sibling ReportedAttribute as children of this one
-    reader.stash(model.ReportedAttribute)
+    reader.stash("ReportedAttribute")
 
 
-@end("md:ReportedAttribute", only=False)
-def _ra_end(reader: Reader, elem):
-    cls = reader.class_for_tag(elem.tag)
-    if cls is None:
-        cls = reader.class_for_tag("md:ReportedAttribute")
-        value_for = elem.tag
-    else:
-        value_for = elem.attrib["id"]
-
-    # Pop all child elements
-    args = dict(child=reader.pop_all(cls, subclass=True), value_for=value_for)
-
-    xhtml = reader.pop_single("StructuredText")
-    if xhtml:
-        cls = v21.XHTMLAttributeValue
-        args["value"] = xhtml
-
-    obj = cls(**args)
-
+@end(":AttributeSet md:AttributeSet", only=False)
+def _as_end(reader: Reader, elem):
+    # Collect ReportedAttributes from the current AttributeSet in a list
+    reader.push("AttributeSet", reader.pop_all("ReportedAttribute"))
+    # Unstash others from the same level
     reader.unstash()
-    return obj
+
+
+@end("md:ReportedAttribute")
+def _ra(reader: Reader, elem):
+    args: MutableMapping[str, Any] = dict()
+
+    # Unstash and retrieve child ReportedAttribute
+    child = reader.pop_single("AttributeSet")
+    if child:
+        args.update(child=child)
+
+    # TODO Match value_for to specific common.MetadataAttribute in the ReportStructure
+    # # Retrieve the current MetadataSet, MDSD, and ReportStructure
+    # mds = cast(model.MetadataSet, reader.get_single("MetadataSet"))
+
+    try:
+        # Set `value_for` using the "id" attribute
+        args["value_for"] = elem.attrib["id"]
+    except KeyError:
+        args["value_for"] = elem.tag
+
+    # Identify a concrete subclass of model.ReportedAttribute
+    xhtml_value_root_elem = reader.pop_single("StructuredText")
+    if xhtml_value_root_elem is not None:
+        cls: type = v21.XHTMLAttributeValue
+        args["value"] = xhtml_value_root_elem
+    else:
+        # TODO Distinguish model.EnumeratedAttributeValue
+        cls = model.OtherNonEnumeratedAttributeValue
+        try:
+            args["value"] = elem.attrib["value"]
+        except KeyError:
+            if not child:  # pragma: no cover
+                raise
+
+    # Push onto a common ReportedAttribute stack; not a subclass-specific stack
+    reader.push("ReportedAttribute", cls(**args))
 
 
 # §8: Hierarchical Code List

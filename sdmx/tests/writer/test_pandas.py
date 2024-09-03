@@ -8,6 +8,10 @@ import sdmx
 from sdmx.model.v21 import TimeDimension
 from sdmx.testing import assert_pd_equal
 
+MARKS = {
+    "ESTAT/esms.xml": pytest.mark.xfail(raises=NotImplementedError),
+}
+
 
 def test_write_data_arguments(specimen):
     # The identity here is not important; any non-empty DataMessage will work
@@ -23,7 +27,7 @@ def test_write_data_arguments(specimen):
         sdmx.to_pandas(msg, attributes="foobarbaz")
 
 
-@pytest.mark.parametrize_specimens("path", kind="data")
+@pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
 def test_write_data(specimen, path):
     msg = sdmx.read_sdmx(path)
 
@@ -38,7 +42,7 @@ def test_write_data(specimen, path):
     assert isinstance(result, (pd.Series, pd.DataFrame, list)), type(result)
 
 
-@pytest.mark.parametrize_specimens("path", kind="data")
+@pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
 def test_write_data_attributes(path):
     msg = sdmx.read_sdmx(path)
 

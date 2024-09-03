@@ -287,7 +287,8 @@ class IdentifiableArtefact(AnnotableArtefact):
         return (
             compare("id", self, other, strict)
             and compare("uri", self, other, strict)
-            and compare("urn", self, other, strict)
+            # Allow non-strict comparison if self.urn is None
+            and compare("urn", self, other, strict and self.urn is not None)
         )
 
     def __hash__(self):
@@ -997,9 +998,14 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
         strict : bool, optional
             Passed to :func:`.compare` and :meth:`.IdentifiableArtefact.compare`.
         """
-        return super().compare(other, strict) and all(
-            c.compare(other.get(c.id), strict) for c in self.components
-        )
+        result = True
+        for c in self.components:
+            try:
+                result &= c.compare(other.get(c.id), strict)
+            except KeyError:
+                log.debug(f"{other} has no component with ID {c.id!r}")
+                result = False
+        return result and super().compare(other, strict)
 
 
 # §4.5: Category Scheme
@@ -2151,6 +2157,13 @@ class BaseMetadataSet:
     publication_period: Optional[date] = None
     publication_year: Optional[date] = None
 
+    described_by: Optional[BaseMetadataflow] = None
+
+    #: Note that the class of this attribute differs from SDMX 2.1 to SDMX 3.0.
+    #: Compare :attr:`.v21.MetadataSet.structured_by` and
+    #: :attr:`.v30.MetadataSet.structured_by`.
+    structured_by: Optional[IdentifiableArtefact] = None
+
 
 # SDMX 2.1 §8: Hierarchical Code List
 # SDMX 3.0 §8: Hierarchy
@@ -2570,6 +2583,7 @@ _PACKAGE_CLASS: Dict[str, set] = {
         "HierarchicalCodelist",  # SDMX 2.1
         "Hierarchy",
         "Level",
+        "ValueList",  # SDMX 3.0
     },
     "conceptscheme": {"Concept", "ConceptScheme"},
     "datastructure": {

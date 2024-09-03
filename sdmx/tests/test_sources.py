@@ -634,8 +634,17 @@ class TestUNICEF(DataSourceTest):
 
     @pytest.mark.network
     def test_data(self, client):
-        dsd = client.dataflow("GLOBAL_DATAFLOW").structure[0]
+        dm = client.dataflow("GLOBAL_DATAFLOW")
+        dsd = dm.structure[0]
+
         client.data("GLOBAL_DATAFLOW", key="ALB+DZA.MNCH_INSTDEL.", dsd=dsd)
+
+        cl = dm.codelist["CL_UNICEF_INDICATOR"]
+        c = cl["TRGT_2030_CME_MRM0"]
+
+        # Code is properly associated with its parent, despite forward reference
+        assert isinstance(c.parent, type(c))
+        assert "TRGT_CME" == c.parent.id
 
     @pytest.mark.network
     def test_cd2030(self, client):
