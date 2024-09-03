@@ -216,6 +216,7 @@ def test_complete(module, extra):
         (dict(name=Resource.conceptscheme), model.ConceptScheme),
         (dict(name=Resource.contentconstraint), v21.ContentConstraint),
         (dict(name=Resource.dataflow), v21.DataflowDefinition),
+        (dict(name=Resource.metadatastructure), v21.MetadataStructureDefinition),
         (dict(name=Resource.organisationscheme), model.OrganisationScheme),
         (dict(name=Resource.provisionagreement), v21.ProvisionAgreement),
         pytest.param(
