@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.17.0 (2024-09-03)
+====================
 
 - :class:`MetadataStructureDefinition <.BaseMetadataStructureDefinition>` and :class:`MetadataSet <.BaseMetadataSet>` can be written to and read from SDMX-ML (:pull:`192`).
 
