@@ -6,7 +6,7 @@
 # - writer functions for sdmx.model classes, in the same order as model.py
 
 import logging
-from typing import Iterable, List, Literal, MutableMapping
+from typing import Iterable, List, Literal, MutableMapping, Optional
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -432,9 +432,9 @@ def _contact(obj: model.Contact):
 
 
 @writer
-def _component(obj: model.Component, dsd):
+def _component(obj: model.Component, dsd, *, attrib: Optional[dict] = None):
     child = []
-    attrib = dict()
+    attrib = attrib or dict()
 
     try:
         child.append(
