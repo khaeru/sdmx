@@ -10,6 +10,8 @@ from sdmx.model.common import (
     Agency,
     AnnotableArtefact,
     Annotation,
+    Component,
+    ComponentList,
     Contact,
     IdentifiableArtefact,
     Item,
@@ -341,6 +343,22 @@ class TestRepresentation:
         is0: ItemScheme = ItemScheme(id="is0")
         r = Representation(enumerated=is0)
         assert "<Representation: is0, []>" == repr(r)
+
+
+class TestComponentList:
+    def test_compare(self, caplog) -> None:
+        """Test comparison of two CL with mismatched components."""
+
+        components = [Component(id=s) for s in ("FOO", "BAR", "BAZ")]
+
+        cl1: ComponentList = ComponentList(id="CL", components=components)
+        cl2: ComponentList = ComponentList(id="CL", components=components[:-1])
+
+        # cl1 and cl2 compare as different
+        assert False is cl1.compare(cl2)
+
+        # Log message is emitted for mismatched components
+        assert "CL has no component with ID 'BAZ'" in caplog.messages
 
 
 class TestContact:

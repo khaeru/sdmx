@@ -527,7 +527,7 @@ def _itemscheme(reader: Reader, elem):
         try:
             is_[parent_id].append_child(is_[child_id])
         except KeyError:
-            if not is_.is_partial:
+            if not is_.is_partial:  # pragma: no cover
                 raise
 
     return is_
@@ -1379,7 +1379,7 @@ def _ra(reader: Reader, elem):
         try:
             args["value"] = elem.attrib["value"]
         except KeyError:
-            if not child:
+            if not child:  # pragma: no cover
                 raise
 
     # Push onto a common ReportedAttribute stack; not a subclass-specific stack

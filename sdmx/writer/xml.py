@@ -294,7 +294,7 @@ def _a(obj: model.Annotation):
 def annotable(obj, *args, **kwargs) -> etree._Element:
     # Determine tag
     tag = kwargs.pop("_tag", tag_for_class(obj.__class__))
-    if tag is None:
+    if tag is None:  # pragma: no cover
         raise NotImplementedError(f"Write {obj.__class__} to SDMX-ML")
 
     # Write Annotations
@@ -384,7 +384,7 @@ def _facet(obj: model.Facet):
     attrib: MutableMapping[str, str] = dict()
     try:
         attrib.update(textType=ucfirst(obj.value_type.name))
-    except AttributeError:
+    except AttributeError:  # pragma: no cover
         pass
     return Element("str:TextFormat", **attrib)
 
@@ -834,7 +834,7 @@ def _mdr(obj: model.MetadataReport):
     # TODO Write the id=… attribute
     elem = Element("md:Report")
 
-    if obj.target:
+    if obj.target:  # pragma: no cover
         elem.append(writer.recurse(obj.target))
     if obj.attaches_to:
         elem.append(writer.recurse(obj.attaches_to))
@@ -857,8 +857,10 @@ def _tok(obj: model.TargetObjectKey):
 @writer
 def _tov(obj: model.TargetObjectValue):
     if isinstance(obj.value_for, str):
+        # NB value_for should be MetadataAttribute, but currently not due to limitations
+        #    of .reader.xml.v21
         id_: str = obj.value_for
-    else:
+    else:  # pragma: no cover
         id_ = obj.value_for.id
 
     elem = Element("md:ReferenceValue", id=id_)
@@ -869,8 +871,8 @@ def _tov(obj: model.TargetObjectValue):
         elem.append(
             Element("md:ObjectReference", Element("URN", sdmx.urn.make(obj.obj)))
         )
-    else:
-        assert False
+    else:  # pragma: no cover
+        raise NotImplementedError(type(obj))
 
     return elem
 
@@ -884,7 +886,7 @@ def _ra(obj: model.ReportedAttribute):
         # NB value_for should be MetadataAttribute, but currently not due to limitations
         #    of .reader.xml.v21
         attrib.update(id=obj.value_for)
-    else:
+    else:  # pragma: no cover
         attrib.update(id=obj.value_for.id)
 
     if isinstance(obj, model.OtherNonEnumeratedAttributeValue):
@@ -894,7 +896,7 @@ def _ra(obj: model.ReportedAttribute):
             attrib.update(value=obj.value)
     elif isinstance(obj, model.XHTMLAttributeValue):
         child.append(Element("com:StructuredText", obj.value))
-    else:
+    else:  # pragma: no cover
         raise NotImplementedError
 
     if len(obj.child):
