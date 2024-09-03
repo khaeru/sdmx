@@ -759,7 +759,7 @@ def _mdsd(obj: v21.MetadataStructureDefinition):
     msc = Element(
         "str:MetadataStructureComponents",
         *[writer.recurse(mdt, obj) for mdt in obj.target.values()],
-        *[writer.recurse(rs, obj) for rs in obj.report_structure.values()],
+        *[writer.recurse(rs) for rs in obj.report_structure.values()],
     )
 
     return maintainable(obj, msc)
@@ -779,16 +779,17 @@ def _rs(obj: v21.ReportStructure):
 
 @writer
 def _mda(obj: v21.MetadataAttribute, *args):
-    # Use the generic _component function to handle several common features
-    elem = _component(obj, *args)
-
     # MetadataAttribute class properties
+    attrib = dict()
     if obj.is_presentational is not None:
-        elem.attrib["isPresentational"] = str(obj.is_presentational).lower()
+        attrib["isPresentational"] = str(obj.is_presentational).lower()
     if obj.min_occurs is not None:
-        elem.attrib["minOccurs"] = str(obj.min_occurs)
+        attrib["minOccurs"] = str(obj.min_occurs)
     if obj.max_occurs is not None:
-        elem.attrib["maxOccurs"] = str(obj.max_occurs)
+        attrib["maxOccurs"] = str(obj.max_occurs)
+
+    # Use the generic _component function to handle several common features
+    elem = _component(obj, *args, attrib=attrib)
 
     # Recurse children
     elem.extend([writer.recurse(mda, *args) for mda in obj.child])
