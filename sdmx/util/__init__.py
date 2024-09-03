@@ -80,6 +80,11 @@ def parse_content_type(value: str) -> Tuple[str, Dict[str, Any]]:
     return content_type, params
 
 
+def ucfirst(value: str) -> str:
+    """Return `value` with its first character transformed to upper-case."""
+    return value[0].upper() + value[1:]
+
+
 _FIELDS_CACHE: Dict[str, List[Field]] = dict()
 
 
