@@ -16,6 +16,7 @@ from sdmx import message
 from sdmx.format.xml.v21 import NS, qname, tag_for_class
 from sdmx.model import common, v21
 from sdmx.model import v21 as model
+from sdmx.util import ucfirst
 from sdmx.writer.base import BaseWriter
 
 _element_maker = ElementMaker(nsmap={k: v for k, v in NS.items() if v is not None})
@@ -377,8 +378,12 @@ def _is(obj: model.ItemScheme):
 
 @writer
 def _facet(obj: model.Facet):
-    # TODO textType should be CamelCase
-    return Element("str:TextFormat", textType=getattr(obj.value_type, "name", None))
+    attrib: MutableMapping[str, str] = dict()
+    try:
+        attrib.update(textType=ucfirst(obj.value_type.name))
+    except AttributeError:
+        pass
+    return Element("str:TextFormat", **attrib)
 
 
 @writer
