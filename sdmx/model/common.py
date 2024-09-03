@@ -2157,6 +2157,13 @@ class BaseMetadataSet:
     publication_period: Optional[date] = None
     publication_year: Optional[date] = None
 
+    described_by: Optional[BaseMetadataflow] = None
+
+    #: Note that the class of this attribute differs from SDMX 2.1 to SDMX 3.0.
+    #: Compare :attr:`.v21.MetadataSet.structured_by` and
+    #: :attr:`.v30.MetadataSet.structured_by`.
+    structured_by: Optional[IdentifiableArtefact] = None
+
 
 # SDMX 2.1 §8: Hierarchical Code List
 # SDMX 3.0 §8: Hierarchy

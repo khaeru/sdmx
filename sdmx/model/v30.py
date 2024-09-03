@@ -486,10 +486,18 @@ class MetadataSet(MaintainableArtefact, common.BaseMetadataSet):
     valid_to: Optional[str] = None
     set_id: Optional[str] = None
 
+    #: .. note:: According to the standard, MetadataSet has **two** associations, both
+    #:    named :py:`.described_by`: one to a :class:`.Metadataflow`, and the other to a
+    #:    :class:`.MetadataProvisionAgreement`. :mod:`sdmx` implements the first,
+    #:    because it is consistent with SDMX 2.1.
     described_by: Optional[Metadataflow] = None
 
     # described_by: Optional[MetadataProvisionAgreement] = None
 
+    #: .. note:: According to the standard, this differs from
+    #:    :attr:`v21.MetadataSet.structured_by` in pointing to
+    #:    :attr:`.MetadataStructureDefinition.attributes`, directly, rather than to the
+    #:    MetadataStructureDefinition itself.
     structured_by: Optional[MetadataAttributeDescriptor] = None
 
     #: Analogous to :attr:`.v21.MetadataSet.published_by`.
