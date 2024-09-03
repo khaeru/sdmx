@@ -514,8 +514,8 @@ class MetadataSet(NameableArtefact, common.BaseMetadataSet):
     described_by: Optional[MetadataflowDefinition] = None
     # described_by: Optional[ReportStructure] = None
 
-    #: .. seealso:: :attr:`.v30.MetadataSet.structured_by`, which has different
-    #:    semantics.
+    #: .. seealso::
+    #:    :attr:`.v30.MetadataSet.structured_by`, which has different semantics.
     structured_by: Optional[MetadataStructureDefinition] = None
 
     #: Analogous to :attr:`.v30.MetadataSet.provided_by`.
