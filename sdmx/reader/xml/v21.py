@@ -602,10 +602,10 @@ def _maybe_unbounded(value: str) -> Optional[int]:
     return None if value == "unbounded" else int(value)
 
 
+# TODO Reduce complexity from 12 → 11, by adding separate parsers for certain COMPONENTs
 @end(COMPONENT, only=False)
 @possible_reference(unstash=True)
-def _component_end(reader: Reader, elem):
-    # Object class: {,Measure,Time}Dimension; DataAttribute; MetadataAttribute
+def _component_end(reader: Reader, elem):  # noqa: C901
     cls = reader.class_for_tag(elem.tag)
 
     args = dict(
@@ -613,10 +613,8 @@ def _component_end(reader: Reader, elem):
         concept_identity=reader.pop_resolved_ref("ConceptIdentity"),
         local_representation=reader.pop_single(common.Representation),
     )
-    try:
-        args["order"] = int(elem.attrib["position"])
-    except KeyError:
-        pass
+    if position := elem.attrib.get("position"):
+        args["order"] = int(position)
 
     # DataAttributeOnly
     if us := elem.attrib.get("assignmentStatus"):
@@ -634,13 +632,13 @@ def _component_end(reader: Reader, elem):
         setdefault_attrib(args, elem, "isPresentational", "maxOccurs", "minOccurs")
         if "is_presentational" in args:
             args["is_presentational"] = bool(args["is_presentational"])
-
-        if "max_occurs" in args:
-            args["max_occurs"] = _maybe_unbounded(args["max_occurs"])
-        if "min_occurs" in args:
-            args["min_occurs"] = _maybe_unbounded(args["min_occurs"])
+        for name in "max_occurs", "min_occurs":
+            if name in args:
+                args[name] = _maybe_unbounded(args[name])
         if children := reader.pop_all(cls):
             args["child"] = children
+    elif cls is v21.IdentifiableObjectTarget:
+        args["object_type"] = model.get_class(elem.attrib["objectType"])
 
     reader.unstash()
 
