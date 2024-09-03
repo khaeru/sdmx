@@ -15,7 +15,6 @@ concurrency:
 
 jobs:
   publish:
-    uses: iiasa/actions/.github/workflows/publish.yaml@main
-    secrets:
-      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-      TESTPYPI_TOKEN: ${{ secrets.TESTPYPI_TOKEN }}
+    uses: iiasa/actions/.github/workflows/publish.yaml@pypi-trusted
+    permissions:
+      id-token: write
