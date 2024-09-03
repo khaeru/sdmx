@@ -365,7 +365,10 @@ def _item(obj: model.Item, **kwargs):
 
 @writer
 def _is(obj: model.ItemScheme):
-    elem = maintainable(obj)
+    kw = dict()
+    if obj.is_partial is not None:
+        kw["isPartial"] = str(obj.is_partial).lower()
+    elem = maintainable(obj, **kw)
 
     # Pass _with_urn to identifiable(): don't generate URNs for Items in `obj` which do
     # not already have them
