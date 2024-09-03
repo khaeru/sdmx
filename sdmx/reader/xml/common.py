@@ -545,7 +545,6 @@ class XMLEventReader(BaseReader):
         the is_external_reference attribute set to :obj:`True`. Subsequent calls with
         the same object ID will return references to the same object.
         """
-        kwargs.setdefault("is_external_reference", elem is None)
         setdefault_attrib(
             kwargs,
             elem,
@@ -555,6 +554,12 @@ class XMLEventReader(BaseReader):
             "validTo",
             "version",
         )
+
+        # Ensure is_external_reference and is_final are bool
+        try:
+            kwargs["is_external_reference"] = kwargs["is_external_reference"] == "true"
+        except (KeyError, SyntaxError):
+            kwargs.setdefault("is_external_reference", elem is None)
         kwargs["is_final"] = kwargs.get("is_final", None) == "true"
 
         # Create a candidate object
@@ -583,18 +588,9 @@ class XMLEventReader(BaseReader):
             or (existing.urn or sdmx.urn.make(existing)) == sdmx.urn.make(obj)
         ):
             if elem is not None:
-                # Previously an external reference, now concrete
-                # FIXME Handle the case where a MaintainableArtefact is included in a
-                #       StructureMessage, with is_external_reference explicitly True
-                existing.is_external_reference = False
-
                 # Update `existing` from `obj` to preserve references
                 # If `existing` was a forward reference <Ref/>, its URN was not stored.
                 for attr in list(kwargs.keys()) + ["urn"]:
-                    # log.info(
-                    #     f"Updating {attr} {getattr(existing, attr)} "
-                    #     f"{getattr(obj, attr)}"
-                    # )
                     setattr(existing, attr, getattr(obj, attr))
 
             # Discard the candidate
@@ -627,7 +623,7 @@ def setdefault_attrib(target, elem, *names):
             except KeyError:
                 pass
     except AttributeError:
-        pass
+        pass  # No elem.attrib; elem is None
 
 
 TO_SNAKE_RE = re.compile("([A-Z]+)")
