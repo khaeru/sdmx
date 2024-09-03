@@ -766,6 +766,18 @@ def _mdsd(obj: v21.MetadataStructureDefinition):
 
 
 @writer
+def _rs(obj: v21.ReportStructure):
+    elem = _cl(obj, None)
+    elem.extend(
+        [
+            Element("str:MetadataTarget", Element(":Ref", id=mdt.id))
+            for mdt in obj.report_for
+        ]
+    )
+    return elem
+
+
+@writer
 def _mda(obj: v21.MetadataAttribute, *args):
     # Use the generic _component function to handle several common features
     elem = _component(obj, *args)
@@ -781,6 +793,25 @@ def _mda(obj: v21.MetadataAttribute, *args):
     # Recurse children
     elem.extend([writer.recurse(mda, *args) for mda in obj.child])
 
+    return elem
+
+
+@writer
+def _iot(obj: v21.IdentifiableObjectTarget, *args):
+    # IdentifiableObjectTarget class properties
+    attrib: MutableMapping[str, str] = dict()
+    if obj.object_type:
+        attrib.update(objectType=str(obj.object_type.__name__))
+
+    # Use the generic _component function to handle several common features
+    return _component(obj, *args, attrib=attrib)
+
+
+@writer
+def _rpt(obj: v21.ReportPeriodTarget, *args):
+    elem = _component(obj, *args)
+    # Do not write "id" attribute
+    elem.attrib.pop("id")
     return elem
 
 
