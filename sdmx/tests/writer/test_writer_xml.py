@@ -261,7 +261,7 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("ECB/orgscheme.xml", True),
         ("ECB_EXR/1/structure-full.xml", False),
         ("ESTAT/apro_mk_cola-structure.xml", True),
-        ("ESTAT/esms-structure.xml", False),
+        ("ESTAT/esms-structure.xml", True),
         pytest.param(
             "ISTAT/47_850-structure.xml", True, marks=[pytest.mark.skip(reason="Slow")]
         ),
