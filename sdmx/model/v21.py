@@ -429,12 +429,17 @@ class TargetIdentifiableObject(TargetObjectValue):
 
 @dataclass
 class TargetObjectKey:
-    """SDMX 2.1 TargetObjectKey."""
+    """SDMX 2.1 TargetObjectKey.
 
+    TargetObjectKey supports item access (:py:`tok["name"]`) to members of
+    :attr:`.key_values`.
+    """
+
+    #: Keys and values of the TargetObjectKey.
     key_values: DictLikeDescriptor[str, TargetObjectValue] = DictLikeDescriptor()
 
     def __getitem__(self, name: str) -> TargetObjectValue:
-        raise NotImplementedError
+        return self.key_values[name]
 
 
 @dataclass

@@ -4,6 +4,7 @@ import pytest
 
 import sdmx
 import sdmx.message
+from sdmx.model import v21
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
     AttributeDescriptor,
@@ -32,6 +33,7 @@ from sdmx.model.v21 import (
     MemberSelection,
     MemberValue,
     Observation,
+    TargetObjectKey,
     value_for_dsd_ref,
 )
 
@@ -648,3 +650,15 @@ class TestHierarchicalCodelist:
 
     def test_repr(self, obj: model.HierarchicalCodelist):
         assert "<HierarchicalCodelist HCL_COUNTRY: 1 hierarchies>" == repr(obj)
+
+
+class TestTargetObjectKey:
+    def test_getitem(self) -> None:
+        """:meth:`TargetObjectKey.__getitem__` works."""
+        to = v21.TargetObject(id="FOO")
+        c = Code(id="BAR")
+        tok = TargetObjectKey(
+            key_values={"FOO": v21.TargetIdentifiableObject(value_for=to, obj=c)}
+        )
+
+        assert tok["FOO"].obj is c  # type: ignore [attr-defined]
