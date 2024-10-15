@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Any, Dict, Hashable, Set, Union
+from typing import Any, Hashable, Union
 
 import numpy as np
 import pandas as pd
@@ -294,7 +294,7 @@ def write_dataset(  # noqa: C901 TODO reduce complexity 12 → ≤11
         raise ValueError(f"attributes must be in 'osgd'; got {attributes}")
 
     # Iterate on observations
-    data: Dict[Hashable, Dict[str, Any]] = {}
+    data: dict[Hashable, dict[str, Any]] = {}
     for observation in obj.obs:
         # Check that the Observation is within the constraint, if any
         key = observation.key.order()
@@ -501,7 +501,7 @@ def write_itemscheme(obj: model.ItemScheme, locale=DEFAULT_LOCALE):
     pandas.Series or pandas.DataFrame
     """
     items = {}
-    seen: Set[Item] = set()
+    seen: set[Item] = set()
 
     def add_item(item):
         """Recursive helper for adding items."""

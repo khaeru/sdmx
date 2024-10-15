@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
 from io import IOBase
-from typing import TYPE_CHECKING, Any, Dict, Optional, Set, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from requests import Response
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     import sdmx.rest.common
 
 #: Data sources registered with :mod:`sdmx`.
-sources: Dict[str, "Source"] = {}
+sources: dict[str, "Source"] = {}
 
 #: Valid data content types for SDMX REST API messages.
 DataContentType = Enum("DataContentType", "CSV JSON XML")
@@ -68,14 +68,14 @@ class Source:
     name: str
 
     #: Additional HTTP headers to supply by default with all requests.
-    headers: Dict[str, Any] = field(default_factory=dict)
+    headers: dict[str, Any] = field(default_factory=dict)
 
     #: :class:`.DataContentType` indicating the type of data returned by the source.
     data_content_type: DataContentType = DataContentType.XML
 
     #: SDMX REST API version(s) supported. Default: :class:`.Version["2.1"] <.Version>`
     #: only.
-    versions: Set[Version] = field(default_factory=lambda: {Version["2.1"]})
+    versions: set[Version] = field(default_factory=lambda: {Version["2.1"]})
 
     #: Mapping from :class:`.Resource` values to :class:`bool` indicating support for
     #: SDMX-REST endpoints and features. If not supplied, the defaults from
@@ -87,7 +87,7 @@ class Source:
     #:   See :meth:`.preview_data`.
     #: - ``"structure-specific data"=True`` if the source can return structure-
     #:   specific data messages.
-    supports: Dict[Union[str, Resource], bool] = field(default_factory=dict)
+    supports: dict[Union[str, Resource], bool] = field(default_factory=dict)
 
     def __post_init__(self):
         # Sanity check: _id attribute of a subclass matches the loaded ID.
@@ -121,7 +121,7 @@ class Source:
                 self.supports.pop(f_name, SDMX_ML_SUPPORTS.get(feature, sdmx_ml)),
             )
 
-    def get_url_class(self) -> Type["sdmx.rest.common.URL"]:
+    def get_url_class(self) -> type["sdmx.rest.common.URL"]:
         """Return a class for constructing URLs for this Source.
 
         - If :attr:`.versions` includes *only* SDMX 3.0.0, return :class:`.v30.URL`.
@@ -142,7 +142,7 @@ class Source:
     # Hooks
     def handle_response(
         self, response: Response, content: IOBase
-    ) -> Tuple[Response, IOBase]:
+    ) -> tuple[Response, IOBase]:
         """Handle response content of unknown type.
 
         This hook is called by :meth:`.Client.get` *only* when the `content` cannot be
@@ -198,7 +198,7 @@ NoSource = _NoSource(id="", url="", name="")
 
 
 def add_source(
-    info: Union[Dict, str], id: Optional[str] = None, override: bool = False, **kwargs
+    info: Union[dict, str], id: Optional[str] = None, override: bool = False, **kwargs
 ) -> None:
     """Add a new data source.
 

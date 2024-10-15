@@ -6,7 +6,7 @@
 # - writer functions for sdmx.model classes, in the same order as model.py
 
 import logging
-from typing import Iterable, List, Literal, MutableMapping, Optional
+from typing import Iterable, Literal, MutableMapping, Optional
 
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -263,7 +263,7 @@ def _footer(obj: message.Footer):
 # §3.2: Base structures
 
 
-def i11lstring(obj, name) -> List[etree._Element]:
+def i11lstring(obj, name) -> list[etree._Element]:
     """InternationalString.
 
     Returns a list of elements with name `name`.

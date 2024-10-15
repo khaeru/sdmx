@@ -5,7 +5,7 @@ import re
 from copy import copy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Mapping, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Mapping, Optional
 from urllib.parse import urlsplit, urlunsplit
 
 if TYPE_CHECKING:
@@ -155,7 +155,7 @@ class Parameter(abc.ABC):
     default: Optional[str] = None
 
     @abc.abstractmethod
-    def handle(self, parameters: Dict[str, Any]) -> Dict[str, str]:
+    def handle(self, parameters: dict[str, Any]) -> dict[str, str]:
         """Return a dict to update :attr:`.URL.path` or :attr:`.URL.query`."""
 
 
@@ -246,7 +246,7 @@ class PositiveIntParam(QueryParameter):
 # - common:NCNameIDType
 # - common:VersionType
 
-PARAM: Dict[str, Parameter] = {
+PARAM: dict[str, Parameter] = {
     # Path parameters
     "agency_id": PathParameter("agency_id"),
     "key": OptionalPath("key"),
@@ -321,10 +321,10 @@ class URL(abc.ABC):
     resource_type: Resource
 
     #: Pieces for the hierarchical path component of the URL. If
-    _path: Dict[str, Optional[str]]
+    _path: dict[str, Optional[str]]
 
     #: Pieces for the query component of the URL.
-    query: Dict[str, str]
+    query: dict[str, str]
 
     # Keyword arguments to the constructor
     _params: dict

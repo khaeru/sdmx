@@ -9,14 +9,13 @@ for further details.
 """
 
 from collections import ChainMap
-from typing import Dict
 from warnings import warn
 
 from . import common
 from .common import OptionalPath, PathParameter, QueryParameter, Resource
 
 #: v1.5.0-specific path and query parameters.
-PARAM: Dict[str, common.Parameter] = {
+PARAM: dict[str, common.Parameter] = {
     # Path parameters
     # NB the text and YAML OpenAPI specification disagree on whether this is required
     "component_id": OptionalPath("component_id"),

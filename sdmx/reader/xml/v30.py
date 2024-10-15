@@ -1,6 +1,6 @@
 """SDMX-ML 3.0.0 reader."""
 
-from typing import Any, Dict
+from typing import Any
 
 import sdmx.urn
 from sdmx.format import Version
@@ -140,7 +140,7 @@ def _ar(reader: Reader, elem):
         return
 
     # Iterate over parsed references to Components
-    args: Dict[str, Any] = dict(dimensions=list())
+    args: dict[str, Any] = dict(dimensions=list())
     for ref in refs:
         # Use the <Ref id="..."> to retrieve a Component from the DSD
         if issubclass(ref.target_cls, model.DimensionComponent):

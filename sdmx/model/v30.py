@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Any, ClassVar, Dict, List, Optional, Set
+from typing import Any, ClassVar, Optional
 
 from . import common
 from .common import (
@@ -77,7 +77,7 @@ __all__ = [
 
 @dataclass
 class CodeSelection:
-    mv: List["MemberValue"] = field(default_factory=list)
+    mv: list["MemberValue"] = field(default_factory=list)
 
 
 class ExclusiveCodeSelection(CodeSelection):
@@ -190,7 +190,7 @@ class ValueList(EnumeratedList):
 
     _Item = ValueItem
 
-    items: List[ValueItem] = field(default_factory=list)
+    items: list[ValueItem] = field(default_factory=list)
 
     def append(self, item: ValueItem) -> None:
         self.items.append(item)
@@ -284,7 +284,7 @@ class MemberSelection(common.BaseMemberSelection):
 @NameableArtefact._preserve("repr")
 class DataConstraint(Constraint):
     #:
-    content: Set[ConstrainableArtefact] = field(default_factory=set)
+    content: set[ConstrainableArtefact] = field(default_factory=set)
 
     data_content_keys: Optional[DataKeySet] = None
     data_content_region: Optional[common.CubeRegion] = None
@@ -432,7 +432,7 @@ class MetadataAttributeValue:
     #    offends mypy.
 
     parent: Optional["MetadataAttributeValue"] = None
-    child: List["MetadataAttributeValue"] = field(default_factory=list)
+    child: list["MetadataAttributeValue"] = field(default_factory=list)
 
 
 class CodedMetadataAttributeValue(MetadataAttributeValue):
@@ -505,9 +505,9 @@ class MetadataSet(MaintainableArtefact, common.BaseMetadataSet):
     #: Analogous to :attr:`.v21.MetadataSet.published_by`.
     provided_by: Optional[MetadataProvider] = None
 
-    attaches_to: List[TargetIdentifiableObject] = field(default_factory=list)
+    attaches_to: list[TargetIdentifiableObject] = field(default_factory=list)
 
-    metadata: List[MetadataAttributeValue] = field(default_factory=list)
+    metadata: list[MetadataAttributeValue] = field(default_factory=list)
 
 
 # §8: Hierarchy
@@ -523,7 +523,7 @@ class Hierarchy(MaintainableArtefact):
     level: Optional[common.Level] = None
 
     #: The top-level :class:`HierarchicalCodes <HierarchicalCode>` in the hierarchy.
-    codes: Dict[str, common.HierarchicalCode] = field(default_factory=dict)
+    codes: dict[str, common.HierarchicalCode] = field(default_factory=dict)
 
 
 @dataclass

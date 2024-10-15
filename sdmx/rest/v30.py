@@ -8,13 +8,12 @@ details.
 """
 
 from collections import ChainMap
-from typing import Dict
 
 from . import common
 from .common import PathParameter, QueryParameter, Resource
 
 #: v2.1.0-specific path and query parameters.
-PARAM: Dict[str, common.Parameter] = {
+PARAM: dict[str, common.Parameter] = {
     # Path parameters
     "component_id": PathParameter("component_id"),
     "context": PathParameter(

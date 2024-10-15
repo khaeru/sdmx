@@ -7,13 +7,9 @@ import logging
 from dataclasses import dataclass, field
 from typing import (
     ClassVar,
-    Dict,
     Generator,
     Generic,
-    List,
     Optional,
-    Set,
-    Type,
     TypeVar,
     Union,
 )
@@ -171,9 +167,9 @@ class MemberSelection(common.BaseMemberSelection):
 @NameableArtefact._preserve("repr")
 class ContentConstraint(Constraint, common.BaseContentConstraint):
     #: :class:`CubeRegions <.CubeRegion>` included in the ContentConstraint.
-    data_content_region: List[common.CubeRegion] = field(default_factory=list)
+    data_content_region: list[common.CubeRegion] = field(default_factory=list)
     #:
-    content: Set[ConstrainableArtefact] = field(default_factory=set)
+    content: set[ConstrainableArtefact] = field(default_factory=set)
     metadata_content_region: Optional[common.MetadataTargetRegion] = None
 
     def __contains__(self, value):
@@ -195,7 +191,7 @@ class ContentConstraint(Constraint, common.BaseContentConstraint):
     def iter_keys(
         self,
         obj: Union["DataStructureDefinition", "DataflowDefinition"],
-        dims: List[str] = [],
+        dims: list[str] = [],
     ) -> Generator[Key, None, None]:
         """Iterate over keys.
 
@@ -350,7 +346,7 @@ class IdentifiableObjectTarget(TargetObject):
     """SDMX 2.1 IdentifiableObjectTarget."""
 
     #: Type of :class:`.IdentifiableArtefact` that is targeted.
-    object_type: Optional[Type[IdentifiableArtefact]] = None
+    object_type: Optional[type[IdentifiableArtefact]] = None
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -385,7 +381,7 @@ class ReportStructure(ComponentList):
 
     _Component = common.MetadataAttribute
 
-    report_for: List[MetadataTarget] = field(default_factory=list)
+    report_for: list[MetadataTarget] = field(default_factory=list)
 
 
 @dataclass
@@ -437,6 +433,9 @@ class TargetObjectKey:
 
     key_values: DictLikeDescriptor[str, TargetObjectValue] = DictLikeDescriptor()
 
+    def __getitem__(self, name: str) -> TargetObjectValue:
+        raise NotImplementedError
+
 
 @dataclass
 class ReportedAttribute:
@@ -447,7 +446,7 @@ class ReportedAttribute:
 
     value_for: common.MetadataAttribute
     parent: Optional["ReportedAttribute"] = None
-    child: List["ReportedAttribute"] = field(default_factory=list)
+    child: list["ReportedAttribute"] = field(default_factory=list)
 
     def __getitem__(self, index: int) -> "ReportedAttribute":
         return self.child[index]
@@ -498,7 +497,7 @@ class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttribute
 class MetadataReport:
     """SDMX 2.1 MetadataReport."""
 
-    metadata: List[ReportedAttribute] = field(default_factory=list)
+    metadata: list[ReportedAttribute] = field(default_factory=list)
     target: Optional[MetadataTarget] = None
     attaches_to: Optional[TargetObjectKey] = None
 
@@ -521,7 +520,7 @@ class MetadataSet(NameableArtefact, common.BaseMetadataSet):
     #: Analogous to :attr:`.v30.MetadataSet.provided_by`.
     published_by: Optional[common.DataProvider] = None
 
-    report: List[MetadataReport] = field(default_factory=list)
+    report: list[MetadataReport] = field(default_factory=list)
 
 
 # §8 Hierarchical Code List
@@ -534,7 +533,7 @@ class Hierarchy(NameableArtefact):
     has_formal_levels: bool = False
 
     #: Hierarchical codes in the hierarchy.
-    codes: Dict[str, common.HierarchicalCode] = field(default_factory=dict)
+    codes: dict[str, common.HierarchicalCode] = field(default_factory=dict)
 
     level: Optional[common.Level] = None
 
@@ -543,7 +542,7 @@ class Hierarchy(NameableArtefact):
 class HierarchicalCodelist(common.MaintainableArtefact):
     """SDMX 2.1 HierarchicalCodelist."""
 
-    hierarchy: List[Hierarchy] = field(default_factory=list)
+    hierarchy: list[Hierarchy] = field(default_factory=list)
 
     def __repr__(self) -> str:
         tmp = super(NameableArtefact, self).__repr__()[:-1]
@@ -557,7 +556,7 @@ class HierarchicalCodelist(common.MaintainableArtefact):
 class ItemAssociation(common.AnnotableArtefact, Generic[IT]):
     """SDMX 2.1 ItemAssociation."""
 
-    _Item: ClassVar[Type[common.Item]] = common.Item
+    _Item: ClassVar[type[common.Item]] = common.Item
 
     source: Optional[IT] = None
     target: Optional[IT] = None
@@ -577,12 +576,12 @@ IST = TypeVar("IST", bound="common.ItemScheme")
 class ItemSchemeMap(NameableArtefact, Generic[IST, IAT]):
     """SDMX 2.1 ItemSchemeMap."""
 
-    _ItemAssociation: ClassVar[Type[ItemAssociation]] = ItemAssociation
+    _ItemAssociation: ClassVar[type[ItemAssociation]] = ItemAssociation
 
     source: Optional[IST] = None
     target: Optional[IST] = None
 
-    item_association: List[IAT] = field(default_factory=list)
+    item_association: list[IAT] = field(default_factory=list)
 
 
 class CodelistMap(ItemSchemeMap[common.Codelist, CodeMap]):
@@ -595,7 +594,7 @@ class CodelistMap(ItemSchemeMap[common.Codelist, CodeMap]):
 class StructureSet(common.MaintainableArtefact):
     """SDMX 2.1 StructureSet."""
 
-    item_scheme_map: List[ItemSchemeMap] = field(default_factory=list)
+    item_scheme_map: list[ItemSchemeMap] = field(default_factory=list)
 
 
 CF = common.ClassFinder(

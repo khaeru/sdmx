@@ -1,5 +1,4 @@
 from operator import attrgetter
-from typing import List
 
 import pytest
 
@@ -55,7 +54,7 @@ class TestComponentList:
     def components(self):
         return [Dimension(id="C1"), Dimension(id="C2"), Dimension(id="C3")]
 
-    def test_append(self, cl: ComponentList, components: List[Dimension]) -> None:
+    def test_append(self, cl: ComponentList, components: list[Dimension]) -> None:
         # Components have no order
         assert (None, None, None) == tuple(map(attrgetter("order"), components))
 
@@ -75,14 +74,14 @@ class TestComponentList:
         assert not hasattr(foo, "order")
 
     def test_extend_no_order(
-        self, cl: ComponentList, components: List[Dimension]
+        self, cl: ComponentList, components: list[Dimension]
     ) -> None:
         cl.extend(components)
 
         # extend() also adds order
         assert (1, 2, 3) == tuple(map(attrgetter("order"), components))
 
-    def test_extend_order(self, cl: ComponentList, components: List[Dimension]) -> None:
+    def test_extend_order(self, cl: ComponentList, components: list[Dimension]) -> None:
         components[2].order = 1
         components[1].order = 2
         components[0].order = 3

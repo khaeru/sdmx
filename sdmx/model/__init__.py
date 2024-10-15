@@ -2,7 +2,7 @@ from warnings import warn
 
 from . import common, v21
 
-WARNED = set()
+WARNED: set[str] = set()
 
 
 def __dir__():

@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import pytest
 
@@ -77,9 +77,9 @@ class TestPositiveIntParam:
 _S = "?startPeriod=2024-02-12"
 
 R = Resource
-PARAMS: Tuple[
+PARAMS: tuple[
     Union[
-        Tuple[Resource, Dict[str, Any], Optional[str], Optional[str]],
+        tuple[Resource, dict[str, Any], Optional[str], Optional[str]],
         "_pytest.mark.ParameterSet",
     ],
     ...,

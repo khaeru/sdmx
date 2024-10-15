@@ -16,18 +16,13 @@ from operator import attrgetter, itemgetter
 from typing import (
     Any,
     ClassVar,
-    Dict,
     Generator,
     Generic,
     Iterable,
-    List,
     Mapping,
     MutableMapping,
     Optional,
     Sequence,
-    Set,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     get_args,
@@ -179,7 +174,7 @@ class AnnotableArtefact:
     #:
     #: :mod:`.sdmx` implementation detail: The IM does not specify the name of this
     #: feature.
-    annotations: List[Annotation] = field(default_factory=list)
+    annotations: list[Annotation] = field(default_factory=list)
 
     def get_annotation(self, **attrib):
         """Return a :class:`Annotation` with given `attrib`, e.g. 'id'.
@@ -243,7 +238,7 @@ class IdentifiableArtefact(AnnotableArtefact):
     #: a URN.
     urn: Optional[str] = None
 
-    urn_group: Dict = field(default_factory=dict, repr=False)
+    urn_group: dict = field(default_factory=dict, repr=False)
 
     def __post_init__(self):
         if not isinstance(self.id, str):
@@ -525,7 +520,7 @@ IT = TypeVar("IT", bound="Item")
 @NameableArtefact._preserve("eq", "hash", "repr")
 class Item(NameableArtefact, Generic[IT]):
     parent: Optional[Union[IT, "ItemScheme"]] = None
-    child: List[IT] = field(default_factory=list)
+    child: list[IT] = field(default_factory=list)
 
     def __post_init__(self):
         super().__post_init__()
@@ -624,11 +619,11 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     #: Members of the ItemScheme. Both ItemScheme and Item are abstract classes.
     #: Concrete classes are paired: for example, a :class:`.Codelist` contains
     #: :class:`Codes <.Code>`.
-    items: Dict[str, IT] = field(default_factory=dict)
+    items: dict[str, IT] = field(default_factory=dict)
 
     # The type of the Items in the ItemScheme. This is necessary because the type hint
     # in the class declaration is static; not meant to be available at runtime.
-    _Item: ClassVar[Type] = Item
+    _Item: ClassVar[type] = Item
 
     # Convenience access to items
     def __getattr__(self, name: str) -> IT:
@@ -814,7 +809,7 @@ class Representation:
     #:
     enumerated: Optional[ItemScheme] = None
     #:
-    non_enumerated: List[Facet] = field(default_factory=list)
+    non_enumerated: list[Facet] = field(default_factory=list)
 
     def __repr__(self):
         return "<{}: {}, {}>".format(
@@ -890,13 +885,13 @@ CT = TypeVar("CT", bound=Component)
 @dataclass
 class ComponentList(IdentifiableArtefact, Generic[CT]):
     #:
-    components: List[CT] = field(default_factory=list)
+    components: list[CT] = field(default_factory=list)
     #: Counter used to automatically populate :attr:`.DimensionComponent.order` values.
     auto_order = 1
 
     # The default type of the Components in the ComponentList. See comment on
     # ItemScheme._Item
-    _Component: ClassVar[Type] = Component
+    _Component: ClassVar[type] = Component
 
     # Convenience access to the components
     def append(self, value: CT) -> None:
@@ -1054,20 +1049,20 @@ class Contact:
     #:
     responsibility: InternationalStringDescriptor = InternationalStringDescriptor()
     #:
-    email: List[str] = field(default_factory=list)
+    email: list[str] = field(default_factory=list)
     #:
-    fax: List[str] = field(default_factory=list)
+    fax: list[str] = field(default_factory=list)
     #:
-    uri: List[str] = field(default_factory=list)
+    uri: list[str] = field(default_factory=list)
     #:
-    x400: List[str] = field(default_factory=list)
+    x400: list[str] = field(default_factory=list)
 
 
 @dataclass
 @NameableArtefact._preserve("eq", "hash", "repr")
 class Organisation(Item["Organisation"]):
     #:
-    contact: List[Contact] = field(default_factory=list)
+    contact: list[Contact] = field(default_factory=list)
 
 
 class OrganisationScheme(ItemScheme[IT]):
@@ -1112,7 +1107,7 @@ class Structure(MaintainableArtefact):
     @property
     def grouping(self) -> Sequence[ComponentList]:
         """A collection of all the ComponentLists associated with a subclass."""
-        result: List[ComponentList] = []
+        result: list[ComponentList] = []
         for f in fields(self):
             types = get_args(f.type) or (f.type,)
             try:
@@ -1264,7 +1259,7 @@ class AttributeRelationship:
 @dataclass
 class DimensionRelationship(AttributeRelationship):
     #:
-    dimensions: List[DimensionComponent] = field(default_factory=list)
+    dimensions: list[DimensionComponent] = field(default_factory=list)
     #: NB the IM says "0..*" here in a diagram, but the text does not match.
     group_key: Optional["GroupDimensionDescriptor"] = None
 
@@ -1309,13 +1304,13 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
     )
 
     # Specific types to be used in concrete subclasses
-    MemberValue: ClassVar[Type["BaseMemberValue"]]
-    MemberSelection: ClassVar[Type["BaseMemberSelection"]]
-    ConstraintType: ClassVar[Type[BaseConstraint]]
+    MemberValue: ClassVar[type["BaseMemberValue"]]
+    MemberSelection: ClassVar[type["BaseMemberSelection"]]
+    ConstraintType: ClassVar[type[BaseConstraint]]
 
     # Convenience methods
     def iter_keys(
-        self, constraint: Optional[BaseConstraint] = None, dims: List[str] = []
+        self, constraint: Optional[BaseConstraint] = None, dims: list[str] = []
     ) -> Generator["Key", None, None]:
         """Iterate over keys.
 
@@ -1341,7 +1336,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
             return lambda value: KeyValue(id=id, value=value, value_for=value_for)
 
         # List of iterables of (dim.id, KeyValues) along each dimension
-        all_kvs: List[Iterable[KeyValue]] = []
+        all_kvs: list[Iterable[KeyValue]] = []
 
         # Iterate over dimensions
         for dim in self.dimensions.components:
@@ -1491,7 +1486,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         attr = getattr(self.attributes, get_method)
 
         # Arguments for creating the Key
-        args: Dict[str, Any] = dict(described_by=self.dimensions)
+        args: dict[str, Any] = dict(described_by=self.dimensions)
 
         if key_cls is GroupKey:
             # Get the GroupDimensionDescriptor, if indicated by group_id
@@ -1564,7 +1559,7 @@ class BaseDataflow(StructureUsage, ConstrainableArtefact):
             self.structure.is_external_reference = self.is_external_reference
 
     def iter_keys(
-        self, constraint: Optional[BaseConstraint] = None, dims: List[str] = []
+        self, constraint: Optional[BaseConstraint] = None, dims: list[str] = []
     ) -> Generator["Key", None, None]:
         """Iterate over keys.
 
@@ -1762,7 +1757,7 @@ class Key:
                 )
             kwargs.update(arg)
 
-        kvs: Iterable[Tuple] = []
+        kvs: Iterable[tuple] = []
 
         if isinstance(arg, Sequence):
             # Sequence of already-prepared KeyValues; assume already sorted
@@ -1909,7 +1904,7 @@ class GroupKey(Key):
 @dataclass
 class SeriesKey(Key):
     #: :mod:`sdmx` extension not in the IM.
-    group_keys: Set[GroupKey] = field(default_factory=set)
+    group_keys: set[GroupKey] = field(default_factory=set)
 
     __eq__ = Key.__eq__
     __hash__ = Key.__hash__
@@ -1942,7 +1937,7 @@ class BaseObservation:
     #: Data value.
     value: Optional[Union[Any, Code]] = None
     #: :mod:`sdmx` extension not in the IM.
-    group_keys: Set[GroupKey] = field(default_factory=set)
+    group_keys: set[GroupKey] = field(default_factory=set)
 
     @property
     def attrib(self):
@@ -2011,14 +2006,14 @@ class BaseDataSet(AnnotableArtefact):
     structured_by: Optional[BaseDataStructureDefinition] = None
 
     #: All observations in the DataSet.
-    obs: List[BaseObservation] = field(default_factory=list)
+    obs: list[BaseObservation] = field(default_factory=list)
 
     #: Map of series key → list of observations.
     #: :mod:`sdmx` extension not in the IM.
-    series: DictLikeDescriptor[SeriesKey, List[BaseObservation]] = DictLikeDescriptor()
+    series: DictLikeDescriptor[SeriesKey, list[BaseObservation]] = DictLikeDescriptor()
     #: Map of group key → list of observations.
     #: :mod:`sdmx` extension not in the IM.
-    group: DictLikeDescriptor[GroupKey, List[BaseObservation]] = DictLikeDescriptor()
+    group: DictLikeDescriptor[GroupKey, list[BaseObservation]] = DictLikeDescriptor()
 
     def __post_init__(self):
         if self.action and not isinstance(self.action, ActionType):
@@ -2117,7 +2112,7 @@ class MetadataAttribute(AttributeComponent):
     min_occurs: Optional[int] = None
 
     parent: Optional["MetadataAttribute"] = None
-    child: List["MetadataAttribute"] = field(default_factory=list)
+    child: list["MetadataAttribute"] = field(default_factory=list)
 
 
 class BaseMetadataStructureDefinition(Structure, ConstrainableArtefact):
@@ -2202,7 +2197,7 @@ class HierarchicalCode(IdentifiableArtefact):
     parent: Optional[Union["HierarchicalCode", Any]] = (
         None  # NB second element is "Hierarchy"
     )
-    child: List["HierarchicalCode"] = field(default_factory=list)
+    child: list["HierarchicalCode"] = field(default_factory=list)
 
 
 # SDMX 2.1 §10.2: Constraint inheritance
@@ -2276,7 +2271,7 @@ class BaseDataKey:
     # :obj:`False` if they are excluded.
     included: bool
     #: Mapping from :class:`.Component` to :class:`.ComponentValue` comprising the key.
-    key_value: Dict[Component, ComponentValue] = field(default_factory=dict)
+    key_value: dict[Component, ComponentValue] = field(default_factory=dict)
 
 
 @dataclass
@@ -2287,7 +2282,7 @@ class BaseDataKeySet:
     #: :class:`Constraint <.BaseConstraint>`; :obj:`False` if they are excluded.
     included: bool
     #: :class:`DataKeys <.BaseDataKey>` appearing in the set.
-    keys: List[BaseDataKey] = field(default_factory=list)
+    keys: list[BaseDataKey] = field(default_factory=list)
 
     def __len__(self):
         """:func:`len` of the DataKeySet = :func:`len` of its :attr:`keys`."""
@@ -2307,7 +2302,7 @@ class BaseMemberSelection:
     included: bool = True
     #: Value(s) included in the selection. Note that the name of this attribute is not
     #: stated in the IM, so 'values' is chosen for the implementation in this package.
-    values: List[BaseSelectionValue] = field(default_factory=list)
+    values: list[BaseSelectionValue] = field(default_factory=list)
 
     def __contains__(self, value):
         """Compare KeyValue to MemberValue."""
@@ -2329,7 +2324,7 @@ class CubeRegion:
     #:
     included: bool = True
     #:
-    member: Dict[DimensionComponent, BaseMemberSelection] = field(default_factory=dict)
+    member: dict[DimensionComponent, BaseMemberSelection] = field(default_factory=dict)
 
     def __contains__(self, other: Union["Key", "KeyValue"]) -> bool:
         """Membership test.
@@ -2561,7 +2556,7 @@ class BaseContentConstraint:
 #: The SDMX-IM groups classes into 'packages'; these are used in :class:`URNs <.URN>`.
 PACKAGE = dict()
 
-_PACKAGE_CLASS: Dict[str, set] = {
+_PACKAGE_CLASS: dict[str, set] = {
     "base": {
         "Agency",
         "AgencyScheme",
@@ -2627,15 +2622,15 @@ PARENT = {
 @dataclass
 class ClassFinder:
     module_name: str
-    name_map: Dict[str, str] = field(default_factory=dict)
-    parent_map: Dict[type, type] = field(default_factory=dict)
+    name_map: dict[str, str] = field(default_factory=dict)
+    parent_map: dict[type, type] = field(default_factory=dict)
 
     def __post_init__(self):
         self._module = sys.modules[self.module_name]
         self._parent = ChainMap(PARENT, self.parent_map)
 
     @lru_cache()
-    def get_class(self, name: Union[str, Resource], package=None) -> Optional[Type]:
+    def get_class(self, name: Union[str, Resource], package=None) -> Optional[type]:
         """Return a class for `name` and (optional) `package` names."""
         if isinstance(name, Resource):
             # Convert a Resource enumeration value to a string

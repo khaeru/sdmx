@@ -8,14 +8,11 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    Dict,
     Iterable,
     Iterator,
     Mapping,
     Optional,
     Sequence,
-    Tuple,
-    Type,
     Union,
     cast,
 )
@@ -105,7 +102,7 @@ class BaseReference:
 
     @classmethod
     @abstractmethod
-    def info_from_element(cls, elem) -> Dict[str, Any]: ...
+    def info_from_element(cls, elem) -> dict[str, Any]: ...
 
     def __str__(self):
         # NB for debugging only
@@ -130,16 +127,16 @@ class XMLEventReader(BaseReader):
     model: ClassVar["types.ModuleType"]
 
     #: :class:`.BaseReference` subclass used by this reader.
-    Reference: ClassVar[Type[BaseReference]]
+    Reference: ClassVar[type[BaseReference]]
 
     # Mapping from (QName, ["start", "end"]) to a function that parses the element/event
     # or else None
-    parser: ClassVar[Mapping[Tuple[QName, str], Callable]]
+    parser: ClassVar[Mapping[tuple[QName, str], Callable]]
 
     # One-way counter for use in stacks
     _count: Iterator[int]
 
-    def __init_subclass__(cls: Type["XMLEventReader"]):
+    def __init_subclass__(cls: type["XMLEventReader"]):
         # Empty dictionary
         cls.parser = {}
 
@@ -162,7 +159,7 @@ class XMLEventReader(BaseReader):
         **kwargs,
     ) -> message.Message:
         # Initialize stacks
-        self.stack: Dict[Union[Type, str], Dict[Union[str, int], Any]] = defaultdict(
+        self.stack: dict[Union[type, str], dict[Union[str, int], Any]] = defaultdict(
             dict
         )
 
@@ -177,7 +174,7 @@ class XMLEventReader(BaseReader):
 
         if _events is None:
             events = cast(
-                Iterator[Tuple[str, etree._Element]],
+                Iterator[tuple[str, etree._Element]],
                 etree.iterparse(source, events=("start", "end")),
             )
         else:
@@ -385,7 +382,7 @@ class XMLEventReader(BaseReader):
 
     def get_single(
         self,
-        cls_or_name: Union[Type, str],
+        cls_or_name: Union[type, str],
         id: Optional[str] = None,
         version: Optional[str] = None,
         subclass: bool = False,
@@ -402,7 +399,7 @@ class XMLEventReader(BaseReader):
         the stack `cls_or_name` *or any stack for a subclass of this class*.
         """
         if subclass:
-            keys: Iterable[Union[Type, str]] = filter(
+            keys: Iterable[Union[type, str]] = filter(
                 matching_class(cls_or_name), self.stack.keys()
             )
             results: Mapping = ChainMap(*[self.stack[k] for k in keys])
@@ -422,14 +419,14 @@ class XMLEventReader(BaseReader):
         else:
             return next(iter(results.values()))
 
-    def pop_all(self, cls_or_name: Union[Type, str], subclass=False) -> Sequence:
+    def pop_all(self, cls_or_name: Union[type, str], subclass=False) -> Sequence:
         """Pop all objects from stack *cls_or_name* and return.
 
         If `cls_or_name` is a class and `subclass` is :obj:`True`; return all objects in
         the stack `cls_or_name` *or any stack for a subclass of this class*.
         """
         if subclass:
-            keys: Iterable[Union[Type, str]] = list(
+            keys: Iterable[Union[type, str]] = list(
                 filter(matching_class(cls_or_name), self.stack.keys())
             )
             result: Iterable = chain(*[self.stack.pop(k).values() for k in keys])
@@ -438,14 +435,14 @@ class XMLEventReader(BaseReader):
 
         return list(result)
 
-    def pop_single(self, cls_or_name: Union[Type, str]):
+    def pop_single(self, cls_or_name: Union[type, str]):
         """Pop a single object from the stack for `cls_or_name` and return."""
         try:
             return self.stack[cls_or_name].popitem()[1]
         except KeyError:
             return None
 
-    def peek(self, cls_or_name: Union[Type, str]):
+    def peek(self, cls_or_name: Union[type, str]):
         """Get the object at the top of stack `cls_or_name` without removing it."""
         try:
             key, value = self.stack[cls_or_name].popitem()
@@ -454,7 +451,7 @@ class XMLEventReader(BaseReader):
         except KeyError:  # pragma: no cover
             return None
 
-    def pop_resolved_ref(self, cls_or_name: Union[Type, str]):
+    def pop_resolved_ref(self, cls_or_name: Union[type, str]):
         """Pop a reference to `cls_or_name` and resolve it."""
         return self.resolve(self.pop_single(cls_or_name))
 

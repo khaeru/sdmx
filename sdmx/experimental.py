@@ -71,7 +71,7 @@ class DataSet(AnnotableArtefact):
 
     @property
     def obs(self):
-        # In model.DataSet, .obs is typed as List[Observation].
+        # In model.DataSet, .obs is typed as list[Observation].
         # Here, the Observations are generated on request.
         for key, data in self._data.iterrows():
             yield self._make_obs(key, data)

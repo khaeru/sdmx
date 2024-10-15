@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterator
 from dataclasses import Field, fields
 from functools import lru_cache
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Iterable
 
 import requests
 
@@ -57,7 +57,7 @@ def only(iterator: Iterator) -> Any:
 
 
 @lru_cache()
-def parse_content_type(value: str) -> Tuple[str, Dict[str, Any]]:
+def parse_content_type(value: str) -> tuple[str, dict[str, Any]]:
     """Return content type and parameters from `value`.
 
     Modified from :mod:`requests.util`.
@@ -85,7 +85,7 @@ def ucfirst(value: str) -> str:
     return value[0].upper() + value[1:]
 
 
-_FIELDS_CACHE: Dict[str, List[Field]] = dict()
+_FIELDS_CACHE: dict[str, list[Field]] = dict()
 
 
 def direct_fields(cls) -> Iterable[Field]:

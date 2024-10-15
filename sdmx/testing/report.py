@@ -2,7 +2,7 @@ import json
 import os
 from itertools import chain
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from jinja2 import Template
 
@@ -207,7 +207,7 @@ def main(base_path: Optional[Path] = None):
     base_path = base_path or Path.cwd().joinpath("source-tests")
 
     # Locate, read, and merge JSON files
-    data: Dict[str, Dict[str, str]] = {}
+    data: dict[str, dict[str, str]] = {}
     for path in base_path.glob("**/*.json"):
         # Update `data` with the file contents
         with open(path) as f:
