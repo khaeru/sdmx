@@ -172,8 +172,11 @@ class TestClient:
             headers={"Content-Type": "application/vnd.sdmx.data+xml; version=3.0.0"},
         )
 
-        with mock, pytest.raises(
-            ValueError, match="can't determine a reader for response content type"
+        with (
+            mock,
+            pytest.raises(
+                ValueError, match="can't determine a reader for response content type"
+            ),
         ):
             client.get("data", resource_id=df_id, key=key)
 

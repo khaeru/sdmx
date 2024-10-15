@@ -11,7 +11,7 @@ import re
 from copy import copy
 from itertools import chain
 from sys import maxsize
-from typing import Any, Dict, MutableMapping, Optional, Type, cast
+from typing import Any, MutableMapping, Optional, cast
 
 from dateutil.parser import isoparse
 from lxml import etree
@@ -392,7 +392,7 @@ def _ref(reader: Reader, elem):
         # <com:Structure>/<str:Structure>: use message property for a class hint
         msg = reader.get_single(message.DataMessage, subclass=True)
         if msg:
-            cls_hint = cast(Type[message.DataMessage], type(msg))(
+            cls_hint = cast(type[message.DataMessage], type(msg))(
                 version=reader.xml_version
             ).structure_type
         elif QName(elem.getparent()).localname == "Dataflow":
@@ -497,7 +497,7 @@ def _item_end(reader: Reader, elem):
 )
 @possible_reference()  # <str:CustomTypeScheme> in <str:Transformation>
 def _itemscheme(reader: Reader, elem):
-    cls: Type[common.ItemScheme] = reader.class_for_tag(elem.tag)
+    cls: type[common.ItemScheme] = reader.class_for_tag(elem.tag)
 
     try:
         args = dict(is_partial=elem.attrib["isPartial"])
@@ -510,7 +510,7 @@ def _itemscheme(reader: Reader, elem):
     iter_all = chain(*[iter(item) for item in reader.pop_all(cls._Item, subclass=True)])
 
     # Set of objects already added to `items`
-    seen: Dict[Any, Any] = dict()
+    seen: dict[Any, Any] = dict()
 
     # Flatten the list, with each item appearing only once
     for i in filter(lambda i: i not in seen, iter_all):
@@ -1464,14 +1464,14 @@ def _hcl(reader: Reader, elem):
 
 @start("str:CodelistMap", only=False)
 def _ismap_start(reader: Reader, elem):
-    cls: Type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    cls: type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
     # Push class for reference while parsing sub-elements
     reader.push("ItemAssociation class", cls._ItemAssociation._Item)
 
 
 @end("str:CodelistMap", only=False)
 def _ismap_end(reader: Reader, elem):
-    cls: Type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    cls: type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
 
     # Remove class from stacks
     reader.pop_single("ItemAssociation class")
@@ -1506,7 +1506,7 @@ def _ismap_end(reader: Reader, elem):
 
 @end("str:CodeMap")
 def _item_map(reader: Reader, elem):
-    cls: Type[model.ItemAssociation] = reader.class_for_tag(elem.tag)
+    cls: type[model.ItemAssociation] = reader.class_for_tag(elem.tag)
 
     # Store Source and Target as Reference instances
     return reader.annotable(
@@ -1622,7 +1622,7 @@ def _udo(reader: Reader, elem):
 @end("str:VtlMapping")
 def _vtlm(reader: Reader, elem):
     ref = reader.resolve(reader.pop_single(reader.Reference))
-    args: Dict[str, Any] = dict()
+    args: dict[str, Any] = dict()
     if isinstance(ref, common.BaseDataflow):
         cls = model.VTLDataflowMapping
         args["dataflow_alias"] = ref

@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import IO, TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import IO, TYPE_CHECKING, Any, Optional, Union
 from warnings import warn
 
 import requests
@@ -56,7 +56,7 @@ class Client:
 
     """
 
-    cache: Dict[str, "sdmx.message.Message"] = {}
+    cache: dict[str, "sdmx.message.Message"] = {}
 
     #: :class:`.source.Source` for requests sent from the instance.
     source: "sdmx.source.Source"
@@ -65,7 +65,7 @@ class Client:
     session: requests.Session
 
     # Stored keyword arguments "allow_redirects" and "timeout" for pre-requests.
-    _send_kwargs: Dict[str, Any] = {}
+    _send_kwargs: dict[str, Any] = {}
 
     def __init__(self, source=None, log_level=None, **session_opts):
         try:

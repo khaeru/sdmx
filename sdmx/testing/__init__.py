@@ -3,7 +3,7 @@ import os
 from collections import ChainMap
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import List, Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -233,7 +233,7 @@ class SpecimenCollection:
 
     # Path to specimen; file format; data/structure
     # TODO add version
-    specimens: List[Tuple[Path, str, str]]
+    specimens: list[tuple[Path, str, str]]
 
     def __init__(self, base_path):
         self.base_path = base_path

@@ -4,7 +4,7 @@ Installation
 Dependencies
 ============
 
-:mod:`sdmx` is a pure `Python <https://python.org>`_ package requiring Python 3.8 or higher, which can be installed:
+:mod:`sdmx` is a pure `Python <https://python.org>`_ package requiring Python 3.9 or higher, which can be installed:
 
 - from `the Python website <https://www.python.org/downloads/>`_, or
 - using a scientific Python distribution that includes other packages useful for data analysis, such as

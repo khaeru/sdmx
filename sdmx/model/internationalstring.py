@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Dict, Iterable, Mapping, Optional, Sequence, Tuple, Union
+from typing import Iterable, Mapping, Optional, Sequence, Union
 
 # TODO read this from the environment, or use any value set in the SDMX-ML spec.
 #      Currently set to 'en' because test_dsd.py expects it.
@@ -50,9 +50,9 @@ class InternationalString:
     __slots__ = ("localizations",)
 
     # Types that can be converted into InternationalString
-    _CONVERTIBLE = Union[str, Sequence, Mapping, Iterable[Tuple[str, str]]]
+    _CONVERTIBLE = Union[str, Sequence, Mapping, Iterable[tuple[str, str]]]
 
-    localizations: Dict[str, str]
+    localizations: dict[str, str]
 
     def __init__(self, value: Optional[_CONVERTIBLE] = None, **kwargs):
         # Handle initial values according to type

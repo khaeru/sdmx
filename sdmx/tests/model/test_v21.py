@@ -1,10 +1,10 @@
 from operator import attrgetter
-from typing import List
 
 import pytest
 
 import sdmx
 import sdmx.message
+from sdmx.model import v21
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
     AttributeDescriptor,
@@ -33,6 +33,7 @@ from sdmx.model.v21 import (
     MemberSelection,
     MemberValue,
     Observation,
+    TargetObjectKey,
     value_for_dsd_ref,
 )
 
@@ -55,7 +56,7 @@ class TestComponentList:
     def components(self):
         return [Dimension(id="C1"), Dimension(id="C2"), Dimension(id="C3")]
 
-    def test_append(self, cl: ComponentList, components: List[Dimension]) -> None:
+    def test_append(self, cl: ComponentList, components: list[Dimension]) -> None:
         # Components have no order
         assert (None, None, None) == tuple(map(attrgetter("order"), components))
 
@@ -75,14 +76,14 @@ class TestComponentList:
         assert not hasattr(foo, "order")
 
     def test_extend_no_order(
-        self, cl: ComponentList, components: List[Dimension]
+        self, cl: ComponentList, components: list[Dimension]
     ) -> None:
         cl.extend(components)
 
         # extend() also adds order
         assert (1, 2, 3) == tuple(map(attrgetter("order"), components))
 
-    def test_extend_order(self, cl: ComponentList, components: List[Dimension]) -> None:
+    def test_extend_order(self, cl: ComponentList, components: list[Dimension]) -> None:
         components[2].order = 1
         components[1].order = 2
         components[0].order = 3
@@ -649,3 +650,15 @@ class TestHierarchicalCodelist:
 
     def test_repr(self, obj: model.HierarchicalCodelist):
         assert "<HierarchicalCodelist HCL_COUNTRY: 1 hierarchies>" == repr(obj)
+
+
+class TestTargetObjectKey:
+    def test_getitem(self) -> None:
+        """:meth:`TargetObjectKey.__getitem__` works."""
+        to = v21.TargetObject(id="FOO")
+        c = Code(id="BAR")
+        tok = TargetObjectKey(
+            key_values={"FOO": v21.TargetIdentifiableObject(value_for=to, obj=c)}
+        )
+
+        assert tok["FOO"].obj is c  # type: ignore [attr-defined]

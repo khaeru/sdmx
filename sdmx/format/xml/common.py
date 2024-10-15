@@ -6,7 +6,7 @@ from itertools import chain
 from operator import itemgetter
 from pathlib import Path
 from shutil import copytree
-from typing import IO, Iterable, List, Mapping, Optional, Tuple, Union
+from typing import IO, Iterable, Mapping, Optional, Union
 
 from lxml import etree
 from lxml.etree import QName
@@ -221,7 +221,7 @@ def _extracted_zipball(version: Version) -> Path:
 
 def _handle_validate_args(
     schema_dir: Optional[Path], version: Union[str, Version]
-) -> Tuple[Path, Version]:
+) -> tuple[Path, Version]:
     """Handle arguments for :func:`.install_schemas` and :func:`.validate_xml`."""
     import platformdirs
 
@@ -274,9 +274,9 @@ def install_schemas(
 
 class XMLFormat:
     NS: Mapping[str, Optional[str]]
-    _class_tag: List
+    _class_tag: list
 
-    def __init__(self, model, base_ns: str, class_tag: Iterable[Tuple[str, str]]):
+    def __init__(self, model, base_ns: str, class_tag: Iterable[tuple[str, str]]):
         from sdmx import message  # noqa: F401
 
         self.base_ns = base_ns

@@ -7,7 +7,7 @@ To force the data to be retrieved over the Internet, delete this directory.
 # TODO add a pytest argument for clearing this cache in conftest.py
 import logging
 from pathlib import Path
-from typing import Any, Dict, Tuple, Type, Union
+from typing import Any, Union
 
 import pytest
 import requests_mock
@@ -31,17 +31,17 @@ class DataSourceTest:
     source_id: str
 
     #: Failures affecting **all** data sources, internal to :mod:`sdmx`.
-    xfail_common: Dict[str, Any] = {}
+    xfail_common: dict[str, Any] = {}
 
     #: Mapping of endpoint → Exception subclass. Tests of these endpoints are expected
     #: to fail with the given kind of exception.
-    xfail: Dict[str, Union[Type[Exception], Tuple[Type[Exception], str]]] = {}
+    xfail: dict[str, Union[type[Exception], tuple[type[Exception], str]]] = {}
 
     #: True to xfail if a 503 Error is returned.
     tolerate_503 = False
 
     #: Keyword arguments for particular endpoints.
-    endpoint_args: Dict[str, Dict[str, Any]] = {}
+    endpoint_args: dict[str, dict[str, Any]] = {}
 
     @pytest.fixture
     def cache_path(self, test_data_path):

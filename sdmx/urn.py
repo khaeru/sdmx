@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Optional
+from typing import Optional
 
 from sdmx.model import PACKAGE, MaintainableArtefact
 
@@ -140,7 +140,7 @@ def make(
     )
 
 
-def match(value: str) -> Dict[str, str]:
+def match(value: str) -> dict[str, str]:
     """Match :data:`URN` in `value`, returning a :class:`dict` with the match groups.
 
     Example

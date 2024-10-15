@@ -1,7 +1,6 @@
 import logging
 from tempfile import NamedTemporaryFile
 from time import sleep
-from typing import Dict
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
@@ -13,7 +12,7 @@ from sdmx.source import Source as BaseSource
 log = logging.getLogger(__name__)
 
 
-def handle_references_param(kwargs: Dict) -> None:
+def handle_references_param(kwargs: dict) -> None:
     """Handle the "references" query parameter for ESTAT and similar.
 
     For this parameter, the server software behind ESTAT's data source only supports

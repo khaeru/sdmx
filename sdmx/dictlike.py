@@ -1,7 +1,7 @@
 import logging
 import typing
 from dataclasses import fields
-from typing import Generic, Tuple, TypeVar, Union, get_args, get_origin
+from typing import Generic, TypeVar, Union, get_args, get_origin
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
     def __hash__(cls):
         pass
 
-    def _validate_entry(self, kv: Tuple):
+    def _validate_entry(self, kv: tuple):
         """Validate one `key`/`value` pair."""
         key, value = kv
         try:
@@ -147,7 +147,7 @@ class DictLikeDescriptor(Generic[KT, VT]):
         self._field = next(filter(lambda f: f.name == self._name[1:], fields(obj)))
         # The type is DictLike[KeyType, ValueType]; retrieve those arguments
         kt, vt = get_args(self._field.type)
-        # Store. If ValueType is a generic, e.g. List[int], store only List.
+        # Store. If ValueType is a generic, e.g. list[int], store only List.
         self._types = (kt, get_origin(vt) or vt)
 
     def __get__(self, obj, type) -> DictLike[KT, VT]:

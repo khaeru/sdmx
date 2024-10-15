@@ -2,7 +2,7 @@ import logging
 from dataclasses import InitVar, dataclass, field
 from enum import Enum, IntFlag
 from functools import lru_cache
-from typing import List, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 from sdmx.util import parse_content_type
 
@@ -141,7 +141,7 @@ MEDIA_TYPES = [
 ]
 
 
-def list_media_types(**filters) -> List[MediaType]:
+def list_media_types(**filters) -> list[MediaType]:
     """Return the string for each item in :data:`MEDIA_TYPES` matching `filters`."""
     result = []
     for mt in MEDIA_TYPES:

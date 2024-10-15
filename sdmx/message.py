@@ -16,11 +16,8 @@ from operator import attrgetter
 from typing import (
     TYPE_CHECKING,
     Generator,
-    List,
     Optional,
     Text,
-    Tuple,
-    Type,
     Union,
     get_args,
 )
@@ -42,7 +39,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def _summarize(obj, include: Optional[List[str]] = None):
+def _summarize(obj, include: Optional[list[str]] = None):
     """Helper method for __repr__ on Header and Message (sub)classes."""
     import requests
 
@@ -123,7 +120,7 @@ class Footer:
     #:
     severity: Optional[str] = None
     #: The body text of the Footer contains zero or more blocks of text.
-    text: List[model.InternationalString] = field(default_factory=list)
+    text: list[model.InternationalString] = field(default_factory=list)
     #:
     code: Optional[int] = None
 
@@ -315,7 +312,7 @@ class StructureMessage(Message):
         # separator characters
         urn_expr = re.compile(rf"[=:]{re.escape(id_)}")
 
-        candidates: List[model.IdentifiableArtefact] = []
+        candidates: list[model.IdentifiableArtefact] = []
         for key, obj in chain(*[c.items() for c in self._collections]):
             if id_ in (key, obj.id) or urn_expr.search(obj.urn or ""):
                 candidates.append(obj)
@@ -325,7 +322,7 @@ class StructureMessage(Message):
 
         return candidates[0] if len(candidates) == 1 else None
 
-    def iter_collections(self) -> Generator[Tuple[str, type], None, None]:
+    def iter_collections(self) -> Generator[tuple[str, type], None, None]:
         """Iterate over collections."""
         for f in direct_fields(self.__class__):
             yield f.name, get_args(f.type)[1]
@@ -380,7 +377,7 @@ class DataMessage(Message):
     """
 
     #: :class:`list` of :class:`.DataSet`.
-    data: List[model.BaseDataSet] = field(default_factory=list)
+    data: list[model.BaseDataSet] = field(default_factory=list)
     #: :class:`.DataflowDefinition` that contains the data.
     dataflow: Optional[model.BaseDataflow] = None
     #: The "dimension at observation level".
@@ -388,7 +385,7 @@ class DataMessage(Message):
         Union[
             model._AllDimensions,
             model.DimensionComponent,
-            List[model.DimensionComponent],
+            list[model.DimensionComponent],
         ]
     ] = None
 
@@ -407,7 +404,7 @@ class DataMessage(Message):
         return self.dataflow.structure
 
     @property
-    def structure_type(self) -> Type[common.Structure]:
+    def structure_type(self) -> type[common.Structure]:
         """:class:`.Structure` subtype describing the contained (meta)data."""
         return {
             Version["2.1"]: v21.DataStructureDefinition,
@@ -522,7 +519,7 @@ class MetadataMessage(DataMessage):
     """SDMX Metadata Message."""
 
     @property
-    def structure_type(self) -> Type[common.Structure]:
+    def structure_type(self) -> type[common.Structure]:
         return {
             Version["2.1"]: v21.MetadataStructureDefinition,
             Version["3.0.0"]: v30.MetadataStructureDefinition,

@@ -4,7 +4,7 @@ See :ref:`sdmx-csv`.
 """
 
 from os import PathLike
-from typing import Literal, Optional, Type, Union
+from typing import Literal, Optional, Union
 
 import pandas as pd
 
@@ -21,7 +21,7 @@ def to_csv(
     obj,
     *args,
     path: Optional[PathLike] = None,
-    rtype: Type[Union[str, pd.DataFrame]] = str,
+    rtype: type[Union[str, pd.DataFrame]] = str,
     **kwargs,
 ) -> Union[None, str, pd.DataFrame]:
     """Convert an SDMX *obj* to SDMX-CSV.
