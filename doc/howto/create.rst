@@ -63,6 +63,7 @@ There are different classes to describe dimensions, measures, and attributes.
 
     import sdmx
     from sdmx.model.v21 import (
+        Agency,
         DataStructureDefinition,
         Dimension,
         PrimaryMeasure,
@@ -70,7 +71,8 @@ There are different classes to describe dimensions, measures, and attributes.
     )
 
     # Create an empty DSD
-    dsd = DataStructureDefinition(id="CUSTOM_DSD")
+    m = Agency(id="EXAMPLE")
+    dsd = DataStructureDefinition(id="CUSTOM_DSD", maintainer=m)
 
     # Add 1 Dimension object to the DSD for each dimension of the data.
     # Dimensions must have a explicit order for make_key(), below.
