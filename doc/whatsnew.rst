@@ -3,8 +3,10 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Bug fix for writing :class:`.VersionableArtefact` to SDMX-ML 2.1: :class:`KeyError` was raised if :attr:`.VersionableArtefact.version` was an instance of :class:`.Version` (:pull:`198`).
 
 v2.18.0 (2024-10-15)
 ====================
