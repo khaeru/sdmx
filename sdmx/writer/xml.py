@@ -291,7 +291,7 @@ def _a(obj: model.Annotation):
     return elem
 
 
-def annotable(obj, *args, **kwargs) -> etree._Element:
+def annotable(obj: common.AnnotableArtefact, *args, **kwargs) -> etree._Element:
     # Determine tag
     tag = kwargs.pop("_tag", tag_for_class(obj.__class__))
     if tag is None:  # pragma: no cover
@@ -309,7 +309,7 @@ def annotable(obj, *args, **kwargs) -> etree._Element:
         raise
 
 
-def identifiable(obj, *args, **kwargs) -> etree._Element:
+def identifiable(obj: common.IdentifiableArtefact, *args, **kwargs) -> etree._Element:
     """Write :class:`.IdentifiableArtefact`.
 
     Unless the keyword argument `_with_urn` is :data:`False`, a URN is generated for
@@ -328,7 +328,7 @@ def identifiable(obj, *args, **kwargs) -> etree._Element:
     return annotable(obj, *args, **kwargs)
 
 
-def nameable(obj, *args, **kwargs) -> etree._Element:
+def nameable(obj: common.NameableArtefact, *args, **kwargs) -> etree._Element:
     return identifiable(
         obj,
         *i11lstring(obj.name, "com:Name"),
@@ -338,11 +338,16 @@ def nameable(obj, *args, **kwargs) -> etree._Element:
     )
 
 
-def maintainable(obj, *args, **kwargs) -> etree._Element:
-    kwargs.setdefault("version", obj.version)
+def maintainable(obj: common.MaintainableArtefact, *args, **kwargs) -> etree._Element:
+    # MaintainableArtefact attributes
     kwargs.setdefault("isExternalReference", str(obj.is_external_reference).lower())
     kwargs.setdefault("isFinal", str(obj.is_final).lower())
     kwargs.setdefault("agencyID", getattr(obj.maintainer, "id", None))
+
+    # VersionableArtefact attributes (no separate method)
+    kwargs.setdefault("version", str(obj.version))
+    # TODO Also write valid_from, valid_to
+
     return nameable(obj, *args, **kwargs)
 
 
