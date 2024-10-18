@@ -372,10 +372,12 @@ class VersionableArtefact(NameableArtefact):
 
     def __post_init__(self):
         super().__post_init__()
+        if isinstance(self.version, str) and self.version == "None":
+            self.version = None
         try:
             if self.version and self.version != self.urn_group["version"]:
                 raise ValueError(
-                    f"Version {self.version} does not match URN {self.urn}"
+                    f"Version {self.version!r} does not match URN {self.urn!r}"
                 )
             else:
                 self.version = self.urn_group["version"]
