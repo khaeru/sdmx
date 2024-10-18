@@ -38,10 +38,12 @@ from .internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
 )
+from .version import Version
 
 __all__ = [
     "DEFAULT_LOCALE",
     "InternationalString",
+    "Version",
     # In the order they appear in this file
     "ConstrainableArtefact",
     "Annotation",
@@ -362,7 +364,7 @@ class NameableArtefact(IdentifiableArtefact):
 @dataclass
 class VersionableArtefact(NameableArtefact):
     #: A version string following an agreed convention.
-    version: Optional[str] = None
+    version: Union[str, Version, None] = None
     #: Date from which the version is valid.
     valid_from: Optional[str] = None
     #: Date from which the version is superseded.
@@ -370,10 +372,12 @@ class VersionableArtefact(NameableArtefact):
 
     def __post_init__(self):
         super().__post_init__()
+        if self.version == "None":
+            self.version = None
         try:
             if self.version and self.version != self.urn_group["version"]:
                 raise ValueError(
-                    f"Version {self.version} does not match URN {self.urn}"
+                    f"Version {self.version!r} does not match URN {self.urn!r}"
                 )
             else:
                 self.version = self.urn_group["version"]

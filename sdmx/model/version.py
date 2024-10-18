@@ -35,19 +35,26 @@ def _cmp_method(op: Callable) -> Callable:
 class Version(packaging.version.Version):
     """Class representing a version.
 
-    This class extends :class:`packaging.version.Version`, which provides a complete
-    interface for interacting with Python version specifiers. The extensions implement
-    the particular form of versioning laid out by the SDMX standards. Specifically:
+    The SDMX Information Model **does not** specify a Version class; instead,
+    :attr:`.VersionableArtefact.version` is described as “a version **string** following
+    SDMX versioning rules.”
 
-    - :attr:`kind` to identify whether the version is an SDMX 2.1, SDMX 3.0, or Python-
-      style version string.
+    In order to simplify application of those ‘rules’, and to handle the differences
+    between SDMX 2.1 and 3.0.0, this class extends :class:`packaging.version.Version`,
+    which provides a complete interface for interacting with Python version specifiers.
+    The extensions implement the particular form of versioning laid out by the SDMX
+    standards. Specifically:
+
+    - :attr:`kind` as added to identify whether a Version instance is an SDMX 2.1, SDMX
+      3.0, or Python-style version string.
     - Attribute aliases for particular terms used in the SDMX 3.0 standards:
       :attr:`patch` and :attr:`ext`.
     - The :class:`str` representation of a Version uses the SDMX 3.0 style of separating
       the :attr:`ext` with a hyphen ("1.0.0-dev1"), which differs from the Python style
       of using no separator for a ‘post-release’ ("1.0.0dev1") or a plus symbol for a
       ‘local part’ ("1.0.0+dev1").
-    - The class is comparable with :class:`str` version expressions.
+    - :meth:`increment`, an added convenience method.
+    - The class is comparable and interchangeable with :class:`str` version expressions.
 
     Parameters
     ----------
