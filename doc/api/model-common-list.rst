@@ -82,4 +82,5 @@
 :obj:`~.common.VTLConceptMapping`
 :obj:`~.common.VTLDataflowMapping`
 :obj:`~.common.VTLMappingScheme`
+:obj:`~.common.Version`
 :obj:`~.common.VersionableArtefact`

@@ -38,11 +38,11 @@ Some of the internal methods take specific arguments and return varying values.
 These arguments can be passed to :func:`.to_pandas` when `obj` is of the appropriate type:
 
 .. autosummary::
-   sdmx.writer.pandas.write_dataset
-   sdmx.writer.pandas.write_datamessage
-   sdmx.writer.pandas.write_itemscheme
-   sdmx.writer.pandas.write_structuremessage
-   sdmx.writer.pandas.DEFAULT_RTYPE
+   write_dataset
+   write_datamessage
+   write_itemscheme
+   write_structuremessage
+   DEFAULT_RTYPE
 
 Other objects are converted as follows:
 
