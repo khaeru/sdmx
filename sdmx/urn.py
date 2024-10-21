@@ -1,7 +1,8 @@
 import re
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from sdmx.model import PACKAGE, MaintainableArtefact
+if TYPE_CHECKING:
+    import sdmx.model.common
 
 #: Regular expression for URNs.
 _PATTERN = re.compile(
@@ -31,18 +32,18 @@ class URN:
     klass: str
 
     #: ID of the :class:`.Agency` that is the :attr:`.MaintainableArtefact.maintainer`.
-    agency: str
+    agency: Optional[str] = None
 
     #: ID of the :class:`.MaintainableArtefact`.
-    id: str
+    id: Optional[str] = None
 
     #: :attr:`.VersionableArtefact.version` of the maintainable artefact.parent.
-    version: str
+    version: Optional[str] = None
 
     #: ID of an item within a maintainable parent. Optional.
-    item_id: Optional[str]
+    item_id: Optional[str] = None
 
-    def __init__(self, value, **kwargs) -> None:
+    def __init__(self, value: Optional[str], **kwargs) -> None:
         if kwargs:
             self.__dict__.update(kwargs)
 
@@ -57,9 +58,13 @@ class URN:
 
         g = self.groupdict = match.groupdict()
 
-        self.package = (
-            PACKAGE[g["class"]] if g["package"] == "package" else g["package"]
-        )
+        if g["package"] == "package":
+            from sdmx.model.v21 import PACKAGE
+
+            self.package = PACKAGE[g["class"]]
+        else:
+            self.package = g["package"]
+
         self.klass = g["class"]
         self.agency = g["agency"]
         self.id = g["id"]
@@ -104,14 +109,17 @@ def expand(value: str) -> str:
 
 def make(
     obj,
-    maintainable_parent: Optional["MaintainableArtefact"] = None,
+    maintainable_parent: Optional["sdmx.model.common.MaintainableArtefact"] = None,
     strict: bool = False,
 ) -> str:
     """Create an SDMX URN for `obj`.
 
-    If `obj` is not :class:`.MaintainableArtefact`, then `maintainable_parent`
-    must be supplied in order to construct the URN.
+    If `obj` is not :class:`.MaintainableArtefact`, then `maintainable_parent` must be
+    supplied in order to construct the URN.
     """
+    from sdmx.model.common import MaintainableArtefact
+    from sdmx.model.v21 import PACKAGE
+
     if not isinstance(obj, MaintainableArtefact):
         ma = maintainable_parent or obj.get_scheme()
         item_id = obj.id

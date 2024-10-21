@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pytest
 
 import sdmx.model as model
-from sdmx.model import v21
+from sdmx.model import common, v21
 from sdmx.model.common import (
     Agency,
     AnnotableArtefact,
@@ -16,7 +16,6 @@ from sdmx.model.common import (
     IdentifiableArtefact,
     Item,
     ItemScheme,
-    MaintainableArtefact,
     NameableArtefact,
     Representation,
 )
@@ -90,18 +89,22 @@ class TestAnnotableArtefact:
         )
 
 
+URN = "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=IT1:VARIAB_ALL(9.6)"
+
+
 class TestIdentifiableArtefact:
-    def test_general(self):
-        urn = (
-            "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=IT1:VARIAB_ALL"
-            "(9.6)"
-        )
-        urn_pat = urn.replace("(", r"\(").replace(")", r"\)")
+    def test_init_urn(self):
+        """IdentifiableArtefact can be initialized with URN."""
+        ia = IdentifiableArtefact(urn=URN)
+        assert "VARIAB_ALL" == ia.id
+
+    def test_general(self) -> None:
+        urn_pat = URN.replace("(", r"\(").replace(")", r"\)")
 
         with pytest.raises(
             ValueError, match=f"ID BAD_URN does not match URN {urn_pat}"
         ):
-            IdentifiableArtefact(id="BAD_URN", urn=urn)
+            IdentifiableArtefact(id="BAD_URN", urn=URN)
 
         # IdentifiableArtefact is hashable
         ia = IdentifiableArtefact()
@@ -162,27 +165,32 @@ class TestNameableArtefact:
         assert na1.compare(na2)
 
 
-class TestMaintainableArtefact:
-    def test_urn(self):
-        urn = (
-            "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme="
-            "IT1:VARIAB_ALL(9.6)"
-        )
-        ma = MaintainableArtefact(id="VARIAB_ALL", urn=urn)
+class TestVersionableArtefact:
+    def test_urn(self) -> None:
+        va = common.VersionableArtefact(id="VARIAB_ALL", urn=URN)
 
         # Version is parsed from URN
-        assert ma.version == "9.6"
+        assert va.version == "9.6"
 
         # Mismatch raises an exception
-        with pytest.raises(ValueError, match="Version 9.7 does not match URN"):
-            MaintainableArtefact(version="9.7", urn=urn)
+        with pytest.raises(ValueError, match="Version '9.7' does not match URN"):
+            common.VersionableArtefact(version="9.7", urn=URN)
+
+    def test_version_none(self) -> None:
+        va = common.VersionableArtefact(version="None")
+        assert va.version is None
+
+
+class TestMaintainableArtefact:
+    def test_urn(self) -> None:
+        ma = common.MaintainableArtefact(id="VARIAB_ALL", urn=URN)
 
         # Maintainer is parsed from URN
         assert ma.maintainer == Agency(id="IT1")
 
         # Mismatch raises an exception
         with pytest.raises(ValueError, match="Maintainer FOO does not match URN"):
-            MaintainableArtefact(maintainer=Agency(id="FOO"), urn=urn)
+            common.MaintainableArtefact(maintainer=Agency(id="FOO"), urn=URN)
 
 
 class TestItem:

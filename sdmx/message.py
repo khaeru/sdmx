@@ -285,12 +285,12 @@ class StructureMessage(Message):
             :attr:`~.IdentifiableArtefact.id`; if :class:`str`, an object with this ID
             *or* this string as part of its :attr:`~.IdentifiableArtefact.urn`.
 
+            .. todo:: Support passing a URN.
+
         Returns
         -------
         .IdentifiableArtefact
-            with the given ID and possibly class.
-        None
-            if there is no match.
+            with the given ID and possibly class, or :any:`None` if there is no match.
 
         Raises
         ------
@@ -299,8 +299,6 @@ class StructureMessage(Message):
             of different classes, or two objects of the same class with different
             :attr:`~.MaintainableArtefact.maintainer` or
             :attr:`~.VersionableArtefact.version`.
-
-        .. todo:: Support passing a URN.
         """
         id_ = (
             obj_or_id.id

@@ -31,6 +31,7 @@ from typing import (
 
 from sdmx.dictlike import DictLikeDescriptor
 from sdmx.rest import Resource
+from sdmx.urn import URN
 from sdmx.util import compare, direct_fields, only
 
 from .internationalstring import (
@@ -38,10 +39,12 @@ from .internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
 )
+from .version import Version
 
 __all__ = [
     "DEFAULT_LOCALE",
     "InternationalString",
+    "Version",
     # In the order they appear in this file
     "ConstrainableArtefact",
     "Annotation",
@@ -238,24 +241,19 @@ class IdentifiableArtefact(AnnotableArtefact):
     #: a URN.
     urn: Optional[str] = None
 
-    urn_group: dict = field(default_factory=dict, repr=False)
-
     def __post_init__(self):
-        if not isinstance(self.id, str):
+        # Validate URN, if any
+        self._urn = URN(self.urn)
+
+        if not self.id:
+            self.id = self._urn.item_id or self._urn.id or MissingID
+        elif self.urn and self.id not in (self._urn.item_id or self._urn.id):
+            # Ensure explicit ID is consistent with URN
+            raise ValueError(f"ID {self.id} does not match URN {self.urn}")
+        elif not isinstance(self.id, str):
             raise TypeError(
                 f"IdentifiableArtefact.id must be str; got {type(self.id).__name__}"
             )
-
-        if self.urn:
-            import sdmx.urn
-
-            self.urn_group = sdmx.urn.match(self.urn)
-
-        try:
-            if self.id not in (self.urn_group["item_id"] or self.urn_group["id"]):
-                raise ValueError(f"ID {self.id} does not match URN {self.urn}")
-        except KeyError:
-            pass
 
     def __eq__(self, other):
         """Equality comparison.
@@ -362,7 +360,7 @@ class NameableArtefact(IdentifiableArtefact):
 @dataclass
 class VersionableArtefact(NameableArtefact):
     #: A version string following an agreed convention.
-    version: Optional[str] = None
+    version: Union[str, Version, None] = None
     #: Date from which the version is valid.
     valid_from: Optional[str] = None
     #: Date from which the version is superseded.
@@ -370,15 +368,15 @@ class VersionableArtefact(NameableArtefact):
 
     def __post_init__(self):
         super().__post_init__()
-        try:
-            if self.version and self.version != self.urn_group["version"]:
-                raise ValueError(
-                    f"Version {self.version} does not match URN {self.urn}"
-                )
-            else:
-                self.version = self.urn_group["version"]
-        except KeyError:
-            pass
+
+        if not self.version:
+            self.version = self._urn.version
+        elif isinstance(self.version, str) and self.version == "None":
+            self.version = None
+        elif self.urn and self.version != self._urn.version:
+            raise ValueError(
+                f"Version {self.version!r} does not match URN {self.urn!r}"
+            )
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.
@@ -420,15 +418,14 @@ class MaintainableArtefact(VersionableArtefact):
 
     def __post_init__(self):
         super().__post_init__()
-        try:
-            if self.maintainer and self.maintainer.id != self.urn_group["agency"]:
+
+        if self.urn:
+            if self.maintainer and self.maintainer.id != self._urn.agency:
                 raise ValueError(
                     f"Maintainer {self.maintainer} does not match URN {self.urn}"
                 )
             else:
-                self.maintainer = Agency(id=self.urn_group["agency"])
-        except KeyError:
-            pass
+                self.maintainer = Agency(id=self._urn.agency)
 
     def compare(self, other, strict=True):
         """Return :obj:`True` if `self` is the same as `other`.

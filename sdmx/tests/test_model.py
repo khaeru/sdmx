@@ -96,6 +96,8 @@ CLASSES = [
     # Appearing in model.InternationalString
     "DEFAULT_LOCALE",
     "InternationalString",
+    # Appearing in model.Version
+    "Version",
     # Classes that are distinct in .model.v21 versus .model.v30
     "SelectionValue",
     "MemberValue",

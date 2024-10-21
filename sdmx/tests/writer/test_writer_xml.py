@@ -7,6 +7,7 @@ from lxml import etree
 import sdmx
 import sdmx.writer.xml
 from sdmx import message
+from sdmx.model import common
 from sdmx.model import v21 as m
 from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
 from sdmx.writer.xml import writer as XMLWriter
@@ -166,12 +167,21 @@ def test_reference() -> None:
     assert 'version="1.0"' in result_str
 
 
-def test_Footer(footer):
-    """:class:`.Footer` can be written."""
-    sdmx.to_xml(footer)
+def test_VersionableArtefact() -> None:
+    """:class:`VersionableArtefact` with :class:`.Version` instance can be written."""
+    cl: common.Codelist = common.Codelist(id="FOO", version=common.Version("1.2.3"))
+
+    # Written to XML without error
+    result = sdmx.to_xml(cl).decode()
+    assert 'version="1.2.3"' in result
 
 
 # sdmx.message classes
+
+
+def test_Footer(footer):
+    """:class:`.Footer` can be written."""
+    sdmx.to_xml(footer)
 
 
 def test_structuremessage(tmp_path, structuremessage):
