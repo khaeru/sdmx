@@ -201,6 +201,41 @@ def test_gh_164(specimen):
     assert isinstance(da.related_to, v21.NoSpecifiedRelationship)
 
 
+def test_gh_199():
+    """Test of https://github.com/khaeru/sdmx/issues/199."""
+    import sdmx.format.xml.v21
+
+    # Template for DSD URN
+    URN = "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=FOO:BAR({})"
+
+    # Template for SDMX-ML data message
+    CONTENT = """<?xml version="1.0" encoding="UTF-8"?>
+<mes:StructureSpecificData
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+  xmlns:u="{}:ObsLevelDim:TIME_PERIOD">
+  <u:DataSet>
+    ...
+  </u:DataSet>
+</mes:StructureSpecificData>"""
+
+    # Construct a URN and message; store as BytesIO
+    urn1 = URN.format("1")
+    dsd1 = v21.DataStructureDefinition(urn=urn1)
+    f1 = BytesIO(CONTENT.format(urn1).encode())
+
+    # Construct a *different* URN and message with this other URN mapped to the "u:" XML
+    # namespace prefix
+    urn2 = URN.format("2")
+    dsd2 = v21.DataStructureDefinition(urn=urn2)
+    f2 = BytesIO(CONTENT.format(urn2).encode())
+
+    # First message can be parsed
+    sdmx.read_sdmx(f1, structure=dsd1)
+
+    # #199: raises XMLParseError/NotImplementedError
+    sdmx.read_sdmx(f2, structure=dsd2)
+
+
 # Each entry is a tuple with 2 elements:
 # 1. an instance of lxml.etree.Element to be parsed.
 # 2. Either:
