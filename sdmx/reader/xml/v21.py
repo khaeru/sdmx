@@ -1238,8 +1238,10 @@ def _mds_start(reader, elem):
     mds = reader.class_for_tag(elem.tag)()
 
     # Retrieve the (message-local) ID referencing a data structure definition
-    id = elem.attrib.get("structureRef", None) or elem.attrib.get(
-        reader.qname("metadata:structureRef"), None
+    id = (
+        elem.attrib.get("structureRef", None)
+        or elem.attrib.get(reader.qname("md:structureRef"), None)
+        or elem.attrib.get(reader.qname("md_ss:structureRef"), None)
     )
 
     # Get a reference to the MSD that structures the data set

@@ -86,6 +86,7 @@ NS = {
     # To be formatted
     "com": "{}/common",
     "md": "{}/metadata/generic",
+    "md_ss": "{}/metadata/structurespecific",
     "data": "{}/data/structurespecific",
     "str": "{}/structure",
     "mes": "{}/message",
