@@ -6,6 +6,7 @@ import pandas as pd
 
 from sdmx import message
 from sdmx.dictlike import DictLike
+from sdmx.model import common, v21
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
     DEFAULT_LOCALE,
@@ -210,7 +211,7 @@ def _rp(obj: model.RangePeriod, **kwargs):
 
 @writer
 def write_dataset(  # noqa: C901 TODO reduce complexity 12 → ≤10
-    obj: model.DataSet,
+    obj: common.BaseDataSet,
     attributes="",
     dtype=np.float64,
     constraint=None,
@@ -308,7 +309,7 @@ def write_dataset(  # noqa: C901 TODO reduce complexity 12 → ≤10
         if attributes:
             # Add the combined attributes from observation, series- and group keys
             row.update(observation.attrib)
-        if "d" in attributes:
+        if "d" in attributes and isinstance(obj, v21.DataSet):
             # Add the attributes of the data set
             row.update(obj.attrib)
 
