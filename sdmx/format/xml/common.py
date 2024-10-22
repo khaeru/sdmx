@@ -273,6 +273,8 @@ def install_schemas(
 
 
 class XMLFormat:
+    """Information about an SDMX-ML format."""
+
     NS: Mapping[str, Optional[str]]
     _class_tag: list
 
@@ -306,29 +308,32 @@ class XMLFormat:
                 return prefix
         raise ValueError(url)
 
+    _NS_PATTERN = re.compile(r"(\{(?P<ns>.*)\}|(?P<ns_prefix>.*):)?(?P<localname>.*)")
+
     @lru_cache()
-    def qname(self, ns_or_name, name=None) -> QName:
+    def qname(self, ns_or_name: str, name: Optional[str] = None) -> QName:
         """Return a fully-qualified tag `name` in namespace `ns`."""
         if isinstance(ns_or_name, QName):
             # Already a QName; do nothing
             return ns_or_name
-        else:
-            if name is None:
-                match = re.fullmatch(
-                    r"(\{(?P<ns_full>.*)\}|(?P<ns_key>.*):)?(?P<name>.*)", ns_or_name
-                )
-                assert match
-                name = match.group("name")
-                if ns_key := match.group("ns_key"):
-                    ns = self.NS[ns_key]
-                elif ns := match.group("ns_full"):
-                    pass
-                else:
-                    ns = None
-            else:
-                ns = self.NS[ns_or_name]
 
-            return QName(ns, name)
+        if name is None:
+            # `ns_or_name` contains the local name ("tag") and possibly a namespace
+            # prefix ("ns:tag") or full namespace name ("{foo}tag")
+            match = self._NS_PATTERN.fullmatch(ns_or_name)
+            assert match
+            name = match.group("localname")
+            if prefix := match.group("ns_prefix"):
+                ns = self.NS[prefix]
+            elif ns := match.group("ns"):
+                pass
+            else:
+                ns = None  # Tag without namespace
+        else:
+            # `ns_or_name` is the namespace prefix; `name` is the local name
+            ns = self.NS[ns_or_name]
+
+        return QName(ns, name)
 
     @lru_cache()
     def class_for_tag(self, tag) -> Optional[type]:
