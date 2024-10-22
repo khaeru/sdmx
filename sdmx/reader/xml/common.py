@@ -151,7 +151,7 @@ class XMLEventReader(BaseReader):
 
     # BaseReader methods
 
-    def read_message(  # noqa: C901 TODO reduce complexity 12 → ≤11
+    def read_message(
         self,
         source,
         structure=None,
@@ -196,20 +196,14 @@ class XMLEventReader(BaseReader):
                     # Don't know what to do for this (element, event)
                     raise NotImplementedError(element.tag, event) from None
 
-                try:
-                    # Parse the element
-                    result = func(self, element)
-                except TypeError:
-                    if func is None:  # Explicitly no parser for this (element, event)
-                        continue  # Skip
-                    else:  # pragma: no cover
-                        raise
-                else:
-                    # Store the result
-                    self.push(result)
+                if func is None:
+                    continue  # Explicitly no parser for this (element, event) → skip
 
-                    if event == "end":
-                        element.clear()  # Free memory
+                result = func(self, element)  # Parse the element
+                self.push(result)  # Store the result
+
+                if event == "end":
+                    element.clear()  # Free memory
 
         except Exception as exc:
             # Parsing failed; display some diagnostic information
