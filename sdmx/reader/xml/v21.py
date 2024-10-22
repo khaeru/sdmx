@@ -34,7 +34,6 @@ from .common import (
 )
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class _NoText:
