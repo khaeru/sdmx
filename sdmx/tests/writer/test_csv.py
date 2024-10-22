@@ -23,6 +23,9 @@ def _add_test_dsd(ds: m.DataSet) -> None:
 
 @pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
 def test_write_data(tmp_path, specimen, path):
+    if ("v3", "csv") == path.parts[-3:-1]:
+        pytest.skip("SDMX-CSV 3.0.0 examples cannot be read without DSD")
+
     msg = sdmx.read_sdmx(path)
 
     for i, dataset in enumerate(msg.data):
