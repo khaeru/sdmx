@@ -599,7 +599,7 @@ def _maybe_unbounded(value: str) -> Optional[int]:
     return None if value == "unbounded" else int(value)
 
 
-# TODO Reduce complexity from 12 → 11, by adding separate parsers for certain COMPONENTs
+# TODO Reduce complexity from 12 → ≤10, by adding separate parsers for some COMPONENTs
 @end(COMPONENT, only=False)
 @possible_reference(unstash=True)
 def _component_end(reader: Reader, elem):  # noqa: C901

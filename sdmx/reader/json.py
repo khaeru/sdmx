@@ -37,7 +37,7 @@ class Reader(BaseReader):
     def detect(cls, content):
         return content.startswith(b"{")
 
-    def read_message(self, source, structure=None, **kwargs):  # noqa: C901  TODO reduce complexity 15 → ≤11
+    def read_message(self, source, structure=None, **kwargs):  # noqa: C901  TODO reduce complexity 15 → ≤10
         # Initialize message instance
         msg = DataMessage()
 
