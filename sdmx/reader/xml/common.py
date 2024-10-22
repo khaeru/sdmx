@@ -129,9 +129,9 @@ class XMLEventReader(BaseReader):
     #: :class:`.BaseReference` subclass used by this reader.
     Reference: ClassVar[type[BaseReference]]
 
-    # Mapping from (QName, ["start", "end"]) to a function that parses the element/event
-    # or else None
-    parser: ClassVar[Mapping[tuple[QName, str], Callable]]
+    #: Mapping from (QName, ["start", "end"]) to a function that parses the
+    #: element/event or else None (no parsing).
+    parser: ClassVar[dict[tuple[QName, str], Callable]]
 
     # One-way counter for use in stacks
     _count: Iterator[int]
@@ -368,10 +368,6 @@ class XMLEventReader(BaseReader):
             self.stack[s].update(values)
 
     # Delegate to version-specific module
-    @classmethod
-    def NS(cls):
-        return cls.format.NS
-
     @classmethod
     def class_for_tag(cls, tag: str) -> type:
         return cls.format.class_for_tag(tag)
