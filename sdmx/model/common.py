@@ -146,6 +146,7 @@ class _MissingID(str):
         return isinstance(other, self.__class__)
 
 
+#: Singleton used for :attr:`.IdentifiableArtefact.id` if none given.
 MissingID = _MissingID()
 
 
