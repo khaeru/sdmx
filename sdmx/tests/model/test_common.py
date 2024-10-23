@@ -93,6 +93,17 @@ URN = "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=IT1:VARIAB_ALL(9.
 
 
 class TestIdentifiableArtefact:
+    def test_init_empty_id(self):
+        """IdentifiableArtefact can be initialized with an empty :class:`str` as ID."""
+        # No id= parameter → id attribute is MissingID
+        ia0 = IdentifiableArtefact()
+        assert common.MissingID == ia0.id
+        assert common.MissingID is ia0.id
+
+        # Empty string parameter → id attribute is empty string
+        ia1 = IdentifiableArtefact(id="")
+        assert "" == ia1.id
+
     def test_init_urn(self):
         """IdentifiableArtefact can be initialized with URN."""
         ia = IdentifiableArtefact(urn=URN)

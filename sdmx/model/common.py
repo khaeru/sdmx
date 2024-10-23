@@ -146,6 +146,7 @@ class _MissingID(str):
         return isinstance(other, self.__class__)
 
 
+#: Singleton used for :attr:`.IdentifiableArtefact.id` if none given.
 MissingID = _MissingID()
 
 
@@ -245,7 +246,8 @@ class IdentifiableArtefact(AnnotableArtefact):
         # Validate URN, if any
         self._urn = URN(self.urn)
 
-        if not self.id:
+        if self.id is MissingID:
+            # Try to retrieve an item ID from the URN, if any
             self.id = self._urn.item_id or self._urn.id or MissingID
         elif self.urn and self.id not in (self._urn.item_id or self._urn.id):
             # Ensure explicit ID is consistent with URN
