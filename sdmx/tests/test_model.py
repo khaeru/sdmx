@@ -112,6 +112,7 @@ CLASSES = [
     "MeasureDescriptor",
     "DataStructureDefinition",
     "Observation",
+    "DataSet",
     "StructureSpecificDataSet",
     "MetadataStructureDefinition",
     "TextAttributeValue",

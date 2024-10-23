@@ -29,6 +29,9 @@ def test_write_data_arguments(specimen):
 
 @pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
 def test_write_data(specimen, path):
+    if ("v3", "csv") == path.parts[-3:-1]:
+        pytest.skip("SDMX-CSV 3.0.0 examples cannot be read without DSD")
+
     msg = sdmx.read_sdmx(path)
 
     result = sdmx.to_pandas(msg)
@@ -44,6 +47,9 @@ def test_write_data(specimen, path):
 
 @pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
 def test_write_data_attributes(path):
+    if ("v3", "csv") == path.parts[-3:-1]:
+        pytest.skip("SDMX-CSV 3.0.0 examples cannot be read without DSD")
+
     msg = sdmx.read_sdmx(path)
 
     result = sdmx.to_pandas(msg, attributes="osgd")

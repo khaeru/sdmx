@@ -319,6 +319,11 @@ class SpecimenCollection:
         # Add files from the SDMX 3.0 specification
         v3 = base_path.joinpath("v3")
 
+        # SDMX-CSV
+        self.specimens.extend(
+            (p, "csv", "data") for p in v3.joinpath("csv").glob("*.csv")
+        )
+
         # commented: SDMX-JSON 2.0 is not yet implemented
         # # SDMX-JSON
         # self.specimens.extend(

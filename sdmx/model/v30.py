@@ -43,6 +43,7 @@ __all__ = [
     "DataStructureDefinition",
     "Dataflow",
     "Observation",
+    "DataSet",
     "StructureSpecificDataSet",
     "MetadataAttributeDescriptor",
     "IdentifiableObjectSelection",

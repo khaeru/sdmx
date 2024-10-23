@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from . import json, xml
+from . import csv, json, xml
 
 #: Reader classes
-READERS = [json.Reader, xml.Reader]
+READERS = [csv.Reader, json.Reader, xml.Reader]
 
 
 def _readers():
