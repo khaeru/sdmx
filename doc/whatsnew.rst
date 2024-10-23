@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.19.0 (2024-10-23)
+====================
 
 - :mod:`.reader.csv` supports reading :ref:`SDMX-CSV 2.0.0 <sdmx-csv>` (corresponding to SDMX 3.0.0) (:pull:`201`, :issue:`34`).
   See the implementation notes for information about the differences between the SDMX-CSV 1.0 and 2.0.0 formats and their support in :mod:`sdmx`.
