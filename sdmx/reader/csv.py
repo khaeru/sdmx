@@ -26,13 +26,22 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class Options:
-    # Defined in the spec
+    """SDMX-CSV 2.0.0 format options."""
+
+    #: Types of labels included. Appears in the specification.
     labels: Literal["both", "id", "name"] = "id"
+
+    #: Whether series, observation, or no keys are expressed in their own columns (in
+    #: addition to dimension columns). Appears in the specification.
     key: Literal["both", "none", "obs", "series"] = "none"
 
-    # Others
+    #: “Custom columns” detected by :meth:`.Reader.inspect_header`.
     custom_columns: list[bytes] = field(default_factory=list)
+
+    #: CSV field delimiter.
     delimiter: str = ","
+
+    #: SDMX-CSV “sub-field” delimiter.
     delimiter_sub: str = ""
 
 
@@ -43,26 +52,31 @@ class Reader(BaseReader):
     media_types = list_media_types(base="csv")
     suffixes = [".csv"]
 
-    dataflow: Optional["common.BaseDataflow"]
-    structure: Union["v21.DataStructureDefinition", "v30.DataStructure"]
+    #: Handlers for individual fields in a CSV record. This collection has exactly the
+    #: same number of handlers as columns in the `source` passed to
+    #: :meth:`read_message`.
     handlers: Sequence["Handler"]
-    observations: dict[tuple[str, str, str], list["common.BaseObservation"]]
+
+    _dataflow: Optional["common.BaseDataflow"]
+    _structure: Union["v21.DataStructureDefinition", "v30.DataStructure"]
+    _observations: dict[tuple[str, str, str], list["common.BaseObservation"]]
 
     def __init__(self):
         self.options = Options()
         self.handlers = []
 
     def read_message(self, source, structure=None, *, delimiter: str = ",", **kwargs):
+        """Read a message from `source`."""
         self.options.delimiter = delimiter
 
         if isinstance(structure, common.BaseDataflow):
-            self.dataflow = structure
-            self.structure = structure.structure
+            self._dataflow = structure
+            self._structure = structure.structure
         else:
-            self.dataflow = None
-            self.structure = structure
+            self._dataflow = None
+            self._structure = structure
 
-        self.observations = defaultdict(list)
+        self._observations = defaultdict(list)
 
         # Create a CSV reader
         lines = source.read().decode().splitlines()
@@ -75,13 +89,13 @@ class Reader(BaseReader):
             self.handle_row(row)
 
         # Create a data message
-        self.message = sdmx.message.DataMessage(dataflow=self.dataflow)
+        self.message = sdmx.message.DataMessage(dataflow=self._dataflow)
 
         # Create 1 data set for each of the 4 ActionType values
         ds_kw: "DataSetKwargs" = dict(
-            described_by=self.dataflow, structured_by=self.structure
+            described_by=self._dataflow, structured_by=self._structure
         )
-        for (*_, action), obs in self.observations.items():
+        for (*_, action), obs in self._observations.items():
             a = common.ActionType[
                 {"A": "append", "D": "delete", "I": "information", "R": "replace"}[
                     action
@@ -93,7 +107,8 @@ class Reader(BaseReader):
 
         return self.message
 
-    def handle_row(self, row: list[str]):
+    def handle_row(self, row: list[str]) -> None:
+        """Handle a single CSV row."""
         obs = v30.Observation(
             dimension=v30.Key(),
             attached_attribute={"__TARGET": v30.AttributeValue(value=[])},
@@ -102,11 +117,20 @@ class Reader(BaseReader):
         for h, v in zip_longest(self.handlers, row):
             h(obs, v)
 
+        # Remove the "__TARGET" annotation and construct a key describing the data set
+        # to which this observation belongs
         target = tuple(obs.attached_attribute.pop("__TARGET").value)
 
-        self.observations[target].append(obs)
+        self._observations[target].append(obs)
 
     def inspect_header(self, header: list[str]) -> None:  # noqa: C901  TODO Reduce complexity from 12 → ≤10
+        """Inspect the SDMX-CSV header and determine the format :class:`.Options`.
+
+        Raises
+        ------
+        ValueError
+            if the source contains malformed SDMX-CSV 2.0.0.
+        """
         handlers: MutableSequence[Optional["Handler"]] = [
             StoreTarget(allowable={"dataflow", "dataprovision", "datastructure"}),
             StoreTarget(),
@@ -148,9 +172,9 @@ class Reader(BaseReader):
         inspected = set(range(i))
 
         for cls, components, multi_possible in (
-            (KeyValue, self.structure.dimensions, False),
-            (ObsValue, self.structure.measures, False),
-            (AttributeValue, self.structure.attributes, True),
+            (KeyValue, self._structure.dimensions, False),
+            (ObsValue, self._structure.measures, False),
+            (AttributeValue, self._structure.attributes, True),
         ):
             for c in components:
                 pattern = re.compile(
@@ -179,7 +203,13 @@ class Reader(BaseReader):
 
 
 class Handler:
+    """Base class for :attr:`.Reader.handlers`."""
+
     def __call__(self, obs: "common.BaseObservation", value: str) -> None:
+        """Handle the `value` in one field/record, and update the resulting `obs`.
+
+        Subclasses **must** implement this method.
+        """
         raise NotImplementedError
 
     def __repr__(self) -> str:
@@ -187,7 +217,7 @@ class Handler:
 
 
 class Name(Handler):
-    """Handler for Options.labels == "name".
+    """Handler for :py:`Options.labels == "name"` columns.
 
     Does nothing; the values are not stored.
     """
@@ -197,11 +227,18 @@ class Name(Handler):
 
 
 class NotHandled(Handler):
+    """Handler that does nothing."""
+
     def __call__(self, obs, value):
         log.info(f"Not handled: {self.__class__.__name__}: {value}")
 
 
 class StoreTarget(Handler):
+    """Store `value` on a special :class:`.DataAttribute` with ID "__TARGET" on `obs`.
+
+    Used for the STRUCTURE, STRUCTURE_ID, and ACTION columns.
+    """
+
     def __init__(self, allowable: Optional[set[str]] = None):
         self.allowable = allowable
 
@@ -211,14 +248,20 @@ class StoreTarget(Handler):
 
 
 class SeriesKey(NotHandled):
+    """ "SERIES_KEY" columns are currently not handled."""
+
     pass
 
 
 class ObsKey(NotHandled):
+    """ "OBS_KEY" columns are currently not handled."""
+
     pass
 
 
 class KeyValue(Handler):
+    """Handle a :class:`~.common.KeyValue` for one :class:`.Dimension`."""
+
     def __init__(self, dimension, **kwargs):
         self.dimension = dimension
 
@@ -229,6 +272,12 @@ class KeyValue(Handler):
 
 
 class ObsValue(Handler):
+    """Handle the :attr:`Observation.value <.BaseObservation.value>.
+
+    In line with :mod:`.model.v30`, multiple values (for data structures with multiple
+    measures) are currently not handled.
+    """
+
     def __init__(self, measure, **kwargs):
         self.measure = measure
 
@@ -237,6 +286,11 @@ class ObsValue(Handler):
 
 
 class AttributeValue(Handler):
+    """Handle a :class:`.v30.AttributeValue` for one :class:`.DataAttribute`.
+
+    The attribute value is attached to the `obs`.
+    """
+
     def __init__(self, attribute, multi: bool):
         self.attribute = attribute
         if multi:
@@ -253,7 +307,7 @@ class Custom(Handler):
 
     Currently values are ignored.
 
-    .. todo:: Store as :class:`.Annotation`.
+    .. todo:: Store as :class:`.Annotation` or temporary attribute values on `obs`.
     """
 
     def __init__(self, header: str):

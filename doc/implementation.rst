@@ -300,21 +300,32 @@ The SDMX-JSON *format* is versioned differently from the overall SDMX *standard*
 SDMX-CSV
 --------
 
-Reference: https://github.com/sdmx-twg/sdmx-csv
+Reference: https://github.com/sdmx-twg/sdmx-csv; see in particular the file `sdmx-csv-field-guide.md <https://github.com/sdmx-twg/sdmx-csv/blob/v2.0.0/data-message/docs/sdmx-csv-field-guide.md>`_.
 
 Based on Comma-Separated Value (CSV).
 The SDMX-CSV *format* is versioned differently from the overall SDMX *standard*:
 
 - `SDMX-CSV 1.0 <https://github.com/sdmx-twg/sdmx-csv/tree/v1.0>`__ corresponds to SDMX 2.1.
   It supports only data and metadata, not structures.
-- SDMX-CSV 2.0 corresponds to SDMX 3.0.
+  SDMX-CSV 1.0 files are recognizable by the header ``DATAFLOW`` in the first column of the first row.
 
-.. versionadded:: 2.9.0
+  .. versionadded:: 2.9.0
 
-   Support for SDMX-CSV 1.0.
+     Support for *writing* SDMX-CSV 1.0.
+     See :mod:`.writer.csv`.
 
-:mod:`sdmx` does not currently support *writing* SDMX-CSV.
-See :issue:`34`.
+  :mod:`sdmx` does not currently support *reading* SDMX-CSV 1.0.
+
+- `SDMX-CSV 2.0.0 <https://github.com/sdmx-twg/sdmx-csv/tree/v2.0.0>`_ corresponds to SDMX 3.0.0.
+  The format differs from and is not backwards compatible with SDMX-CSV 1.0.
+  SDMX-CSV 2.0.0 files are recognizable by the header ``STRUCTURE`` in the first column of the first row.
+
+  .. versionadded:: 2.19.0
+
+     Initial support for *reading* SDMX-CSV 2.0.0.
+     See :mod:`.reader.csv`.
+
+  :mod:`sdmx` does not currently support *writing* SDMX-CSV 2.0.0.
 
 .. _sdmx-rest:
 .. _web-service:
