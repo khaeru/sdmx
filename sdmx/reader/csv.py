@@ -1,6 +1,7 @@
 import csv
 import logging
 import re
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
 from itertools import zip_longest
@@ -141,10 +142,16 @@ class Reader(BaseReader):
         if match := re.fullmatch(r"STRUCTURE(\[(?P<delimiter_sub>.)\])?", header[0]):
             self.options.delimiter_sub = match.groupdict().get("delimeter_sub", None)
         else:
-            raise ValueError("Invalid SDMX-CSV")
+            raise ValueError(
+                f"Invalid SDMX-CSV 2.0.0: {header[0]!r} in line 1, field 1; "
+                "expected 'STRUCTURE' or 'STRUCTURE[…]'"
+            )
 
         if not header[1] == "STRUCTURE_ID":
-            raise ValueError("Invalid SDMX-CSV")
+            raise ValueError(
+                f"Invalid SDMX-CSV 2.0.0: {header[1]!r} in line 1, field 2; "
+                "expected 'STRUCTURE_ID'"
+            )
 
         i = 2
         if header[i] == "STRUCTURE_NAME":
@@ -202,15 +209,15 @@ class Reader(BaseReader):
         assert len(self.handlers) == len(header)
 
 
-class Handler:
+class Handler(ABC):
     """Base class for :attr:`.Reader.handlers`."""
 
+    @abstractmethod
     def __call__(self, obs: "common.BaseObservation", value: str) -> None:
         """Handle the `value` in one field/record, and update the resulting `obs`.
 
         Subclasses **must** implement this method.
         """
-        raise NotImplementedError
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}>"

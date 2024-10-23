@@ -1,12 +1,22 @@
 from functools import lru_cache
+from io import BytesIO
 from typing import TYPE_CHECKING
 
 import pytest
 
-from sdmx.reader.csv import Reader
+from sdmx.reader.csv import Handler, NotHandled, Reader
 
 if TYPE_CHECKING:
     from sdmx.model import v30
+
+
+class TestHandler:
+    def test_abc(self):
+        with pytest.raises(TypeError):
+            Handler()
+
+    def test_repr(self):
+        assert "<NotHandled>" == repr(NotHandled())
 
 
 class TestReader:
@@ -20,6 +30,17 @@ class TestReader:
     )
     def test_handles_media_type(self, mt, expected) -> None:
         assert expected is Reader.handles_media_type(mt)
+
+    @pytest.mark.parametrize(
+        "content, exc_text",
+        (
+            (b"DATAFLOW,DIM_1,OBS_VALUE", "'DATAFLOW' in line 1, field 1"),
+            (b"STRUCTURE,ACTION,DIM_1,OBS_VALUE", "'ACTION' in line 1, field 2"),
+        ),
+    )
+    def test_inspect_header0(self, content, exc_text) -> None:
+        with pytest.raises(ValueError, match=f"Invalid SDMX-CSV 2.0.0: {exc_text}"):
+            Reader().read_message(BytesIO(content))
 
     @pytest.mark.parametrize("value, expected", [(".csv", True), (".xlsx", False)])
     def test_supports_suffix(self, value, expected) -> None:
