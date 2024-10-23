@@ -6,6 +6,8 @@ What's new?
 Next release
 ============
 
+- :mod:`.reader.csv` supports reading :ref:`SDMX-CSV 2.0.0 <sdmx-csv>` (corresponding to SDMX 3.0.0) (:pull:`201`, :issue:`34`).
+  See the implementation notes for information about the differences between the SDMX-CSV 1.0 and 2.0.0 formats and their support in :mod:`sdmx`.
 - Bug fix for writing :class:`.VersionableArtefact` to SDMX-ML 2.1: :class:`KeyError` was raised if :attr:`.VersionableArtefact.version` was an instance of :class:`.Version` (:pull:`198`).
 - Bug fix for reading data from structure-specific SDMX-ML: :class:`.XMLParseError` / :class:`NotImplementedError` was raised if reading 2 messages in sequence with different XML namespaces defined (:pull:`200`, thanks :gh-user:`mephinet` for :issue:`199`).
 
