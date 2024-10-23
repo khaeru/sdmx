@@ -9,7 +9,7 @@
 import logging
 import re
 from copy import copy
-from itertools import chain
+from itertools import chain, filterfalse
 from sys import maxsize
 from typing import Any, MutableMapping, Optional, cast
 
@@ -34,7 +34,6 @@ from .common import (
 )
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class _NoText:
@@ -151,14 +150,11 @@ def _message(reader: Reader, elem):
         reader.push("DataSetClass", model.get_class(f"{QName(elem).localname}Set"))
 
     # Handle namespaces mapped on `elem` but not part of the standard set
-    for key, value in filter(
-        lambda kv: kv[1] not in set(reader.NS().values()), elem.nsmap.items()
-    ):
-        # Register the namespace
-        reader.NS().update({key: value})
-        # Use _ds_start() and _ds_end() to handle <{key}:DataSet> elements
-        reader.start(f"{key}:DataSet", only=False)(_ds_start)
-        reader.end(f"{key}:DataSet", only=False)(_ds_end)
+    existing_ns = set(reader.format.NS.values())
+    for namespace in filterfalse(existing_ns.__contains__, elem.nsmap.values()):
+        # Use _ds_start() and _ds_end() to handle <{namespace}DataSet> elements
+        reader.parser[QName(namespace, "DataSet"), "start"] = _ds_start
+        reader.parser[QName(namespace, "DataSet"), "end"] = _ds_end
 
     # Instantiate the message object
     return reader.class_for_tag(elem.tag)()
@@ -602,7 +598,7 @@ def _maybe_unbounded(value: str) -> Optional[int]:
     return None if value == "unbounded" else int(value)
 
 
-# TODO Reduce complexity from 12 → 11, by adding separate parsers for certain COMPONENTs
+# TODO Reduce complexity from 12 → ≤10, by adding separate parsers for some COMPONENTs
 @end(COMPONENT, only=False)
 @possible_reference(unstash=True)
 def _component_end(reader: Reader, elem):  # noqa: C901
@@ -1160,7 +1156,7 @@ def _obs_ss(reader, elem):
     except KeyError:
         pass
     else:
-        elem.attrib[dim_at_obs.id] = reader.qname(tmp).localname
+        _, elem.attrib[dim_at_obs.id] = tmp.split(":", maxsplit=2)
 
     if ss_without_structure and dim_at_obs is not model.AllDimensions:
         # Create the observation key
@@ -1241,8 +1237,10 @@ def _mds_start(reader, elem):
     mds = reader.class_for_tag(elem.tag)()
 
     # Retrieve the (message-local) ID referencing a data structure definition
-    id = elem.attrib.get("structureRef", None) or elem.attrib.get(
-        reader.qname("metadata:structureRef"), None
+    id = (
+        elem.attrib.get("structureRef", None)
+        or elem.attrib.get(reader.qname("md:structureRef"), None)
+        or elem.attrib.get(reader.qname("md_ss:structureRef"), None)
     )
 
     # Get a reference to the MSD that structures the data set

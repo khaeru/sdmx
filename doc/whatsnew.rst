@@ -7,6 +7,7 @@ Next release
 ============
 
 - Bug fix for writing :class:`.VersionableArtefact` to SDMX-ML 2.1: :class:`KeyError` was raised if :attr:`.VersionableArtefact.version` was an instance of :class:`.Version` (:pull:`198`).
+- Bug fix for reading data from structure-specific SDMX-ML: :class:`.XMLParseError` / :class:`NotImplementedError` was raised if reading 2 messages in sequence with different XML namespaces defined (:pull:`200`, thanks :gh-user:`mephinet` for :issue:`199`).
 
 v2.18.0 (2024-10-15)
 ====================

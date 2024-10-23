@@ -129,9 +129,9 @@ class XMLEventReader(BaseReader):
     #: :class:`.BaseReference` subclass used by this reader.
     Reference: ClassVar[type[BaseReference]]
 
-    # Mapping from (QName, ["start", "end"]) to a function that parses the element/event
-    # or else None
-    parser: ClassVar[Mapping[tuple[QName, str], Callable]]
+    #: Mapping from (QName, ["start", "end"]) to a function that parses the
+    #: element/event or else None (no parsing).
+    parser: ClassVar[dict[tuple[QName, str], Callable]]
 
     # One-way counter for use in stacks
     _count: Iterator[int]
@@ -151,7 +151,7 @@ class XMLEventReader(BaseReader):
 
     # BaseReader methods
 
-    def read_message(  # noqa: C901 TODO reduce complexity 12 → ≤11
+    def read_message(
         self,
         source,
         structure=None,
@@ -196,20 +196,14 @@ class XMLEventReader(BaseReader):
                     # Don't know what to do for this (element, event)
                     raise NotImplementedError(element.tag, event) from None
 
-                try:
-                    # Parse the element
-                    result = func(self, element)
-                except TypeError:
-                    if func is None:  # Explicitly no parser for this (element, event)
-                        continue  # Skip
-                    else:  # pragma: no cover
-                        raise
-                else:
-                    # Store the result
-                    self.push(result)
+                if func is None:
+                    continue  # Explicitly no parser for this (element, event) → skip
 
-                    if event == "end":
-                        element.clear()  # Free memory
+                result = func(self, element)  # Parse the element
+                self.push(result)  # Store the result
+
+                if event == "end":
+                    element.clear()  # Free memory
 
         except Exception as exc:
             # Parsing failed; display some diagnostic information
@@ -368,10 +362,6 @@ class XMLEventReader(BaseReader):
             self.stack[s].update(values)
 
     # Delegate to version-specific module
-    @classmethod
-    def NS(cls):
-        return cls.format.NS
-
     @classmethod
     def class_for_tag(cls, tag: str) -> type:
         return cls.format.class_for_tag(tag)

@@ -134,7 +134,7 @@ XFAIL = {
 }
 
 
-def generate_endpoint_tests(metafunc):
+def generate_endpoint_tests(metafunc):  # noqa: C901  TODO reduce complexity 11 → ≤10
     """pytest hook for parametrizing tests that need an "endpoint" fixture.
 
     This function relies on the :class:`.DataSourceTest` base class defined in
