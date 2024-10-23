@@ -463,7 +463,27 @@ class BaseConstraint(ABC, MaintainableArtefact):
 
 # §3.4: Data Types
 
-
+#: Per the standard…
+#:
+#: ..
+#:
+#:    …used to specify the action that a receiving system should take when processing
+#:    the content that is the object of the action:
+#:
+#:    Append
+#:       Data or metadata is an incremental update for an existing data/metadata set or
+#:       the provision of new data or documentation (attribute values) formerly absent.
+#:       If any of the supplied data or metadata is already present, it will not replace
+#:       that data or metadata.
+#:    Replace
+#:       Data/metadata is to be replaced and may also include additional data/metadata
+#:       to be appended.
+#:    Delete
+#:       Data/Metadata is to be deleted.
+#:    Information
+#:       Data and metadata are for information purposes.
+#:
+#:    — SDMX 3.0.0 Section 2 §3.4.2.1
 ActionType = Enum("ActionType", "delete replace append information")
 
 ConstraintRoleType = Enum("ConstraintRoleType", "allowable actual")
@@ -1990,7 +2010,7 @@ class BaseObservation:
 class BaseDataSet(AnnotableArtefact):
     """Common features of SDMX 2.1 and 3.0 DataSet."""
 
-    #:
+    #: Action to be performed
     action: Optional[ActionType] = None
     #:
     valid_from: Optional[str] = None

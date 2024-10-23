@@ -8,6 +8,7 @@
 :obj:`~.v30.DataConstraint`
 :obj:`~.v30.DataKey`
 :obj:`~.v30.DataKeySet`
+:obj:`~.v30.DataSet`
 :obj:`~.v30.DataStructureDefinition`
 :obj:`~.v30.Dataflow`
 :obj:`~.v30.DataflowRelationship`

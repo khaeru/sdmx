@@ -54,6 +54,7 @@ __all__ = [
     "DataStructureDefinition",
     "DataflowDefinition",
     "Observation",
+    "DataSet",
     "StructureSpecificDataSet",
     "GenericDataSet",
     "GenericTimeSeriesDataSet",

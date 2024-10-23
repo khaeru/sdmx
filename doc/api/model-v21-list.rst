@@ -8,6 +8,7 @@
 :obj:`~.v21.ContentConstraint`
 :obj:`~.v21.DataKey`
 :obj:`~.v21.DataKeySet`
+:obj:`~.v21.DataSet`
 :obj:`~.v21.DataSetTarget`
 :obj:`~.v21.DataStructureDefinition`
 :obj:`~.v21.DataflowDefinition`
