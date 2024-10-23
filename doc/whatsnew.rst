@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.19.1 (2024-10-23)
+====================
 
 - Bugfix: in v2.19.0 (only), :py:`IdentifableArtefact(id="")` resulted in the given ID (an empty :class:`str`) being incorrectly replaced with :data:`~.common.MissingID` (:pull:`203`).
 
