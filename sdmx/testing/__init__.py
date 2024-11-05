@@ -310,6 +310,7 @@ class SpecimenCollection:
                 ("SPC", "metadatastructure-0.xml"),
                 ("TEST", "gh-142.xml"),
                 ("TEST", "gh-149.xml"),
+                ("WB", "gh-78.xml"),
             ]
         )
 

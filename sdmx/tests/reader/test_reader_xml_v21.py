@@ -67,6 +67,24 @@ def test_read_ss_xml(specimen):
     assert len(TIME_FORMAT.related_to.dimensions) == 5
 
 
+def test_gh_078(specimen):
+    """Test of https://github.com/khaeru/sdmx/issues/78.
+
+    This required adding support for :xml:`<mes:Department>` and :xml:`<mes:Role>` to
+    :mod:`.reader.xml`.
+    """
+    # Message can be read
+    with specimen("WB/gh-78.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    # Sender attributes are present and have the expected values
+    for attr, text in (
+        ("org_unit", "DECDG"),
+        ("responsibility", "Support"),
+    ):
+        assert text == getattr(msg.header.sender.contact[0], attr).localizations["en"]
+
+
 def test_gh_104(caplog, specimen):
     """Test of https://github.com/khaeru/sdmx/issues/104.
 
