@@ -236,6 +236,31 @@ def test_gh_199():
     sdmx.read_sdmx(f2, structure=dsd2)
 
 
+def test_gh_205(caplog, specimen) -> None:
+    """Test of https://github.com/khaeru/sdmx/issues/205."""
+    with specimen("INSEE/gh-205.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    # Messages were logged
+    msg_template = "Could not resolve {cls}.concept_identity reference to ConceptScheme=FR1:CONCEPTS_INSEE(1.0) → Concept={id}"
+    m1 = msg_template.format(cls="TimeDimension", id="TIME_PERIOD")
+    m2 = msg_template.format(cls="PrimaryMeasure", id="OBS_VALUE")
+    assert m1 in caplog.messages
+    assert m2 in caplog.messages
+
+    # Access the parsed DSD
+    dsd = msg.structure["CNA-2014-PIB"]
+
+    # Components have annotations with expected ID and text
+    for component, text in (
+        (dsd.dimensions.get("TIME_PERIOD"), m1),
+        (dsd.measures.get("OBS_VALUE"), m2),
+    ):
+        a = component.annotations[0]
+        assert "sdmx.reader.xml.v21-parse-error" == a.id
+        assert text == str(a.text)
+
+
 # Each entry is a tuple with 2 elements:
 # 1. an instance of lxml.etree.Element to be parsed.
 # 2. Either:
