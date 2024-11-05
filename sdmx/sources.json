@@ -415,7 +415,7 @@
   {
     "id": "WB",
     "name": "World Bank World Integrated Trade Solution",
-    "url": "http://wits.worldbank.org/API/V1/SDMX/V21/rest",
+    "url": "https://wits.worldbank.org/API/V1/SDMX/V21/rest",
     "supports": {
       "actualconstraint": false,
       "agencyscheme": false,
