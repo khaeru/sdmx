@@ -26,6 +26,16 @@ class Source(BaseSource):
             kwargs.setdefault(
                 "url", "https://api.worldbank.org/v2/sdmx/rest/dataflow"
             )
+        elif kwargs.get("resource_type") in {Resource.datastructure, Resource.codelist}:
+            # Here /all/latest is not allowed.
+            # It is added automatically, use url to circumvent that.
+            name = kwargs.get("resource_type").name
+            kwargs.pop("resource_type")
+            if not all(value is None for value in kwargs.values()):
+                raise ValueError(
+                    f"WDI {name} is a unique endpoint and doesn't support arguments"
+                )
+            kwargs.setdefault("url", f"https://api.worldbank.org/v2/sdmx/rest/{name}/wb")
 
         try:
             if isinstance(kwargs["key"], str):
