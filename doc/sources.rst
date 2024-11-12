@@ -274,6 +274,10 @@ Website `(en) <https://www.insee.fr/en/information/2868055>`__,
 `(fr) <https://www.insee.fr/fr/information/2862759>`__
 
 - French name: Institut national de la statistique et des études économiques.
+- Known issue(s) with this data source:
+
+  - :issue:`205`: as of 2024-11-12 some structures, for instance ``urn:sdmx:…DataStructure=FR1:CNA-2014-PIB(1.0)``, include :attr:`~.Component.concept_identity` references that do not exist, for instance ``urn:sdmx:…Concept=FR1:CONCEPTS_INSEE(1.0).TIME_PERIOD`` and ``urn:sdmx:…Concept=FR1:CONCEPTS_INSEE(1.0).OBS_VALUE``.
+    From :ref:`v2.20.0 <2.20.0>`, :mod:`.reader.xml.v21` discards such invalid references, leaving :py:`.concept_identity = None`.
 
 .. autoclass:: sdmx.source.insee.Source()
    :members:

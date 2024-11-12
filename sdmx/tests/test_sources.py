@@ -672,15 +672,6 @@ class TestWB(DataSourceTest):
         "structureset": NotImplementedError,  # 501
     }
 
-    @pytest.mark.network
-    def test_gh_78(self, client):
-        """Test of https://github.com/khaeru/sdmx/78.
-
-        This response required adding support for ``<mes:Department>`` and
-        ``<mes:Role>`` to :mod:`.reader.xml`.
-        """
-        client.data("DF_WITS_Tariff_TRAINS", key=".840.000.020110.reported")
-
 
 class TestWB_WDI(DataSourceTest):
     source_id = "WB_WDI"

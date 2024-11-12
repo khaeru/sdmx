@@ -3,8 +3,16 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+.. _2.20.0:
+
+Next release
+============
+
+- Improve tolerance of invalid references in SDMX-ML (:pull:`207`; thanks :gh-user:`nicolas-graves` for :issue:`205`).
+  Where a file gives a reference for a :attr:`.Component.concept_identity` (such as for a :class:`.Dimension` or :class:`.PrimaryMeasure`) that is invalid—that is, the specified :class:`.Concept` does not exist in the referenced :class:`.ConceptScheme`—log on level :data:`logging.WARNING` and discard the reference.
+  Previously such invalid references caused a :class:`KeyError`.
+  Prompted by an example in :ref:`INSEE <INSEE>`.
+- Update the base URL of the :ref:`WB <WB>` source to use HTTPS instead of plain HTTP (:pull:`207`).
 
 v2.19.1 (2024-10-23)
 ====================
@@ -36,7 +44,7 @@ v2.17.0 (2024-09-03)
   - :class:`.XHTMLAttributeValue` contents are stored as :mod:`lxml.etree` nodes.
   - MetadataStructureDefinition is included when writing :class:`.StructureMessage`.
 
-- Update base url for :ref:`WB_WDI` source to use HTTPS instead of plain HTTP (:issue:`191`, :pull:`192`).
+- Update the base url of the :ref:`WB_WDI <WB_WDI>` source to use HTTPS instead of plain HTTP (:issue:`191`, :pull:`192`).
 - Improvements to :mod:`.reader.xml` and :mod:`.reader.xml.v21` (:pull:`192`).
 
   - Correctly associate :class:`.Item` in :class:`.ItemScheme` with its parent, even if the parent is defined after the child (“forward reference”).

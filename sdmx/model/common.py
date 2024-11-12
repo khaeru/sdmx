@@ -2601,9 +2601,10 @@ _PACKAGE_CLASS: dict[str, set] = {
     },
     "conceptscheme": {"Concept", "ConceptScheme"},
     "datastructure": {
-        "DataflowDefinition",  # SDMX 2.1
         "Dataflow",  # SDMX 3.0
-        "DataStructureDefinition",
+        "DataflowDefinition",  # SDMX 2.1
+        "DataStructure",  # SDMX 3.0
+        "DataStructureDefinition",  # SDMX 2.1
         "StructureUsage",
     },
     "mapping": {"CodelistMap", "StructureSet"},

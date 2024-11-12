@@ -606,11 +606,23 @@ def _component_end(reader: Reader, elem):  # noqa: C901
 
     args = dict(
         id=elem.attrib.get("id", common.MissingID),
-        concept_identity=reader.pop_resolved_ref("ConceptIdentity"),
         local_representation=reader.pop_single(common.Representation),
     )
     if position := elem.attrib.get("position"):
         args["order"] = int(position)
+
+    # Resolve a ConceptIdentity reference
+    ci_ref = reader.pop_single("ConceptIdentity")
+    try:
+        args["concept_identity"] = reader.resolve(ci_ref)
+    except KeyError:
+        message = (
+            f"Could not resolve {cls.__name__}.concept_identity reference to {ci_ref!s}"
+        )
+        log.error(message)
+        args.setdefault("annotations", []).append(
+            common.Annotation(id=f"{__name__}-parse-error", text=message)
+        )
 
     # DataAttributeOnly
     if us := elem.attrib.get("assignmentStatus"):

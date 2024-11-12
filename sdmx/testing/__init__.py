@@ -291,6 +291,7 @@ class SpecimenCollection:
                 ("IMF_STA", "DSD_GFS.xml"),  # khaeru/sdmx#164
                 ("INSEE", "CNA-2010-CONSO-SI-A17-structure.xml"),
                 ("INSEE", "dataflow.xml"),
+                ("INSEE", "gh-205.xml"),
                 ("INSEE", "IPI-2010-A21-structure.xml"),
                 ("ISTAT", "22_289-structure.xml"),
                 ("ISTAT", "47_850-structure.xml"),
@@ -309,6 +310,7 @@ class SpecimenCollection:
                 ("SPC", "metadatastructure-0.xml"),
                 ("TEST", "gh-142.xml"),
                 ("TEST", "gh-149.xml"),
+                ("WB", "gh-78.xml"),
             ]
         )
 
