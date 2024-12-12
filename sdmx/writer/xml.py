@@ -300,7 +300,7 @@ def annotable(obj: common.AnnotableArtefact, *args, **kwargs) -> etree._Element:
     # Write Annotations
     e_anno = Element("com:Annotations", *[writer.recurse(a) for a in obj.annotations])
     if len(e_anno):
-        args = args + (e_anno,)
+        args = (e_anno,) + args
 
     try:
         return Element(tag, *args, **kwargs)

@@ -13,6 +13,9 @@ Next release
   Previously such invalid references caused a :class:`KeyError`.
   Prompted by an example in :ref:`INSEE <INSEE>`.
 - Update the base URL of the :ref:`WB <WB>` source to use HTTPS instead of plain HTTP (:pull:`207`).
+- Bugfix for writing :class:`.NameableArtefact` to SDMX-ML (:pull:`211`; thanks :gh-user:`3nz01` for :issue:`210`).
+  Up to v2.19.1, the :xml:`<com:Annotations>` element was written *after* elements such as :xml:`<com:Name>`, which is opposite the order given in the XSD schemas for SDMX-ML.
+  :mod:`sdmx.reader.xml` tolerates non-standard element order, but some other implementations do not.
 
 v2.19.1 (2024-10-23)
 ====================
