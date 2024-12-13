@@ -1,5 +1,6 @@
 import io
 import logging
+from datetime import datetime
 
 import pytest
 from lxml import etree
@@ -7,7 +8,8 @@ from lxml import etree
 import sdmx
 import sdmx.writer.xml
 from sdmx import message
-from sdmx.model import common
+from sdmx.format.xml import validate_xml
+from sdmx.model import common, v21
 from sdmx.model import v21 as m
 from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
 from sdmx.writer.xml import writer as XMLWriter
@@ -15,6 +17,18 @@ from sdmx.writer.xml import writer as XMLWriter
 log = logging.getLogger(__name__)
 
 # Fixtures
+
+
+@pytest.fixture
+def structure_message() -> message.StructureMessage:
+    """A StructureMessage that serializes to XSD-valid SDMX-XML."""
+    return message.StructureMessage(
+        header=message.Header(
+            id="N_A",
+            prepared=datetime.now(),
+            sender=common.Agency(id="N_A"),
+        )
+    )
 
 
 @pytest.fixture
@@ -47,6 +61,42 @@ def dks(dsd):
 
 
 # Test specific methods associated with specific classes
+
+
+class TestNameableArtefact:
+    def test_xsd(self, structure_message):
+        """Annotations for a NameableArtefact are output in the correct order.
+
+        In https://github.com/khaeru/sdmx/issues/210 it was reported that
+        <com:Annotations> incorrectly appeared before <com:Name>.
+        """
+        # Common arguments
+        args = dict(
+            # Identifiable Artefact
+            id="FOO",
+            # Nameable Artefact
+            name="foo",
+            description="bar",
+            # VersionableArtefact
+            version="1",
+            # MaintainableArtefact
+            maintainer=common.Agency(id="N_A"),
+            is_external_reference=False,
+            is_final=True,
+        )
+        dsd = v21.DataStructureDefinition(**args)
+        na = v21.DataflowDefinition(
+            annotations=[common.Annotation(id="baz", text="qux")],  # Annotable Artefact
+            **args,  # Identifiable, Nameable, Versionable, Maintainable
+            structure=dsd,  # Dataflow-specific attributes
+        )
+        structure_message.dataflow[na.id] = na
+
+        # Write to SDMX-ML
+        buf = io.BytesIO(sdmx.to_xml(structure_message))
+
+        # Validate using XSD. Fails with v2.19.1.
+        assert validate_xml(buf), buf.getvalue().decode()
 
 
 def test_contact() -> None:
