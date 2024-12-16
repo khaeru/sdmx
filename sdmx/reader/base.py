@@ -32,7 +32,8 @@ class Converter:
 class BaseReader(Converter):
     """Converter of file or binary data in standard SDMX formats."""
 
-    #: First byte(s) of file or response body content, used by :meth:`.handles`.
+    #: First byte(s) of file or response body content, used by
+    #: :meth:`~.BaseReader.handles`.
     binary_content_startswith: ClassVar[Optional[bytes]] = None
 
     #: List of media types, used by :meth:`.handles`.
@@ -45,13 +46,16 @@ class BaseReader(Converter):
     def detect(cls, content: bytes) -> bool:
         """Detect whether the reader can handle `content`.
 
+        .. deprecated:: 2.20.0
+           Use :meth:`~.BaseReader.handles` instead.
+
         Returns
         -------
         bool
             :obj:`True` if the reader can handle the content.
         """
         warn(
-            "BaseReader.detect(); use Converter.handles(bytes(…)) instead",
+            "BaseReader.detect(bytes); use Converter.handles() instead",
             DeprecationWarning,
         )
         return False
@@ -59,9 +63,13 @@ class BaseReader(Converter):
     @classmethod
     @lru_cache()
     def handles_media_type(cls, value: str) -> bool:
-        """:obj:`True` if the reader can handle content/media type `value`."""
+        """:obj:`True` if the reader can handle content/media type `value`.
+
+        .. deprecated:: 2.20.0
+           Use :meth:`~.BaseReader.handles` instead.
+        """
         warn(
-            "BaseReader.handles_media_type(); use Converter.handles(requests.Response(…)) instead",
+            "BaseReader.handles_media_type(str); use Converter.handles(requests.Response) instead",
             DeprecationWarning,
         )
         for mt in cls.media_types:
@@ -71,9 +79,13 @@ class BaseReader(Converter):
 
     @classmethod
     def supports_suffix(cls, value: str) -> bool:
-        """:obj:`True` if the reader can handle files with suffix `value`."""
+        """:obj:`True` if the reader can handle files with suffix `value`.
+
+        .. deprecated:: 2.20.0
+           Use :meth:`~.BaseReader.handles` instead.
+        """
         warn(
-            "BaseReader.supports_suffix(); use Converter.handles(pathlib.Path(…)) instead",
+            "BaseReader.supports_suffix(str); use Converter.handles(pathlib.Path) instead",
             DeprecationWarning,
         )
         return cls.handles(pathlib.Path(f"_.{value.lower()}"), {})

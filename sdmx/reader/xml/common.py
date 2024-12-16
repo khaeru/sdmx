@@ -151,9 +151,9 @@ class XMLEventReader(BaseReader):
 
     # BaseReader methods
 
-    def read_message(
+    def convert(
         self,
-        source,
+        data,
         structure=None,
         _events=None,
         **kwargs,
@@ -175,7 +175,7 @@ class XMLEventReader(BaseReader):
         if _events is None:
             events = cast(
                 Iterator[tuple[str, etree._Element]],
-                etree.iterparse(source, events=("start", "end")),
+                etree.iterparse(data, events=("start", "end")),
             )
         else:
             events = _events

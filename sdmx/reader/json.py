@@ -3,6 +3,7 @@
 import json
 import logging
 from typing import Mapping, MutableMapping
+from warnings import warn
 
 from dateutil.parser import isoparse
 
@@ -30,14 +31,20 @@ log = logging.getLogger(__name__)
 class Reader(BaseReader):
     """Read SDMX-JSON and expose it as instances from :mod:`sdmx.model`."""
 
+    binary_content_startswith = b"{"
     media_types = list_media_types(base="json", version=Version["1.0.0"])
     suffixes = [".json"]
 
     @classmethod
     def detect(cls, content):
-        return content.startswith(b"{")
+        warn(
+            "Reader.detect(bytes); use Converter.handles() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return content.startswith(cls.binary_content_startswith)
 
-    def read_message(self, source, structure=None, **kwargs):  # noqa: C901  TODO reduce complexity 15 → ≤10
+    def convert(self, data, structure=None, **kwargs):  # noqa: C901  TODO reduce complexity 15 → ≤10
         # Initialize message instance
         msg = DataMessage()
 
@@ -47,8 +54,8 @@ class Reader(BaseReader):
             msg.dataflow.structure = dsd
 
         # Read JSON
-        source.default_size = -1
-        tree = json.load(source)
+        data.default_size = -1
+        tree = json.load(data)
 
         # Read the header
         # TODO handle KeyError here

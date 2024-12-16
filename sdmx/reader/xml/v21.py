@@ -130,7 +130,7 @@ def _message(reader: Reader, elem):
 
     ss_without_structure = False
 
-    # Retrieve any {Metad,D}ataStructure definition given to Reader.read_message()
+    # Retrieve any {Metad,D}ataStructure definition given to Reader.convert()
     supplied_structure = reader.get_single(common.Structure, subclass=True)
 
     # Handle

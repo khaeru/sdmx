@@ -54,8 +54,7 @@ class Reader(BaseReader):
     suffixes = [".csv"]
 
     #: Handlers for individual fields in a CSV record. This collection has exactly the
-    #: same number of handlers as columns in the `source` passed to
-    #: :meth:`read_message`.
+    #: same number of handlers as columns in the `data` passed to :meth:`convert`.
     handlers: Sequence["Handler"]
 
     _dataflow: Optional["common.BaseDataflow"]
@@ -65,9 +64,12 @@ class Reader(BaseReader):
     def __init__(self):
         self.options = Options()
         self.handlers = []
+        self._dataflow = None
+        self._structure = None
+        self._observations = defaultdict(list)
 
-    def read_message(self, source, structure=None, *, delimiter: str = ",", **kwargs):
-        """Read a message from `source`."""
+    def convert(self, data, structure=None, *, delimiter: str = ",", **kwargs):
+        """Read a message from `data`."""
         self.options.delimiter = delimiter
 
         if isinstance(structure, common.BaseDataflow):
@@ -77,10 +79,8 @@ class Reader(BaseReader):
             self._dataflow = None
             self._structure = structure
 
-        self._observations = defaultdict(list)
-
         # Create a CSV reader
-        lines = source.read().decode().splitlines()
+        lines = data.read().decode().splitlines()
         reader = csv.reader(lines, delimiter=self.options.delimiter)
 
         self.inspect_header(next(reader))
@@ -130,7 +130,7 @@ class Reader(BaseReader):
         Raises
         ------
         ValueError
-            if the source contains malformed SDMX-CSV 2.0.0.
+            if the data contain malformed SDMX-CSV 2.0.0.
         """
         handlers: MutableSequence[Optional["Handler"]] = [
             StoreTarget(allowable={"dataflow", "dataprovision", "datastructure"}),
