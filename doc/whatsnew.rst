@@ -8,6 +8,12 @@ What's new?
 Next release
 ============
 
+- Add :func:`.to_sdmx` and :class:`.DataFrameConverter` to allow converting :class:`.pandas.DataFrame` as if it were SDMX-CSV (:pull:`212`).
+
+  - See also :class:`.Converter`, :data:`.CONVERTER`, :func:`.get_converter` for opportunities to extend this generic capability.
+  - Add :func:`.get_reader`; deprecate :func:`.detect_content_reader`, :func:`.get_reader_for_media_type`, :func:`.get_reader_for_path`.
+  - Add :meth:`.BaseReader.handles` and :attr:`.binary_content_startswith`; deprecate :meth:`~.BaseReader.detect`, :meth:`~.BaseReader.supports_suffix`, :meth:`~.BaseReader.handles_media_type`.
+
 - Improve tolerance of invalid references in SDMX-ML (:pull:`207`; thanks :gh-user:`nicolas-graves` for :issue:`205`).
   Where a file gives a reference for a :attr:`.Component.concept_identity` (such as for a :class:`.Dimension` or :class:`.PrimaryMeasure`) that is invalid—that is, the specified :class:`.Concept` does not exist in the referenced :class:`.ConceptScheme`—log on level :data:`logging.WARNING` and discard the reference.
   Previously such invalid references caused a :class:`KeyError`.

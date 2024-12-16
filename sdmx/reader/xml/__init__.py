@@ -1,5 +1,6 @@
 from importlib import import_module
 from itertools import chain
+from warnings import warn
 
 from lxml import etree
 
@@ -14,16 +15,22 @@ __all__ = ["XMLParseError"]
 class Reader(BaseReader):
     """Reader that detects and dispatches to either v21 or v30."""
 
+    binary_content_startswith = b"<"
     media_types = list_media_types(base="xml")
     suffixes = [".xml"]
 
     @classmethod
     def detect(cls, content):
-        return content.startswith(b"<")
+        warn(
+            "Reader.detect(bytes); use Converter.handles() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return content.startswith(cls.binary_content_startswith)
 
-    def read_message(self, source, **kwargs):
+    def convert(self, data, **kwargs):
         # Create an iterative parser
-        events = etree.iterparse(source, events=("start", "end"))
+        events = etree.iterparse(data, events=("start", "end"))
 
         # Peek at the start event for the first tag
         event, element = next(events)
@@ -44,5 +51,5 @@ class Reader(BaseReader):
         return (
             import_module(f"sdmx.reader.xml.{version}")
             .Reader()
-            .read_message(None, **kwargs, _events=chain([(event, element)], events))
+            .convert(None, **kwargs, _events=chain([(event, element)], events))
         )

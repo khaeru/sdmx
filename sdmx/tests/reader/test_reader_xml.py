@@ -2,6 +2,13 @@ import pytest
 
 import sdmx
 from sdmx.message import Message
+from sdmx.reader import xml
+
+
+class TestReader:
+    def test_deprecated_detect(self) -> None:
+        with pytest.warns(DeprecationWarning, match="use Converter.handles"):
+            assert True is xml.Reader.detect(b"<")
 
 
 @pytest.mark.parametrize_specimens("path", format="xml")

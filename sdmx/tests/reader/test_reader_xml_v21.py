@@ -8,6 +8,7 @@ import pytest
 from lxml import etree
 
 import sdmx
+import sdmx.message
 from sdmx import urn
 from sdmx.format.xml.v21 import qname
 from sdmx.model import common, v21
@@ -164,11 +165,11 @@ def test_gh_159():
     )
 
     # - Create a reader
-    # - Convert to a file-like object compatible with read_message()
+    # - Convert to a file-like object compatible with convert()
     # - Parse the element
     # - Retrieve the resulting object
     reader = Reader()
-    reader.read_message(BytesIO(etree.tostring(elem)))
+    reader.convert(BytesIO(etree.tostring(elem)))
     obj = reader.pop_single(common.Agency)
 
     assert "Foo Agency" == str(obj.name)
@@ -258,6 +259,7 @@ def test_gh_205(caplog, specimen) -> None:
     """Test of https://github.com/khaeru/sdmx/issues/205."""
     with specimen("INSEE/gh-205.xml") as f:
         msg = sdmx.read_sdmx(f)
+        assert isinstance(msg, sdmx.message.StructureMessage)
 
     # Messages were logged
     msg_template = "Could not resolve {cls}.concept_identity reference to ConceptScheme=FR1:CONCEPTS_INSEE(1.0) → Concept={id}"
@@ -339,7 +341,7 @@ def test_parse_elem(elem, expected):
     This method allows unit-level testing of specific XML elements appearing in SDMX-ML
     messages. Add elements by extending the list passed to the parametrize() decorator.
     """
-    # Convert to a file-like object compatible with read_message()
+    # Convert to a file-like object compatible with convert()
     tmp = BytesIO(etree.tostring(elem))
 
     # Create a reader
@@ -348,10 +350,10 @@ def test_parse_elem(elem, expected):
     if isinstance(expected, (str, re.Pattern)):
         # Parsing the element raises an exception
         with pytest.raises(XMLParseError, match=expected):
-            reader.read_message(tmp)
+            reader.convert(tmp)
     else:
         # The element is parsed successfully
-        result = reader.read_message(tmp)
+        result = reader.convert(tmp)
 
         if not result:
             stack = list(chain(*[s.values() for s in reader.stack.values()]))

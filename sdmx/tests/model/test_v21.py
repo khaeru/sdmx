@@ -1,4 +1,5 @@
 from operator import attrgetter
+from typing import cast
 
 import pytest
 
@@ -589,7 +590,7 @@ class TestMetadataSet:
     @pytest.fixture(scope="class")
     def msg(self, specimen) -> sdmx.message.MetadataMessage:
         with specimen("esms_generic.xml") as f:
-            return sdmx.read_sdmx(f)
+            return cast(sdmx.message.MetadataMessage, sdmx.read_sdmx(f))
 
     def test_report_hierarchy(self, msg: sdmx.message.MetadataMessage) -> None:
         # Access message → metadata set → report

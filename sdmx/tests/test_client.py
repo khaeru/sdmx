@@ -34,11 +34,7 @@ def test_read_sdmx(tmp_path, specimen):
 
     # Exception raised when the file contents don't allow to guess the format
     bad_file = BytesIO(b"#! neither XML nor JSON")
-    exc = (
-        "cannot infer SDMX message format from path None, format={}, or content "
-        "'#! ne..'"
-    )
-    with pytest.raises(RuntimeError, match=exc.format("None")):
+    with pytest.raises(RuntimeError, match="cannot infer SDMX message format from "):
         sdmx.read_sdmx(bad_file)
 
     # Using the format= argument forces a certain reader to be used
