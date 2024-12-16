@@ -7,7 +7,7 @@ import requests
 
 from sdmx.model import common
 from sdmx.model.v21 import DataStructureDefinition
-from sdmx.reader import get_reader_for_media_type
+from sdmx.reader import get_reader
 from sdmx.rest import Resource
 from sdmx.session import ResponseIO, Session
 from sdmx.source import NoSource, list_sources, sources
@@ -481,19 +481,19 @@ class Client:
         )
 
         # Select reader class
-        content_type = response.headers.get("content-type", None)
         try:
-            Reader = get_reader_for_media_type(content_type)
+            Reader = get_reader(response)
         except ValueError:
             raise ValueError(
-                f"can't determine a reader for response content type {content_type!r}"
+                "can't determine a reader for response content type "
+                + repr(response.headers.get("content-type", None))
             ) from None
 
         # Instantiate reader
         reader = Reader()
 
         # Parse the message, using any provided or auto-queried DSD
-        msg = reader.read_message(response_content, structure=kwargs.get("dsd", None))
+        msg = reader.convert(response_content, structure=kwargs.get("dsd", None))
 
         # Store the HTTP response with the message
         msg.response = response
