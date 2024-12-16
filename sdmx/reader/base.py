@@ -1,22 +1,44 @@
+import io
 import logging
-from abc import ABC, abstractmethod
+import pathlib
 from functools import lru_cache
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 from warnings import warn
+
+import requests
 
 from sdmx.format import MediaType
 
 if TYPE_CHECKING:
+    import sdmx.message
     import sdmx.model.common
 
 log = logging.getLogger(__name__)
 
 
-class BaseReader(ABC):
-    #: List of media types handled by the reader.
+class Converter:
+    """Base class for conversion to :mod:`sdmx` objects."""
+
+    @classmethod
+    def handles(cls, data: Any, kwargs: dict) -> bool:
+        """Return :any:`True` if the class can convert `data` using `kwargs`."""
+        return False
+
+    def convert(self, data: Any, **kwargs) -> "sdmx.message.Message":
+        """Convert `data` to an instance of an SDMX Message subclass."""
+        raise NotImplementedError
+
+
+class BaseReader(Converter):
+    """Converter of file or binary data in standard SDMX formats."""
+
+    #: First byte(s) of file or response body content, used by :meth:`.handles`.
+    binary_content_startswith: ClassVar[Optional[bytes]] = None
+
+    #: List of media types, used by :meth:`.handles`.
     media_types: ClassVar[list[MediaType]] = []
 
-    #: List of file name suffixes handled by the reader.
+    #: List of file name suffixes, used by :meth:`.handles`.
     suffixes: ClassVar[list[str]] = []
 
     @classmethod
@@ -28,12 +50,20 @@ class BaseReader(ABC):
         bool
             :obj:`True` if the reader can handle the content.
         """
+        warn(
+            "BaseReader.detect(); use Converter.handles(bytes(…)) instead",
+            DeprecationWarning,
+        )
         return False
 
     @classmethod
     @lru_cache()
     def handles_media_type(cls, value: str) -> bool:
         """:obj:`True` if the reader can handle content/media type `value`."""
+        warn(
+            "BaseReader.handles_media_type(); use Converter.handles(requests.Response(…)) instead",
+            DeprecationWarning,
+        )
         for mt in cls.media_types:
             if mt.match(value):
                 return True
@@ -42,20 +72,67 @@ class BaseReader(ABC):
     @classmethod
     def supports_suffix(cls, value: str) -> bool:
         """:obj:`True` if the reader can handle files with suffix `value`."""
-        return value.lower() in cls.suffixes
+        warn(
+            "BaseReader.supports_suffix(); use Converter.handles(pathlib.Path(…)) instead",
+            DeprecationWarning,
+        )
+        return cls.handles(pathlib.Path(f"_.{value.lower()}"), {})
 
-    @abstractmethod
-    def read_message(
-        self,
-        source,
-        structure: Optional["sdmx.model.common.Structure"] = None,
-        **kwargs,
+    @classmethod
+    def handles(cls, data, kwargs):
+        """Return :any:`True` if the Reader can convert `data` using `kwargs`.
+
+        The default implementation checks for any of the following conditions:
+
+        1. `data` is :class:`pathlib.Path` and has one of the Reader's
+           :attr:`.suffixes`. The match is case-insensitive.
+        2. `data` is :class:`requests.Response` and its
+           :attr:`~requests.Response.headers` include a ``content-type`` that is matched
+           by one of the :class:`.MediaTypes` in the Reader' :attr:`.media_types`.
+        3. `data` is :class:`bytes`, :class:`io.IOBase`, or :class:`io.BufferedReader`
+           and starts with the class' :attr:`.binary_content_startswith` (if any). For
+           the :mod:`io` classes, this check is performed by 'peeking' at the content
+           without changing the position in the file for a later call to
+           :meth:`.convert`.
+        """
+        if isinstance(data, pathlib.Path):
+            # `data` is a Path with a known suffix
+            # Formerly supports_suffix()
+            return data.suffix.lower() in cls.suffixes
+        elif isinstance(data, requests.Response):
+            # `data` is a HTTP Response with given content-type headers
+            # Formerly handles_media_type()
+            value = data.headers.get("content-type", "")
+            return any(mt.match(value) for mt in cls.media_types)
+        elif bcsw := cls.binary_content_startswith:
+            if isinstance(data, bytes):
+                # `data` is raw bytes
+                # Formerly detect()
+                peek = data
+            elif isinstance(data, io.BufferedReader):
+                # `data` is a subtype of io.IOBase that supports peek()
+                peek = data.peek(len(bcsw))
+            elif isinstance(data, io.IOBase):
+                # `data` is a subtype of io.IOBase that supports tell()/seek()
+                # Formerly in read_sdmx()
+                pos = data.tell()
+                peek = data.readline().strip()
+                data.seek(pos)  # Return to original `pos`ition
+            else:
+                peek = b""
+
+            return peek.startswith(bcsw)
+
+        return False
+
+    def convert(
+        self, data, structure: Optional["sdmx.model.common.Structure"] = None, **kwargs
     ):
-        """Read message from *source*.
+        """Convert `data` to an instance of an SDMX Message subclass.
 
         Parameters
         ----------
-        source : file-like
+        data : file-like
             Message content.
         structure :
             :class:`DataStructure <.BaseDataStructureDefinition>` or
@@ -67,7 +144,16 @@ class BaseReader(ABC):
         :class:`.Message`
             An instance of a Message subclass.
         """
-        pass  # pragma: no cover
+        raise NotImplementedError
+
+    def read_message(self, *args, **kwargs):
+        """Deprecated. Use :meth:`.convert` instead."""
+        warn(
+            "Reader.read_message(); use Converter.convert() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.convert(*args, **kwargs)
 
     @classmethod
     def _handle_deprecated_kwarg(
