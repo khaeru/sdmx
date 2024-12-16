@@ -66,7 +66,8 @@ class TestReader:
         ],
     )
     def test_handles_media_type(self, mt, expected) -> None:
-        assert expected is Reader.handles_media_type(mt)
+        with pytest.warns(DeprecationWarning, match="use Converter.handles"):
+            assert expected is Reader.handles_media_type(mt)
 
     @pytest.mark.parametrize(
         "content, exc_text",
@@ -77,11 +78,12 @@ class TestReader:
     )
     def test_inspect_header0(self, content, exc_text) -> None:
         with pytest.raises(ValueError, match=f"Invalid SDMX-CSV 2.0.0: {exc_text}"):
-            Reader().read_message(BytesIO(content))
+            Reader().convert(BytesIO(content))
 
     @pytest.mark.parametrize("value, expected", [(".csv", True), (".xlsx", False)])
     def test_supports_suffix(self, value, expected) -> None:
-        assert expected is Reader.supports_suffix(value)
+        with pytest.warns(DeprecationWarning, match="use Converter.handles"):
+            assert expected is Reader.supports_suffix(value)
 
 
 @lru_cache
@@ -110,7 +112,7 @@ def get_dfd(n_measure: int = 1) -> "v30.Dataflow":
 
 
 @pytest.mark.parametrize_specimens("path", format="csv")
-def test_read_specimen(path):
+def test_read_specimen(path) -> None:
     """Test that the samples from the SDMX-CSV spec can be read."""
     import sdmx
 
@@ -119,7 +121,7 @@ def test_read_specimen(path):
     else:
         dfd = get_dfd()
 
-    kwargs = dict(structure=dfd)
+    kwargs: dict = dict(structure=dfd)
 
     if path.stem == "example-04":
         kwargs.update(delimiter=";")
