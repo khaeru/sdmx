@@ -84,5 +84,8 @@ Reader API
 .. automodule:: sdmx.reader
    :members:
 
+.. autoclass:: sdmx.reader.base.Converter
+   :members:
+
 .. autoclass:: sdmx.reader.base.BaseReader
    :members:
