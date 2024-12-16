@@ -5,8 +5,11 @@ What's new?
 
 .. _2.20.0:
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.20.0 (2024-12-16)
+====================
 
 - Add :func:`.to_sdmx` and :class:`.DataFrameConverter` to allow converting :class:`.pandas.DataFrame` as if it were SDMX-CSV (:pull:`212`).
 
