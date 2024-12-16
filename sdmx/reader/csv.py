@@ -10,10 +10,13 @@ from typing import TYPE_CHECKING, Literal, MutableSequence, Optional, Sequence, 
 import sdmx.message
 from sdmx.format import list_media_types
 from sdmx.model import common, v30
+from sdmx.reader import base
 from sdmx.reader.base import BaseReader
 
 if TYPE_CHECKING:
     from typing import TypedDict
+
+    import pandas
 
     from sdmx.model import v21
 
@@ -207,6 +210,48 @@ class Reader(BaseReader):
 
         self.handlers = tuple(filter(None, handlers))
         assert len(self.handlers) == len(header)
+
+
+class DataFrameConverter(base.Converter):
+    @classmethod
+    def handles(cls, data, kwargs) -> bool:
+        import pandas as pd
+
+        return isinstance(data, pd.DataFrame) and "structure" in kwargs
+
+    def convert(
+        self, data: "pandas.DataFrame", structure=None, **kwargs
+    ) -> "sdmx.message.DataMessage":
+        assert 0 == len(kwargs)
+
+        # TEMPORARY Use a Reader instance
+        r = Reader()
+        r._dataflow = structure
+        r._structure = structure.structure
+        r.inspect_header(data.columns.to_list())
+
+        # Parse remaining rows to observations
+        for _, row in data.iterrows():
+            r.handle_row(row.to_list())
+
+        # Create a data message
+        message = sdmx.message.DataMessage(dataflow=r._dataflow)
+
+        # Create 1 data set for each of the 4 ActionType values
+        ds_kw: "DataSetKwargs" = dict(
+            described_by=r._dataflow, structured_by=r._structure
+        )
+        for (*_, action), obs in r._observations.items():
+            a = common.ActionType[
+                {"A": "append", "D": "delete", "I": "information", "R": "replace"}[
+                    action
+                ]
+            ]
+
+            message.data.append(v30.DataSet(action=a, **ds_kw))
+            message.data[-1].add_obs(obs)
+
+        return message
 
 
 class Handler(ABC):
