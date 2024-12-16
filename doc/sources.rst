@@ -177,9 +177,6 @@ Website `1 <https://wikis.ec.europa.eu/pages/viewpage.action?pageId=40708145>`__
 - Eurostat also maintains four additional SDMX REST API endpoints, available in :mod:`sdmx` with the IDs below.
   These are described at URL (2) above.
 
-.. contents::
-    :local:
-
 - In some cases, the service can have a long response time, so :mod:`sdmx` will time out.
   Increase the timeout attribute if necessary.
 
