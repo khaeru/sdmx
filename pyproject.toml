@@ -38,7 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cache = ["requests-cache"]
-docs = ["IPython", "sphinx >=4", "sphinx-book-theme"]
+docs = ["furo", "IPython", "sphinx >= 8"]
 tests = [
   "Jinja2",
   "pytest >= 5",

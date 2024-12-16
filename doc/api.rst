@@ -20,6 +20,7 @@ See also the :doc:`implementation`.
 On this page:
 
 .. contents::
+   :class: this-will-duplicate-information-and-it-is-still-useful-here
    :local:
    :depth: 1
    :backlinks: none
