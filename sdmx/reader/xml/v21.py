@@ -381,10 +381,18 @@ def _localization(reader, elem):
 def _ref(reader: Reader, elem):
     cls_hint = reader.peek("ItemAssociation class") or None
 
-    if not cls_hint and QName(elem).localname in ("CodeID", "Parent", "Target"):
+    localname = QName(elem).localname
+
+    if not cls_hint and localname in ("CodeID", "Parent", "Target"):
         # Use the *grand*-parent of the <Ref> or <URN> for a class hint
-        cls_hint = reader.class_for_tag(elem.getparent().tag)
-    elif not cls_hint and QName(elem).localname == "Structure":
+        tag = elem.getparent().tag
+
+        if QName(tag).localname == "Categorisation" and localname == "Target":
+            # XSD CategoryReferenceType needs a specific class hint
+            cls_hint = common.Category
+        else:
+            cls_hint = reader.class_for_tag(tag)
+    elif not cls_hint and localname == "Structure":
         # <com:Structure>/<str:Structure>: use message property for a class hint
         msg = reader.get_single(message.DataMessage, subclass=True)
         if msg:

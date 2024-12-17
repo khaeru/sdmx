@@ -63,21 +63,23 @@ jobs:
         repository: khaeru/sdmx-test-data
         path: sdmx-test-data
 
-    - uses: actions/setup-python@v5
+    - uses: astral-sh/setup-uv@v4
       with:
-        python-version: 3.x
-        cache: pip
-        cache-dependency-path: "**/pyproject.toml"
+        enable-cache: true
+        cache-dependency-glob: "**/pyproject.toml"
 
-    - name: Install the Python package and dependencies
-      run: pip install .[cache,tests] pytest-regex
+    - name: Install Python, the package, and dependencies
+      run: |
+        uv venv --python=${{ matrix.python-version }}
+        uv pip install .[tests] pytest-regex
 
     - name: Tests of ${{ matrix.source }} data source
       continue-on-error: true
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
-        pytest -m network --regex '.*Test${{ matrix.source }}:' \
+        uv run \
+          pytest -m network --regex '.*Test${{ matrix.source }}:' \
           --color=yes --durations=30 -rA --verbose \
           --cov-report=xml \
           --numprocesses=auto
@@ -101,14 +103,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
+    - uses: astral-sh/setup-uv@v4
       with:
-        python-version: 3.x
-        cache: pip
-        cache-dependency-path: "**/pyproject.toml"
+        enable-cache: true
+        cache-dependency-glob: "**/pyproject.toml"
 
-    - name: Install the Python package and dependencies
-      run: pip install .[cache,tests]
+    - name: Install Python, the package, and dependencies
+      run: |
+        uv venv --python=${{ matrix.python-version }}
+        uv pip install .[tests] pytest-regex
 
     - name: Download artifacts
       uses: actions/download-artifact@v4

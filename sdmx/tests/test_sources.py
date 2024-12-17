@@ -466,7 +466,11 @@ class TestISTAT(DataSourceTest):
         client.data(df_id, key="A.001001+001002.AUTP.ALL.ALL.1")
 
         # Use a dict() key to force Client to make a sub-query for the DSD
-        client.data(df_id, key=data_key)
+        try:
+            client.data(df_id, key=data_key)
+        except HTTPError as e:
+            log.info(f"Known, sporadic {e!r}")
+            pass
 
     @pytest.mark.network
     def test_gh_104(self, client):

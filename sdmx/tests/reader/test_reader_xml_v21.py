@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from itertools import chain
+from typing import cast
 
 import pandas
 import pytest
@@ -15,6 +16,17 @@ from sdmx.model import common, v21
 from sdmx.model.v21 import ContentConstraint, Facet, FacetType, FacetValueType
 from sdmx.reader.xml.v21 import Reader, XMLParseError
 from sdmx.writer.xml import Element as E
+
+
+class TestCategorisation:
+    def test_0(self, specimen) -> None:
+        """Check that :attr:`.Categorisation.target` is read as :class:`.Category`."""
+        with specimen("ESTAT/esms-structure.xml") as f:
+            msg = cast(sdmx.message.StructureMessage, sdmx.read_sdmx(f))
+
+        c = msg.categorisation["DEMO_TOT"]
+
+        assert isinstance(c.category, common.Category)  # Fails with v2.20.0
 
 
 def test_read_xml_structure_insee(specimen):
