@@ -26,14 +26,14 @@ v2.20.0 (2024-12-16)
   Previously such invalid references caused a :class:`KeyError`.
   Prompted by an example in :ref:`INSEE <INSEE>`.
 - Update the base URL of the :ref:`WB <WB>` source to use HTTPS instead of plain HTTP (:pull:`207`).
-- Bugfix for writing :class:`.NameableArtefact` to SDMX-ML (:pull:`211`; thanks :gh-user:`3nz01` for :issue:`210`).
+- Bug fix for writing :class:`.NameableArtefact` to SDMX-ML (:pull:`211`; thanks :gh-user:`3nz01` for :issue:`210`).
   Up to v2.19.1, the :xml:`<com:Annotations>` element was written *after* elements such as :xml:`<com:Name>`, which is opposite the order given in the XSD schemas for SDMX-ML.
   :mod:`sdmx.reader.xml` tolerates non-standard element order, but some other implementations do not.
 
 v2.19.1 (2024-10-23)
 ====================
 
-- Bugfix: in v2.19.0 (only), :py:`IdentifableArtefact(id="")` resulted in the given ID (an empty :class:`str`) being incorrectly replaced with :data:`~.common.MissingID` (:pull:`203`).
+- Bug fix: in v2.19.0 (only), :py:`IdentifableArtefact(id="")` resulted in the given ID (an empty :class:`str`) being incorrectly replaced with :data:`~.common.MissingID` (:pull:`203`).
 
 v2.19.0 (2024-10-23)
 ====================
@@ -64,10 +64,10 @@ v2.17.0 (2024-09-03)
 - Improvements to :mod:`.reader.xml` and :mod:`.reader.xml.v21` (:pull:`192`).
 
   - Correctly associate :class:`.Item` in :class:`.ItemScheme` with its parent, even if the parent is defined after the child (“forward reference”).
-  - Bugfix: correctly handle a :class:`.MaintainableArtefact` that is explicitly included in a message (that is, not merely referenced), but with :py:`is_external_reference = True`; the value given in the file is preserved.
-  - Bugfix: :class:`.FacetValueType` is written in UpperCamelCase per the standard.
+  - Bug fix: correctly handle a :class:`.MaintainableArtefact` that is explicitly included in a message (that is, not merely referenced), but with :py:`is_external_reference = True`; the value given in the file is preserved.
+  - Bug fix: :class:`.FacetValueType` is written in UpperCamelCase per the standard.
     The standard specifies lowerCamelCase only in the Information Model.
-  - Bugfix: erroneous extra :xml:`<Ref ... style="Ref"/>` attribute is no longer written.
+  - Bug fix: erroneous extra :xml:`<Ref ... style="Ref"/>` attribute is no longer written.
 - Expand logged information in :meth:`.ComponentList.compare` (:pull:`192`).
 
 v2.16.0 (2024-08-16)
@@ -86,8 +86,8 @@ v2.15.0 (2024-04-28)
 - :func:`.urn.make` can handle :class:`.DataConsumerScheme`, :class:`.OrganisationScheme`, :class:`.ReportingTaxonomy`, :class:`.TransformationScheme`, and :class:`.VTLMappingScheme` (:pull:`175`).
 - New method :meth:`.StructureMessage.iter_objects` (:pull:`175`).
 - New method :meth:`.DataMessage.update` (:pull:`175`).
-- Bugfix: :class:`.ItemScheme` could not be :func:`copy.deepcopy` 'd (:pull:`170`).
-- Bugfix: :class:`.TypeError` was raised on :meth:`.Client.get` from an SDMX-JSON source (:pull:`175`).
+- Bug fix: :class:`.ItemScheme` could not be :func:`copy.deepcopy` 'd (:pull:`170`).
+- Bug fix: :class:`.TypeError` was raised on :meth:`.Client.get` from an SDMX-JSON source (:pull:`175`).
 
 v2.14.0 (2024-02-20)
 ====================
@@ -183,9 +183,9 @@ v2.12.1 (2023-12-20)
 ====================
 
 - Python 3.12 (released 2023-10-02) is fully supported (:pull:`145`).
-- Bugfix: :py:`dsd=...` argument supplied to the SDMX-ML reader ignored in v2.11.0 and later, causing a warning (:pull:`147`; thanks :gh-user:`miccoli` for :issue:`146`).
-- Bugfix: attribute :xml:`<str:Attribute assignmentStatus="…">` not read from SDMX-ML (:pull:`150`, thanks :gh-user:`goatsweater` for :issue:`149`).
-- Bugfix: items not written by :mod:`.writer.xml` (:pull:`150`, thanks :gh-user:`goatsweater` for :issue:`149`).
+- Bug fix: :py:`dsd=...` argument supplied to the SDMX-ML reader ignored in v2.11.0 and later, causing a warning (:pull:`147`; thanks :gh-user:`miccoli` for :issue:`146`).
+- Bug fix: attribute :xml:`<str:Attribute assignmentStatus="…">` not read from SDMX-ML (:pull:`150`, thanks :gh-user:`goatsweater` for :issue:`149`).
+- Bug fix: items not written by :mod:`.writer.xml` (:pull:`150`, thanks :gh-user:`goatsweater` for :issue:`149`).
 
   - :attr:`.Annotation.title` → :xml:`<com:AnnotationTitle>…<com:AnnotationTitle/>`.
   - :attr:`.DimensionComponent.order` → :xml:`<str:Dimension position="…">`.
@@ -216,7 +216,7 @@ All changes
 -----------
 
 - Implement the SDMX 3.0 Information Model (:mod:`.model.v30`) and a SDMX-ML 3.0 reader (:mod:`.reader.xml.v30`) (:pull:`135`).
-- Add :func:`.util.item_structure.parse_item_description`, :func:`.parse_item`, and :func:`.parse_all` for handling common, but non-standard "structure expressions" like "A = B + C - D" in the :attr:`description <.NameableArtefact.description>` of :class:`Items <.Item>` in :class:`ItemSchemes <.ItemScheme>` (or subclasses, e.g. :class:`.Code` in :class:`.Codelist`) (:issue:`133`, :pull:`137`).
+- Add :func:`.util.item_structure.parse_item_description`, :func:`.parse_item`, and :func:`.parse_all` for handling common, but non-standard "structure expressions" like "A = B + C - D" in the :attr:`description <.NameableArtefact.description>` of :class:`Items <.Item>` in :class:`ItemSchemes <.ItemScheme>` (or subclasses, such as :class:`.Code` in :class:`.Codelist`) (:issue:`133`, :pull:`137`).
   See examples and further description in the function documentation.
 - Update the :ref:`ECB` data source URL per a recent change in the service (:pull:`134`).
 
@@ -265,16 +265,16 @@ v2.9.0 (2023-04-30)
   - Implement :meth:`.KeyValue.__lt__`, for use with Python :func:`.sorted`.
   - Implement :meth:`.DataSet.__str__`.
     The previous default string representation included the representation of *every* observation in the data set, which could be excessively verbose.
-    Use ``repr(ds)`` explicitly if this is desired.
+    Use :py:`repr(ds)` explicitly if this is desired.
   - :meth:`.ComponentList.append` (thus also child classes including :class:`.DimensionDescriptor`) now sets :attr:`.DimensionComponent.order` on the appended components (dimensions), if not already set.
   - Add :meth:`.ComponentList.extend`.
 
 - :mod:`sdmx.writer.xml` (:pull:`125`):
 
-  - Write :attr:`.DataSet.attrib`, i.e. :class:`AttributeValue` attached directly to a data set, rather than to its contents.
-  - Write :class:`.Contact`, e.g. within an :class:`.AgencyScheme`.
+  - Write :attr:`.DataSet.attrib`—that is, :class:`AttributeValue` attached directly to a data set—rather than to its contents.
+  - Write :class:`.Contact`, for instance within an :class:`.AgencyScheme`.
 
-- Bugfix: correctly handle ``&detail=referencepartial`` REST query parameter and :class:`.StructureMessage` containing ≥2 :class:`.MaintainableArtefact` with the same maintainer and ID, but different versions (:issue:`116`, :pull:`124`).
+- Bug fix: correctly handle ``&detail=referencepartial`` REST query parameter and :class:`.StructureMessage` containing ≥2 :class:`.MaintainableArtefact` with the same maintainer and ID, but different versions (:issue:`116`, :pull:`124`).
   See the documentation for :mod:`.reader.xml`.
 - :mod:`sdmx` is fully compatible with pandas 2.0.0, released 2023-04-03 (:pull:`124`).
   The minimum version of Python is increased from 3.7 (EOL 2023-06-27) to 3.8.
@@ -296,8 +296,8 @@ In order to prepare for future support of SDMX 3.0, code such as the following w
 
    dsd = model.DataStructureDefinition(...)
 
-This occurs for :mod:`sdmx.model` classes (e.g. :class:`.v21.DataStructureDefinition`) which may have a different implementation in SDMX 3.0 than in SDMX 2.1.
-It does *not* occur for classes (e.g. :class:`.InternationalString`) that are unchanged from SDMX 2.1 to 3.0.
+This occurs for :mod:`sdmx.model` classes (for instance :class:`.v21.DataStructureDefinition`) which may have a different implementation in SDMX 3.0 than in SDMX 2.1.
+It does *not* occur for classes that are unchanged from SDMX 2.1 to 3.0, for instance :class:`.InternationalString`.
 
 Code can be adjusted by importing explicitly from the new :mod:`.model.v21` submodule:
 
@@ -340,9 +340,9 @@ v2.7.0 (2022-11-14)
 - Correctly parse "." in item IDs in URNs (:data:`~sdmx.urn.URN`, :pull:`109`).
 - Handle SDMX-ML observed in the wild (:pull:`109`):
 
-  - Elements that normally contain text but appear without even a text node, e.g. ``<com:AnnotationURL/>``.
-  - XML namespaces defined on the message element, e.g. ``<mes:StructureSpecificData xmlns:u="...">`` followed by ``<u:DataSet>`` instead of ``<mes:DataSet>``.
-- Use the user-supplied ``dsd=…`` argument to :meth:`.Client.get`, even if its ID does not match those used locally in an SDMX-ML :class:`.DataMessage` (:pull:`106`, :issue:`104`).
+  - Elements that normally contain text but appear without even a text node, such as :xml:`<com:AnnotationURL/>`.
+  - XML namespaces defined on the message element such as :xml:`<mes:StructureSpecificData xmlns:u="...">` followed by :xml:`<u:DataSet>` instead of :xml:`<mes:DataSet>`.
+- Use the user-supplied :py:`dsd=...` argument to :meth:`.Client.get`, even if its ID does not match those used locally in an SDMX-ML :class:`.DataMessage` (:pull:`106`, :issue:`104`).
 - Expand the :ref:`source/endpoint test matrix <source-matrix>` (:pull:`109`).
   Every REST API endpoint is queried for every data source, even if it is known to be not implemented.
   This allows to spot when source implementations change.
@@ -358,7 +358,7 @@ v2.6.3 (2022-09-29)
 - Bump minimum version of :py:`pydantic` to 1.9.2 (:pull:`98`).
 - Always return all objects parsed from a SDMX-ML :class:`.StructureMessage` (:pull:`99`).
 
-  If two or more :class:`.MaintainableArtefact` have the same ID (e.g. "CL_FOO"); :mod:`sdmx` would formerly store only the last one parsed.
+  If two or more :class:`.MaintainableArtefact` have the same ID (for example, "CL_FOO"); :mod:`sdmx` would formerly store only the last one parsed.
   Now, each is returned, with keys like ``{maintainer's id}:{object id}`` such as would appear in an SDMX URI; for example, "AGENCY_A:CL_FOO", "AGENCY_B:CL_FOO", etc.
 - Recognize the MIME type ``application/vnd.sdmx.generic+xml;version=2.1`` (:pull:`99`).
 - Catch some cases where :attr:`~.NameableArtefact.name` and :attr:`~.NameableArtefact.description` were discarded when parsing SDMX-ML (:pull:`99`).
@@ -426,8 +426,8 @@ v2.5.0 (2021-06-27)
 - Tolerate malformed SDMX-JSON from :ref:`OECD <OECD>` (:issue:`64`, :pull:`81`).
 - Reduce noise when :mod:`requests_cache` is not installed (:issue:`75`, :pull:`80`).
   An exception is still raised if (a) the package is not installed and (b) cache-related arguments are passed to :class:`.Client`.
-- Bugfix: `verify` = :obj:`False` was not passed to the preliminary request used to validate a :class:`dict` key for a data request (:pull:`80`; thanks :gh-user:`albertame` for :issue:`77`).
-- Handle ``<mes:Department>`` and ``<mes:Role>>`` in SDMX-ML headers (:issue:`78`, :pull:`79`).
+- Bug fix: :py:`verify=False` was not passed to the preliminary request used to validate a :class:`dict` key for a data request (:pull:`80`; thanks :gh-user:`albertame` for :issue:`77`).
+- Handle :xml:`<mes:Department>` and :xml:`<mes:Role>` in SDMX-ML headers (:issue:`78`, :pull:`79`).
 
 v2.4.1 (2021-04-12)
 ===================
@@ -452,7 +452,7 @@ v2.3.0 (2021-03-10)
 ===================
 
 - :func:`.to_xml` can produce structure-specific SDMX-ML (:pull:`67`).
-- Improve typing of :class:`.Item` and subclasses, e.g. :class:`.Code` (:pull:`66`).
+- Improve typing of :class:`.Item` and subclasses such as :class:`.Code` (:pull:`66`).
   :attr:`~Item.parent` and :attr:`~Item.child` elements are typed the same as a subclass.
 - Require :py:`pydantic` >= 1.8.1, and remove workarounds for limitations in earlier versions (:pull:`66`).
 - The default branch of the :mod:`sdmx` GitHub repository is renamed ``main``.
@@ -460,7 +460,7 @@ v2.3.0 (2021-03-10)
 Bug fixes
 ---------
 
-- ``sdmx.__version__`` always gives `999` (:issue:`68`, :pull:`69`).
+- :py:`sdmx.__version__` always gives `999` (:issue:`68`, :pull:`69`).
 
 v2.2.1 (2021-02-27)
 ===================
@@ -470,8 +470,8 @@ v2.2.1 (2021-02-27)
 v2.2.0 (2021-02-26)
 ===================
 
-- New convenience method :meth:`.AnnotableArtefact.get_annotation` to return but not remove an Annotation, e.g. by its ID (:pull:`60`).
-- Add :file:`py.typed` to support type checking (e.g. with `mypy <https://mypy.readthedocs.io>`_) in packages that depend on :mod:`sdmx`.
+- New convenience method :meth:`.AnnotableArtefact.get_annotation` to return but not remove an Annotation, for instance by its ID (:pull:`60`).
+- Add :file:`py.typed` to support type checking (with `mypy <https://mypy.readthedocs.io>`_) in packages that depend on :mod:`sdmx`.
 
 v2.1.0 (2021-02-22)
 ===================
@@ -480,7 +480,7 @@ v2.1.0 (2021-02-22)
 - :attr:`.Item.parent` stores a reference to the containing :class:`.ItemScheme` for top-level Items that have no hierarchy/parent of their own. This allows navigating from any Item to the ItemScheme that contains it. :meth:`.Item.get_scheme` is added as a convenience method (:pull:`58`).
 - :mod:`.reader.xml` internals reworked for significant speedups in parsing of SDMX-ML (:pull:`58`).
 - New convenience method :meth:`.StructureMessage.get` to retrieve objects by ID across the multiple collections in StructureMessage (:pull:`58`).
-- New convenience method :meth:`.AnnotableArtefact.pop_annotation` to locate, remove, and return a Annotation, e.g. by its ID (:pull:`58`).
+- New convenience method :meth:`.AnnotableArtefact.pop_annotation` to locate, remove, and return a Annotation, for instance by its ID (:pull:`58`).
 - :func:`len` of a :class:`DataKeySet <.BaseDataKeySet>` gives the length of :attr:`.DataKeySet.keys` (:pull:`58`).
 
 v2.0.1 (2021-01-31)
@@ -514,7 +514,7 @@ Instead, use:
 
 Per `the standard semantic versioning approach <https://semver.org/#how-should-i-handle-deprecating-functionality>`_, this feature is marked as deprecated in version 2.0, and will be removed no sooner than version 3.0.
 
-References to ``sdmx.logger`` should be updated to ``sdmx.log``.
+References to :py:`sdmx.logger` should be updated to :py:`sdmx.log`.
 Instead of passing the `log_level` parameter to :class:`.Client`, access this standard Python :py:class:`~.logging.Logger` and change its level, as described at :ref:`HOWTO control logging <howto-logging>`.
 
 All changes
@@ -545,7 +545,7 @@ New features
 ~~~~~~~~~~~~
 
 - Add :ref:`The Pacific Community's Pacific Data Hub <SPC>` as a data source (:pull:`30`).
-- Add classes to :mod:`sdmx.model`: :class:`.v21.TimeRangeValue`, :class:`.Period`, :class:`RangePeriod`, and parse ``<com:TimeRange>`` and related tags in SDMX-ML (:pull:`30`).
+- Add classes to :mod:`sdmx.model`: :class:`.v21.TimeRangeValue`, :class:`.Period`, :class:`RangePeriod`, and parse :xml:`<com:TimeRange>` and related tags in SDMX-ML (:pull:`30`).
 
 Bug fixes
 ~~~~~~~~~
@@ -589,7 +589,7 @@ New features
   If you have an example of a DataMessages that :mod:`sdmx` 1.4.0 cannot write, please `file an issue on GitHub <https://github.com/khaeru/sdmx/issues/new>`_ with a file attachment.
   SDMX-ML features used in such examples will be prioritized for future improvements.
 
-- Add ``compare()`` methods to :class:`.DataMessage`, :class:`.DataSet`, and related classes  (:pull:`13`).
+- Add :py:`compare()` methods to :class:`.DataMessage`, :class:`.DataSet`, and related classes  (:pull:`13`).
 
 Bug fixes
 ~~~~~~~~~
@@ -624,7 +624,7 @@ Data model changes
 - :attr:`.IdentifiableArtefact.id` is strictly typed as :class:`str`, with a singleton object (analogous to :obj:`None`) used for missing IDs.
 - :attr:`.IdentifiableArtefact.id`, :attr:`.VersionableArtefact.version`, and :attr:`.MaintainableArtefact.maintainer` are inferred from a URN if one is passed during construction.
 - :meth:`.VersionableArtefact.identical` and :meth:`.MaintainableArtefact.identical` compare on version and maintainer attributes, respectively.
-- :class:`.Facet`, :class:`.Representation`, and :class:`.ISOConceptReference` are strictly validated, i.e. cannot be assigned non-IM attributes.
+- :class:`.Facet`, :class:`.Representation`, and :class:`.ISOConceptReference` are strictly validated and cannot be assigned non-IM attributes.
 - Add :class:`.OrganisationScheme`, :class:`.NoSpecifiedRelationship`, :class:`.PrimaryMeasureRelationship`, :class:`.DimensionRelationship`, and :class:`.GroupRelationship` as distinct classes.
 - Type of :attr:`.DimensionRelationship.dimensions` is :class:`.DimensionComponent`, not the narrower :class:`.Dimension`.
 - :attr:`.v21.DataStructureDefinition.measures` is an empty :class:`.v21.MeasureDescriptor` by default, not :obj:`None`.
@@ -659,7 +659,7 @@ v1.0.0 (2020-05-01)
 - :py:`sdmx.api` and :py:`sdmx.remote` are reimplemented to (1) match the semantics of the requests_ package and (2) be much thinner.
 - Data sources are modularized in :class:`~.source.Source`.
 
-  - Idiosyncrasies of particular data sources (e.g. ESTAT's process for large requests) are handled by source-specific subclasses.
+  - Idiosyncrasies of particular data sources (such as ESTAT's process for large requests) are handled by source-specific subclasses.
     As a result, :py:`sdmx.api` is leaner.
 
 - Testing coverage is significantly expanded.
@@ -681,7 +681,7 @@ Breaking changes
 Migrating
 ~~~~~~~~~
 
-- ``Writer.write(…, reverse_obs=True)``: use the standard pandas indexing approach to reverse a pd.Series: ``s.iloc[::-1]``
+- :py:`Writer.write(…, reverse_obs=True)`: use the standard pandas indexing approach to reverse a pd.Series: :py:`s.iloc[::-1]`
 - odo support is no longer built-in; however, users can still register a SDMX resource with odo.
   See the :ref:`HOWTO <howto-convert>`.
 - :func:`.write_dataset`: the `parse_time` and `fromfreq` arguments are replaced by `datetime`; see the method documentation and the :ref:`walkthrough section <datetime>` for examples.
