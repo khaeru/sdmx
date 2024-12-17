@@ -3,10 +3,14 @@
 What's new?
 ***********
 
-.. _2.20.0:
+.. _2.20.1:
 
-.. Next release
-.. ============
+Next release
+============
+
+- Bug fix for reading :xml:`<str:Categorisation>` from SDMX-ML 2.1: the :attr:`.Categorisation.category` attribute was read as an instance of Categorisation, rather than Category (:pull:`215`).
+
+.. _2.20.0:
 
 v2.20.0 (2024-12-16)
 ====================
