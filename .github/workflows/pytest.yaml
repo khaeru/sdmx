@@ -87,4 +87,5 @@ jobs:
         lookup-only: ${{ github.event_name == 'schedule' }}
         # lookup-only: true
     - name: Run pre-commit
-      run: uvx --python=3.13 pre-commit run --all-files --show-diff-on-failure --color=always
+      # TEMPORARY Use Python 3.12 to avoid https://github.com/python/mypy/issues/18216
+      run: uvx --python=3.12 pre-commit run --all-files --show-diff-on-failure --color=always
