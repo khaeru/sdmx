@@ -81,7 +81,7 @@ jobs:
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
-        uv run \
+        uv run --no-sync \
           pytest -m network --regex '.*Test${{ matrix.source }}:' \
           --color=yes --durations=30 -rA --verbose \
           --cov-report=xml \
@@ -124,7 +124,9 @@ jobs:
         merge-multiple: true
 
     - name: Compile report
-      run: python -m sdmx.testing.report
+      run: |
+        uv run --no-sync \
+          python -m sdmx.testing.report
 
     - name: Upload report as a pages artifact
       uses: actions/upload-pages-artifact@v3
