@@ -472,6 +472,13 @@ class TestISTAT(DataSourceTest):
             log.info(f"Known, sporadic {e!r}")
             pass
 
+    @pytest.mark.xfail(
+        raises=HTTPError,
+        reason="""As of 2024-12-23, returns a 404 but also a text/plain message: «Error
+        while retrieving Mappings from "Mapping Store"! Cause:Dataflow
+        'urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=IT1:22_289(1.0)' doesn't
+        contain a mapping set»""",
+    )
     @pytest.mark.network
     def test_gh_104(self, client):
         """Test of https://github.com/khaeru/sdmx/issues/104.

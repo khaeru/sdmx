@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  python-version: 3.13
+
 jobs:
   source:
     runs-on: ubuntu-latest
@@ -70,7 +73,7 @@ jobs:
 
     - name: Install Python, the package, and dependencies
       run: |
-        uv venv --python=${{ matrix.python-version }}
+        uv venv --python=${{ env.python-version }}
         uv pip install .[tests] pytest-regex
 
     - name: Tests of ${{ matrix.source }} data source
@@ -78,7 +81,7 @@ jobs:
       env:
         SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
-        uv run \
+        uv run --no-sync \
           pytest -m network --regex '.*Test${{ matrix.source }}:' \
           --color=yes --durations=30 -rA --verbose \
           --cov-report=xml \
@@ -110,7 +113,7 @@ jobs:
 
     - name: Install Python, the package, and dependencies
       run: |
-        uv venv --python=${{ matrix.python-version }}
+        uv venv --python=${{ env.python-version }}
         uv pip install .[tests] pytest-regex
 
     - name: Download artifacts
@@ -121,7 +124,9 @@ jobs:
         merge-multiple: true
 
     - name: Compile report
-      run: python -m sdmx.testing.report
+      run: |
+        uv run --no-sync \
+          python -m sdmx.testing.report
 
     - name: Upload report as a pages artifact
       uses: actions/upload-pages-artifact@v3
