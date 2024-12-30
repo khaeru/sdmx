@@ -44,7 +44,7 @@ tests = [
   "pytest >= 5",
   "pytest-cov",
   "pytest-xdist",
-  "requests-mock >= 1.4",
+  "responses",
   "sdmx1[cache]",
 ]
 

@@ -8,6 +8,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import pytest
+import responses
 
 from sdmx.exceptions import HTTPError
 from sdmx.rest import Resource
@@ -88,7 +89,7 @@ def pytest_configure(config):
     info = dict(
         id="MOCK",
         name="Mock source",
-        url="mock://example.com/",
+        url="https://example.com/",
         supports={feature: True for feature in list(Resource)},
     )
     add_source(info)
@@ -409,18 +410,14 @@ def specimen(pytestconfig):
 
 @pytest.fixture(scope="session")
 def mock_service_adapter():
-    from requests_mock import Adapter
-
     import sdmx
     from sdmx.format import MediaType
     from sdmx.message import StructureMessage
 
-    a = Adapter()
-
     common = dict(
-        content=sdmx.to_xml(StructureMessage()),
-        status_code=200,
-        headers={"Content-Type": repr(MediaType("generic", "xml", "2.1"))},
+        body=sdmx.to_xml(StructureMessage()),
+        status=200,
+        content_type=repr(MediaType("generic", "xml", "2.1")),
     )
     for path in (
         "actualconstraint/MOCK/all/latest",
@@ -455,9 +452,7 @@ def mock_service_adapter():
         "userdefinedoperatorscheme/MOCK/all/latest",
         "vtlmappingscheme/MOCK/all/latest",
     ):
-        a.register_uri("GET", f"mock://example.com/{path}", **common)
-
-    yield a
+        responses.add("GET", url=f"https://example.com/{path}", **common)
 
 
 @pytest.fixture(scope="class")

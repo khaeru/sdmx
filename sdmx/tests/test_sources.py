@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Union
 
 import pytest
-import requests_mock
+import responses
 
 import sdmx
 from sdmx import Client
@@ -113,10 +113,12 @@ class TestMOCK(DataSourceTest):
     def client(self, mock_service_adapter):
         """Return a client with mocked responses."""
 
-        c = Client(self.source_id)
-        c.session.mount("mock://", mock_service_adapter)
+        responses.start()
 
-        yield c
+        try:
+            yield Client(self.source_id)
+        finally:
+            responses.stop()
 
     # Same as above, but without the "source" or "network" marks
     def test_endpoint(self, client, endpoint, args):
@@ -185,7 +187,7 @@ class TestECB(DataSourceTest):
     source_id = "ECB"
 
 
-# Data for requests_mock; see TestESTAT.mock()
+# Data for mock responses; see TestESTAT.mock()
 estat_mock = {
     "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/..B1GQ+P3.": {
         "body": Path("ESTAT", "footer2.xml"),
@@ -207,13 +209,16 @@ class TestESTAT(DataSourceTest):
     @pytest.fixture
     def mock(self, test_data_path):
         # Prepare the mock requests
-        fixture = requests_mock.Mocker()
+        fixture = responses.RequestsMock()
         for url, args in estat_mock.items():
-            # str() here is for Python 3.5 compatibility
-            args["body"] = open(str(test_data_path / args["body"]), "rb")
-            fixture.get(url, **args)
+            args["body"] = test_data_path.joinpath(args["body"]).read_bytes()
+            fixture.add("GET", url=url, **args)
 
-        return fixture
+        fixture.start()
+        try:
+            yield fixture
+        finally:
+            fixture.stop()
 
     @pytest.mark.network
     def test_xml_footer(self, mock):

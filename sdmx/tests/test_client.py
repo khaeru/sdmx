@@ -5,7 +5,7 @@ from io import BytesIO
 
 import pandas as pd
 import pytest
-import requests_mock
+import responses
 
 import sdmx
 from sdmx.source import sources
@@ -158,14 +158,13 @@ class TestClient:
     @pytest.mark.skip(reason="SDMX 3.0.0 now supported")
     def test_v3_unsupported(self, testsource, client):
         """Client raises an exception when an SDMX 3.0 message is returned."""
-        mock = requests_mock.Mocker()
-        df_id = "DATAFLOW"
-        key = ".KEY2.KEY3..KEY5"
-        url = f"{sources[testsource].url}/data/{df_id}/{key}"
+        df_id, key = "DATAFLOW", ".KEY2.KEY3..KEY5"
+
+        mock = responses.RequestsMock()
         mock.get(
-            url,
+            url=f"{sources[testsource].url}/data/{df_id}/{key}",
             body="",
-            headers={"Content-Type": "application/vnd.sdmx.data+xml; version=3.0.0"},
+            content_type="application/vnd.sdmx.data+xml; version=3.0.0",
         )
 
         with (

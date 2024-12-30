@@ -8,7 +8,7 @@ repos:
     - pandas-stubs
     - pytest
     - requests-cache
-    - requests-mock
+    - responses
     - types-Jinja2
     - types-python-dateutil
     - types-PyYAML
