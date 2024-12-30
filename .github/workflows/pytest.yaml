@@ -51,6 +51,7 @@ jobs:
         uv run --no-sync \
           pytest \
           -ra --color=yes --verbose \
+          --sdmx-fetch-data \
           --cov-report=xml \
           --numprocesses auto
       shell: bash

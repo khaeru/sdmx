@@ -3,20 +3,35 @@ import os
 from collections import ChainMap
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
+import platformdirs
 import pytest
 import responses
+from xdist import is_xdist_worker
 
 from sdmx.exceptions import HTTPError
 from sdmx.rest import Resource
 from sdmx.source import DataContentType, add_source, sources
 from sdmx.testing.report import ServiceReporter
 
+if TYPE_CHECKING:
+    import pytest
+
 log = logging.getLogger(__name__)
 
+
+DATA_DEFAULT_DIR = platformdirs.user_cache_path("sdmx").joinpath("test-data")
+DATA_ERROR = (
+    "Unable to locate test specimens. Give --sdmx-fetch-data, or use "
+    "--sdmx-test-data=… or the SDMX_TEST_DATA environment variable to indicate an "
+    "existing directory"
+)
+# DATA_REMOTE_URL = "git@github.com:khaeru/sdmx-test-data.git"
+DATA_REMOTE_URL = "https://github.com/khaeru/sdmx-test-data.git"
+DATA_STASH_KEY = pytest.StashKey[Path]()
 
 # Expected to_pandas() results for data files; see expected_data()
 # - Keys are the file name (above) with '.' -> '-': 'foo.xml' -> 'foo-xml'
@@ -36,6 +51,8 @@ EXPECTED = {
     "ts-json": dict(use="flat-json"),
 }
 
+SPECIMENS_KEY = pytest.StashKey["SpecimenCollection"]()
+
 
 def assert_pd_equal(left, right, **kwargs):
     """Assert equality of two pandas objects."""
@@ -49,12 +66,61 @@ def assert_pd_equal(left, right, **kwargs):
     method(left, right, **kwargs)
 
 
+def fetch_data() -> Path:
+    """Fetch test data from GitHub."""
+    import git
+
+    # Create a lock to avoid concurrency issues when running with pytest-xdist
+    DATA_DEFAULT_DIR.mkdir(parents=True, exist_ok=True)
+    blf = git.BlockingLockFile(DATA_DEFAULT_DIR, check_interval_s=0.1)
+    blf._obtain_lock()
+
+    # Initialize a git Repo object
+    repo = git.Repo.init(DATA_DEFAULT_DIR)
+
+    try:
+        # Reference to existing 'origin' remote
+        origin = repo.remotes["origin"]
+        # Ensure the DATA_REMOTE_URL is among the URLs for this remote
+        if DATA_REMOTE_URL not in origin.urls:  # pragma: no cover
+            origin.set_url(DATA_REMOTE_URL)
+    except IndexError:
+        # Create a new remote
+        origin = repo.create_remote("origin", DATA_REMOTE_URL)
+
+    log.info(f"Fetch test data from {origin} → {repo.working_dir}")
+
+    origin.fetch("refs/heads/main", depth=1)  # Fetch only 1 commit from the remote
+    origin_main = origin.refs["main"]  # Reference to 'origin/main'
+    try:
+        head = repo.heads["main"]  # Reference to existing local 'main'
+    except IndexError:
+        head = repo.create_head("main", origin_main)  # Create a local 'main'
+
+    if (
+        head.commit != origin_main.commit  # Commit differs
+        or repo.is_dirty()  # Working dir is dirty
+        or len(repo.index.diff(head.commit))
+    ):
+        # Check out files into the working directory
+        head.set_tracking_branch(origin_main).checkout()
+
+    del blf  # Release lock
+
+    return Path(repo.working_dir)
+
+
 def pytest_addoption(parser):
-    """Add the ``--sdmx-test-data`` command-line option to pytest."""
+    """Add pytest command-line options."""
+    parser.addoption(
+        "--sdmx-fetch-data",
+        action="store_true",
+        help="fetch test specimens from GitHub",
+    )
     parser.addoption(
         "--sdmx-test-data",
         # Use the environment variable value by default
-        default=os.environ.get("SDMX_TEST_DATA", None),
+        default=os.environ.get("SDMX_TEST_DATA", DATA_DEFAULT_DIR),
         help="path to SDMX test specimens",
     )
 
@@ -70,19 +136,26 @@ def pytest_configure(config):
     config._sdmx_reporter = ServiceReporter(config)
     config.pluginmanager.register(config._sdmx_reporter)
 
-    # Check the value can be converted to a path, and exists
-    message = "Give --sdmx-test-data=… or set the SDMX_TEST_DATA environment variable"
+    # Convert the option value to an Path instance attribute on `config`
     try:
-        sdmx_test_data = Path(config.option.sdmx_test_data)
+        config.stash[DATA_STASH_KEY] = Path(config.option.sdmx_test_data)
     except TypeError:  # pragma: no cover
-        raise RuntimeError(message) from None
-    else:  # pragma: no cover
-        if not sdmx_test_data.exists():  # pragma: no cover
-            # Cannot proceed further; this exception kills the test session
-            raise FileNotFoundError(f"SDMX test data in {sdmx_test_data}\n{message}")
+        raise RuntimeError(DATA_ERROR) from None
 
-    setattr(config, "sdmx_test_data", sdmx_test_data)
-    setattr(config, "sdmx_specimens", SpecimenCollection(sdmx_test_data))
+
+def pytest_sessionstart(session: "pytest.Session") -> None:
+    # Clone the test data if so configured, and not in an xdist worker process
+    if session.config.option.sdmx_fetch_data and not is_xdist_worker(session):
+        fetch_data()
+
+    # Check the value can be converted to a path, and exists
+    path = session.config.stash[DATA_STASH_KEY]
+    if not path.exists():  # pragma: no cover
+        # Cannot proceed further; this exception kills the test session
+        raise FileNotFoundError(f"SDMX test data in {path}\n{DATA_ERROR}")
+
+    # Create a SpecimenCollection from the files in the directory
+    session.config.stash[SPECIMENS_KEY] = SpecimenCollection(path)
 
     # Add a source globally for use with mock_service_adapter
     # TODO Deduplicate between this and the "testsource" fixture
@@ -111,9 +184,8 @@ def parametrize_specimens(metafunc):
     except StopIteration:
         return
 
-    metafunc.parametrize(
-        mark.args[0], metafunc.config.sdmx_specimens.as_params(**mark.kwargs)
-    )
+    sc = metafunc.config.stash[SPECIMENS_KEY]
+    metafunc.parametrize(mark.args[0], sc.as_params(**mark.kwargs))
 
 
 #: Marks for use below.
@@ -399,13 +471,13 @@ class SpecimenCollection:
 @pytest.fixture(scope="session")
 def test_data_path(pytestconfig):
     """Fixture: the :py:class:`.Path` given as --sdmx-test-data."""
-    yield pytestconfig.sdmx_test_data
+    yield pytestconfig.stash[DATA_STASH_KEY]
 
 
 @pytest.fixture(scope="session")
 def specimen(pytestconfig):
     """Fixture: the :class:`SpecimenCollection`."""
-    yield pytestconfig.sdmx_specimens
+    yield pytestconfig.stash[SPECIMENS_KEY]
 
 
 @pytest.fixture(scope="session")
