@@ -38,15 +38,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: astral-sh/setup-uv@v4
+    - uses: astral-sh/setup-uv@v5
       with:
-        enable-cache: true
         cache-dependency-glob: "**/pyproject.toml"
+        python-version: ${{ matrix.python-version }}
 
     - name: Install Python, the package, and dependencies
-      run: |
-        uv venv --python=${{ matrix.python-version }}
-        uv pip install .[tests]
+      run: uv pip install .[tests]
 
     - name: Run pytest
       run: |
@@ -68,10 +66,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: astral-sh/setup-uv@v4
+    - uses: astral-sh/setup-uv@v5
       with:
-        enable-cache: true
         cache-dependency-glob: "**/pyproject.toml"
+        # TEMPORARY Use Python 3.12 to avoid https://github.com/python/mypy/issues/18216
+        python-version: "3.12"
     - uses: actions/cache@v4
       with:
         path: ~/.cache/pre-commit
@@ -79,5 +78,4 @@ jobs:
         lookup-only: ${{ github.event_name == 'schedule' }}
         # lookup-only: true
     - name: Run pre-commit
-      # TEMPORARY Use Python 3.12 to avoid https://github.com/python/mypy/issues/18216
-      run: uvx --python=3.12 pre-commit run --all-files --show-diff-on-failure --color=always
+      run: uvx pre-commit run --all-files --show-diff-on-failure --color=always
