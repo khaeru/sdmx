@@ -38,12 +38,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Checkout test data
-      uses: actions/checkout@v4
-      with:
-        repository: khaeru/sdmx-test-data
-        path: sdmx-test-data
-
     - uses: astral-sh/setup-uv@v4
       with:
         enable-cache: true
@@ -55,8 +49,6 @@ jobs:
         uv pip install .[tests]
 
     - name: Run pytest
-      env:
-        SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
         uv run --no-sync \
           pytest \
