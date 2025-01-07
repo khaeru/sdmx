@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, ClassVar, Union
 
 import pytest
-import responses
 
 import sdmx
 from sdmx import Client
@@ -161,16 +160,16 @@ class TestECB(DataSourceTest):
 
 
 # Data for mock responses; see TestESTAT.mock()
-estat_mock = {
+ESTAT_STORED = {
     "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/..B1GQ+P3.": {
-        "body": Path("ESTAT", "footer2.xml"),
+        "content": Path("ESTAT", "footer2.xml"),
         "headers": {
             "Content-Type": "application/vnd.sdmx.genericdata+xml; version=2.1"
         },
     },
     "http://ec.europa.eu/eurostat/SDMX/diss-web/file/7JUdWyAy4fmjBSWT": {
         # This file is a trimmed version of the actual response for the above query
-        "body": Path("ESTAT", "footer2.zip"),
+        "content": Path("ESTAT", "footer2.zip"),
         "headers": {"Content-Type": "application/octet-stream"},
     },
 }
@@ -180,25 +179,17 @@ class TestESTAT(DataSourceTest):
     source_id = "ESTAT"
 
     @pytest.fixture
-    def mock(self, test_data_path):
-        # Prepare the mock requests
-        fixture = responses.RequestsMock()
-        for url, args in estat_mock.items():
-            args["body"] = test_data_path.joinpath(args["body"]).read_bytes()
-            fixture.add("GET", url=url, **args)
+    def mock(self, client_with_stored_responses, test_data_path):
+        from sdmx.util.requests import save_response
 
-        fixture.start()
-        try:
-            yield fixture
-        finally:
-            fixture.stop()
+        for url, args in ESTAT_STORED.items():
+            args["content"] = test_data_path.joinpath(args["content"]).read_bytes()
+            save_response(client_with_stored_responses.session, "GET", url, **args)
 
-    @pytest.mark.network
+        yield client_with_stored_responses
+
     def test_xml_footer(self, mock):
-        client = Client(self.source_id)
-
-        with mock:
-            msg = client.get(url=list(estat_mock.keys())[0], get_footer_url=(1, 1))
+        msg = mock.get(url=list(ESTAT_STORED.keys())[0], get_footer_url=(1, 1))
 
         assert len(msg.data[0].obs) == 43
 
