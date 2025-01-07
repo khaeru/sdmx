@@ -75,6 +75,10 @@ def pytest_configure(config):
 
 
 def pytest_sessionstart(session: "pytest.Session") -> None:
+    """Create session-wide objects.
+
+    These are used by the fixtures :func:`.specimen`, :func:`.testsource`.
+    """
     c = session.config
 
     # Create a SpecimenCollection from the files in the directory
