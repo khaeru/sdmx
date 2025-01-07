@@ -23,7 +23,7 @@ Optional dependencies for extra features
 
 - for ``cache``, allowing the caching of SDMX messages in memory, MongoDB, Redis, and more: `requests-cache <https://requests-cache.readthedocs.io>`_.
 - for ``docs``, to build the documentation: `sphinx <https://sphinx-doc.org>`_ and `IPython <https://ipython.org>`_.
-- for ``tests``, to run the test suite: `pytest <https://pytest.org>`_, and `requests-mock <https://requests-mock.readthedocs.io>`_.
+- for ``tests``, to run the test suite: `pytest <https://pytest.org>`_ and others.
 
 Instructions
 ============

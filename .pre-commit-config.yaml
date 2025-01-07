@@ -4,11 +4,12 @@ repos:
   hooks:
   - id: mypy
     additional_dependencies:
+    - GitPython
     - lxml-stubs
     - pandas-stubs
     - pytest
     - requests-cache
-    - requests-mock
+    - responses
     - types-Jinja2
     - types-python-dateutil
     - types-PyYAML

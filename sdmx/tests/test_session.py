@@ -5,17 +5,30 @@ from sdmx.session import Session
 from . import has_requests_cache
 
 
-@pytest.mark.skipif(has_requests_cache, reason="test without requests_cache")
-def test_session_without_requests_cache():  # pragma: no cover
-    # Passing cache= arguments when requests_cache is not installed triggers a warning
-    with pytest.warns(RuntimeWarning):
-        Session(cache_name="test")
+class TestSession:
+    def test_init0(self, tmp_path):
+        # requests_cache keyword argument, with invalid value
+        # - TypeError if requests_cache is not installed
+        # - ValueError from requests_cache if installed
+        with pytest.raises(ValueError if has_requests_cache else TypeError):
+            Session(backend="not_a_backend")
+
+        # Keyword argument for a requests-cache backend, like fast_save, are accepted
+        Session(
+            cache_name=tmp_path.joinpath("TestSession_test_init0"),
+            backend="sqlite",
+            fast_save=True,
+        )
+
+        # Not an argument handled by sdmx1 or by requests_cache —no exception raised
+        Session(foo="bar")
 
 
 @pytest.mark.network
-def test_session_init_cache(tmp_path):
+@pytest.mark.xfail(condition=not has_requests_cache, reason="Requires cache")
+def test_init_cache(tmp_path):
     # Instantiate a REST object with cache
-    cache_name = tmp_path / "pandasdmx_cache"
+    cache_name = tmp_path.joinpath("test_init_cache")
     s = Session(cache_name=str(cache_name), backend="sqlite")
 
     # Get a resource

@@ -40,11 +40,12 @@ dependencies = [
 cache = ["requests-cache"]
 docs = ["furo", "IPython", "sphinx >= 8"]
 tests = [
+  "GitPython",
   "Jinja2",
   "pytest >= 5",
   "pytest-cov",
   "pytest-xdist",
-  "requests-mock >= 1.4",
+  "responses",
   "sdmx1[cache]",
 ]
 
@@ -75,6 +76,7 @@ exclude = ["^build/"]
 # Packages/modules for which no type hints are available.
 module = [
   "lxml.builder", # Not covered by types-lxml
+  "xdist",
 ]
 ignore_missing_imports = true
 

@@ -38,35 +38,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Checkout test data
-      uses: actions/checkout@v4
+    - uses: astral-sh/setup-uv@v5
       with:
-        repository: khaeru/sdmx-test-data
-        path: sdmx-test-data
-
-    - uses: astral-sh/setup-uv@v4
-      with:
-        enable-cache: true
         cache-dependency-glob: "**/pyproject.toml"
+        python-version: ${{ matrix.python-version }}
 
     - name: Install Python, the package, and dependencies
-      run: |
-        uv venv --python=${{ matrix.python-version }}
-        uv pip install .[tests]
+      run: uv pip install .[tests]
 
     - name: Run pytest
-      env:
-        SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
         uv run --no-sync \
           pytest \
           -ra --color=yes --verbose \
+          --sdmx-fetch-data \
           --cov-report=xml \
           --numprocesses auto
       shell: bash
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with: { token: "${{ secrets.CODECOV_TOKEN }}" }
 
   pre-commit:
@@ -76,10 +67,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: astral-sh/setup-uv@v4
+    - uses: astral-sh/setup-uv@v5
       with:
-        enable-cache: true
         cache-dependency-glob: "**/pyproject.toml"
+        # TEMPORARY Use Python 3.12 to avoid https://github.com/python/mypy/issues/18216
+        python-version: "3.12"
     - uses: actions/cache@v4
       with:
         path: ~/.cache/pre-commit
@@ -87,5 +79,4 @@ jobs:
         lookup-only: ${{ github.event_name == 'schedule' }}
         # lookup-only: true
     - name: Run pre-commit
-      # TEMPORARY Use Python 3.12 to avoid https://github.com/python/mypy/issues/18216
-      run: uvx --python=3.12 pre-commit run --all-files --show-diff-on-failure --color=always
+      run: uvx pre-commit run --all-files --show-diff-on-failure --color=always

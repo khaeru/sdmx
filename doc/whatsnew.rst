@@ -8,6 +8,10 @@ What's new?
 Next release
 ============
 
+- Simplify :class:`.Session` via direct inheritance from :class:`.requests_cache.session.CacheMixin`, where installed (:pull:`217`).
+- Add an optional :py:`session=...` keyword argument to :class:`.Client` (:pull:`217`).
+- Improve :ref:`network and offline tests <test-network>` via new and improved test utilities (:pull:`217`).
+  New test fixtures :func:`.session_with_pytest_cache` and :func:`.session_with_stored_responses`.
 - Bug fix for reading :xml:`<str:Categorisation>` from SDMX-ML 2.1: the :attr:`.Categorisation.category` attribute was read as an instance of Categorisation, rather than Category (:pull:`215`).
 
 .. _2.20.0:

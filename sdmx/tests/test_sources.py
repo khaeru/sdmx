@@ -1,16 +1,10 @@
-"""Tests against the actual APIs for specific data sources.
+"""Tests against the actual APIs for specific data sources."""
 
-HTTP responses from the data sources are cached in tests/data/cache.
-To force the data to be retrieved over the Internet, delete this directory.
-"""
-
-# TODO add a pytest argument for clearing this cache in conftest.py
 import logging
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, ClassVar, Union
 
 import pytest
-import requests_mock
 
 import sdmx
 from sdmx import Client
@@ -28,58 +22,46 @@ class DataSourceTest:
     # TODO also test structure-specific data
 
     #: Must be one of the IDs in sources.json.
-    source_id: str
+    source_id: ClassVar[str]
 
-    #: Failures affecting **all** data sources, internal to :mod:`sdmx`.
-    xfail_common: dict[str, Any] = {}
+    #: NB the following can be added to any subclass below for SSL failures. Update the
+    #:    docstring to describe the nature of the problem.
+    #: except skip SSL certificate verification
+    client_args: ClassVar[dict] = {}
+
+    #: Keyword arguments for particular endpoints.
+    endpoint_args: ClassVar[dict[str, dict[str, Any]]] = {}
+
+    #: True to xfail if a 503 Error is returned.
+    tolerate_503: ClassVar[bool] = False
 
     #: Mapping of endpoint → Exception subclass. Tests of these endpoints are expected
     #: to fail with the given kind of exception.
-    xfail: dict[str, Union[type[Exception], tuple[type[Exception], str]]] = {}
+    xfail: ClassVar[dict[str, Union[type[Exception], tuple[type[Exception], str]]]] = {}
 
-    #: True to xfail if a 503 Error is returned.
-    tolerate_503 = False
+    #: Failures affecting **all** data sources, internal to :mod:`sdmx`.
+    xfail_common: ClassVar[dict[str, Any]] = {}
 
-    #: Keyword arguments for particular endpoints.
-    endpoint_args: dict[str, dict[str, Any]] = {}
+    @pytest.fixture(scope="class")
+    def client(self, session_with_pytest_cache):
+        """A Client that uses :func:`.session_with_pytest_cache`."""
+        yield Client(self.source_id, session=session_with_pytest_cache)
 
-    @pytest.fixture
-    def cache_path(self, test_data_path):
-        # Use a common cache file for all agency tests
-        (test_data_path / ".cache").mkdir(exist_ok=True)
-
-        yield test_data_path / ".cache" / self.source_id
-
-    @pytest.fixture
-    def client(self, cache_path):
-        from sdmx.util import HAS_REQUESTS_CACHE
-
-        if HAS_REQUESTS_CACHE:
-            kw = dict(cache_name=str(cache_path), backend="sqlite")
-        else:
-            kw = {}
-
-        return Client(self.source_id, **kw)
-
-    # NB the following can be added to any subclass below for SSL failures. Update the
-    #    docstring to describe the nature of the problem.
-    # @pytest.fixture
-    # def client(self, cache_path):
-    #     """Identical to DataSourceTest, except skip SSL certificate verification.
-    #
-    #     As of [DATE], this source returns an invalid certificate.
-    #     """
-    #     return Client(
-    #         self.source_id, cache_name=str(cache_path), backend="sqlite", verify=False
-    #     )
+    @pytest.fixture(scope="class")
+    def client_with_stored_responses(self, session_with_stored_responses):
+        """A Client that uses :func:`.session_with_stored_responses`."""
+        yield Client(self.source_id, session=session_with_stored_responses)
 
     @pytest.mark.source
     @pytest.mark.network
-    def test_endpoint(self, pytestconfig, cache_path, client, endpoint, args):
-        # See sdmx.testing._generate_endpoint_tests() for values of `endpoint`
-        cache = cache_path.with_suffix(f".{endpoint.name}.xml")
+    def test_endpoint(self, pytestconfig, client, endpoint, args):
+        """Test all SDMX-REST endpoints for this data source.
 
-        message = client.get(endpoint, tofile=cache, **args)
+        See also
+        --------
+        generate_endpoint_tests
+        """
+        message = client.get(endpoint, **args)
 
         if pytestconfig.getoption("verbose"):
             print(repr(message))
@@ -97,8 +79,9 @@ class DataSourceTest:
         sdmx.to_pandas(message)
 
 
-class TestMOCK(DataSourceTest):
-    source_id = "MOCK"
+@pytest.mark.usefixtures("testsource")
+class TestTEST(DataSourceTest):
+    source_id = "TEST"
 
     endpoint_args = {
         "schema": dict(context="datastructure"),
@@ -109,18 +92,9 @@ class TestMOCK(DataSourceTest):
         "registration": ValueError,  # In .rest.v21.URL.handle_registration()
     }
 
-    @pytest.fixture(scope="class")
-    def client(self, mock_service_adapter):
-        """Return a client with mocked responses."""
-
-        c = Client(self.source_id)
-        c.session.mount("mock://", mock_service_adapter)
-
-        yield c
-
     # Same as above, but without the "source" or "network" marks
-    def test_endpoint(self, client, endpoint, args):
-        client.get(endpoint, **args)
+    def test_endpoint(self, client_with_stored_responses, endpoint, args):
+        client_with_stored_responses.get(endpoint, **args)
 
 
 class TestABS(DataSourceTest):
@@ -185,17 +159,17 @@ class TestECB(DataSourceTest):
     source_id = "ECB"
 
 
-# Data for requests_mock; see TestESTAT.mock()
-estat_mock = {
+# Data for mock responses; see TestESTAT.mock()
+ESTAT_STORED = {
     "http://ec.europa.eu/eurostat/SDMX/diss-web/rest/data/nama_10_gdp/..B1GQ+P3.": {
-        "body": Path("ESTAT", "footer2.xml"),
+        "content": Path("ESTAT", "footer2.xml"),
         "headers": {
             "Content-Type": "application/vnd.sdmx.genericdata+xml; version=2.1"
         },
     },
     "http://ec.europa.eu/eurostat/SDMX/diss-web/file/7JUdWyAy4fmjBSWT": {
         # This file is a trimmed version of the actual response for the above query
-        "body": Path("ESTAT", "footer2.zip"),
+        "content": Path("ESTAT", "footer2.zip"),
         "headers": {"Content-Type": "application/octet-stream"},
     },
 }
@@ -205,22 +179,17 @@ class TestESTAT(DataSourceTest):
     source_id = "ESTAT"
 
     @pytest.fixture
-    def mock(self, test_data_path):
-        # Prepare the mock requests
-        fixture = requests_mock.Mocker()
-        for url, args in estat_mock.items():
-            # str() here is for Python 3.5 compatibility
-            args["body"] = open(str(test_data_path / args["body"]), "rb")
-            fixture.get(url, **args)
+    def mock(self, client_with_stored_responses, test_data_path):
+        from sdmx.util.requests import save_response
 
-        return fixture
+        for url, args in ESTAT_STORED.items():
+            args["content"] = test_data_path.joinpath(args["content"]).read_bytes()
+            save_response(client_with_stored_responses.session, "GET", url, **args)
 
-    @pytest.mark.network
+        yield client_with_stored_responses
+
     def test_xml_footer(self, mock):
-        client = Client(self.source_id)
-
-        with mock:
-            msg = client.get(url=list(estat_mock.keys())[0], get_footer_url=(1, 1))
+        msg = mock.get(url=list(ESTAT_STORED.keys())[0], get_footer_url=(1, 1))
 
         assert len(msg.data[0].obs) == 43
 
@@ -258,7 +227,7 @@ class TestESTAT(DataSourceTest):
         client.data(**args)
 
     @pytest.mark.network
-    def test_gh_116(self, caplog, cache_path, client):
+    def test_gh_116(self, caplog, client):
         """Test of https://github.com/khaeru/sdmx/issues/116.
 
         As of 2024-02-13, the actual web service no longer returns multiple versions of
@@ -351,10 +320,14 @@ class TestGROW(DataSourceTest):
 
 class TestILO(DataSourceTest):
     source_id = "ILO"
+
+    endpoint_args = {
+        "codelist": dict(resource_id="CL_ECO"),
+    }
+
     xfail = {
         "agencyscheme": HTTPError,  # 400
         # TODO provide endpoint_args for the following 3 to select 1 or a few objects
-        "codelist": HTTPError,  # 413 Client Error: Payload Too Large
         "contentconstraint": HTTPError,  # 413 Client Error: Payload Too Large
         "datastructure": HTTPError,  # 413 Client Error: Payload Too Large
         "organisationscheme": HTTPError,  # 400
@@ -363,13 +336,7 @@ class TestILO(DataSourceTest):
     }
 
     @pytest.mark.network
-    def test_codelist(self, cache_path, client):
-        client.get(
-            "codelist", "CL_ECO", tofile=cache_path.with_suffix("." + "codelist-CL_ECO")
-        )
-
-    @pytest.mark.network
-    def test_gh_96(self, caplog, cache_path, client):
+    def test_gh_96(self, caplog, client):
         """Test of https://github.com/khaeru/sdmx/issues/96.
 
         As of 2024-02-13, the web service no longer has the prior limitations on
@@ -425,8 +392,7 @@ class TestISTAT(DataSourceTest):
         "actualconstraint": dict(resource_id="CONS_92_143"),
     }
 
-    @pytest.mark.network
-    def test_gh_75(self, client):
+    def test_gh_75(self, client_with_stored_responses):
         """Test of https://github.com/dr-leo/pandaSDMX/pull/75.
 
         - As of the original report on 2019-06-02, the 4th dimension was ``TIPO_DATO``,
@@ -436,6 +402,7 @@ class TestISTAT(DataSourceTest):
         - As of 2022-11-03, the dataflow uses yet another new DSD with the ID
           IT1:DCIS_SERVSOCEDU1(1.0).
         """
+        client = client_with_stored_responses
 
         df_id = "47_850"
 
@@ -508,6 +475,11 @@ class TestISTAT(DataSourceTest):
 
 class TestLSD(DataSourceTest):
     source_id = "LSD"
+
+    #: As of 2021-01-30, this source returns a certificate that is treated as invalid
+    #: by the GitHub Actions job runner; but *not* on a local machine.
+    client_args = dict(verify=False)
+
     endpoint_args = {
         # Using the example from the documentation
         "data": dict(
@@ -515,17 +487,6 @@ class TestLSD(DataSourceTest):
             params=dict(startPeriod="2005-01", endPeriod="2007-01"),
         )
     }
-
-    @pytest.fixture
-    def client(self, cache_path):
-        """Identical to DataSourceTest, except skip SSL certificate verification.
-
-        As of 2021-01-30, this source returns a certificate that is treated as invalid
-        by the GitHub Actions job runner; but *not* on a local machine.
-        """
-        return Client(
-            self.source_id, cache_name=str(cache_path), backend="sqlite", verify=False
-        )
 
 
 class TestNB(DataSourceTest):
@@ -660,7 +621,7 @@ class TestUNICEF(DataSourceTest):
     @pytest.mark.network
     def test_cd2030(self, client):
         """Test that :ref:`Countdown to 2030 <CD2030>` data can be queried."""
-        dsd = client.dataflow("CONSOLIDATED", provider="CD2030").structure[0]
+        dsd = client.dataflow("CONSOLIDATED", agency_id="CD2030").structure[0]
 
         # D5: Births
         client.data("CONSOLIDATED", key=dict(INDICATOR="D5"), dsd=dsd)

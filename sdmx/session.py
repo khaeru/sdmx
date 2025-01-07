@@ -1,31 +1,20 @@
 from io import BufferedIOBase, BufferedRandom, BytesIO
-from operator import itemgetter
 from typing import IO, TYPE_CHECKING, Union
 
-from sdmx.util import HAS_REQUESTS_CACHE, MaybeCachedSession
+import requests
+
+from sdmx.util.requests import HAS_REQUESTS_CACHE, CacheMixin, SessionAttrs
 
 if TYPE_CHECKING:
     import os
 
-#: Known keyword arguments for requests_cache.CachedSession.
-CACHE_KW = [
-    "allowable_codes",
-    "allowable_methods",
-    "backend",
-    "cache_name",
-    "expire_after",
-    "extension",
-    "fast_save",
-    "location",
-    "old_data_on_error",
-]
 
-
-class Session(metaclass=MaybeCachedSession):
-    """:class:`requests.Session` subclass with optional caching.
+class Session(CacheMixin, requests.Session):
+    """:class:`requests.Session` with optional caching.
 
     If :mod:`requests_cache` is installed, this class inherits from
-    :class:`~.requests_cache.CachedSession` and caches responses.
+    :class:`~.requests_cache.CacheMixin` and caches responses. Otherwise, it inherits
+    only from the :class:`requests_cache`.
 
     Parameters
     ----------
@@ -35,54 +24,52 @@ class Session(metaclass=MaybeCachedSession):
     Other parameters
     ----------------
     kwargs :
-        Values for any attributes of :class:`requests.Session`, e.g.
-        :attr:`~requests.Session.proxies`,
-        :attr:`~requests.Session.stream`, or
-        :attr:`~requests.Session.verify`.
+        These may include:
+
+        1. Values for any attributes of :class:`requests.Session`, such as
+           :attr:`~requests.Session.proxies`,
+           :attr:`~requests.Session.stream`, or
+           :attr:`~requests.Session.verify`. These are set on the created Session.
+        2. Keyword arguments to :class:`~.requests_cache.CacheMixin` or any
+           :mod:`requests_cache` backend. Note that:
+
+           - Unlike :mod:`requests_cache`, you must supply :py:`backend="sqlite"`
+             explicitly; otherwise :mod:`sdmx` uses :py:`backend="memory"`.
+           - These classes will silently ignore any other/unrecognized keyword
+             arguments.
 
     Raises
     ------
     TypeError
-        if :mod:`requests_cache` is *not* installed and any parameters are passed.
-
+        if :mod:`requests_cache` is *not* installed and any parameters are passed except
+        for `timeout`.
     """
 
-    def __init__(self, timeout=30.1, **kwargs):
-        # Separate keyword arguments for CachedSession
-        cache_kwargs = dict(
-            filter(itemgetter(1), [(k, kwargs.pop(k, None)) for k in CACHE_KW])
-        )
+    timeout: float
 
-        if HAS_REQUESTS_CACHE:
-            # Using requests_cache.CachedSession
-
-            # No cache keyword arguments supplied = don't use the cache
-            disabled = not len(cache_kwargs.keys())
-
-            if disabled:
-                # Avoid creating any file
-                cache_kwargs.setdefault("backend", "memory")
-
-            super(Session, self).__init__(**cache_kwargs)
-
-            # Overwrite value from requests_cache.CachedSession.__init__()
-            self._is_cache_disabled = disabled
-        elif len(cache_kwargs):  # pragma: no cover
-            raise TypeError(
-                "Arguments not supported without requests_session installed: "
-                + repr(cache_kwargs)
-            )
-        else:  # pragma: no cover
-            # Plain requests.Session: no arguments
-            super(Session, self).__init__()
-
-        # Store timeout; not a property of requests.Session
+    def __init__(self, timeout: float = 30.0, **kwargs):
+        # Store timeout; not an attribute of requests.Session
         self.timeout = timeout
 
-        # Addition keyword arguments must match existing attributes of requests.Session
-        for name, value in kwargs.items():
-            if hasattr(self, name):
-                setattr(self, name, value)
+        # Separate kwargs that will update base requests.Session attributes
+        attrs = [
+            (k, kwargs.pop(k)) for k in set(SessionAttrs.__annotations__) & set(kwargs)
+        ]
+
+        if HAS_REQUESTS_CACHE:
+            # Disable caching entirely if no cache-related kwargs are supplied
+            kwargs.setdefault("disabled", not len(kwargs))
+            kwargs.setdefault("backend", "memory")  # Avoid creating any file
+        elif len(kwargs):  # pragma: no cover
+            raise TypeError(
+                f"Keyword arguments for not installed requests_cache: {kwargs}"
+            )
+
+        super().__init__(**kwargs)
+
+        # Update attributes set by requests.Session.__init__()
+        for name, value in attrs:
+            setattr(self, name, value)
 
 
 class ResponseIO(BufferedIOBase):

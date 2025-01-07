@@ -14,8 +14,7 @@ class Source(BaseSource):
         """
         super().modify_request_args(kwargs)
 
-        # NB this is an indirect test for resource_type != 'data'; because of
-        #    the way the hook is called, resource_type is not available
-        #    directly.
+        # NB this is an indirect test for resource_type != 'data'; because of the way
+        #    the hook is called, resource_type is not available directly.
         if "key" not in kwargs:
-            kwargs.setdefault("provider", "all")
+            kwargs.setdefault("agency_id", "all")
