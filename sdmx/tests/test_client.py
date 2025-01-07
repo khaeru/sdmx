@@ -209,7 +209,7 @@ def test_request_get_args():
             "UNE_RT_A",
             key={"geo": "EL+ES+IE"},
             params={"startPeriod": "2007"},
-            provider="ESTAT",
+            agency_id="ESTAT",
         )
 
     # Using an unknown endpoint is an exception

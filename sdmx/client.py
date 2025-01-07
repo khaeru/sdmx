@@ -207,8 +207,8 @@ class Client:
             resource_id=resource_id,
             params=kwargs.pop("params", {}),
         )
-        if provider := kwargs.pop("provider", None):
-            warn("provider= keyword argument; use agency_id", DeprecationWarning, 2)
+        if provider := kwargs.pop("provider", None):  # pragma: no cover
+            warn("provider= keyword argument; use agency_id", DeprecationWarning, 3)
             kw.update(agency_id=provider)
         if version := kwargs.pop("version", None):
             kw.update(version=version)
