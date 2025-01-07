@@ -45,6 +45,9 @@ class Client:
     source : str or source.Source
         Identifier of a data source. If a string, must be one of the known sources in
         :meth:`list_sources`.
+    session :
+        :class:`.requests.Session` instance. If not supplied, an instance of
+        :class:`.Session` is created.
     log_level : int
         Override the package-wide logger with one of the
         :ref:`standard logging levels <py:levels>`.
@@ -67,7 +70,14 @@ class Client:
     # Stored keyword arguments "allow_redirects" and "timeout" for pre-requests.
     _send_kwargs: dict[str, Any] = {}
 
-    def __init__(self, source=None, log_level=None, **session_opts):
+    def __init__(
+        self,
+        source=None,
+        *,
+        session: Optional["requests.Session"] = None,
+        log_level=None,
+        **session_opts,
+    ):
         try:
             self.source = sources[source.upper()] if source else NoSource
         except KeyError:
@@ -75,8 +85,13 @@ class Client:
                 f"source must be None or one of: {' '.join(list_sources())}"
             )
 
-        # Create an HTTP Session object to reuse a connection for multiple requests
-        self.session = Session(**session_opts)
+        if session:
+            if session_opts:
+                raise ValueError("Client(…, session=…) with additional keyword args")
+            self.session = session
+        else:
+            # Create an HTTP Session object to reuse a connection for multiple requests
+            self.session = Session(**session_opts)
 
         if log_level:
             message = "Client(…, log_level=…) parameter"

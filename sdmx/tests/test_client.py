@@ -62,7 +62,7 @@ class TestClient:
     def test_clear_cache(self, client):
         client.clear_cache()
 
-    def test_session_attrs(self, caplog, client):
+    def test_session_attrs0(self, caplog, client):
         # Deprecated attributes
         with pytest.warns(DeprecationWarning, match="Setting Client.timeout"):
             client.timeout = 300
@@ -95,6 +95,10 @@ class TestClient:
             "Client.get() args {'allow_redirects': True, 'timeout': 123} replace "
             "{'allow_redirects': False}" in caplog.messages
         )
+
+    def test_session_attrs1(self, testsource, session_with_stored_responses):
+        with pytest.raises(ValueError):
+            sdmx.Client(testsource, session=session_with_stored_responses, verify=False)
 
     def test_dir(self, client):
         """dir() includes convenience methods for resource endpoints."""
