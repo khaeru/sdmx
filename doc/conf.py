@@ -83,11 +83,16 @@ intersphinx_mapping = {
 
 # -- Options for sphinx.ext.linkcode ---------------------------------------------------
 
+LINKCODE_ALIAS = {
+    "sdmx/testing": "sdmx/testing/__init__",
+}
+
 
 def linkcode_resolve(domain, info):
     if domain != "py" or not info["module"]:
         return None
     filename = info["module"].replace(".", "/")
+    filename = LINKCODE_ALIAS.get(filename, filename)
     return f"https://github.com/khaeru/sdmx/tree/main/{filename}.py"
 
 
