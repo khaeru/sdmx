@@ -40,6 +40,8 @@ def mock_gh_api():
     """
     base = "https://api.github.com/repos/sdmx-twg/sdmx-ml"
 
+    # TODO Improve .util.requests to provide (roughly) the same functionality, then drop
+    # use of responses here
     mock = responses.RequestsMock(assert_all_requests_are_fired=False)
     mock.add_passthru(re.compile(rf"{base}/zipball/\w+"))
     mock.add_passthru(re.compile(r"https://codeload.github.com/\w+"))

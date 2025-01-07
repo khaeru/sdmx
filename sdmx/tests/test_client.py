@@ -5,10 +5,9 @@ from io import BytesIO
 
 import pandas as pd
 import pytest
-import responses
 
 import sdmx
-from sdmx.source import sources
+from sdmx.util.requests import save_response
 
 
 def test_deprecated_request(caplog):
@@ -44,9 +43,9 @@ def test_read_sdmx(tmp_path, specimen):
 
 class TestClient:
     @pytest.fixture
-    def client(self, testsource):
+    def client(self, testsource, session_with_stored_responses):
         """A :class:`Client` connected to a non-existent test source."""
-        return sdmx.Client(testsource)
+        return sdmx.Client(testsource, session=session_with_stored_responses)
 
     def test_init(self):
         with pytest.warns(
@@ -159,23 +158,23 @@ class TestClient:
             client.get("datastructure", validate=False, dry_run=True)
 
     # TODO update or remove
-    @pytest.mark.skip(reason="SDMX 3.0.0 now supported")
-    def test_v3_unsupported(self, testsource, client):
+    @pytest.mark.xfail(reason="SDMX 3.0.0 is now supported → no exception raised")
+    def test_v3_unsupported(self, client):
         """Client raises an exception when an SDMX 3.0 message is returned."""
         df_id, key = "DATAFLOW", ".KEY2.KEY3..KEY5"
 
-        mock = responses.RequestsMock()
-        mock.get(
-            url=f"{sources[testsource].url}/data/{df_id}/{key}",
-            body="",
-            content_type="application/vnd.sdmx.data+xml; version=3.0.0",
+        save_response(
+            client.session,
+            "GET",
+            url=f"{client.source.url}/data/{df_id}/{key}",
+            content="""<?xml version='1.0' encoding='UTF-8'?>
+<mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message">
+</mes:Structure>""".encode(),
+            headers={"Content-type": "application/vnd.sdmx.data+xml; version=3.0.0"},
         )
 
-        with (
-            mock,
-            pytest.raises(
-                ValueError, match="can't determine a reader for response content type"
-            ),
+        with pytest.raises(
+            ValueError, match="can't determine a reader for response content type"
         ):
             client.get("data", resource_id=df_id, key=key)
 
