@@ -52,8 +52,8 @@ class Client:
         .. deprecated:: 2.0
            Will be removed in :mod:`sdmx` version 3.0.
     **session_opts
-        Additional keyword arguments are passed to :class:`.Session`.
-
+        Additional keyword arguments are passed to :class:`.Session` and thus to
+        :class:`.requests_cache.CachedSession` and its backend classes (if installed).
     """
 
     cache: dict[str, "sdmx.message.Message"] = {}

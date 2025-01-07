@@ -124,7 +124,7 @@ def test_doc_usage_structure():
         for k, v in (
             ("proxies", {"http": "http://1.2.3.4:5678"}),
             ("stream", False),
-            ("timeout", 30.1),
+            ("timeout", 30.0),
         )
     )
 

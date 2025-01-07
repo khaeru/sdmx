@@ -4,31 +4,7 @@ from dataclasses import Field, fields
 from functools import lru_cache
 from typing import Any, Iterable
 
-import requests
-
-try:
-    import requests_cache
-except ImportError:  # pragma: no cover
-    HAS_REQUESTS_CACHE = False
-else:
-    HAS_REQUESTS_CACHE = True
-
-
 log = logging.getLogger(__name__)
-
-
-class MaybeCachedSession(type):
-    """Metaclass to inherit from :class:`requests_cache.CachedSession`, if available.
-
-    If :mod:`requests_cache` is not installed, returns :class:`requests.Session` as a
-    base class.
-    """
-
-    def __new__(cls, name, bases, dct):
-        base = (
-            requests.Session if not HAS_REQUESTS_CACHE else requests_cache.CachedSession
-        )
-        return super().__new__(cls, name, (base,), dct)
 
 
 def compare(attr, a, b, strict: bool) -> bool:
