@@ -9,29 +9,35 @@ import numpy as np
 import pandas as pd
 import platformdirs
 import pytest
-import responses
 from xdist import is_xdist_worker
 
 from sdmx.exceptions import HTTPError
 from sdmx.rest import Resource
-from sdmx.source import DataContentType, add_source, sources
+from sdmx.session import Session
+from sdmx.source import DataContentType, Source, sources
 from sdmx.testing.report import ServiceReporter
+from sdmx.util.requests import offline, save_response
 
 if TYPE_CHECKING:
     import pytest
 
 log = logging.getLogger(__name__)
 
-
+# Default directory for local copy of test data/specimens
 DATA_DEFAULT_DIR = platformdirs.user_cache_path("sdmx").joinpath("test-data")
 DATA_ERROR = (
     "Unable to locate test specimens. Give --sdmx-fetch-data, or use "
     "--sdmx-test-data=… or the SDMX_TEST_DATA environment variable to indicate an "
     "existing directory"
 )
+# Git remote URL for cloning test data
 # DATA_REMOTE_URL = "git@github.com:khaeru/sdmx-test-data.git"
 DATA_REMOTE_URL = "https://github.com/khaeru/sdmx-test-data.git"
-DATA_STASH_KEY = pytest.StashKey[Path]()
+
+# Pytest stash keys
+KEY_DATA = pytest.StashKey[Path]()
+KEY_SPECIMENS = pytest.StashKey["SpecimenCollection"]()
+KEY_SOURCE = pytest.StashKey["Source"]()
 
 # Expected to_pandas() results for data files; see expected_data()
 # - Keys are the file name (above) with '.' -> '-': 'foo.xml' -> 'foo-xml'
@@ -50,8 +56,6 @@ EXPECTED = {
     "flat-json": dict(index_col=[0, 1, 2, 3, 4, 5]),
     "ts-json": dict(use="flat-json"),
 }
-
-SPECIMENS_KEY = pytest.StashKey["SpecimenCollection"]()
 
 
 def assert_pd_equal(left, right, **kwargs):
@@ -138,7 +142,7 @@ def pytest_configure(config):
 
     # Convert the option value to an Path instance attribute on `config`
     try:
-        config.stash[DATA_STASH_KEY] = Path(config.option.sdmx_test_data)
+        config.stash[KEY_DATA] = Path(config.option.sdmx_test_data)
     except TypeError:  # pragma: no cover
         raise RuntimeError(DATA_ERROR) from None
 
@@ -149,23 +153,21 @@ def pytest_sessionstart(session: "pytest.Session") -> None:
         fetch_data()
 
     # Check the value can be converted to a path, and exists
-    path = session.config.stash[DATA_STASH_KEY]
+    path = session.config.stash[KEY_DATA]
     if not path.exists():  # pragma: no cover
         # Cannot proceed further; this exception kills the test session
         raise FileNotFoundError(f"SDMX test data in {path}\n{DATA_ERROR}")
 
     # Create a SpecimenCollection from the files in the directory
-    session.config.stash[SPECIMENS_KEY] = SpecimenCollection(path)
+    session.config.stash[KEY_SPECIMENS] = SpecimenCollection(path)
 
-    # Add a source globally for use with mock_service_adapter
-    # TODO Deduplicate between this and the "testsource" fixture
-    info = dict(
-        id="MOCK",
-        name="Mock source",
-        url="https://example.com/",
+    # Create a test source
+    session.config.stash[KEY_SOURCE] = Source(
+        id="TEST",
+        name="Test source",
+        url="https://example.com/sdmx-rest",
         supports={feature: True for feature in list(Resource)},
     )
-    add_source(info)
 
 
 def pytest_generate_tests(metafunc):
@@ -184,7 +186,7 @@ def parametrize_specimens(metafunc):
     except StopIteration:
         return
 
-    sc = metafunc.config.stash[SPECIMENS_KEY]
+    sc = metafunc.config.stash[KEY_SPECIMENS]
     metafunc.parametrize(mark.args[0], sc.as_params(**mark.kwargs))
 
 
@@ -230,7 +232,11 @@ def generate_endpoint_tests(metafunc):  # noqa: C901  TODO reduce complexity 11 
 
     # Use the test class' source_id attr to look up the Source class
     cls = metafunc.cls
-    source = sources[cls.source_id]
+    source = (
+        sources[cls.source_id]
+        if cls.source_id != "TEST"
+        else metafunc.config.stash[KEY_SOURCE]
+    )
 
     # Merge subclass-specific and "common" xfail marks, preferring the former
     xfails = ChainMap(cls.xfail, cls.xfail_common)
@@ -469,71 +475,100 @@ class SpecimenCollection:
 
 
 @pytest.fixture(scope="session")
-def test_data_path(pytestconfig):
-    """Fixture: the :py:class:`.Path` given as --sdmx-test-data."""
-    yield pytestconfig.stash[DATA_STASH_KEY]
+def session_with_pytest_cache(pytestconfig):
+    """Fixture:  A :class:`.Session` that caches within :file:`.pytest_cache`.
+
+    This subdirectory is ephemeral, and tests **must** pass whether or not it exists and
+    is populated.
+    """
+    p = pytestconfig.cache.mkdir("sdmx-requests-cache")
+    yield Session(cache_name=str(p), backend="filesystem")
+
+
+@pytest.fixture(scope="session")
+def session_with_stored_responses(pytestconfig, test_data_path):
+    """Fixture: A :class:`.Session` returns only stored responses from sdmx-test-data.
+
+    This session (a) uses the 'filesystem' :mod:`requests_cache` backend and (b) is
+    treated with :func:`.offline`, so that *only* stored responses can be returned.
+    """
+
+    import sdmx
+    from sdmx.format import MediaType
+    from sdmx.message import StructureMessage
+
+    p = test_data_path.joinpath("requests")
+    session = Session(cache_name=str(p), backend="filesystem")
+
+    # Populate stored responses for the 'TEST' source. These are not stored in
+    # sdmx-test-data; only generated
+    content: bytes = sdmx.to_xml(StructureMessage())
+    headers = {"Content-Type": repr(MediaType("generic", "xml", "2.1"))}
+
+    source = pytestconfig.stash[KEY_SOURCE]
+
+    for endpoint, params in (
+        ("actualconstraint", ""),
+        ("agencyscheme", ""),
+        ("allowedconstraint", ""),
+        ("attachementconstraint", ""),
+        ("availableconstraint", ""),
+        ("categorisation", ""),
+        ("categoryscheme", "?references=parentsandsiblings"),
+        ("codelist", ""),
+        ("conceptscheme", ""),
+        ("contentconstraint", ""),
+        ("customtypescheme", ""),
+        ("dataconsumerscheme", ""),
+        ("dataflow", ""),
+        ("dataproviderscheme", ""),
+        ("datastructure", ""),
+        ("hierarchicalcodelist", ""),
+        ("metadataflow", ""),
+        ("metadatastructure", ""),
+        ("namepersonalisationscheme", ""),
+        ("organisationscheme", ""),
+        ("organisationunitscheme", ""),
+        ("process", ""),
+        ("provisionagreement", ""),
+        ("reportingtaxonomy", ""),
+        ("rulesetscheme", ""),
+        ("schema/datastructure", ""),
+        ("structure", ""),
+        ("structureset", ""),
+        ("transformationscheme", ""),
+        ("userdefinedoperatorscheme", ""),
+        ("vtlmappingscheme", ""),
+    ):
+        url = f"{source.url}/{endpoint}/{source.id}/all/latest{params}"
+        save_response(session, method="GET", url=url, content=content, headers=headers)
+
+    # Raise an exception on any actual attempts to access the network
+    offline(session)
+
+    yield session
 
 
 @pytest.fixture(scope="session")
 def specimen(pytestconfig):
     """Fixture: the :class:`SpecimenCollection`."""
-    yield pytestconfig.stash[SPECIMENS_KEY]
+    yield pytestconfig.stash[KEY_SPECIMENS]
 
 
 @pytest.fixture(scope="session")
-def mock_service_adapter():
-    import sdmx
-    from sdmx.format import MediaType
-    from sdmx.message import StructureMessage
-
-    common = dict(
-        body=sdmx.to_xml(StructureMessage()),
-        status=200,
-        content_type=repr(MediaType("generic", "xml", "2.1")),
-    )
-    for path in (
-        "actualconstraint/MOCK/all/latest",
-        "agencyscheme/MOCK/all/latest",
-        "allowedconstraint/MOCK/all/latest",
-        "attachementconstraint/MOCK/all/latest",
-        "availableconstraint",
-        "categorisation/MOCK/all/latest",
-        "categoryscheme/MOCK/all/latest",
-        "codelist/MOCK/all/latest",
-        "conceptscheme/MOCK/all/latest",
-        "contentconstraint/MOCK/all/latest",
-        "customtypescheme/MOCK/all/latest",
-        "dataconsumerscheme/MOCK/all/latest",
-        "dataflow/MOCK/all/latest",
-        "dataproviderscheme/MOCK/all/latest",
-        "datastructure/MOCK/all/latest",
-        "hierarchicalcodelist/MOCK/all/latest",
-        "metadataflow/MOCK/all/latest",
-        "metadatastructure/MOCK/all/latest",
-        "namepersonalisationscheme/MOCK/all/latest",
-        "organisationscheme/MOCK/all/latest",
-        "organisationunitscheme/MOCK/all/latest",
-        "process/MOCK/all/latest",
-        "provisionagreement/MOCK/all/latest",
-        "reportingtaxonomy/MOCK/all/latest",
-        "rulesetscheme/MOCK/all/latest",
-        "schema/datastructure/MOCK/all/latest",
-        "structure/MOCK/all/latest",
-        "structureset/MOCK/all/latest",
-        "transformationscheme/MOCK/all/latest",
-        "userdefinedoperatorscheme/MOCK/all/latest",
-        "vtlmappingscheme/MOCK/all/latest",
-    ):
-        responses.add("GET", url=f"https://example.com/{path}", **common)
+def test_data_path(pytestconfig):
+    """Fixture: the :py:class:`.Path` given as --sdmx-test-data."""
+    yield pytestconfig.stash[KEY_DATA]
 
 
 @pytest.fixture(scope="class")
-def testsource():
-    """Fixture: the :attr:`.Source.id` of a non-existent data source."""
-    id = "TEST"
-    add_source(dict(id=id, name="Test source", url="https://example.com/sdmx-rest"))
+def testsource(pytestconfig):
+    """Fixture: the :attr:`.Source.id` of a temporary data source."""
+    s = pytestconfig.stash[KEY_SOURCE]
+
+    sources[s.id] = s
 
     try:
-        yield id
+        yield s.id
     finally:
-        sources.pop(id)
+        sources.pop(s.id)
