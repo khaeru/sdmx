@@ -553,6 +553,17 @@ SDMX-ML —
 
 - Supports preview_data and series-key based key validation.
 
+.. _UY110:
+
+``UY110``: Labour Market Information System (Uruguay)
+-----------------------------------------------------
+
+SDMX-ML —
+Website `(en) <https://de-mtss.simel.mtss.gub.uy/?lc=en>`__,
+`(es) <https://de-mtss.simel.mtss.gub.uy>`__.
+
+- Spanish name: Sistema de Información de Mercado Laboral
+- Operated by the Ministry of Labour and Social Security of (Ministerio de Trabajo y Seguridad Social, MTSS), the National Institute of Statistics (Instituto Nacional de Estadística, INE) and the Social Security Bank (Banco de Previsión Social, BPS) of Uruguay.
 
 .. _WB:
 

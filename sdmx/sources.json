@@ -465,6 +465,21 @@
     }
   },
   {
+    "id": "UY110",
+    "name": "Uruguay",
+    "url": "https://sdmx-mtss.simel.mtss.gub.uy/rest",
+    "supports": {
+      "agencyscheme": false,
+      "dataconsumerscheme": false,
+      "dataproviderscheme": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "provisionagreement": false,
+      "structureset": false
+    }
+  },
+  {
     "id": "WB",
     "name": "World Bank World Integrated Trade Solution",
     "url": "https://wits.worldbank.org/API/V1/SDMX/V21/rest",

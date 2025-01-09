@@ -666,6 +666,19 @@ class TestUNSD(DataSourceTest):
     }
 
 
+class TestUY110(DataSourceTest):
+    source_id = "UY110"
+
+    xfail = {
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        # 400: "Can not create reference, target structure is not maintainable, and no
+        # identifiable reference parameters present"
+        "organisationscheme": HTTPError,
+        "registration": ValueError,  # Internal to sdmx1
+        "structure": NotImplementedError,  # 501
+    }
+
+
 class TestWB(DataSourceTest):
     source_id = "WB"
     xfail = {
