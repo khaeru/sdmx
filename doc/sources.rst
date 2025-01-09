@@ -455,6 +455,26 @@ API documentation `(en) <https://www.stat.ee/sites/default/files/2020-09/API-ins
 - As of 2020-12-13, this web service (like NBB) uses server software that serves SDMX-JSON or SDMX-ML 2.0.
   The latter is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
 
+.. _StatCan:
+
+``StatCan``: Statistics Canada
+------------------------------
+
+SDMX-ML —
+API documentation `(en) <https://www.statcan.gc.ca/en/developers/sdmx/user-guide>`__,
+`(fr) <https://www.statcan.gc.ca/fr/developpeurs/sdmx/guide-sdmx>`__.
+
+- The source only provides a SDMX-REST API for the ``/data/`` endpoint.
+- Some structural artefacts are available, but not through an SDMX-REST API.
+  Instead, a set of SDMX-ML 2.1 files with structure messages are available at URLs with the form: ``https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/structure/Data_Structure_17100005``.
+  (Note that this lacks the URL path components for the agency ID and version, which would resemble ``…/structure/StatCan/Data_Structure_17100005/latest``.)
+
+  These can be queried directly using any Client:
+
+  .. code-block:: python
+
+     c = sdmx.Client("StatCan")  # or sdmx.Client()
+     dm = c.get(url="https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/structure/Data_Structure_17100005")
 
 .. _UNESCO:
 

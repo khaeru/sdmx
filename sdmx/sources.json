@@ -384,6 +384,32 @@
     "name": "Statistics Estonia"
   },
   {
+    "id": "StatCan",
+    "name": "Statistics Canada",
+    "url": "https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/",
+    "supports": {
+      "actualconstraint": false,
+      "allowedconstraint": false,
+      "agencyscheme": false,
+      "categorisation": false,
+      "categoryscheme": false,
+      "codelist": false,
+      "conceptscheme": false,
+      "contentconstraint": false,
+      "dataconsumerscheme": false,
+      "dataproviderscheme": false,
+      "dataflow": false,
+      "datastructure": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "organisationscheme": false,
+      "provisionagreement": false,
+      "structure": false,
+      "structureset": false
+    }
+  },
+  {
     "id": "UNESCO",
     "name": "UN Educational, Scientific and Cultural Organization",
     "url": "http://api.uis.unesco.org/sdmx",

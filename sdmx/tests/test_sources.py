@@ -594,6 +594,24 @@ class TestSTAT_EE(DataSourceTest):
     }
 
 
+class TestStatCan(DataSourceTest):
+    source_id = "StatCan"
+
+    endpoint_args = dict(
+        data=dict(
+            resource_id="DF_17100005",
+            key=".1.138",
+            params=dict(startPeriod=2015, endPeriod=2016),
+        ),
+        structure=dict(resource_id="Data_Structure_17100005"),
+    )
+
+    xfail = {
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        "registration": ValueError,  # Internal to sdmx1
+    }
+
+
 class TestUNESCO(DataSourceTest):
     """UNESCO.
 
