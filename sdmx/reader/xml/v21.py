@@ -404,7 +404,23 @@ def _ref(reader: Reader, elem):
             # In a StructureMessage
             cls_hint = reader.model.DataStructureDefinition
 
-    reader.push(QName(elem).localname, reader.reference(elem, cls_hint))
+    try:
+        ref = reader.reference(elem, cls_hint)
+    except ValueError as e:
+        # Handle references to known non-standard classes; see
+        # https://github.com/khaeru/sdmx/issues/180
+        info = e.args[1]
+        if info["package"] == "publicationtable":
+            log.warning(
+                "Cannot resolve reference to non-SDMX class "
+                f"'{info['package']}.{info['class']}'"
+            )
+            # Push the dict of reference info, in case the user wants to make use of it
+            ref = info
+        else:  # pragma: no cover
+            raise
+
+    reader.push(QName(elem).localname, ref)
 
 
 @end("com:Annotation")
