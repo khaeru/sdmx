@@ -296,8 +296,10 @@ def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> 
     target.extend(
         (base.joinpath(*parts), "xml", "data")
         for parts in [
+            ("constructed", "gh-218.xml"),
             ("INSEE", "CNA-2010-CONSO-SI-A17.xml"),
             ("INSEE", "IPI-2010-A21.xml"),
+            ("IMF", "PCPS.xml"),
             ("ESTAT", "esms.xml"),
             ("ESTAT", "footer.xml"),
             ("ESTAT", "NAMA_10_GDP-ss.xml"),
