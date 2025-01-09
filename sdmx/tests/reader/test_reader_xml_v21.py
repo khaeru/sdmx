@@ -233,6 +233,29 @@ def test_gh_164(specimen):
     assert isinstance(da.related_to, v21.NoSpecifiedRelationship)
 
 
+def test_gh_180(caplog, specimen) -> None:
+    """Test of https://github.com/khaeru/sdmx/issues/190."""
+    with specimen("BIS/gh-180.xml") as f:
+        # Message is not valid SDMX-ML
+        assert False is validate_xml(f)
+
+        # Validation logs an error message regarding the non-standard class
+        assert re.match(
+            ".*attribute 'package'.*'publicationtable' is not an element of the set",
+            caplog.messages[-1],
+        )
+
+        # Message can still be read
+        f.seek(0)
+        msg = sdmx.read_sdmx(f)
+        assert isinstance(msg, sdmx.message.StructureMessage)
+
+        # Reader logs a warning regarding the missing reference
+        assert re.match(
+            "Cannot resolve reference to non-SDMX class", caplog.messages[-1]
+        )
+
+
 def test_gh_199():
     """Test of https://github.com/khaeru/sdmx/issues/199."""
     import sdmx.format.xml.v21

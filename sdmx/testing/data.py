@@ -312,6 +312,7 @@ def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> 
         for parts in [
             ("BIS", "actualconstraint-0.xml"),
             ("BIS", "hierarchicalcodelist-0.xml"),
+            ("BIS", "gh-180.xml"),
             ("ECB", "orgscheme.xml"),
             ("ECB", "structureset-0.xml"),
             ("ESTAT", "apro_mk_cola-structure.xml"),
