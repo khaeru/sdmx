@@ -135,18 +135,19 @@ def test_validate_xml_invalid_doc(tmp_path, installed_schemas):
 
     msg_path.write_bytes(sdmx.to_xml(msg))
 
-    # Expect validation to fail
-    assert not sdmx.validate_xml(msg_path, schema_dir=installed_schemas.joinpath("2.1"))
+    assert sdmx.validate_xml(msg_path, schema_dir=installed_schemas.joinpath("2.1"))
 
 
 def test_validate_xml_invalid_message_type(installed_schemas):
     """Ensure that an invalid document fails validation."""
     # Create a mangled structure message with its outmost tag changed to be invalid
     msg = StructureMessage()
-    invalid_msg = re.sub(b"mes:Structure([ >])", rb"mes:FooBar\1", sdmx.to_xml(msg))
+    invalid_msg = io.BytesIO(
+        re.sub(b"mes:Structure([ >])", rb"mes:FooBar\1", sdmx.to_xml(msg))
+    )
 
     with pytest.raises(NotImplementedError, match="Validate non-SDMX root.*FooBar>"):
-        sdmx.validate_xml(io.BytesIO(invalid_msg), installed_schemas)
+        sdmx.validate_xml(invalid_msg, installed_schemas)
 
 
 @pytest.mark.parametrize("version", ["1", 1, None])
@@ -155,6 +156,23 @@ def test_validate_xml_invalid_version(version):
     with pytest.raises(NotImplementedError):
         # This message doesn't exist, but the version should throw before it is used.
         sdmx.validate_xml("samples/common/common.xml", version=version)
+
+
+def test_validate_xml_max_errors(caplog, installed_schemas):
+    """Test :py:`validate_xml(..., max_errors=...)`."""
+    msg = StructureMessage()
+    invalid_msg = io.BytesIO(
+        re.sub(b"<(mes:Structures)/>", rb"<\1><Foo/></\1><Bar/>", sdmx.to_xml(msg))
+    )
+
+    # Without max_errors, 2 messages are logged
+    sdmx.validate_xml(invalid_msg, installed_schemas)
+    assert 2 == len(caplog.messages)
+    caplog.clear()
+
+    # With the argument, only 1 message is logged
+    sdmx.validate_xml(invalid_msg, installed_schemas, max_errors=1)
+    assert 1 == len(caplog.messages)
 
 
 def test_validate_xml_no_schemas(tmp_path, specimen):

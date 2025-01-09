@@ -17,7 +17,7 @@ def test_get_source(caplog):
 def test_list_sources():
     source_ids = list_sources()
     # Correct number of sources, excluding those created for testing
-    assert 29 == len(set(source_ids) - {"MOCK", "TEST"})
+    assert 34 == len(set(source_ids) - {"MOCK", "TEST"})
 
     # Listed alphabetically
     assert "ABS" == source_ids[0]
