@@ -115,6 +115,36 @@ SDMX-JSON —
 .. autoclass:: sdmx.source.abs_json.Source()
    :members:
 
+.. _AR1:
+
+``AR1``: National Institute of Statistics and Censuses (Argentina)
+------------------------------------------------------------------
+
+SDMX-ML — `Website <https://sdds.indec.gob.ar/nsdp.htm>`__
+
+- Spanish name: Instituto Nacional de Estadística y Censos
+
+This source does not provide an actual SDMX-REST web service.
+Instead, a set of SDMX-ML 2.1 files with data messages only (no  structure or metadata) are available at URLs with the form: ``https://sdds.indec.gob.ar/files/data/IND.XML``.
+These can be used with :class:`Client` by:
+
+- Using ``https://sdds.indec.gob.ar/files/`` as the base URL.
+- Accessing only the :attr:`.Resource.data` endpoint, which gives the ``…/data/…`` URL component.
+- Treating ``IND.XML`` (in reality, a file name with suffix) as the resource ID.
+- Using no query key or parameters.
+
+.. code-block:: python
+
+   c = sdmx.Client("AR1")
+   # The URL https://sdds.indec.gob.ar/files/data/IND.XML
+   dm = c.data("IND.XML")
+
+This is the same as using a non-source-specific Client to query the URL directly:
+
+.. code-block:: python
+
+   c = sdmx.Client()
+   dm = c.get(url="https://sdds.indec.gob.ar/files/data/IND.XML")
 
 .. _BBK:
 

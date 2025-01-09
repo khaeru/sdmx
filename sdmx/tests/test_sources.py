@@ -120,6 +120,19 @@ class TestABS_JSON(DataSourceTest):
     }
 
 
+class TestAR1(DataSourceTest):
+    source_id = "AR1"
+
+    endpoint_args = dict(
+        data=dict(resource_id="WOE.XML"),
+    )
+
+    xfail = {
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        "registration": ValueError,  # Internal to sdmx1
+    }
+
+
 class TestBBK(DataSourceTest):
     source_id = "BBK"
 

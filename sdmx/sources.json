@@ -27,6 +27,32 @@
     "name": "Australian Bureau of Statistics"
   },
   {
+    "id": "AR1",
+    "name": "Argentina",
+    "url": "https://sdds.indec.gob.ar/files/",
+    "supports": {
+      "actualconstraint": false,
+      "allowedconstraint": false,
+      "agencyscheme": false,
+      "categorisation": false,
+      "categoryscheme": false,
+      "codelist": false,
+      "conceptscheme": false,
+      "contentconstraint": false,
+      "dataconsumerscheme": false,
+      "dataproviderscheme": false,
+      "dataflow": false,
+      "datastructure": false,
+      "hierarchicalcodelist": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "organisationscheme": false,
+      "provisionagreement": false,
+      "structure": false,
+      "structureset": false
+      }
+  },
+  {
     "id": "BBK",
     "url": "https://api.statistiken.bundesbank.de/rest",
     "name": "German Federal Bank",
