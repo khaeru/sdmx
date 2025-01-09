@@ -1,5 +1,7 @@
 import importlib.resources
 import json
+import logging
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
@@ -14,6 +16,8 @@ from sdmx.rest import Resource
 
 if TYPE_CHECKING:
     import sdmx.rest.common
+
+log = logging.getLogger(__name__)
 
 #: Data sources registered with :mod:`sdmx`.
 sources: dict[str, "Source"] = {}
@@ -248,6 +252,24 @@ def add_source(
         SourceClass = getattr(mod, "Source", None) or SourceClass
 
     sources[id] = SourceClass(**_info)
+
+
+def get_source(id: str) -> Source:
+    """Return the Source with the given `id`.
+
+    `id` is matched case-insensitively.
+    """
+    try:
+        return sources[id]
+    except KeyError:
+        # Try to find a case-insensitive match
+        for k, v in sources.items():
+            if re.match(k, id, flags=re.IGNORECASE):
+                log.debug(
+                    f"Return source {v.id!r} as a case-insensitive match for id {id!r}"
+                )
+                return v
+        raise
 
 
 def list_sources():

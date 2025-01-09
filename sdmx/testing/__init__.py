@@ -12,7 +12,7 @@ from xdist import is_xdist_worker
 from sdmx.exceptions import HTTPError
 from sdmx.rest import Resource
 from sdmx.session import Session
-from sdmx.source import DataContentType, Source, sources
+from sdmx.source import DataContentType, Source, get_source
 from sdmx.testing.report import ServiceReporter
 from sdmx.util.requests import offline
 
@@ -151,7 +151,7 @@ def generate_endpoint_tests(metafunc):  # noqa: C901  TODO reduce complexity 11 
     # Use the test class' source_id attr to look up the Source class
     cls = metafunc.cls
     source = (
-        sources[cls.source_id]
+        get_source(cls.source_id)
         if cls.source_id != "TEST"
         else metafunc.config.stash[KEY_SOURCE]
     )
@@ -272,6 +272,8 @@ def test_data_path(pytestconfig):
 @pytest.fixture(scope="class")
 def testsource(pytestconfig):
     """Fixture: the :attr:`.Source.id` of a temporary data source."""
+    from sdmx.source import sources
+
     s = pytestconfig.stash[KEY_SOURCE]
 
     sources[s.id] = s
