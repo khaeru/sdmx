@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from collections import ChainMap
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
@@ -7,9 +8,11 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import pandas as pd
 import pytest
+import responses
 from xdist import is_xdist_worker
 
 from sdmx.exceptions import HTTPError
+from sdmx.format import Version
 from sdmx.rest import Resource
 from sdmx.session import Session
 from sdmx.source import DataContentType, Source, get_source
@@ -223,6 +226,44 @@ class MessageTest:
         import sdmx
 
         return sdmx.read_sdmx(path / self.filename)
+
+
+@pytest.fixture(scope="session")
+def installed_schemas(mock_gh_api, tmp_path_factory):
+    """Fixture that ensures schemas are installed locally in a temporary directory."""
+    from sdmx.format.xml.common import install_schemas
+
+    dir = tmp_path_factory.mktemp("schemas")
+
+    with mock_gh_api:
+        install_schemas(dir.joinpath("2.1"), Version["2.1"])
+        install_schemas(dir.joinpath("3.0"), Version["3.0.0"])
+
+    yield dir
+
+
+@pytest.fixture(scope="session")
+def mock_gh_api():
+    """Mock GitHub API responses to avoid hitting rate limits.
+
+    For each API endpoint URL queried by :func:.`_gh_zipball`, return a pared-down JSON
+    response that contains the required "zipball_url" key.
+    """
+    base = "https://api.github.com/repos/sdmx-twg/sdmx-ml"
+
+    # TODO Improve .util.requests to provide (roughly) the same functionality, then drop
+    # use of responses here
+    mock = responses.RequestsMock(assert_all_requests_are_fired=False)
+    mock.add_passthru(re.compile(rf"{base}/zipball/\w+"))
+    mock.add_passthru(re.compile(r"https://codeload.github.com/\w+"))
+
+    for v in "2.1", "3.0", "3.0.0":
+        mock.get(
+            url=f"{base}/releases/tags/v{v}",
+            json=dict(zipball_url=f"{base}/zipball/v{v}"),
+        )
+
+    yield mock
 
 
 @pytest.fixture(scope="session")

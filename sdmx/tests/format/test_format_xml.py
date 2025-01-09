@@ -3,7 +3,6 @@ import re
 from pathlib import Path
 
 import pytest
-import responses
 
 import sdmx
 from sdmx.format import Version, xml
@@ -29,44 +28,6 @@ def test_tag_for_class():
 
 def test_class_for_tag():
     assert xml.v30.class_for_tag("str:DataStructure") is not None
-
-
-@pytest.fixture(scope="module")
-def mock_gh_api():
-    """Mock GitHub API responses to avoid hitting rate limits.
-
-    For each API endpoint URL queried by :func:.`_gh_zipball`, return a pared-down JSON
-    response that contains the required "zipball_url" key.
-    """
-    base = "https://api.github.com/repos/sdmx-twg/sdmx-ml"
-
-    # TODO Improve .util.requests to provide (roughly) the same functionality, then drop
-    # use of responses here
-    mock = responses.RequestsMock(assert_all_requests_are_fired=False)
-    mock.add_passthru(re.compile(rf"{base}/zipball/\w+"))
-    mock.add_passthru(re.compile(r"https://codeload.github.com/\w+"))
-
-    for v in "2.1", "3.0", "3.0.0":
-        mock.get(
-            url=f"{base}/releases/tags/v{v}",
-            json=dict(zipball_url=f"{base}/zipball/v{v}"),
-        )
-
-    mock.start()
-
-    try:
-        yield
-    finally:
-        mock.stop()
-
-
-@pytest.fixture(scope="module")
-def installed_schemas(mock_gh_api, tmp_path_factory):
-    """Fixture that ensures schemas are installed locally in a temporary directory."""
-    dir = tmp_path_factory.mktemp("schemas")
-    sdmx.install_schemas(dir.joinpath("2.1"), Version["2.1"])
-    sdmx.install_schemas(dir.joinpath("3.0"), Version["3.0.0"])
-    yield dir
 
 
 @pytest.mark.parametrize("version", ["1", 1, None])

@@ -233,11 +233,11 @@ def test_gh_164(specimen):
     assert isinstance(da.related_to, v21.NoSpecifiedRelationship)
 
 
-def test_gh_180(caplog, specimen) -> None:
+def test_gh_180(caplog, installed_schemas, specimen) -> None:
     """Test of https://github.com/khaeru/sdmx/issues/190."""
     with specimen("BIS/gh-180.xml") as f:
         # Message is not valid SDMX-ML
-        assert False is validate_xml(f)
+        assert False is validate_xml(f, installed_schemas)
 
         # Validation logs an error message regarding the non-standard class
         assert re.match(
@@ -317,11 +317,11 @@ def test_gh_205(caplog, specimen) -> None:
         assert text == str(a.text)
 
 
-def test_gh_218(caplog, specimen) -> None:
+def test_gh_218(caplog, installed_schemas, specimen) -> None:
     """Test of https://github.com/khaeru/sdmx/pull/218."""
     with specimen("constructed/gh-218.xml") as f:
         # Specimen is XSD-valid
-        validate_xml(f)
+        validate_xml(f, installed_schemas)
 
         f.seek(0)
 
