@@ -282,15 +282,7 @@ def list_sources():
 
 def load_package_sources():
     """Discover all sources listed in :file:`sources.json`."""
-    try:
-        ref = importlib.resources.files("sdmx").joinpath("sources.json")
-    except AttributeError:  # Python <3.9
-        from copy import copy
-
-        with importlib.resources.path("sdmx", "sources.json") as path:
-            ref = copy(path)
-
-    with ref.open("rb") as f:
+    with importlib.resources.files("sdmx").joinpath("sources.json").open("rb") as f:
         for info in json.load(f):
             add_source(info)
 
