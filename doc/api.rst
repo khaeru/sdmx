@@ -36,6 +36,8 @@ Top-level methods and classes
       Client
       Resource
       add_source
+      get_source
+      install_schemas
       list_sources
       log
       read_sdmx
@@ -43,6 +45,8 @@ Top-level methods and classes
       to_csv
       to_pandas
       to_xml
+      to_sdmx
+      validate_xml
 
 ``format``: SDMX file formats
 =============================
