@@ -368,6 +368,75 @@ class TestIMF(DataSourceTest):
     source_id = "IMF"
 
 
+# As of 2025-01-10, all endpoints aside from SDMX 2.1 /data/ return 403
+IMF_BETA_XFAIL: dict[str, Union[type[Exception], tuple[type[Exception], str]]] = {
+    k: HTTPError
+    for k in """
+    actualconstraint
+    agencyscheme
+    allowedconstraint
+    categorisation
+    categoryscheme
+    codelist
+    conceptscheme
+    contentconstraint
+    dataconsumerscheme
+    dataflow
+    dataproviderscheme
+    datastructure
+    hierarchicalcodelist
+    metadataflow
+    metadatastructure
+    organisationscheme
+    provisionagreement
+    registration
+    structure
+    structureset
+    """.split()
+}
+
+
+class TestIMF_beta(DataSourceTest):
+    source_id = "IMF_beta"
+
+    endpoint_args = dict(
+        # As indicated in the API documentation
+        data=dict(
+            resource_id="CPI",
+            key="111.CPI.CP01.IX.M",
+            params=dict(startPeriod=2018),
+            # Does not appear to affect 403
+            # headers={"User-Agent": "idata-script-client"},
+        )
+    )
+
+    xfail = IMF_BETA_XFAIL | dict(
+        metadata=NotImplementedError,
+        registration=ValueError,
+    )
+
+
+class TestIMF_beta3(DataSourceTest):
+    source_id = "IMF_beta3"
+
+    endpoint_args = dict(
+        data=dict(
+            context="dataflow",
+            agency_id="IMF",
+            resource_id="CPI",
+            key="111.CPI.CP01.IX.M",
+            # Not yet supported
+            # params={"c[TIME_PERIOD]": "ge:2018"},
+        ),
+        metadata=dict(provider_id="IMF"),
+    )
+
+    xfail = IMF_BETA_XFAIL | dict(
+        data=HTTPError,  # 403
+        metadata=HTTPError,  # 403
+    )
+
+
 class TestINEGI(DataSourceTest):
     source_id = "INEGI"
 
