@@ -242,7 +242,7 @@ def test_gh_180(caplog, installed_schemas, specimen) -> None:
         # Validation logs an error message regarding the non-standard class
         assert re.match(
             ".*attribute 'package'.*'publicationtable' is not an element of the set",
-            caplog.messages[-1],
+            caplog.messages[-2],
         )
 
         # Message can still be read

@@ -30,13 +30,6 @@ def test_class_for_tag():
     assert xml.v30.class_for_tag("str:DataStructure") is not None
 
 
-@pytest.mark.parametrize("version", ["1", 1, None])
-def test_install_schemas_invalid_version(version):
-    """Ensure invalid versions throw ``NotImplementedError``."""
-    with pytest.raises(NotImplementedError):
-        sdmx.install_schemas(version=version)
-
-
 @pytest.mark.network
 @pytest.mark.parametrize("version", ["2.1", "3.0"])
 def test_install_schemas(installed_schemas, version):
@@ -62,28 +55,15 @@ def test_install_schemas_in_user_cache():
 
 
 @pytest.mark.parametrize("version", ["1", 1, None])
-def test_validate_xml_invalid_version(version):
-    """Ensure validation of invalid versions throw ``NotImplementedError``."""
+def test_install_schemas_invalid_version(version):
+    """Ensure invalid versions throw ``NotImplementedError``."""
     with pytest.raises(NotImplementedError):
-        # This message doesn't exist, but the version should throw before it is used.
-        sdmx.validate_xml("samples/common/common.xml", version=version)
-
-
-def test_validate_xml_no_schemas(tmp_path, specimen, installed_schemas):
-    """Check that supplying an invalid schema path will raise ``ValueError``."""
-    with specimen("IPI-2010-A21-structure.xml", opened=False) as msg_path:
-        with pytest.raises(ValueError):
-            sdmx.validate_xml(msg_path, schema_dir=tmp_path)
+        sdmx.install_schemas(version=version)
 
 
 @pytest.mark.network
 def test_validate_xml_from_v2_1_samples(tmp_path, specimen, installed_schemas):
     """Use official samples to ensure validation of v2.1 messages works correctly."""
-    extracted_content = _extracted_zipball(Version["2.1"])
-
-    # Schemas as just in a flat directory
-    schema_dir = extracted_content.joinpath("schemas")
-
     # Samples are somewhat spread out, and some are known broken so we pick a bunch
     for parts in [
         ("v21", "xml", "common", "common.xml"),
@@ -98,7 +78,31 @@ def test_validate_xml_from_v2_1_samples(tmp_path, specimen, installed_schemas):
         ("v21", "xml", "query", "response_esms_children.xml"),
     ]:
         with specimen(str(Path(*parts))) as sample:
-            assert sdmx.validate_xml(sample, schema_dir, version="2.1")
+            assert sdmx.validate_xml(
+                sample, installed_schemas.joinpath("2.1"), version="2.1"
+            )
+
+
+@pytest.mark.network
+def test_validate_xml_from_v3_0_samples(tmp_path, installed_schemas):
+    """Use official samples to ensure validation of v3.0 messages works correctly."""
+    extracted_content = _extracted_zipball(Version["3.0.0"])
+
+    # Schemas as just in a flat directory
+    schema_dir = extracted_content.joinpath("schemas")
+
+    # Samples are somewhat spread out, and some are known broken so we pick a bunch
+    samples_dir = extracted_content.joinpath("samples")
+    samples = [
+        samples_dir / "Codelist" / "codelist.xml",
+        samples_dir / "Codelist" / "codelist - extended.xml",
+        samples_dir / "Concept Scheme" / "conceptscheme.xml",
+        samples_dir / "Data Structure Definition" / "ECB_EXR.xml",
+        samples_dir / "Dataflow" / "dataflow.xml",
+        samples_dir / "Geospatial" / "geospatial_geographiccodelist.xml",
+    ]
+    for sample in samples:
+        assert sdmx.validate_xml(sample, schema_dir, version="3.0")
 
 
 @pytest.mark.network
@@ -135,33 +139,26 @@ def test_validate_xml_invalid_doc(tmp_path, installed_schemas):
     assert not sdmx.validate_xml(msg_path, schema_dir=installed_schemas.joinpath("2.1"))
 
 
-def test_validate_xml_invalid_message_type():
+def test_validate_xml_invalid_message_type(installed_schemas):
     """Ensure that an invalid document fails validation."""
     # Create a mangled structure message with its outmost tag changed to be invalid
     msg = StructureMessage()
     invalid_msg = re.sub(b"mes:Structure([ >])", rb"mes:FooBar\1", sdmx.to_xml(msg))
 
+    with pytest.raises(NotImplementedError, match="Validate non-SDMX root.*FooBar>"):
+        sdmx.validate_xml(io.BytesIO(invalid_msg), installed_schemas)
+
+
+@pytest.mark.parametrize("version", ["1", 1, None])
+def test_validate_xml_invalid_version(version):
+    """Ensure validation of invalid versions throw ``NotImplementedError``."""
     with pytest.raises(NotImplementedError):
-        sdmx.validate_xml(io.BytesIO(invalid_msg))
+        # This message doesn't exist, but the version should throw before it is used.
+        sdmx.validate_xml("samples/common/common.xml", version=version)
 
 
-@pytest.mark.network
-def test_validate_xml_from_v3_0_samples(tmp_path, installed_schemas):
-    """Use official samples to ensure validation of v3.0 messages works correctly."""
-    extracted_content = _extracted_zipball(Version["3.0.0"])
-
-    # Schemas as just in a flat directory
-    schema_dir = extracted_content.joinpath("schemas")
-
-    # Samples are somewhat spread out, and some are known broken so we pick a bunch
-    samples_dir = extracted_content.joinpath("samples")
-    samples = [
-        samples_dir / "Codelist" / "codelist.xml",
-        samples_dir / "Codelist" / "codelist - extended.xml",
-        samples_dir / "Concept Scheme" / "conceptscheme.xml",
-        samples_dir / "Data Structure Definition" / "ECB_EXR.xml",
-        samples_dir / "Dataflow" / "dataflow.xml",
-        samples_dir / "Geospatial" / "geospatial_geographiccodelist.xml",
-    ]
-    for sample in samples:
-        assert sdmx.validate_xml(sample, schema_dir, version="3.0")
+def test_validate_xml_no_schemas(tmp_path, specimen):
+    """Check that supplying an invalid schema path will raise ``ValueError``."""
+    with specimen("IPI-2010-A21-structure.xml", opened=False) as msg_path:
+        with pytest.raises(FileNotFoundError):
+            sdmx.validate_xml(msg_path, schema_dir=tmp_path)

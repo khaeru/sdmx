@@ -6,7 +6,7 @@ from itertools import chain
 from operator import itemgetter
 from pathlib import Path
 from shutil import copytree
-from typing import IO, Iterable, Mapping, Optional, Union
+from typing import IO, Iterable, Mapping, Optional, Union, cast
 
 from lxml import etree
 from lxml.etree import QName
@@ -99,61 +99,75 @@ def validate_xml(
     msg: Union[Path, IO],
     schema_dir: Optional[Path] = None,
     version: Union[str, Version] = Version["2.1"],
+    max_errors: int = -1,
 ) -> bool:
-    """Validate and SDMX message against the XML Schema (XSD) documents.
+    """Validate SDMX-ML in `msg` against the XML Schema (XSD) documents.
 
-    The XML Schemas must first be installed or validation will fail. See
-    :func:`sdmx.install_schemas` to download the schema files.
+    A log message with level :data:`logging.ERROR` is emitted if validation fails. This
+    indicates the first (possibly not only) element in `msg` that is not valid per the
+    schemas.
 
     Parameters
     ----------
     msg
-        A SDMX-ML Message formatted XML file.
+        Path or io-like containing an SDMX-ML message.
     schema_dir
-        The directory to XSD schemas used to validate the message.
+        Directory with SDMX-ML XSD schemas used to validate the message.
     version
         The SDMX-ML schema version to validate against. One of ``2.1`` or ``3.0``.
+    max_errors
+        Maximum number of messages to log on validation failure.
 
     Returns
     -------
     bool
-        True if validation passed. False otherwise.
+        :any:`True` if validation passed, otherwise :any:`False`.
+
+    Raises
+    ------
+    FileNotFoundError
+        if `schema_dir` (or a subdirectory) does not contain :file:`SDMXMessage.xsd`.
+        Use :func:`sdmx.install_schemas` to download the schema files.
+    NotImplementedError
+        if `msg` contains valid XML, but with a root element that is not part of the
+        SDMX-ML standard.
     """
     schema_dir, version = _handle_validate_args(schema_dir, version)
 
+    # Find SDMXMessage.xsd in `schema_dir` or a subdirectory
+    for candidate in schema_dir, schema_dir.joinpath(version.name):
+        try:
+            # Turn the XSD into a schema object
+            xml_schema = etree.XMLSchema(file=candidate.joinpath("SDMXMessage.xsd"))
+            break
+        except Exception:
+            xml_schema = None
+
+    if xml_schema is None:
+        raise FileNotFoundError(f"Could not find XSD files in {schema_dir}")
+
+    # Parse the given document
     msg_doc = etree.parse(msg)
 
-    # Make sure the message is a supported type
-    supported_elements = [
-        "CodelistQuery",
-        "DataStructureQuery",
-        "GenericData",
-        "GenericMetadata",
-        "GenericTimeSeriesData",
-        "MetadataStructureQuery",
-        "Structure",
-        "StructureSpecificData",
-        "StructureSpecificMetadata",
-        "StructureSpecificTimeSeriesData",
-    ]
-    root_elem_name = msg_doc.docinfo.root_name
-    if root_elem_name not in supported_elements:
-        raise NotImplementedError
+    if not xml_schema.validate(msg_doc):
+        for i, entry in enumerate(
+            cast(Iterable["etree._LogEntry"], xml_schema.error_log)
+        ):
+            if (
+                i == 0
+                and "No matching global declaration available for the validation root"
+                in entry.message
+            ):
+                raise NotImplementedError(
+                    f"Validate non-SDMX root element <{msg_doc.getroot().tag}>"
+                ) from None
+            elif i == max_errors:
+                break
+            log.log(getattr(logging, entry.level_name), entry.message)
 
-    message_xsd = schema_dir.joinpath("SDMXMessage.xsd")
-    if not message_xsd.exists():
-        raise ValueError(f"Could not find XSD files in {schema_dir}")
-
-    # Turn the XSD into a schema object
-    xml_schema_doc = etree.parse(message_xsd)
-    xml_schema = etree.XMLSchema(xml_schema_doc)
-
-    try:
-        xml_schema.assertValid(msg_doc)
-    except etree.DocumentInvalid as err:
-        log.error(err)
-    finally:
-        return xml_schema.validate(msg_doc)
+        return False
+    else:
+        return True
 
 
 def _extracted_zipball(version: Version) -> Path:
