@@ -321,6 +321,7 @@ def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> 
             ("ESTAT", "HCL_WSTATUS_SCL_BNSPART.xml"),
             ("ESTAT", "HCL_WSTATUS_SCL_WSTATUSPR.xml"),
             ("IAEG-SDGs", "metadatastructure-0.xml"),
+            ("IMF", "01R.xml"),
             ("IMF", "1PI-structure.xml"),
             ("IMF", "CL_AREA-structure.xml"),
             # Manually reduced subset of the response for this DSD. Test for
