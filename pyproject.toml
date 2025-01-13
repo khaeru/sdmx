@@ -1,5 +1,6 @@
 [build-system]
-requires = ["build", "setuptools-scm"]
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
 
 [project]
 name = "sdmx1"
@@ -69,6 +70,10 @@ exclude_also = [
   "if TYPE_CHECKING:",
 ]
 
+[tool.hatch]
+build.targets.wheel.packages = ["sdmx"]
+version.source = "versioningit"
+
 [tool.mypy]
 files = [
   "conftest.py",
@@ -108,8 +113,5 @@ ignore = ["E501", "W191"]
 # - .writer.pandas.write_dataset: 12
 mccabe.max-complexity = 10
 
-[tool.setuptools.packages]
-find = {}
-
-[tool.setuptools_scm]
-local_scheme = "no-local-version"
+[tool.versioningit]
+default-version = "0.1.dev1"  # Match setuptools-scm
