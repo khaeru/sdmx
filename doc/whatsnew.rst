@@ -5,8 +5,11 @@ What's new?
 
 .. _2.21.0:
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.21.0 (2025-01-13)
+====================
 
 - Add :ref:`AR1 <AR1>`, :ref:`StatCan <StatCan>`, and :ref:`UY110 <UY110>` data sources (:pull:`218`, :issue:`186`, :issue:`187`, :issue:`188`).
 - Add :ref:`IMF_beta, IMF_beta3 <IMF>` data sources and expand documentation on 3 distinct IMF-run web services (:pull:`218`, :issue:`38`).
