@@ -281,8 +281,12 @@ def session_with_pytest_cache(pytestconfig):
 def session_with_stored_responses(pytestconfig):
     """Fixture: A :class:`.Session` returns only stored responses from sdmx-test-data.
 
-    This session (a) uses the 'filesystem' :mod:`requests_cache` backend and (b) is
-    treated with :func:`.offline`, so that *only* stored responses can be returned.
+    This session…
+
+    1. uses the 'memory' :mod:`requests_cache` backend;
+    2. contains the responses from :func:`.testing.data.add_responses`; and
+    3. is treated with :func:`.offline`, so that *only* stored responses can be
+       returned.
     """
     session = Session(backend="memory")
 
