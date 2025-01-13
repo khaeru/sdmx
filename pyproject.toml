@@ -70,7 +70,11 @@ exclude_also = [
 ]
 
 [tool.mypy]
-exclude = ["^build/"]
+files = [
+  "conftest.py",
+  "doc",
+  "sdmx",
+]
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available.

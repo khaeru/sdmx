@@ -3,6 +3,7 @@ repos:
   rev: v1.13.0
   hooks:
   - id: mypy
+    pass_filenames: false
     additional_dependencies:
     - GitPython
     - lxml-stubs
@@ -14,7 +15,6 @@ repos:
     - types-python-dateutil
     - types-PyYAML
     - types-requests
-    args: []
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.8.3
   hooks:
