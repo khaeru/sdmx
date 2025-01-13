@@ -3,11 +3,13 @@
 from typing import cast
 
 import pandas as pd
+import pandas.testing as pdt
 import pytest
 from pytest import raises
 
 import sdmx
 from sdmx.message import DataMessage, StructureMessage
+from sdmx.model import common, v21
 from sdmx.model.v21 import TimeDimension
 from sdmx.testing import assert_pd_equal
 
@@ -119,6 +121,30 @@ def test_data(specimen, path) -> None:
 
     # TODO incomplete
     assert isinstance(result, (pd.Series, pd.DataFrame, list)), type(result)
+
+
+def test_data_decimal() -> None:
+    """Test handling of "," as a decimal separator."""
+    # Data set with string values containing "," as a decimal separator
+    ds = v21.DataSet(
+        obs=[
+            v21.Observation(dimension=common.Key(FOO="A"), value="1"),
+            v21.Observation(dimension=common.Key(FOO="B"), value="1,0"),
+            v21.Observation(dimension=common.Key(FOO="C"), value="100,1"),
+        ]
+    )
+
+    # Expected result
+    exp = pd.Series(
+        [1.0, 1.0, 100.1],
+        index=pd.MultiIndex.from_product([list("ABC")], names=["FOO"]),
+        name="value",
+    )
+
+    # Conversion occurs without error
+    result = sdmx.to_pandas(ds)
+    # Result is as expected
+    pdt.assert_series_equal(exp, result)
 
 
 def test_data_arguments(specimen) -> None:
