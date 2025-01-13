@@ -77,9 +77,8 @@ class BaseReference:
             # class above
             target_cls = cls_hint
 
-        # DEBUG
-        # if target_cls is None:
-        #     print(f"{info = }")
+        if target_cls is None:
+            raise ValueError(f"Unable to determine target class for {info}", info)
 
         self.maintainable = issubclass(target_cls, common.MaintainableArtefact)
 

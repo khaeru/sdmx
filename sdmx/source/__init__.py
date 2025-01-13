@@ -1,5 +1,7 @@
 import importlib.resources
 import json
+import logging
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
@@ -14,6 +16,8 @@ from sdmx.rest import Resource
 
 if TYPE_CHECKING:
     import sdmx.rest.common
+
+log = logging.getLogger(__name__)
 
 #: Data sources registered with :mod:`sdmx`.
 sources: dict[str, "Source"] = {}
@@ -250,6 +254,24 @@ def add_source(
     sources[id] = SourceClass(**_info)
 
 
+def get_source(id: str) -> Source:
+    """Return the Source with the given `id`.
+
+    `id` is matched case-insensitively.
+    """
+    try:
+        return sources[id]
+    except KeyError:
+        # Try to find a case-insensitive match
+        for k, v in sources.items():
+            if re.match(k, id, flags=re.IGNORECASE):
+                log.debug(
+                    f"Return source {v.id!r} as a case-insensitive match for id {id!r}"
+                )
+                return v
+        raise
+
+
 def list_sources():
     """Return a sorted list of valid source IDs.
 
@@ -260,15 +282,7 @@ def list_sources():
 
 def load_package_sources():
     """Discover all sources listed in :file:`sources.json`."""
-    try:
-        ref = importlib.resources.files("sdmx").joinpath("sources.json")
-    except AttributeError:  # Python <3.9
-        from copy import copy
-
-        with importlib.resources.path("sdmx", "sources.json") as path:
-            ref = copy(path)
-
-    with ref.open("rb") as f:
+    with importlib.resources.files("sdmx").joinpath("sources.json").open("rb") as f:
         for info in json.load(f):
             add_source(info)
 

@@ -10,7 +10,7 @@ from sdmx.model.v21 import DataStructureDefinition
 from sdmx.reader import get_reader
 from sdmx.rest import Resource
 from sdmx.session import ResponseIO, Session
-from sdmx.source import NoSource, list_sources, sources
+from sdmx.source import NoSource, get_source, list_sources
 
 if TYPE_CHECKING:
     import io
@@ -79,7 +79,7 @@ class Client:
         **session_opts,
     ):
         try:
-            self.source = sources[source.upper()] if source else NoSource
+            self.source = get_source(source) if source else NoSource
         except KeyError:
             raise ValueError(
                 f"source must be None or one of: {' '.join(list_sources())}"

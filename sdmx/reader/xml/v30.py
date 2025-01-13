@@ -8,7 +8,7 @@ from sdmx.model import common
 from sdmx.model import v30 as model
 
 from . import v21
-from .common import BaseReference, XMLEventReader
+from .common import BaseReference, NotReference, XMLEventReader
 
 
 class Reference(BaseReference):
@@ -21,12 +21,12 @@ class Reference(BaseReference):
             # If the URN doesn't specify an item ID, it is probably a reference to a
             # MaintainableArtefact, so target_id and id are the same
             result.update(target_id=result["item_id"] or result["id"])
-        except ValueError:
+        except (KeyError, ValueError):
             # Bare string that is the ID of e.g. a component (dimension)
             if id := (elem.text or "").strip():
                 result = {"id": id, "target_id": id, "class": None, "package": None}
             else:
-                raise v21.NotReference
+                raise NotReference()
 
         return result
 

@@ -11,6 +11,7 @@ from lxml import etree
 import sdmx
 import sdmx.message
 from sdmx import urn
+from sdmx.format.xml import validate_xml
 from sdmx.format.xml.v21 import qname
 from sdmx.model import common, v21
 from sdmx.model.v21 import ContentConstraint, Facet, FacetType, FacetValueType
@@ -232,6 +233,29 @@ def test_gh_164(specimen):
     assert isinstance(da.related_to, v21.NoSpecifiedRelationship)
 
 
+def test_gh_180(caplog, installed_schemas, specimen) -> None:
+    """Test of https://github.com/khaeru/sdmx/issues/190."""
+    with specimen("BIS/gh-180.xml") as f:
+        # Message is not valid SDMX-ML
+        assert False is validate_xml(f, installed_schemas)
+
+        # Validation logs an error message regarding the non-standard class
+        assert re.match(
+            ".*attribute 'package'.*'publicationtable' is not an element of the set",
+            caplog.messages[-2],
+        )
+
+        # Message can still be read
+        f.seek(0)
+        msg = sdmx.read_sdmx(f)
+        assert isinstance(msg, sdmx.message.StructureMessage)
+
+        # Reader logs a warning regarding the missing reference
+        assert re.match(
+            "Cannot resolve reference to non-SDMX class", caplog.messages[-1]
+        )
+
+
 def test_gh_199():
     """Test of https://github.com/khaeru/sdmx/issues/199."""
     import sdmx.format.xml.v21
@@ -291,6 +315,36 @@ def test_gh_205(caplog, specimen) -> None:
         a = component.annotations[0]
         assert "sdmx.reader.xml.v21-parse-error" == a.id
         assert text == str(a.text)
+
+
+def test_gh_218(caplog, installed_schemas, specimen) -> None:
+    """Test of https://github.com/khaeru/sdmx/pull/218."""
+    with specimen("constructed/gh-218.xml") as f:
+        # Specimen is XSD-valid
+        validate_xml(f, installed_schemas)
+
+        f.seek(0)
+
+        # Specimen can be read
+        msg = sdmx.read_sdmx(f)
+
+    # The message sender has 1 contact, with all attributes populated
+    assert isinstance(msg, sdmx.message.DataMessage) and msg.header.sender
+    assert 1 == len(msg.header.sender.contact)
+    contact = msg.header.sender.contact[0]
+    assert contact.telephone is not None
+    assert (
+        1
+        # Number of localizations of localizable attributes
+        == len(contact.name.localizations)
+        == len(contact.org_unit.localizations)
+        == len(contact.responsibility.localizations)
+        # Number of values of multi-value attributes
+        == len(contact.email)
+        == len(contact.fax)
+        == len(contact.uri)
+        == len(contact.x400)
+    )
 
 
 # Each entry is a tuple with 2 elements:

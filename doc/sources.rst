@@ -115,6 +115,36 @@ SDMX-JSON —
 .. autoclass:: sdmx.source.abs_json.Source()
    :members:
 
+.. _AR1:
+
+``AR1``: National Institute of Statistics and Censuses (Argentina)
+------------------------------------------------------------------
+
+SDMX-ML — `Website <https://sdds.indec.gob.ar/nsdp.htm>`__
+
+- Spanish name: Instituto Nacional de Estadística y Censos
+
+This source does not provide an actual SDMX-REST web service.
+Instead, a set of SDMX-ML 2.1 files with data messages only (no  structure or metadata) are available at URLs with the form: ``https://sdds.indec.gob.ar/files/data/IND.XML``.
+These can be used with :class:`Client` by:
+
+- Using ``https://sdds.indec.gob.ar/files/`` as the base URL.
+- Accessing only the :attr:`.Resource.data` endpoint, which gives the ``…/data/…`` URL component.
+- Treating ``IND.XML`` (in reality, a file name with suffix) as the resource ID.
+- Using no query key or parameters.
+
+.. code-block:: python
+
+   c = sdmx.Client("AR1")
+   # The URL https://sdds.indec.gob.ar/files/data/IND.XML
+   dm = c.data("IND.XML")
+
+This is the same as using a non-source-specific Client to query the URL directly:
+
+.. code-block:: python
+
+   c = sdmx.Client()
+   dm = c.get(url="https://sdds.indec.gob.ar/files/data/IND.XML")
 
 .. _BBK:
 
@@ -240,15 +270,93 @@ SDMX-ML —
 
 .. _IMF:
 
-``IMF``: International Monetary Fund's “SDMX Central” source
-------------------------------------------------------------
+International Monetary Fund
+---------------------------
+
+As of 2025-01-10, there appear to be at least *three* systems operated by the IMF from which SDMX responses are available.
+Theses are listed here from oldest to newest, and identified by the domain used in the base URL for requests.
+
+(no ID): dataservices.smdx.org
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SDMX-ML and SDMX-JSON —
+API documentation `1 <https://datahelp.imf.org/knowledgebase/articles/1952905-sdmx-2-0-and-sdmx-2-1-restful-web-service>`__,
+`2 <https://datahelp.imf.org/knowledgebase/articles/667681-using-json-restful-web-service>`__
+
+- This appears to be an SDMX 2.0 REST web service, that can be induced to return SDMX-ML 2.1 or SDMX-JSON 1.0.0 messages through a ``?format=sdmx-2.1`` query parameter.
+- :mod:`sdmx` does not provide a :file:`sources.json` entry/ID or tests for this service.
+- However, the package code can still be used to access the responses.
+  For example:
+
+.. code-block:: python
+
+   import sdmx
+
+   client = sdmx.Client()
+   url = (
+       # Base URL
+       "http://dataservices.imf.org/REST/SDMX_XML.svc/CompactData/"
+       # Data flow ID and key
+       "PCPS/M.W00.PZINC."
+       # Query parameters, including format
+       "?startPeriod=2021&endPeriod=2022&format=sdmx-2.1"
+   )
+
+   # Retrieve an SDMX-ML 2.1 data message
+   message = client.get(url=url)
+
+   # Convert the single data set to pandas.Series with multi-index
+   df = sdmx.to_pandas(message.data[0])
+
+``IMF``: sdmxcentral.imf.org
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SDMX-ML —
 `Website <https://sdmxcentral.imf.org/>`__
 
-- Subset of the data available on http://data.imf.org.
+- This appears to be an instance of the “Fusion Metadata Registry” software.
+  Such instances also expose SDMX 2.1 and 3.0 APIs.
+- No API documentation appears to be available.
+- The :mod:`sdmx` source with ID ``IMF`` corresponds to the SDMX 2.1 (SDMX-REST 1.x) API with base URL https://sdmxcentral.imf.org/ws/public/sdmxapi/rest.
+  The web interface suggests URLs for the SDMX 3.0.0 (SDMX-REST 2.x) API with base URL https://sdmxcentral.imf.org/sdmx/v2.
+  This API can be accessed by modifying the :attr:`.Source.url` and :attr:`~.Source.versions` attributes, or by constructing a new Source.
+  For example:
+
+  .. code-block:: python
+
+     import sdmx
+     from sdmx.format import Version
+
+     client = sdmx.Client("IMF")
+     client.source.url = "https://sdmxcentral.imf.org/sdmx/v2"
+     client.source.versions = {Version["3.0.0"]}
+
+     # Retrieve an SDMX-ML 3.0.0 structure message
+     message = client.dataflow("01R")
+
+- The source appears to provide a subset of the data available on https://data.imf.org.
 - Supports series-key-only and hence dataset-based key validation and construction.
 
+``IMF_beta``, ``IMF_beta3``: api.imf.org
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SDMX-ML —
+`Website <https://betadata.imf.org>`__ —
+`API documentation <https://betadata.imf.org/en/Resource-Pages/IMF-API>`__
+
+.. warning:: As of 2025-01-10, this source carries a banner:
+
+       We're in Beta!
+       Help us improve by `testing <https://datasupport.imf.org/knowledge?id=kb_article_view&sys_kb_id=372b9c5493019610102cf4647aba1015&category_id=4e49be7c1b6391903dba646fbd4bcb00>`__ and sharing `feedback <https://forms.office.com/pages/responsepage.aspx?id=Q_qFgC4wvUWxcaZkjDtr54N7EnsUWMNKll1Zs-zgwh9UODA5MTFBVlA1MDFaWEpIMFVaSE83TzJYTy4u&route=shorturl>`__.
+       This is a beta version; the data is not final and should not be used for actual work.
+
+   Users should heed this message.
+   The source IDs used in :mod:`sdmx` may change if and when this source exits beta and enters production, or is designated as the recommended, primary, or sole IMF source.
+
+- The API documentation indicates "Our data are available through SDMX 2.1 and SDMX 3.0 APIs," but the documentation pages mention only the SDMX 2.1 (SDMX-REST 1.x) base URL, https://api.imf.org/external/sdmx/2.1.
+  The base URL used by :mod:`sdmx` for the SDMX 3.0 (SDMX-REST 2.x) API is inferred.
+- :mod:`sdmx` provides access to both versions of the API with IDs ``IMF_beta`` and ``IMF_beta3``.
+  As of 2025-01-10, both return HTTP **403 Forbidden** to every request except the SDMX 2.1 data query illustrated in the API documentation.
 
 .. _INEGI:
 
@@ -425,6 +533,26 @@ API documentation `(en) <https://www.stat.ee/sites/default/files/2020-09/API-ins
 - As of 2020-12-13, this web service (like NBB) uses server software that serves SDMX-JSON or SDMX-ML 2.0.
   The latter is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
 
+.. _StatCan:
+
+``StatCan``: Statistics Canada
+------------------------------
+
+SDMX-ML —
+API documentation `(en) <https://www.statcan.gc.ca/en/developers/sdmx/user-guide>`__,
+`(fr) <https://www.statcan.gc.ca/fr/developpeurs/sdmx/guide-sdmx>`__.
+
+- The source only provides a SDMX-REST API for the ``/data/`` endpoint.
+- Some structural artefacts are available, but not through an SDMX-REST API.
+  Instead, a set of SDMX-ML 2.1 files with structure messages are available at URLs with the form: ``https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/structure/Data_Structure_17100005``.
+  (Note that this lacks the URL path components for the agency ID and version, which would resemble ``…/structure/StatCan/Data_Structure_17100005/latest``.)
+
+  These can be queried directly using any Client:
+
+  .. code-block:: python
+
+     c = sdmx.Client("StatCan")  # or sdmx.Client()
+     dm = c.get(url="https://www150.statcan.gc.ca/t1/wds/sdmx/statcan/rest/structure/Data_Structure_17100005")
 
 .. _UNESCO:
 
@@ -503,6 +631,17 @@ SDMX-ML —
 
 - Supports preview_data and series-key based key validation.
 
+.. _UY110:
+
+``UY110``: Labour Market Information System (Uruguay)
+-----------------------------------------------------
+
+SDMX-ML —
+Website `(en) <https://de-mtss.simel.mtss.gub.uy/?lc=en>`__,
+`(es) <https://de-mtss.simel.mtss.gub.uy>`__.
+
+- Spanish name: Sistema de Información de Mercado Laboral
+- Operated by the Ministry of Labour and Social Security of (Ministerio de Trabajo y Seguridad Social, MTSS), the National Institute of Statistics (Instituto Nacional de Estadística, INE) and the Social Security Bank (Banco de Previsión Social, BPS) of Uruguay.
 
 .. _WB:
 

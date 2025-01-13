@@ -3,16 +3,24 @@
 What's new?
 ***********
 
-.. _2.20.1:
+.. _2.21.0:
 
 Next release
 ============
 
+- Add :ref:`AR1 <AR1>`, :ref:`StatCan <StatCan>`, and :ref:`UY110 <UY110>` data sources (:pull:`218`, :issue:`186`, :issue:`187`, :issue:`188`).
+- Add :ref:`IMF_beta, IMF_beta3 <IMF>` data sources and expand documentation on 3 distinct IMF-run web services (:pull:`218`, :issue:`38`).
+- New function :func:`.get_source` for case-insensitive lookup of sources (:pull:`218`).
+  :class:`.Client` will handle, for instance, :py:`Client("wb")` the same as :py:`Client("WB")` and log a message about the difference.
 - Simplify :class:`.Session` via direct inheritance from :class:`.requests_cache.session.CacheMixin`, where installed (:pull:`217`).
 - Add an optional :py:`session=...` keyword argument to :class:`.Client` (:pull:`217`).
+- Add an optional :py:`max_errors=...` keyword argument to :func:`.validate_xml` (:pull:`218`).
 - Improve :ref:`network and offline tests <test-network>` via new and improved test utilities (:pull:`217`).
   New test fixtures :func:`.session_with_pytest_cache` and :func:`.session_with_stored_responses`.
+- Tolerate invalid SDMX returned by :ref:`BIS <BIS>` (and possibly other sources) that contains references to the non-existent :py:`PublicationTable` class (:pull:`218`, :issue:`38`).
 - Bug fix for reading :xml:`<str:Categorisation>` from SDMX-ML 2.1: the :attr:`.Categorisation.category` attribute was read as an instance of Categorisation, rather than Category (:pull:`215`).
+- Bug fix for reading :xml:`<mes:URI>` and :xml:`<mes:Telephone>` from SDMX-ML 2.1 :xml:`<mes:Header>` (:pull:`218`).
+  Up to v2.20.0, these caused :class:`NotImplementedError`.
 
 .. _2.20.0:
 

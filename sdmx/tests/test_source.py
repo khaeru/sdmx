@@ -1,13 +1,23 @@
 import pytest
 
 from sdmx.model import v21 as model
-from sdmx.source import Source, add_source, list_sources, sources
+from sdmx.source import Source, add_source, get_source, list_sources, sources
+
+
+def test_get_source(caplog):
+    s1 = get_source("WB")
+    assert 0 == len(caplog.messages)
+
+    s2 = get_source("wb")
+    assert "'WB' as a case-insensitive match for id 'wb'" in caplog.messages[-1]
+
+    assert s1 == s2
 
 
 def test_list_sources():
     source_ids = list_sources()
     # Correct number of sources, excluding those created for testing
-    assert 29 == len(set(source_ids) - {"MOCK", "TEST"})
+    assert 34 == len(set(source_ids) - {"MOCK", "TEST"})
 
     # Listed alphabetically
     assert "ABS" == source_ids[0]

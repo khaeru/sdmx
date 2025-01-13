@@ -1,11 +1,12 @@
 """SDMX-ML v2.1 writer."""
+
 # Contents of this file are organized in the order:
 #
 # - Utility methods and global variables.
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
-
 import logging
+from datetime import datetime
 from typing import Iterable, Literal, MutableMapping, Optional
 
 from lxml import etree
@@ -225,14 +226,15 @@ def _em(obj: message.ErrorMessage):
 
 @writer
 def _header(obj: message.Header):
-    elem = Element("mes:Header")
-    if obj.id:
-        elem.append(Element("mes:ID", obj.id))
-    elem.append(Element("mes:Test", str(obj.test).lower()))
-    if obj.prepared:
-        elem.append(Element("mes:Prepared", obj.prepared.isoformat()))
-    if obj.sender:
-        elem.append(writer.recurse(obj.sender, _tag="mes:Sender"))
+    elem = Element(
+        "mes:Header",
+        # Mandatory child elements of mes:Header
+        Element("mes:ID", obj.id or "none"),
+        Element("mes:Test", str(obj.test).lower()),
+        Element("mes:Prepared", (obj.prepared or datetime.now()).isoformat()),
+        writer.recurse(obj.sender or common.Agency(id="none"), _tag="mes:Sender"),
+    )
+    # Optional child elements
     if obj.receiver:
         elem.append(writer.recurse(obj.receiver, _tag="mes:Receiver"))
     if obj.source:

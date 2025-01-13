@@ -120,6 +120,19 @@ class TestABS_JSON(DataSourceTest):
     }
 
 
+class TestAR1(DataSourceTest):
+    source_id = "AR1"
+
+    endpoint_args = dict(
+        data=dict(resource_id="WOE.XML"),
+    )
+
+    xfail = {
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        "registration": ValueError,  # Internal to sdmx1
+    }
+
+
 class TestBBK(DataSourceTest):
     source_id = "BBK"
 
@@ -355,6 +368,75 @@ class TestIMF(DataSourceTest):
     source_id = "IMF"
 
 
+# As of 2025-01-10, all endpoints aside from SDMX 2.1 /data/ return 403
+IMF_BETA_XFAIL: dict[str, Union[type[Exception], tuple[type[Exception], str]]] = {
+    k: HTTPError
+    for k in """
+    actualconstraint
+    agencyscheme
+    allowedconstraint
+    categorisation
+    categoryscheme
+    codelist
+    conceptscheme
+    contentconstraint
+    dataconsumerscheme
+    dataflow
+    dataproviderscheme
+    datastructure
+    hierarchicalcodelist
+    metadataflow
+    metadatastructure
+    organisationscheme
+    provisionagreement
+    registration
+    structure
+    structureset
+    """.split()
+}
+
+
+class TestIMF_beta(DataSourceTest):
+    source_id = "IMF_beta"
+
+    endpoint_args = dict(
+        # As indicated in the API documentation
+        data=dict(
+            resource_id="CPI",
+            key="111.CPI.CP01.IX.M",
+            params=dict(startPeriod=2018),
+            # Does not appear to affect 403
+            # headers={"User-Agent": "idata-script-client"},
+        )
+    )
+
+    xfail = IMF_BETA_XFAIL | dict(
+        metadata=NotImplementedError,
+        registration=ValueError,
+    )
+
+
+class TestIMF_beta3(DataSourceTest):
+    source_id = "IMF_beta3"
+
+    endpoint_args = dict(
+        data=dict(
+            context="dataflow",
+            agency_id="IMF",
+            resource_id="CPI",
+            key="111.CPI.CP01.IX.M",
+            # Not yet supported
+            # params={"c[TIME_PERIOD]": "ge:2018"},
+        ),
+        metadata=dict(provider_id="IMF"),
+    )
+
+    xfail = IMF_BETA_XFAIL | dict(
+        data=HTTPError,  # 403
+        metadata=HTTPError,  # 403
+    )
+
+
 class TestINEGI(DataSourceTest):
     source_id = "INEGI"
 
@@ -581,6 +663,24 @@ class TestSTAT_EE(DataSourceTest):
     }
 
 
+class TestStatCan(DataSourceTest):
+    source_id = "StatCan"
+
+    endpoint_args = dict(
+        data=dict(
+            resource_id="DF_17100005",
+            key=".1.138",
+            params=dict(startPeriod=2015, endPeriod=2016),
+        ),
+        structure=dict(resource_id="Data_Structure_17100005"),
+    )
+
+    xfail = {
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        "registration": ValueError,  # Internal to sdmx1
+    }
+
+
 class TestUNESCO(DataSourceTest):
     """UNESCO.
 
@@ -631,6 +731,19 @@ class TestUNSD(DataSourceTest):
     source_id = "UNSD"
     xfail = {
         "organisationscheme": HTTPError,  # 400
+        "structure": NotImplementedError,  # 501
+    }
+
+
+class TestUY110(DataSourceTest):
+    source_id = "UY110"
+
+    xfail = {
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        # 400: "Can not create reference, target structure is not maintainable, and no
+        # identifiable reference parameters present"
+        "organisationscheme": HTTPError,
+        "registration": ValueError,  # Internal to sdmx1
         "structure": NotImplementedError,  # 501
     }
 

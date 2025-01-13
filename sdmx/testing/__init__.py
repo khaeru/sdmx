@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from collections import ChainMap
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
@@ -7,12 +8,14 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import pandas as pd
 import pytest
+import responses
 from xdist import is_xdist_worker
 
 from sdmx.exceptions import HTTPError
+from sdmx.format import Version
 from sdmx.rest import Resource
 from sdmx.session import Session
-from sdmx.source import DataContentType, Source, sources
+from sdmx.source import DataContentType, Source, get_source
 from sdmx.testing.report import ServiceReporter
 from sdmx.util.requests import offline
 
@@ -151,7 +154,7 @@ def generate_endpoint_tests(metafunc):  # noqa: C901  TODO reduce complexity 11 
     # Use the test class' source_id attr to look up the Source class
     cls = metafunc.cls
     source = (
-        sources[cls.source_id]
+        get_source(cls.source_id)
         if cls.source_id != "TEST"
         else metafunc.config.stash[KEY_SOURCE]
     )
@@ -226,6 +229,44 @@ class MessageTest:
 
 
 @pytest.fixture(scope="session")
+def installed_schemas(mock_gh_api, tmp_path_factory):
+    """Fixture that ensures schemas are installed locally in a temporary directory."""
+    from sdmx.format.xml.common import install_schemas
+
+    dir = tmp_path_factory.mktemp("schemas")
+
+    with mock_gh_api:
+        install_schemas(dir.joinpath("2.1"), Version["2.1"])
+        install_schemas(dir.joinpath("3.0"), Version["3.0.0"])
+
+    yield dir
+
+
+@pytest.fixture(scope="session")
+def mock_gh_api():
+    """Mock GitHub API responses to avoid hitting rate limits.
+
+    For each API endpoint URL queried by :func:.`_gh_zipball`, return a pared-down JSON
+    response that contains the required "zipball_url" key.
+    """
+    base = "https://api.github.com/repos/sdmx-twg/sdmx-ml"
+
+    # TODO Improve .util.requests to provide (roughly) the same functionality, then drop
+    # use of responses here
+    mock = responses.RequestsMock(assert_all_requests_are_fired=False)
+    mock.add_passthru(re.compile(rf"{base}/zipball/\w+"))
+    mock.add_passthru(re.compile(r"https://codeload.github.com/\w+"))
+
+    for v in "2.1", "3.0", "3.0.0":
+        mock.get(
+            url=f"{base}/releases/tags/v{v}",
+            json=dict(zipball_url=f"{base}/zipball/v{v}"),
+        )
+
+    yield mock
+
+
+@pytest.fixture(scope="session")
 def session_with_pytest_cache(pytestconfig):
     """Fixture:  A :class:`.Session` that caches within :file:`.pytest_cache`.
 
@@ -240,8 +281,12 @@ def session_with_pytest_cache(pytestconfig):
 def session_with_stored_responses(pytestconfig):
     """Fixture: A :class:`.Session` returns only stored responses from sdmx-test-data.
 
-    This session (a) uses the 'filesystem' :mod:`requests_cache` backend and (b) is
-    treated with :func:`.offline`, so that *only* stored responses can be returned.
+    This session…
+
+    1. uses the 'memory' :mod:`requests_cache` backend;
+    2. contains the responses from :func:`.testing.data.add_responses`; and
+    3. is treated with :func:`.offline`, so that *only* stored responses can be
+       returned.
     """
     session = Session(backend="memory")
 
@@ -272,6 +317,8 @@ def test_data_path(pytestconfig):
 @pytest.fixture(scope="class")
 def testsource(pytestconfig):
     """Fixture: the :attr:`.Source.id` of a temporary data source."""
+    from sdmx.source import sources
+
     s = pytestconfig.stash[KEY_SOURCE]
 
     sources[s.id] = s

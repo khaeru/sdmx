@@ -10,3 +10,6 @@ python:
   - method: pip
     path: .
     extra_requirements: [cache,docs,tests]
+
+sphinx:
+  configuration: doc/conf.py

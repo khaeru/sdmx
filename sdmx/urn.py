@@ -48,6 +48,7 @@ class URN:
             self.__dict__.update(kwargs)
 
         if value is None:
+            self.groupdict = {}  # Needed by match()
             return
 
         try:

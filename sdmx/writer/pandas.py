@@ -324,7 +324,12 @@ def write_dataset(  # noqa: C901 TODO reduce complexity 12 → ≤10
     if len(result):
         result.index.names = observation.key.order().values.keys()
         if dtype:
-            result["value"] = result["value"].astype(dtype)
+            try:
+                result["value"] = result["value"].astype(dtype)
+            except ValueError:
+                # Attempt to handle locales in which LC_NUMERIC.decimal_point is ","
+                # TODO Make this more robust by inferring and changing locale settings
+                result["value"] = result["value"].str.replace(",", ".").astype(dtype)
             if not attributes:
                 result = result["value"]
 

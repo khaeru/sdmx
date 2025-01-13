@@ -296,8 +296,10 @@ def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> 
     target.extend(
         (base.joinpath(*parts), "xml", "data")
         for parts in [
+            ("constructed", "gh-218.xml"),
             ("INSEE", "CNA-2010-CONSO-SI-A17.xml"),
             ("INSEE", "IPI-2010-A21.xml"),
+            ("IMF", "PCPS.xml"),
             ("ESTAT", "esms.xml"),
             ("ESTAT", "footer.xml"),
             ("ESTAT", "NAMA_10_GDP-ss.xml"),
@@ -310,6 +312,7 @@ def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> 
         for parts in [
             ("BIS", "actualconstraint-0.xml"),
             ("BIS", "hierarchicalcodelist-0.xml"),
+            ("BIS", "gh-180.xml"),
             ("ECB", "orgscheme.xml"),
             ("ECB", "structureset-0.xml"),
             ("ESTAT", "apro_mk_cola-structure.xml"),
@@ -318,6 +321,7 @@ def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> 
             ("ESTAT", "HCL_WSTATUS_SCL_BNSPART.xml"),
             ("ESTAT", "HCL_WSTATUS_SCL_WSTATUSPR.xml"),
             ("IAEG-SDGs", "metadatastructure-0.xml"),
+            ("IMF", "01R.xml"),
             ("IMF", "1PI-structure.xml"),
             ("IMF", "CL_AREA-structure.xml"),
             # Manually reduced subset of the response for this DSD. Test for
