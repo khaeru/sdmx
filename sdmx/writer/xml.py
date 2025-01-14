@@ -480,11 +480,14 @@ def _cl(obj: model.ComponentList, *args):
 
 @writer
 def _cat(obj: model.Categorisation):
-    return maintainable(
-        obj,
-        reference(obj.artefact, tag="str:Source", style="Ref"),
-        reference(obj.category, tag="str:Target", style="Ref"),
-    )
+    elem = maintainable(obj)
+    # If .reader.xml.v21._ref did not resolve a ref while reading (e.g. ref to a non-
+    # standard class like PublicationTable), this may be a dict → don't write. Generates
+    # XSD-invalid SDMX-ML; but occurs only when the input SDMX-ML was invalid anyway.
+    if isinstance(obj.artefact, common.IdentifiableArtefact):
+        elem.append(reference(obj.artefact, tag="str:Source", style="Ref"))
+    elem.append(reference(obj.category, tag="str:Target", style="Ref"))
+    return elem
 
 
 # §10.3: Constraints
