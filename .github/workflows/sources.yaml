@@ -26,17 +26,20 @@ jobs:
         source:
         - ABS
         - ABS_JSON
+        - AR1
         - BBK
         - BIS
         - COMP
         - ECB
         - EMPL
         - ESTAT
-        - ESTAT3
         - ESTAT_COMEXT
+        - ESTAT3
         - GROW
         - ILO
         - IMF
+        - IMF_beta
+        - IMF_beta3
         - INEGI
         - INSEE
         - ISTAT
@@ -48,9 +51,12 @@ jobs:
         - SGR
         - SPC
         - STAT_EE
+        - StatCan
+        - TEST
         - UNESCO
         - UNICEF
         - UNSD
+        - UY110
         - WB
         - WB_WDI
 
@@ -59,30 +65,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # TODO avoid requiring this; it's not used in this workflow
-    - name: Checkout test data
-      uses: actions/checkout@v4
+    - name: Set up uv, Python
+      uses: astral-sh/setup-uv@v5
       with:
-        repository: khaeru/sdmx-test-data
-        path: sdmx-test-data
-
-    - uses: astral-sh/setup-uv@v4
-      with:
-        enable-cache: true
         cache-dependency-glob: "**/pyproject.toml"
+        python-version: ${{ env.python-version }}
 
-    - name: Install Python, the package, and dependencies
-      run: |
-        uv venv --python=${{ env.python-version }}
-        uv pip install .[tests] pytest-regex
+    - name: Install the package and dependencies
+      run: uv pip install .[tests] pytest-regex
 
     - name: Tests of ${{ matrix.source }} data source
       continue-on-error: true
-      env:
-        SDMX_TEST_DATA: ./sdmx-test-data/
       run: |
         uv run --no-sync \
           pytest -m network --regex '.*Test${{ matrix.source }}:' \
+          --sdmx-fetch-data \
           --color=yes --durations=30 -rA --verbose \
           --cov-report=xml \
           --numprocesses=auto
@@ -105,15 +102,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: astral-sh/setup-uv@v4
+    - name: Set up uv, Python
+      uses: astral-sh/setup-uv@v5
       with:
-        enable-cache: true
         cache-dependency-glob: "**/pyproject.toml"
+        python-version: ${{ env.python-version }}
 
-    - name: Install Python, the package, and dependencies
-      run: |
-        uv venv --python=${{ env.python-version }}
-        uv pip install .[tests] pytest-regex
+    - name: Install the package and dependencies
+      run: uv pip install .[tests]
 
     - name: Download artifacts
       uses: actions/download-artifact@v4
@@ -123,9 +119,7 @@ jobs:
         merge-multiple: true
 
     - name: Compile report
-      run: |
-        uv run --no-sync \
-          python -m sdmx.testing.report
+      run: uv run --no-sync python -m sdmx.testing.report
 
     - name: Upload report as a pages artifact
       uses: actions/upload-pages-artifact@v3
