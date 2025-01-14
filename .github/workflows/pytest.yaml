@@ -38,12 +38,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: astral-sh/setup-uv@v5
+    - name: Set up uv, Python
+      uses: astral-sh/setup-uv@v5
       with:
         cache-dependency-glob: "**/pyproject.toml"
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python, the package, and dependencies
+    - name: Install the package and dependencies
       run: uv pip install .[tests]
 
     - name: Run pytest
