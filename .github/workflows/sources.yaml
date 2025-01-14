@@ -95,8 +95,7 @@ jobs:
         compression-level: 1
 
     - name: Upload test coverage to Codecov.io
-      uses: codecov/codecov-action@v4
-      with: { token: "${{ secrets.CODECOV_TOKEN }}" }
+      uses: codecov/codecov-action@v5
 
   collect:
     needs: source
