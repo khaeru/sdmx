@@ -170,7 +170,7 @@ def validate_xml(
         return True
 
 
-def _extracted_zipball(version: Version) -> Path:
+def _extracted_zipball(version: Version, force: bool = False) -> Path:
     """Retrieve, cache, and extract the SDMX-ML schemas for `version`.
 
     1. Query the GitHub REST API to identify a URL for the `version` in zipball format.
@@ -217,7 +217,7 @@ def _extracted_zipball(version: Version) -> Path:
     target = platformdirs.user_cache_path("sdmx").joinpath(filename)
 
     # Avoid downloading if the same file is already present
-    if target.exists():
+    if target.exists() and not force:
         log.info(f"Use existing {target}")
         resp.close()
     else:
@@ -226,12 +226,19 @@ def _extracted_zipball(version: Version) -> Path:
         target.write_bytes(resp.content)
 
     with zipfile.ZipFile(target) as zf:
-        # Unpack the entire archive
-        zf.extractall(target.parent)
         # The first name list is the top-level directory within the file
-        subdir = zf.namelist()[0]
+        result = target.parent.joinpath(zf.namelist()[0])
 
-    return target.parent.joinpath(subdir)
+        if result.exists() and not force:
+            log.info(
+                f"Destination {result} exists → skip extraction.\n"
+                "Remove the directory or give force=True to override"
+            )
+        else:
+            # Unpack the entire archive
+            zf.extractall(target.parent)
+
+    return result
 
 
 def _handle_validate_args(
