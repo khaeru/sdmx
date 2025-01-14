@@ -3,10 +3,14 @@
 What's new?
 ***********
 
-.. _2.21.0:
+.. _2.21.1:
 
-.. Next release
-.. ============
+Next release
+============
+
+- Bug fix for writing :xml:`<str:Categorisation>` to SDMX-ML: invalid input SDMX-ML with non-standard classes tolerated in v2.21.0 (:pull:`218`) could not be round-tripped back to file (:pull:`221`).
+
+.. _2.21.0:
 
 v2.21.0 (2025-01-13)
 ====================
