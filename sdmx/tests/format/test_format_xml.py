@@ -31,7 +31,7 @@ def test_class_for_tag():
 
 
 @pytest.mark.network
-@pytest.mark.parametrize("version", ["2.1", "3.0"])
+@pytest.mark.parametrize("version", ["2.1", "3.0.0"])
 def test_install_schemas(installed_schemas, version):
     """Test that XSD files are downloaded and ready for use in validation."""
     # Look for a couple of the expected files
@@ -62,10 +62,9 @@ def test_install_schemas_invalid_version(version):
 
 
 @pytest.mark.network
-def test_validate_xml_from_v2_1_samples(tmp_path, specimen, installed_schemas):
-    """Use official samples to ensure validation of v2.1 messages works correctly."""
-    # Samples are somewhat spread out, and some are known broken so we pick a bunch
-    for parts in [
+@pytest.mark.parametrize(
+    "parts",
+    [
         ("v21", "xml", "common", "common.xml"),
         ("v21", "xml", "demography", "demography.xml"),
         ("v21", "xml", "demography", "esms.xml"),
@@ -76,33 +75,39 @@ def test_validate_xml_from_v2_1_samples(tmp_path, specimen, installed_schemas):
         ("v21", "xml", "query", "response_cl_all.xml"),
         ("v21", "xml", "query", "query_esms_children.xml"),
         ("v21", "xml", "query", "response_esms_children.xml"),
-    ]:
-        with specimen(str(Path(*parts))) as sample:
-            assert sdmx.validate_xml(
-                sample, installed_schemas.joinpath("2.1"), version="2.1"
-            )
+    ],
+)
+def test_validate_xml_from_v2_1_samples(tmp_path, specimen, installed_schemas, parts):
+    """Use official samples to ensure validation of v2.1 messages works correctly."""
+    # Samples are somewhat spread out, and some are known broken so we pick a bunch
+    with specimen(str(Path(*parts))) as sample:
+        assert sdmx.validate_xml(sample, installed_schemas, version="2.1")
+
+
+@pytest.fixture(scope="module")
+def v30_zipball_path(installed_schemas):
+    yield _extracted_zipball(Version["3.0.0"])
 
 
 @pytest.mark.network
-def test_validate_xml_from_v3_0_samples(tmp_path, installed_schemas):
+@pytest.mark.parametrize(
+    "parts",
+    [
+        # Samples are somewhat spread out, and some are known broken so we pick a bunch
+        ("Codelist", "codelist.xml"),
+        ("Codelist", "codelist - extended.xml"),
+        ("Concept Scheme", "conceptscheme.xml"),
+        ("Data Structure Definition", "ECB_EXR.xml"),
+        ("Dataflow", "dataflow.xml"),
+        ("Geospatial", "geospatial_geographiccodelist.xml"),
+    ],
+)
+def test_validate_xml_from_v3_0_samples(installed_schemas, v30_zipball_path, parts):
     """Use official samples to ensure validation of v3.0 messages works correctly."""
-    extracted_content = _extracted_zipball(Version["3.0.0"])
 
-    # Schemas as just in a flat directory
-    schema_dir = extracted_content.joinpath("schemas")
-
-    # Samples are somewhat spread out, and some are known broken so we pick a bunch
-    samples_dir = extracted_content.joinpath("samples")
-    samples = [
-        samples_dir / "Codelist" / "codelist.xml",
-        samples_dir / "Codelist" / "codelist - extended.xml",
-        samples_dir / "Concept Scheme" / "conceptscheme.xml",
-        samples_dir / "Data Structure Definition" / "ECB_EXR.xml",
-        samples_dir / "Dataflow" / "dataflow.xml",
-        samples_dir / "Geospatial" / "geospatial_geographiccodelist.xml",
-    ]
-    for sample in samples:
-        assert sdmx.validate_xml(sample, schema_dir, version="3.0")
+    assert sdmx.validate_xml(
+        v30_zipball_path.joinpath("samples", *parts), installed_schemas, version="3.0.0"
+    )
 
 
 @pytest.mark.network
