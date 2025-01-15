@@ -51,10 +51,10 @@ jobs:
       run: |
         uv run --no-sync \
           pytest \
-          -ra --color=yes --verbose \
+          --color=yes --durations=20 -ra --verbose \
           --sdmx-fetch-data \
           --cov-report=xml \
-          --numprocesses auto
+          --numprocesses=auto
       shell: bash
 
     - name: Upload test coverage to Codecov.io
