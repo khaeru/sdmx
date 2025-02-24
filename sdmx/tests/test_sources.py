@@ -368,60 +368,61 @@ class TestIMF(DataSourceTest):
     source_id = "IMF"
 
 
-# As of 2025-01-10, all endpoints aside from SDMX 2.1 /data/ return 403
-IMF_DATA_XFAIL: dict[str, Union[type[Exception], tuple[type[Exception], str]]] = {
-    k: HTTPError
-    for k in """
-    actualconstraint
-    agencyscheme
-    allowedconstraint
-    dataconsumerscheme
-    dataproviderscheme
-    organisationscheme
-    provisionagreement
-    registration
-    structure
-    structureset
-    """.split()
-}
-
-
 class TestIMF_DATA(DataSourceTest):
     source_id = "IMF_DATA"
 
-    endpoint_args = dict(
+    endpoint_args = {
         # As indicated in the API documentation
-        data=dict(
+        "data": dict(
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
             params=dict(startPeriod=2018)
-        )
-    )
+        ),
+        "codelist": dict(resource_id="CL_COUNTRY"),
+        "structure": dict(resource_id="DSD_CPI"),
+        "conceptscheme": dict(resource_id="CS_MASTER_SYSTEM")
+    }
 
-    xfail = IMF_DATA_XFAIL | dict(
-        metadata=NotImplementedError,
-        registration=ValueError,
-    )
+    xfail = {
+        "actualconstraint": HTTPError,
+        "agencyscheme": HTTPError,
+        "allowedconstraint": HTTPError,
+        "dataconsumerscheme": HTTPError,
+        "dataproviderscheme": HTTPError,
+        "organisationscheme": HTTPError,
+        "provisionagreement": HTTPError,
+        "registration": HTTPError,
+        "structureset": HTTPError
+    }
 
 
 class TestIMF_DATA3(DataSourceTest):
     source_id = "IMF_DATA3"
 
-    endpoint_args = dict(
-        data=dict(
+    endpoint_args = {
+        "data": dict(
             context="dataflow",
-            agency_id="IMF",
+            agency_id="IMF.STA",
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
             params={"c[TIME_PERIOD]": "ge:2018"}
         ),
-        metadata=dict(provider_id="IMF"),
-    )
+                "codelist": dict(resource_id="CL_COUNTRY"),
+        "structure": dict(resource_id="DSD_CPI"),
+        "conceptscheme": dict(resource_id="CS_MASTER_SYSTEM")
+    }
 
-    xfail = IMF_DATA_XFAIL | dict(
-        data=HTTPError,  # 403
-        metadata=HTTPError,  # 403
-    )
+    xfail = {
+        "actualconstraint": HTTPError,
+        "agencyscheme": HTTPError,
+        "allowedconstraint": HTTPError,
+        "dataconsumerscheme": HTTPError,
+        "dataproviderscheme": HTTPError,
+        "organisationscheme": HTTPError,
+        "provisionagreement": HTTPError,
+        "registration": HTTPError,
+        "structureset": HTTPError
+    }
 
 
 class TestINEGI(DataSourceTest):
