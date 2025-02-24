@@ -369,7 +369,7 @@ class TestIMF(DataSourceTest):
 
 
 # As of 2025-01-10, all endpoints aside from SDMX 2.1 /data/ return 403
-IMF_BETA_XFAIL: dict[str, Union[type[Exception], tuple[type[Exception], str]]] = {
+IMF_DATA_XFAIL: dict[str, Union[type[Exception], tuple[type[Exception], str]]] = {
     k: HTTPError
     for k in """
     actualconstraint
