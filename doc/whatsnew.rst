@@ -3,10 +3,14 @@
 What's new?
 ***********
 
-.. _2.21.1:
+.. _2.21.2:
 
 .. Next release
 .. ============
+
+v2.21.2 (2025-02-24)
+====================
+- Rename :ref:`IMF_beta, IMF_beta3 <IMF>` data sources to :ref:`IMF_DATA, IMF_DATA3 <IMF>` and update documentation on 3 distinct IMF-run web services (:pull:`225`, :issue:`224`).
 
 v2.21.1 (2025-01-14)
 ====================
