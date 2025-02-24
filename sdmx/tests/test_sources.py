@@ -418,7 +418,7 @@ class TestIMF_DATA3(DataSourceTest):
         metadata=dict(provider_id="IMF"),
     )
 
-    xfail = IMF_DATA3_XFAIL | dict(
+    xfail = IMF_DATA_XFAIL | dict(
         data=HTTPError,  # 403
         metadata=HTTPError,  # 403
     )
