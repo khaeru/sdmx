@@ -337,7 +337,7 @@ SDMX-ML —
 - The source appears to provide a subset of the data available on https://data.imf.org.
 - Supports series-key-only and hence dataset-based key validation and construction.
 
-``IMF_beta``, ``IMF_beta3``: api.imf.org
+``IMF_DATA``, ``IMF_DATA3``: api.imf.org
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SDMX-ML —
@@ -351,12 +351,7 @@ SDMX-ML —
        This is a beta version; the data is not final and should not be used for actual work.
 
    Users should heed this message.
-   The source IDs used in :mod:`sdmx` may change if and when this source exits beta and enters production, or is designated as the recommended, primary, or sole IMF source.
 
-- The API documentation indicates "Our data are available through SDMX 2.1 and SDMX 3.0 APIs," but the documentation pages mention only the SDMX 2.1 (SDMX-REST 1.x) base URL, https://api.imf.org/external/sdmx/2.1.
-  The base URL used by :mod:`sdmx` for the SDMX 3.0 (SDMX-REST 2.x) API is inferred.
-- :mod:`sdmx` provides access to both versions of the API with IDs ``IMF_beta`` and ``IMF_beta3``.
-  As of 2025-01-10, both return HTTP **403 Forbidden** to every request except the SDMX 2.1 data query illustrated in the API documentation.
 
 .. _INEGI:
 
