@@ -312,11 +312,12 @@ API documentation `1 <https://datahelp.imf.org/knowledgebase/articles/1952905-sd
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SDMX-ML —
-`Website <https://sdmxcentral.imf.org/>`__
+`Website <https://sdmxcentral.imf.org/>`__ —
+`API documentation <https://dsbb.imf.org/content/Pdfs/IMF%20SDMX%20Central%20Web%20Services%20Guide%20Published%2010_17_2019.pdf>`__
 
-- This appears to be an instance of the “Fusion Metadata Registry” software.
+- This source does not contain data and should only be used to query structures.
+- This is an instance of the “Fusion Metadata Registry” software.
   Such instances also expose SDMX 2.1 and 3.0 APIs.
-- No API documentation appears to be available.
 - The :mod:`sdmx` source with ID ``IMF`` corresponds to the SDMX 2.1 (SDMX-REST 1.x) API with base URL https://sdmxcentral.imf.org/ws/public/sdmxapi/rest.
   The web interface suggests URLs for the SDMX 3.0.0 (SDMX-REST 2.x) API with base URL https://sdmxcentral.imf.org/sdmx/v2.
   This API can be accessed by modifying the :attr:`.Source.url` and :attr:`~.Source.versions` attributes, or by constructing a new Source.
@@ -331,11 +332,7 @@ SDMX-ML —
      client.source.url = "https://sdmxcentral.imf.org/sdmx/v2"
      client.source.versions = {Version["3.0.0"]}
 
-     # Retrieve an SDMX-ML 3.0.0 structure message
-     message = client.dataflow("01R")
 
-- The source appears to provide a subset of the data available on https://data.imf.org.
-- Supports series-key-only and hence dataset-based key validation and construction.
 
 ``IMF_DATA``, ``IMF_DATA3``: api.imf.org
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
