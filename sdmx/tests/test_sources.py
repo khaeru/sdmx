@@ -375,18 +375,8 @@ IMF_BETA_XFAIL: dict[str, Union[type[Exception], tuple[type[Exception], str]]] =
     actualconstraint
     agencyscheme
     allowedconstraint
-    categorisation
-    categoryscheme
-    codelist
-    conceptscheme
-    contentconstraint
     dataconsumerscheme
-    dataflow
     dataproviderscheme
-    datastructure
-    hierarchicalcodelist
-    metadataflow
-    metadatastructure
     organisationscheme
     provisionagreement
     registration
@@ -396,8 +386,8 @@ IMF_BETA_XFAIL: dict[str, Union[type[Exception], tuple[type[Exception], str]]] =
 }
 
 
-class TestIMF_beta(DataSourceTest):
-    source_id = "IMF_beta"
+class TestIMF_DATA(DataSourceTest):
+    source_id = "IMF_DATA"
 
     endpoint_args = dict(
         # As indicated in the API documentation
@@ -405,19 +395,17 @@ class TestIMF_beta(DataSourceTest):
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
             params=dict(startPeriod=2018),
-            # Does not appear to affect 403
-            # headers={"User-Agent": "idata-script-client"},
         )
     )
 
-    xfail = IMF_BETA_XFAIL | dict(
+    xfail = IMF_DATA_XFAIL | dict(
         metadata=NotImplementedError,
         registration=ValueError,
     )
 
 
-class TestIMF_beta3(DataSourceTest):
-    source_id = "IMF_beta3"
+class TestIMF_DATA3(DataSourceTest):
+    source_id = "IMF_DATA3"
 
     endpoint_args = dict(
         data=dict(
@@ -425,13 +413,12 @@ class TestIMF_beta3(DataSourceTest):
             agency_id="IMF",
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
-            # Not yet supported
-            # params={"c[TIME_PERIOD]": "ge:2018"},
+            params=dict(startPeriod=2018)
         ),
         metadata=dict(provider_id="IMF"),
     )
 
-    xfail = IMF_BETA_XFAIL | dict(
+    xfail = IMF_DATA3_XFAIL | dict(
         data=HTTPError,  # 403
         metadata=HTTPError,  # 403
     )
