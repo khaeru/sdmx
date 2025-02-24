@@ -242,7 +242,7 @@
       "provisionagreement": false,
       "registration": false,
       "structure": false,
-      "structureset": false,
+      "structureset": false
     },
     "headers": {
       "data": {
@@ -264,7 +264,7 @@
       "provisionagreement": false,
       "registration": false,
       "structure": false,
-      "structureset": false,
+      "structureset": false
     },
     "headers": {
       "data": {
