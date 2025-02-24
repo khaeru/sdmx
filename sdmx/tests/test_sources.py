@@ -394,7 +394,7 @@ class TestIMF_DATA(DataSourceTest):
         data=dict(
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
-            params=dict(startPeriod=2018),
+            params=dict(startPeriod=2018)
         )
     )
 
@@ -413,7 +413,7 @@ class TestIMF_DATA3(DataSourceTest):
             agency_id="IMF",
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
-            params=dict(startPeriod=2018)
+            params={"c[TIME_PERIOD]": "ge:2018"}
         ),
         metadata=dict(provider_id="IMF"),
     )
