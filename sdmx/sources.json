@@ -254,7 +254,7 @@
     "id": "IMF_DATA3",
     "url": "https://api.imf.org/external/sdmx/3.0",
     "name": "International Monetary Fund - Beta Data portal (SDMX 3.0)",
-        "supports": {
+    "supports": {
       "actualconstraint": false,
       "agencyscheme": false,
       "allowedconstraint": false,
