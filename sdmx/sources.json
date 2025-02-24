@@ -232,6 +232,18 @@
     "id": "IMF_DATA",
     "url": "https://api.imf.org/external/sdmx/2.1",
     "name": "International Monetary Fund - Beta Data portal",
+    "supports": {
+      "actualconstraint": false,
+      "agencyscheme": false,
+      "allowedconstraint": false,
+      "dataconsumerscheme": false,
+      "dataproviderscheme": false,
+      "organisationscheme": false,
+      "provisionagreement": false,
+      "registration": false,
+      "structure": false,
+      "structureset": false,
+    },
     "headers": {
       "data": {
         "User-Agent": "idata-script-client"
@@ -242,6 +254,18 @@
     "id": "IMF_DATA3",
     "url": "https://api.imf.org/external/sdmx/3.0",
     "name": "International Monetary Fund - Beta Data portal (SDMX 3.0)",
+        "supports": {
+      "actualconstraint": false,
+      "agencyscheme": false,
+      "allowedconstraint": false,
+      "dataconsumerscheme": false,
+      "dataproviderscheme": false,
+      "organisationscheme": false,
+      "provisionagreement": false,
+      "registration": false,
+      "structure": false,
+      "structureset": false,
+    },
     "headers": {
       "data": {
         "User-Agent": "idata-script-client"
