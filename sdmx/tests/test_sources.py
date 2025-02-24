@@ -376,11 +376,11 @@ class TestIMF_DATA(DataSourceTest):
         "data": dict(
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
-            params=dict(startPeriod=2018)
+            params=dict(startPeriod=2018),
         ),
         "codelist": dict(resource_id="CL_COUNTRY"),
         "structure": dict(resource_id="DSD_CPI"),
-        "conceptscheme": dict(resource_id="CS_MASTER_SYSTEM")
+        "conceptscheme": dict(resource_id="CS_MASTER_SYSTEM"),
     }
 
     xfail = {
@@ -392,7 +392,7 @@ class TestIMF_DATA(DataSourceTest):
         "organisationscheme": HTTPError,
         "provisionagreement": HTTPError,
         "registration": HTTPError,
-        "structureset": HTTPError
+        "structureset": HTTPError,
     }
 
 
@@ -405,11 +405,11 @@ class TestIMF_DATA3(DataSourceTest):
             agency_id="IMF.STA",
             resource_id="CPI",
             key="111.CPI.CP01.IX.M",
-            params={"c[TIME_PERIOD]": "ge:2018"}
+            params={"c[TIME_PERIOD]": "ge:2018"},
         ),
-                "codelist": dict(resource_id="CL_COUNTRY"),
+        "codelist": dict(resource_id="CL_COUNTRY"),
         "structure": dict(resource_id="DSD_CPI"),
-        "conceptscheme": dict(resource_id="CS_MASTER_SYSTEM")
+        "conceptscheme": dict(resource_id="CS_MASTER_SYSTEM"),
     }
 
     xfail = {
@@ -421,7 +421,7 @@ class TestIMF_DATA3(DataSourceTest):
         "organisationscheme": HTTPError,
         "provisionagreement": HTTPError,
         "registration": HTTPError,
-        "structureset": HTTPError
+        "structureset": HTTPError,
     }
 
 
