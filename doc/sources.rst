@@ -312,11 +312,12 @@ API documentation `1 <https://datahelp.imf.org/knowledgebase/articles/1952905-sd
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SDMX-ML —
-`Website <https://sdmxcentral.imf.org/>`__
+`Website <https://sdmxcentral.imf.org/>`__ —
+`API documentation <https://dsbb.imf.org/content/Pdfs/IMF%20SDMX%20Central%20Web%20Services%20Guide%20Published%2010_17_2019.pdf>`__
 
-- This appears to be an instance of the “Fusion Metadata Registry” software.
+- This source does not contain data and should only be used to query structures.
+- This is an instance of the “Fusion Metadata Registry” software.
   Such instances also expose SDMX 2.1 and 3.0 APIs.
-- No API documentation appears to be available.
 - The :mod:`sdmx` source with ID ``IMF`` corresponds to the SDMX 2.1 (SDMX-REST 1.x) API with base URL https://sdmxcentral.imf.org/ws/public/sdmxapi/rest.
   The web interface suggests URLs for the SDMX 3.0.0 (SDMX-REST 2.x) API with base URL https://sdmxcentral.imf.org/sdmx/v2.
   This API can be accessed by modifying the :attr:`.Source.url` and :attr:`~.Source.versions` attributes, or by constructing a new Source.
@@ -331,13 +332,9 @@ SDMX-ML —
      client.source.url = "https://sdmxcentral.imf.org/sdmx/v2"
      client.source.versions = {Version["3.0.0"]}
 
-     # Retrieve an SDMX-ML 3.0.0 structure message
-     message = client.dataflow("01R")
 
-- The source appears to provide a subset of the data available on https://data.imf.org.
-- Supports series-key-only and hence dataset-based key validation and construction.
 
-``IMF_beta``, ``IMF_beta3``: api.imf.org
+``IMF_DATA``, ``IMF_DATA3``: api.imf.org
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SDMX-ML —
@@ -351,12 +348,7 @@ SDMX-ML —
        This is a beta version; the data is not final and should not be used for actual work.
 
    Users should heed this message.
-   The source IDs used in :mod:`sdmx` may change if and when this source exits beta and enters production, or is designated as the recommended, primary, or sole IMF source.
 
-- The API documentation indicates "Our data are available through SDMX 2.1 and SDMX 3.0 APIs," but the documentation pages mention only the SDMX 2.1 (SDMX-REST 1.x) base URL, https://api.imf.org/external/sdmx/2.1.
-  The base URL used by :mod:`sdmx` for the SDMX 3.0 (SDMX-REST 2.x) API is inferred.
-- :mod:`sdmx` provides access to both versions of the API with IDs ``IMF_beta`` and ``IMF_beta3``.
-  As of 2025-01-10, both return HTTP **403 Forbidden** to every request except the SDMX 2.1 data query illustrated in the API documentation.
 
 .. _INEGI:
 
