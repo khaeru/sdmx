@@ -243,11 +243,6 @@
       "registration": false,
       "structure": false,
       "structureset": false
-    },
-    "headers": {
-      "data": {
-        "User-Agent": "idata-script-client"
-      }
     }
   },
   {
@@ -265,11 +260,6 @@
       "registration": false,
       "structure": false,
       "structureset": false
-    },
-    "headers": {
-      "data": {
-        "User-Agent": "idata-script-client"
-      }
     },
     "versions": [
       "3.0.0"
