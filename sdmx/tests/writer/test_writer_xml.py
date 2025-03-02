@@ -86,7 +86,7 @@ class TestNameableArtefact:
         )
         dsd = v21.DataStructureDefinition(**args)
         na = v21.DataflowDefinition(
-            annotations=[common.Annotation(id="baz", text="qux")],  # Annotable Artefact
+            annotations=[v21.Annotation(id="baz", text="qux")],  # Annotable Artefact
             **args,  # Identifiable, Nameable, Versionable, Maintainable
             structure=dsd,  # Dataflow-specific attributes
         )

@@ -34,6 +34,7 @@ from .common import (
 
 # Classes defined directly in the current file, in the order they appear
 __all__ = [
+    "Annotation",
     "SelectionValue",
     "MemberValue",
     "TimeRangeValue",
@@ -92,6 +93,16 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+
+# §3.2: Base Structures
+
+
+@dataclass
+class Annotation(common.BaseAnnotation):
+    """SDMX 2.1 Annotation.
+
+    Identical to its parent class.
+    """
 
 
 # §10.3: Constraints

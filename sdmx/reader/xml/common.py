@@ -494,7 +494,7 @@ class XMLEventReader(BaseReader):
         """
         if elem is not None:
             kwargs.setdefault("annotations", [])
-            kwargs["annotations"].extend(self.pop_all(common.Annotation))
+            kwargs["annotations"].extend(self.pop_all(self.model.Annotation))
         return cls(**kwargs)
 
     def identifiable(self, cls, elem, **kwargs):

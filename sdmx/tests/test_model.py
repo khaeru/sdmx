@@ -5,7 +5,6 @@ from sdmx.model import v21, v30
 
 CLASSES = [
     # Appearing in .model.common
-    "Annotation",
     "AnnotableArtefact",
     "IdentifiableArtefact",
     "NameableArtefact",
@@ -99,6 +98,7 @@ CLASSES = [
     # Appearing in model.Version
     "Version",
     # Classes that are distinct in .model.v21 versus .model.v30
+    "Annotation",
     "SelectionValue",
     "MemberValue",
     "TimeRangeValue",

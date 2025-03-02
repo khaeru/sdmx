@@ -42,12 +42,13 @@ from .internationalstring import (
 from .version import Version
 
 __all__ = [
+    # Re-exported from other modules
     "DEFAULT_LOCALE",
     "InternationalString",
     "Version",
-    # In the order they appear in this file
+    # From the current module, in the order they appear in this file.
+    # Classes named Base* are not included
     "ConstrainableArtefact",
-    "Annotation",
     "AnnotableArtefact",
     "IdentifiableArtefact",
     "NameableArtefact",
@@ -158,7 +159,7 @@ class ConstrainableArtefact:
 
 
 @dataclass
-class Annotation:
+class BaseAnnotation:
     #: Can be used to disambiguate multiple annotations for one AnnotableArtefact.
     id: Optional[str] = None
     #: Title, used to identify an annotation.
@@ -171,6 +172,19 @@ class Annotation:
     #: Content of the annotation.
     text: InternationalStringDescriptor = InternationalStringDescriptor()
 
+    @property
+    def value(self) -> Optional[str]:
+        """A non-localised version of the Annotation content.
+
+        This feature was added by SDMX 3.0.0. In :class:`v30.Annotation`, this can be
+        read and written. In this default implementation and in :class:`v21.Annotation`
+        the value is always :any:`None`.
+
+        :mod:`sdmx` provides a common attribute so that both classes have identical type
+        signatures.
+        """
+        return None
+
 
 @dataclass
 class AnnotableArtefact:
@@ -178,7 +192,7 @@ class AnnotableArtefact:
     #:
     #: :mod:`.sdmx` implementation detail: The IM does not specify the name of this
     #: feature.
-    annotations: list[Annotation] = field(default_factory=list)
+    annotations: list[BaseAnnotation] = field(default_factory=list)
 
     def get_annotation(self, **attrib):
         """Return a :class:`Annotation` with given `attrib`, e.g. 'id'.
@@ -2697,3 +2711,17 @@ class ClassFinder:
     # To allow lru_cache() above
     def __hash__(self):
         return hash(self.module_name)
+
+
+def __getattr__(name: str):
+    if name == "Annotation":
+        from warnings import warn
+
+        from .v21 import Annotation
+
+        warn(
+            "from sdmx.model.common import Annotation. Use one of sdmx.model.{v21,v30}",
+            DeprecationWarning,
+        )
+        return Annotation
+    raise AttributeError(name)

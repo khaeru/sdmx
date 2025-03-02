@@ -9,7 +9,7 @@ from sdmx.model import common, v21
 from sdmx.model.common import (
     Agency,
     AnnotableArtefact,
-    Annotation,
+    BaseAnnotation,
     Component,
     ComponentList,
     Contact,
@@ -21,10 +21,10 @@ from sdmx.model.common import (
 )
 
 
-class TestAnnotation:
+class TestBaseAnnotation:
     def test_text(self) -> None:
         """`text` can be :class:`str`."""
-        a = Annotation(text="Foo")
+        a = BaseAnnotation(text="Foo")
 
         assert a.text.localizations["en"] == "Foo"
 
@@ -33,8 +33,8 @@ class TestAnnotableArtefact:
     def test_get_annotation(self):
         aa = AnnotableArtefact(
             annotations=[
-                Annotation(id="foo", text="bar"),
-                Annotation(id="baz", title="baz_title", text="baz_text"),
+                v21.Annotation(id="foo", text="bar"),
+                v21.Annotation(id="baz", title="baz_title", text="baz_text"),
             ]
         )
 
@@ -52,7 +52,7 @@ class TestAnnotableArtefact:
 
     def test_pop_annotation(self):
         aa = AnnotableArtefact()
-        anno = Annotation(id="foo", text="bar")
+        anno = v21.Annotation(id="foo", text="bar")
 
         assert 0 == len(aa.annotations)
         aa.annotations.append(anno)
@@ -69,8 +69,8 @@ class TestAnnotableArtefact:
 
         value = dict(foo=1.1, bar=2, baz=True)
 
-        aa.annotations.append(Annotation(id="test-anno0", text=repr(value)))
-        aa.annotations.append(Annotation(id="test-anno1", text="value['foo']"))
+        aa.annotations.append(v21.Annotation(id="test-anno0", text=repr(value)))
+        aa.annotations.append(v21.Annotation(id="test-anno1", text="value['foo']"))
 
         # Returns None for a missing ID
         assert None is aa.eval_annotation(id="wrong-id")

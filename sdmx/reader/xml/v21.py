@@ -432,10 +432,14 @@ def _a(reader, elem):
         url=None if url is NoText else url,
     )
 
+    # Annotation.value: SDMX 3.0.0 only
+    if value := reader.pop_single("AnnotationValue"):
+        args["value"] = value
+
     # Optional 'id' attribute
     setdefault_attrib(args, elem, "id")
 
-    a = common.Annotation(**args)
+    a = reader.model.Annotation(**args)
     add_localizations(a.text, reader.pop_all("AnnotationText"))
 
     return a
@@ -646,7 +650,7 @@ def _component_end(reader: Reader, elem):  # noqa: C901
         )
         log.error(message)
         args.setdefault("annotations", []).append(
-            common.Annotation(id=f"{__name__}-parse-error", text=message)
+            v21.Annotation(id=f"{__name__}-parse-error", text=message)
         )
 
     # DataAttributeOnly

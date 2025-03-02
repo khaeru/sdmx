@@ -4,7 +4,6 @@
 :obj:`~.common.Agency`
 :obj:`~.common.AgencyScheme`
 :obj:`~.common.AnnotableArtefact`
-:obj:`~.common.Annotation`
 :obj:`~.common.AttributeDescriptor`
 :obj:`~.common.AttributeRelationship`
 :obj:`~.common.AttributeValue`

@@ -8,6 +8,7 @@ import sdmx.message
 from sdmx.model import v21
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
+    Annotation,
     AttributeDescriptor,
     AttributeValue,
     Code,
@@ -37,6 +38,18 @@ from sdmx.model.v21 import (
     TargetObjectKey,
     value_for_dsd_ref,
 )
+
+
+class TestAnnotation:
+    def test_value(self) -> None:
+        a0 = Annotation()
+
+        # Value defaults None
+        assert None is a0.value
+
+        # Value cannot be set
+        with pytest.raises(AttributeError):
+            a0.value = "foo"  # type: ignore [misc]
 
 
 class TestComponent:

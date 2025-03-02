@@ -67,7 +67,7 @@ start(
 )(None)
 
 # New qnames in SDMX-ML 3.0 parsed using existing methods from .reader.xml.v21
-end("str:GeoCell str:GridDefinition str:Value")(v21._text)
+end("com:AnnotationValue str:GeoCell str:GridDefinition str:Value")(v21._text)
 end("str:GeographicCodelist str:ValueList")(v21._itemscheme)
 start("str:GeoFeatureSetCode str:GeoGridCode str:ValueItem", only=False)(
     v21._item_start
