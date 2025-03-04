@@ -132,27 +132,14 @@ def validate_xml(
         if `msg` contains valid XML, but with a root element that is not part of the
         SDMX-ML standard.
     """
-    schema_dir, version = _handle_validate_args(schema_dir, version)
-
-    # Find SDMXMessage.xsd in `schema_dir` or a subdirectory
-    for candidate in schema_dir, schema_dir.joinpath(version.name):
-        try:
-            # Turn the XSD into a schema object
-            xml_schema = etree.XMLSchema(file=candidate.joinpath("SDMXMessage.xsd"))
-            break
-        except Exception:
-            xml_schema = None
-
-    if xml_schema is None:
-        raise FileNotFoundError(f"Could not find XSD files in {schema_dir}")
+    # Retrieve the XMLSchema
+    schema = construct_schema(schema_dir, version)
 
     # Parse the given document
     msg_doc = etree.parse(msg)
 
-    if not xml_schema.validate(msg_doc):
-        for i, entry in enumerate(
-            cast(Iterable["etree._LogEntry"], xml_schema.error_log)
-        ):
+    if not schema.validate(msg_doc):
+        for i, entry in enumerate(cast(Iterable["etree._LogEntry"], schema.error_log)):
             if (
                 i == 0
                 and "No matching global declaration available for the validation root"
@@ -168,6 +155,50 @@ def validate_xml(
         return False
     else:
         return True
+
+
+def construct_schema(
+    schema_dir: Optional[Path] = None,
+    version: Union[str, Version] = Version["2.1"],
+) -> "etree.XMLSchema":
+    """Construct a :class:`lxml.etree.XMLSchema` for SDMX-ML of the given `version`.
+
+    :file:`SDMXCommon.xsd` includes the documentation:
+
+       XHTMLType allows for mixed content of text and XHTML tags. When using this type,
+       one will have to provide a reference to the XHTML schema, since the processing of
+       the tags within this type is strict, meaning that they are validated against the
+       XHTML schema provided.
+
+    This function does so by inserting an :xml:`<xs:import>` element that refers to
+    http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd, which is the URL given by
+    https://www.w3.org/TR/xhtml1-schema. With the :class:`.XMLSchema` returned by this
+    document, it is possible to validate :xml:`<common:StructuredText>` elements that
+    represent :class:`.XHTMLAttributeValue`.
+    """
+    # Find SDMXMessage.xsd in `schema_dir` or a subdirectory
+    schema_dir, version = _handle_validate_args(schema_dir, version)
+    for candidate in schema_dir, schema_dir.joinpath(version.name):
+        try:
+            # Parse the XSD into a schema object
+            schema_etree = etree.parse(candidate.joinpath("SDMXMessage.xsd"))
+            break
+        except Exception:  # e.g. FileNotFoundError
+            schema_etree = None
+
+    if schema_etree is None:
+        raise FileNotFoundError(f"Could not find XSD files in {schema_dir}")
+
+    # Modify the schema by inserting an <xs:import > reference to the XHTML schema URL
+    elem = etree.Element(
+        "{http://www.w3.org/2001/XMLSchema}import",
+        namespace="http://www.w3.org/1999/xhtml",
+        schemaLocation="http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd",
+    )
+    schema_etree.getroot().insert(0, elem)
+
+    # Parse the ElementTree to an XMLSchema and return
+    return etree.XMLSchema(schema_etree)
 
 
 def _extracted_zipball(version: Version, force: bool = False) -> Path:
