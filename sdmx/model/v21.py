@@ -543,8 +543,12 @@ class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttribute
 
 
 @dataclass
-class MetadataReport:
-    """SDMX 2.1 MetadataReport."""
+class MetadataReport(common.AnnotableArtefact):
+    """SDMX 2.1 MetadataReport.
+
+    .. note:: The SDMX 2.1 IM does not specify that this is a subtype of
+       :class:`.AnnotableArtefact`, but this is implied by the XSD schemas for SDMX-ML.
+    """
 
     metadata: list["TReportedAttribute"] = field(default_factory=list)
     target: Optional[MetadataTarget] = None
