@@ -1,5 +1,6 @@
 """SDMX-ML 3.0.0 reader."""
 
+import logging
 from typing import Any
 
 import sdmx.urn
@@ -9,6 +10,8 @@ from sdmx.model import v30 as model
 
 from . import v21
 from .common import BaseReference, NotReference, XMLEventReader
+
+log = logging.getLogger(__name__)
 
 
 class Reference(BaseReference):
@@ -79,6 +82,13 @@ end("str:MetadataAttributeList")(v21._cl)
 end("str:DataConstraint")(v21._cc)
 end("str:KeyValue")(v21._ms)
 end("str:Observation")(v21._ar_kind)
+
+
+@end("com:Link")
+def _link(reader, elem) -> None:
+    # TODO Once https://github.com/khaeru/sdmx/issues/228 is resolved, store on
+    # IdentifiableArtefact or similar
+    log.debug(f"Ignored: <com:Link> with attributes {elem.attrib}")
 
 
 @end("str:Codelist")
