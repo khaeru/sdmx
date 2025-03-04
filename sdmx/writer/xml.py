@@ -6,9 +6,11 @@
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
 import logging
+from collections.abc import Iterable, MutableMapping
 from datetime import datetime
-from typing import Iterable, Literal, MutableMapping, Optional
+from typing import Literal, Optional
 
+import lxml
 from lxml import etree
 from lxml.builder import ElementMaker
 
@@ -439,7 +441,7 @@ def _contact(obj: model.Contact):
 
 
 @writer
-def _component(obj: model.Component, dsd, *, attrib: Optional[dict] = None):
+def _component(obj: model.Component, dsd=None, *, attrib: Optional[dict] = None):
     child = []
     attrib = attrib or dict()
 
@@ -717,7 +719,7 @@ def _obs(obj: model.Observation, struct_spec=False):
 
 
 @writer
-def _ds(obj: model.DataSet):
+def _ds(obj: model.DataSet) -> "lxml.etree._Element":
     if len(obj.group):
         raise NotImplementedError("to_xml() for DataSet with groups")
 
@@ -726,7 +728,7 @@ def _ds(obj: model.DataSet):
         attrib["action"] = str(obj.action)
     if obj.structured_by:
         attrib["structureRef"] = obj.structured_by.id
-    elem = Element("mes:DataSet", **attrib)
+    elem = annotable(obj, **attrib)
 
     # AttributeValues attached to the data set
     if len(obj.attrib):
@@ -830,24 +832,24 @@ def _rpt(obj: v21.ReportPeriodTarget, *args):
 
 
 @writer
-def _mds(obj: model.MetadataSet):
+def _mds(obj: model.MetadataSet) -> "lxml.etree._Element":
     attrib = {}
     if obj.structured_by:
         attrib["structureRef"] = obj.structured_by.id
-    return Element(
-        "mes:MetadataSet", *[writer.recurse(mdr) for mdr in obj.report], **attrib
-    )
+    elem = annotable(obj, **attrib)
+    elem.extend(writer.recurse(mdr, rs=obj.described_by) for mdr in obj.report)
+    return elem
 
 
 @writer
-def _mdr(obj: model.MetadataReport):
-    # TODO Write the id=… attribute
-    elem = Element("md:Report")
+def _mdr(
+    obj: model.MetadataReport, *, rs: v21.ReportStructure
+) -> "lxml.etree._Element":
+    # id attribute: the ID of the ReportStructure
+    elem = annotable(obj, id=rs.id, _tag="md:Report")
 
-    if obj.target:  # pragma: no cover
-        elem.append(writer.recurse(obj.target))
-    if obj.attaches_to:
-        elem.append(writer.recurse(obj.attaches_to))
+    if obj.attaches_to is not None:
+        elem.append(writer.recurse(obj.attaches_to, mdt=obj.target))
 
     elem.append(
         Element("md:AttributeSet", *[writer.recurse(ra) for ra in obj.metadata])
@@ -857,10 +859,13 @@ def _mdr(obj: model.MetadataReport):
 
 
 @writer
-def _tok(obj: model.TargetObjectKey):
-    # TODO Write the id=… attribute
+def _tok(
+    obj: model.TargetObjectKey, *, mdt: v21.MetadataTarget
+) -> "lxml.etree._Element":
     return Element(
-        "md:Target", *[writer.recurse(tov) for tov in obj.key_values.values()]
+        "md:Target",
+        *[writer.recurse(tov) for tov in obj.key_values.values()],
+        id=mdt.id,
     )
 
 
