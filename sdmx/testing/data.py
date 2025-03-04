@@ -324,10 +324,13 @@ def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> 
             ("IMF", "01R.xml"),
             ("IMF", "1PI-structure.xml"),
             ("IMF", "CL_AREA-structure.xml"),
+            ("IMF", "CL_FREQ-3.0-structure.xml"),
+            ("IMF", "datastructure-0.xml"),
             # Manually reduced subset of the response for this DSD. Test for
             # <str:CubeRegion> containing both <com:KeyValue> and <com:Attribute>
             ("IMF", "ECOFIN_DSD-structure.xml"),
             ("IMF", "hierarchicalcodelist-0.xml"),
+            ("IMF", "hierarchicalcodelist-1.xml"),
             ("IMF", "structureset-0.xml"),
             ("IMF_STA", "availableconstraint_CPI.xml"),  # khaeru/sdmx#161
             ("IMF_STA", "DSD_GFS.xml"),  # khaeru/sdmx#164
