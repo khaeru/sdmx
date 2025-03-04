@@ -1,6 +1,7 @@
 import io
 import logging
 from datetime import datetime
+from typing import cast
 
 import pytest
 from lxml import etree
@@ -276,7 +277,6 @@ def test_ErrorMessage(errormessage):
         ("ECB_EXR/1/M.USD.EUR.SP00.A.xml", "ECB_EXR/1/structure.xml"),
         ("ECB_EXR/ng-ts.xml", "ECB_EXR/ng-structure-full.xml"),
         ("ECB_EXR/ng-ts-ss.xml", "ECB_EXR/ng-structure-full.xml"),
-        ("ESTAT/esms.xml", "ESTAT/esms-structure.xml"),
         # DSD reference does not round-trip correctly
         pytest.param(
             "ECB_EXR/rg-xs.xml",
@@ -291,12 +291,14 @@ def test_ErrorMessage(errormessage):
         ),
     ],
 )
-def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path):
+def test_data_roundtrip(
+    pytestconfig, tmp_path, specimen, data_id: str, structure_id: str
+) -> None:
     """Test that SDMX-ML DataMessages can be 'round-tripped'."""
 
     # Read structure from file
     with specimen(structure_id) as f:
-        dsd = sdmx.read_sdmx(f).structure[0]
+        dsd = cast("message.StructureMessage", sdmx.read_sdmx(f)).structure[0]
 
     # Read data from file, using the DSD
     with specimen(data_id) as f:
@@ -308,6 +310,41 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
 
     # Read again, using the same DSD
     msg1 = sdmx.read_sdmx(path, structure=dsd)
+
+    # Contents are identical
+    assert msg0.compare(msg1, strict=True), (
+        path.read_text() if pytestconfig.getoption("verbose") else path
+    )
+
+
+@pytest.mark.parametrize(
+    "data_id, structure_id",
+    [
+        ("ESTAT/esms.xml", "ESTAT/esms-structure.xml"),
+    ],
+)
+def test_metadata_roundtrip(
+    pytestconfig, tmp_path, specimen, data_id: str, structure_id: str
+) -> None:
+    """Test that SDMX-ML MetadataMessages can be 'round-tripped'."""
+
+    # Read metadata structure from file
+    with specimen(structure_id) as f:
+        mdsd = cast("message.StructureMessage", sdmx.read_sdmx(f)).metadatastructure[0]
+
+    # Read data from file, using the MDSD
+    with specimen(data_id) as f:
+        msg0 = sdmx.read_sdmx(f, structure=mdsd)
+
+    # Write to file
+    path = tmp_path / "output.xml"
+    path.write_bytes(sdmx.to_xml(msg0, pretty_print=True))
+
+    # Validate using XSD
+    assert validate_xml(path)
+
+    # Read again, using the same MDSD
+    msg1 = sdmx.read_sdmx(path, structure=mdsd)
 
     # Contents are identical
     assert msg0.compare(msg1, strict=True), (
