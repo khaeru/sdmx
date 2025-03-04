@@ -1313,6 +1313,12 @@ def _mds_end(reader, elem):
     # Collect the contained MetadataReports
     mds.report.extend(reader.pop_all(v21.MetadataReport))
 
+    # Collect the ID of the ReportStructure; update the `mds`
+    rs_id = set(reader.pop_all("ReportStructure.id"))
+    if not mds.structured_by.is_external_reference:
+        assert 1 == len(rs_id)
+        mds.report_structure = mds.structured_by.report_structure[rs_id.pop()]
+
     # Add the data set to the message
     reader.get_single(message.MetadataMessage).data.append(mds)
 
@@ -1320,7 +1326,34 @@ def _mds_end(reader, elem):
 @end(":Report md:Report")
 def _md_report(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
+
+    # "id" identifies a ReportStructure within the MetadataStructureDefinition
+    rs_id = elem.attrib["id"]
+
+    # Retrieve a reference to the ReportStructure
+    mds = reader.get_single("MetadataSet")
+    assert isinstance(mds, v21.MetadataSet) and mds.structured_by is not None
+    if not mds.structured_by.is_external_reference:
+        rs = mds.structured_by.report_structure[rs_id]
+    else:
+        rs = None
+
+    # Also push `rs_id`, to be collected in _mds_end()
+    reader.push("ReportStructure.id", rs_id)
+
+    # Collect the ID of the MetadataTarget
+    mdt_id = set(reader.pop_all("MetadataTarget.id"))
+    assert 1 == len(mdt_id)
+    # Locate the MetadataTarget
+    try:
+        mdt = next(
+            filter(lambda mdt: {mdt.id} == mdt_id, getattr(rs, "report_for", []))
+        )
+    except StopIteration:
+        mdt = None
+
     return cls(
+        target=mdt,
         attaches_to=reader.pop_single(model.TargetObjectKey),
         metadata=reader.pop_single("AttributeSet"),
     )
@@ -1329,6 +1362,11 @@ def _md_report(reader: Reader, elem):
 @end(":Target md:Target")
 def _tov(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
+
+    # "id" identifies a MetadataTarget within the ReportStructure. Push this, to be
+    # collected in _md_report().
+    reader.push("MetadataTarget.id", elem.attrib["id"])
+
     return cls(
         key_values={
             v.value_for: v for v in reader.pop_all(v21.TargetObjectValue, subclass=True)
