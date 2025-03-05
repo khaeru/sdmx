@@ -445,19 +445,13 @@ def _component(obj: model.Component, dsd=None, *, attrib: Optional[dict] = None)
     child = []
     attrib = attrib or dict()
 
-    try:
-        child.append(
-            reference(obj.concept_identity, tag="str:ConceptIdentity", style="Ref")
-        )
-    except AttributeError:  # pragma: no cover
-        pass  # concept_identity is None
-
-    try:
-        child.append(
-            writer.recurse(obj.local_representation, "LocalRepresentation", style="Ref")
-        )
-    except NotImplementedError:
-        pass  # None
+    for func, name, tag in (
+        (reference, "concept_identity", "str:ConceptIdentity"),
+        (reference, "concept_role", "str:ConceptRole"),
+        (writer.recurse, "local_representation", "LocalRepresentation"),
+    ):
+        if value := getattr(obj, name, None):
+            child.append(func(value, tag=tag, style="Ref"))
 
     if isinstance(obj, model.DataAttribute) and obj.usage_status:
         child.append(writer.recurse(obj.related_to, dsd))
