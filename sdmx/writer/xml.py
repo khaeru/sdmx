@@ -193,6 +193,7 @@ def _sm(obj: message.StructureMessage):
         ("categorisation", "Categorisations"),
         ("codelist", "Codelists"),
         ("concept_scheme", "Concepts"),
+        ("hierarchical_codelist", "HierarchicalCodelists"),
         ("structure", "DataStructures"),
         ("constraint", "Constraints"),
         ("metadatastructure", "MetadataStructures"),
@@ -831,7 +832,7 @@ def _mds(obj: model.MetadataSet) -> "lxml.etree._Element":
     if obj.structured_by:
         attrib["structureRef"] = obj.structured_by.id
     elem = annotable(obj, **attrib)
-    elem.extend(writer.recurse(mdr, rs=obj.described_by) for mdr in obj.report)
+    elem.extend(writer.recurse(mdr, rs=obj.report_structure) for mdr in obj.report)
     return elem
 
 
@@ -898,7 +899,7 @@ def _ra(obj: model.ReportedAttribute):
     else:  # pragma: no cover
         attrib.update(id=obj.value_for.id)
 
-    if isinstance(obj, model.OtherNonEnumeratedAttributeValue):
+    if isinstance(obj, v21.OtherNonEnumeratedAttributeValue):
         # Only write the "value" attribute if defined; some attributes are only
         # containers for child attributes
         if obj.value:
@@ -915,3 +916,31 @@ def _ra(obj: model.ReportedAttribute):
         )
 
     return Element("md:ReportedAttribute", *child, **attrib)
+
+
+# SDMX 2.1 §8: Hierarchical Code List
+
+
+@writer
+def _level(obj: common.Level):
+    return Element("str:Level", Element("Ref", id=obj.id))
+
+
+@writer
+def _hc(obj: common.HierarchicalCode):
+    return identifiable(
+        obj,
+        reference(obj.code, style="Ref"),
+        *([writer.recurse(obj.level)] if obj.level else []),
+        *[writer.recurse(hc) for hc in obj.child],
+    )
+
+
+@writer
+def _hierarchy(obj: v21.Hierarchy):
+    return nameable(obj, *[writer.recurse(hc) for hc in obj.codes.values()])
+
+
+@writer
+def _hcl(obj: v21.HierarchicalCodelist):
+    return maintainable(obj, *[writer.recurse(h) for h in obj.hierarchy])

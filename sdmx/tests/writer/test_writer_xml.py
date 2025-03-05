@@ -385,6 +385,7 @@ class TestRoundTripMetadata(RoundTripTests):
         ),
         ("IMF/ECOFIN_DSD-structure.xml", True),
         ("IMF/datastructure-0.xml", True),
+        ("IMF/hierarchicalcodelist-1.xml", True),
         ("INSEE/CNA-2010-CONSO-SI-A17-structure.xml", False),
         ("INSEE/IPI-2010-A21-structure.xml", False),
         ("INSEE/dataflow.xml", False),
