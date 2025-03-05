@@ -14,6 +14,7 @@ from functools import lru_cache
 from itertools import product
 from operator import attrgetter, itemgetter
 from typing import (
+    TYPE_CHECKING,
     Any,
     ClassVar,
     Generator,
@@ -40,6 +41,9 @@ from .internationalstring import (
     InternationalStringDescriptor,
 )
 from .version import Version
+
+if TYPE_CHECKING:
+    from dataclasses import Field
 
 __all__ = [
     # Re-exported from other modules
@@ -1137,40 +1141,50 @@ class DataProviderScheme(OrganisationScheme[DataProvider]):
 
 @dataclass(repr=False)
 class Structure(MaintainableArtefact):
+    @classmethod
+    @lru_cache
+    def _cl_fields(cls) -> tuple[tuple["Field", bool, type[ComponentList]], ...]:
+        """Tuple of fields typed as ComponentList or DictLike[…, ComponentList]."""
+        result = []
+        for f in fields(cls):
+            is_dictlike = get_origin(f.type) is DictLikeDescriptor
+            cl_type = get_args(f.type)[1] if is_dictlike else f.type
+            if type(cl_type) is type and issubclass(cl_type, ComponentList):
+                result.append((f, is_dictlike, cl_type))
+        return tuple(result)
+
     @property
     def grouping(self) -> Sequence[ComponentList]:
         """A collection of all the ComponentLists associated with a subclass."""
         result: list[ComponentList] = []
-        for f in fields(self):
-            types = get_args(f.type) or (f.type,)
-            try:
-                if any(issubclass(t, ComponentList) for t in types):
-                    result.append(getattr(self, f.name))
-            except TypeError:
-                pass
+        for f, is_dictlike, _ in self._cl_fields():
+            value = getattr(self, f.name)
+            if is_dictlike:
+                result.extend(value.values())
+            else:
+                result.append(value)
         return result
 
     def replace_grouping(self, cl: ComponentList) -> None:
         """Replace existing component list with `cl`."""
-        field = None
-        for f in fields(self):
-            is_dictlike = get_origin(f.type) is DictLikeDescriptor
-            if f.type is type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
-                field = f
-                break
-
-        if not field:
+        try:
+            (field, is_dictlike, _), *_ = filter(
+                lambda t: t[2] is type(cl), self._cl_fields()
+            )
+        except ValueError:
             raise TypeError(f"No grouping of type {type(cl)} on {type(self)}")
 
         if is_dictlike:
+            # Set an element in e.g. BaseDataStructureDefinition.group_dimension
             getattr(self, field.name).setdefault(cl.id, cl)
         else:
+            # Set an instance attribute, e.g. BaseDataStructureDefinition.attributes
             setattr(self, field.name, cl)
 
     def compare(self, other: "Structure", strict: bool = True) -> bool:
-        # DictLike of ComponentList will not have an "id" attribute
         def _key(item) -> str:
-            return getattr(item, "id", str(type(item)))
+            """Key for sorting: item type + its ID."""
+            return f"{type(item)} {item.id}"
 
         return all(
             s.compare(o, strict)

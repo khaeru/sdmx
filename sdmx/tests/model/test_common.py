@@ -401,10 +401,15 @@ class TestStructure:
         return model.BaseDataStructureDefinition()
 
     def test_grouping(self, obj) -> None:
-        result = obj.grouping
-        # Class has an AttributeDescriptor, DimensionDescriptor, and dict-like of
-        # GroupDimensionDescriptor
-        assert 3 == len(result)
+        # Class has an AttributeDescriptor, DimensionDescriptor
+        assert 2 == len(obj.grouping)
+
+        # With GroupDimensionDescriptor, these are each included separately
+        obj.group_dimensions = {
+            "FOO": model.GroupDimensionDescriptor(id="FOO"),
+            "BAR": model.GroupDimensionDescriptor(id="BAR"),
+        }
+        assert 4 == len(obj.grouping)
 
     def test_replace_grouping(self, obj) -> None:
         class Foo(model.ComponentList):
