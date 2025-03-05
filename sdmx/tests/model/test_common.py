@@ -376,8 +376,9 @@ class TestComponentList:
         # cl1 and cl2 compare as different
         assert False is cl1.compare(cl2)
 
-        # Log message is emitted for mismatched components
-        assert "CL has no component with ID 'BAZ'" in caplog.messages
+        # commented: This message is currently disabled
+        # # Log message is emitted for mismatched components
+        # assert "CL has no component with ID 'BAZ'" in caplog.messages
 
 
 class TestContact:

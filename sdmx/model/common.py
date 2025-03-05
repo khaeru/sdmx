@@ -1035,7 +1035,7 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
             try:
                 result &= c.compare(other.get(c.id), strict)
             except KeyError:
-                log.debug(f"{other} has no component with ID {c.id!r}")
+                # log.debug(f"{other} has no component with ID {c.id!r}")
                 result = False
         return result and super().compare(other, strict)
 
