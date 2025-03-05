@@ -1514,7 +1514,7 @@ def _h(reader: Reader, elem):
     return reader.nameable(
         cls,
         elem,
-        has_formal_levels=eval(elem.attrib["leveled"].title()),
+        has_formal_levels=eval(elem.attrib.get("leveled", "false").title()),
         codes={c.id: c for c in reader.pop_all(model.HierarchicalCode)},
         level=reader.pop_single(common.Level),
     )
