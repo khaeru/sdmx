@@ -1,5 +1,3 @@
-from requests.structures import CaseInsensitiveDict
-
 from . import Source as BaseSource
 
 
