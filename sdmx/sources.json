@@ -231,7 +231,7 @@
   {
     "id": "IMF_DATA",
     "url": "https://api.imf.org/external/sdmx/2.1",
-    "name": "International Monetary Fund - Beta Data portal",
+    "name": "International Monetary Fund",
     "supports": {
       "actualconstraint": false,
       "agencyscheme": false,
@@ -248,7 +248,7 @@
   {
     "id": "IMF_DATA3",
     "url": "https://api.imf.org/external/sdmx/3.0",
-    "name": "International Monetary Fund - Beta Data portal (SDMX 3.0)",
+    "name": "International Monetary Fund (SDMX 3.0)",
     "supports": {
       "actualconstraint": false,
       "agencyscheme": false,

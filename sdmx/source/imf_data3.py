@@ -14,7 +14,7 @@ class Source(BaseSource):
         """Modify arguments used to build query URL.
 
         1. Set default provider agency ID ``all``.
-        2. Set default User-Agent header "idata-script-client".
+        2. Set media-type in header.
         """
         super().modify_request_args(kwargs)
 
@@ -24,12 +24,9 @@ class Source(BaseSource):
         if "key" not in kwargs:
             kwargs.setdefault("agency_id", "all")
 
-        # Supply a specific value for the user-agent header
-        kwargs.setdefault("headers", CaseInsensitiveDict())
-        kwargs["headers"].setdefault("User-Agent", "idata-script-client")
-
         # Retrieve SDMX-ML by default
         # TODO Choose between the data, metadata, or structure media-type according to
         #      other `kwargs`
+        kwargs.setdefault("headers", CaseInsensitiveDict())
         mt = [MediaType(x, "xml", "3.0.0") for x in ("data", "metadata", "structure")]
         kwargs["headers"].setdefault("Accept", ", ".join(map(str, mt)))

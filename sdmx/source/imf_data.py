@@ -11,8 +11,7 @@ class Source(BaseSource):
     def modify_request_args(self, kwargs):
         """Modify arguments used to build query URL.
 
-        1. Set default provider agency ID ``all``.
-        2. Set default User-Agent header "idata-script-client".
+        Set default provider agency ID ``all``.
         """
         super().modify_request_args(kwargs)
 
@@ -21,7 +20,3 @@ class Source(BaseSource):
         #    the hook is called, resource_type is not available directly.
         if "key" not in kwargs:
             kwargs.setdefault("agency_id", "all")
-
-        # Supply a specific value for the user-agent header
-        kwargs.setdefault("headers", CaseInsensitiveDict())
-        kwargs["headers"].setdefault("User-Agent", "idata-script-client")
