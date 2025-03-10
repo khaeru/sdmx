@@ -343,7 +343,7 @@ Website `(beta) <https://betadata.imf.org>`__,
 API documentation `(beta) <https://betadata.imf.org/en/Resource-Pages/IMF-API>`__, 
 `(main) <https://data.imf.org/en/Resource-Pages/IMF-API>`__
 
-- `Effective end-March the IMF Data Portal will formally launch, replacing data.imf.org <https://datasupport.imf.org/knowledge?id=knowledge_category&sys_kb_id=967337049388ea50102cf4647aba1024&category_id=4e49be7c1b6391903dba646fbd4bcb00>`. At which time the main links above will point at the new portal and the beta links will be retired
+- `Effective end-March the IMF Data Portal will formally launch, replacing data.imf.org <https://datasupport.imf.org/knowledge?id=knowledge_category&sys_kb_id=967337049388ea50102cf4647aba1024&category_id=4e49be7c1b6391903dba646fbd4bcb00>`__. At which time the main links above will point at the new portal and the beta links will be retired
 - Metadataflows, Metadata sets, and metadata structures are only supported for IMF_DATA3.
 - HierarchicalCodelist are only supported for IMF_DATA.
 .. warning:: As of 2025-01-10, this source carries a banner:
