@@ -594,12 +594,27 @@ class MetadataReport(common.AnnotableArtefact):
 class MetadataSet(NameableArtefact, common.BaseMetadataSet):
     """SDMX 2.1 MetadataSet.
 
-    .. note:: Contrast :class:`.v30.MetadataSet`, which is a
-       :class:`.MaintainableArtefact`.
+    .. important:: The SDMX 2.1 IM (Figure 29/§7.4.1 on p.84 and §7.4.2.2 on p.87) gives
+       *two* associations from MetadataSet with the *same* name "+describedBy".
+
+       One is an association to a MetadataflowDefinition. :mod:`sdmx` implements this
+       as the attribute :attr:`MetadataSet.described_by`.
+
+       The second is to a ReportStructure. Because Python does not allow for multiple
+       class attributes with the same name, :mod:`sdmx` implements this as the attribute
+       :attr:`MetadataSet.report_structure`, which differs from the name given in the
+       standard.
+
+       One reason for this implementation choice is that
+       :attr:`.MetadataSet.described_by` is similar to :attr:`DataSet.described_by
+       <.BaseDataSet.described_by>` in that each refers to a (meta)data flow definition.
+
+    .. note:: Contrast :class:`.v30.MetadataSet`, which inherits from
+       :class:`.MaintainableArtefact` instead of NameableArtefact.
     """
 
+    #: See note above.
     described_by: Optional[MetadataflowDefinition] = None
-    # described_by: Optional[ReportStructure] = None
 
     #: .. seealso::
     #:    :attr:`.v30.MetadataSet.structured_by`, which has different semantics.
@@ -609,6 +624,9 @@ class MetadataSet(NameableArtefact, common.BaseMetadataSet):
     published_by: Optional[common.DataProvider] = None
 
     report: list[MetadataReport] = field(default_factory=list)
+
+    #: See note above.
+    report_structure: Optional[ReportStructure] = None
 
 
 # §8 Hierarchical Code List
@@ -695,6 +713,7 @@ CF = common.ClassFinder(
     },
     parent_map={
         common.HierarchicalCode: Hierarchy,
+        common.Level: Hierarchy,
         PrimaryMeasure: MeasureDescriptor,
         MetadataTarget: MetadataStructureDefinition,
     },
