@@ -304,13 +304,24 @@ class IdentifiableArtefact(AnnotableArtefact):
             and compare("urn", self, other, strict and self.urn is not None)
         )
 
+    def __gt__(self, other: Any) -> bool:
+        # NB __lt__ handles the case where other is the same type as self
+        if isinstance(other, str):
+            return self.id > other
+        else:
+            return NotImplemented
+
     def __hash__(self):
         return id(self) if self.id == MissingID else hash(self.id)
 
-    def __lt__(self, other):
-        return (
-            self.id < other.id if isinstance(other, self.__class__) else NotImplemented
-        )
+    def __lt__(self, other: Any) -> bool:
+        if isinstance(other, type(self)):
+            other_id = other.id
+        elif isinstance(other, str):
+            other_id = other
+        else:
+            return NotImplemented
+        return self.id < other_id
 
     def __str__(self):
         return self.id

@@ -128,19 +128,14 @@ class TestIdentifiableArtefact:
         ad = model.AttributeDescriptor()
         assert hash(ad) == id(ad)
 
-    def test_hash_subclass(self):
-        @dataclass
-        class Foo(IdentifiableArtefact):
-            __hash__ = IdentifiableArtefact.__hash__
-
-        f = Foo(id="FOO")
-        assert hash("FOO") == hash(f)
-
-    def test_sort(self):
-        """Test IdentifiableArtefact.__lt__."""
-        # Items of the same class can be sorted
+    def test_gt_lt(self):
+        """Test IdentifiableArtefact.__gt__ and IdentifiableArtefact.__lt__."""
+        # IdentifiableArtefact of the same class can be sorted
         items = [Item(id="b"), Item(id="a")]
         assert list(reversed(items)) == sorted(items)
+
+        # Mixed IdentifiableArtefact and str can be sorted
+        assert [Item(id="a"), "b", "c"] == sorted(["b", Item(id="a"), "c"])
 
         with pytest.raises(
             TypeError,
@@ -150,6 +145,14 @@ class TestIdentifiableArtefact:
             ),
         ):
             sorted([v21.DataStructureDefinition(id="c")] + items)
+
+    def test_hash_subclass(self):
+        @dataclass
+        class Foo(IdentifiableArtefact):
+            __hash__ = IdentifiableArtefact.__hash__
+
+        f = Foo(id="FOO")
+        assert hash("FOO") == hash(f)
 
 
 class TestNameableArtefact:
