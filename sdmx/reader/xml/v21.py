@@ -90,6 +90,15 @@ start = Reader.start
 end = Reader.end
 possible_reference = Reader.possible_reference
 
+
+def _get_id(reader, elem) -> str:
+    """Retrieve an ID attribute for `elem`."""
+    if QName(elem).namespace:  # Element with namespace → generic SDMX-ML
+        return elem.attrib["id"]
+    else:  # No namespace → structure-specific SDMX-ML
+        return re.split(r"[:\.]", elem.attrib[reader.qname("xsi", "type")])[-1]
+
+
 # Tags to skip entirely
 start(
     "com:Annotations com:Footer footer:Message "
@@ -1326,8 +1335,8 @@ def _mds_end(reader, elem):
 def _md_report(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
 
-    # "id" identifies a ReportStructure within the MetadataStructureDefinition
-    rs_id = elem.attrib["id"]
+    # Identify a ReportStructure within the MetadataStructureDefinition
+    rs_id = _get_id(reader, elem)
 
     # Retrieve a reference to the ReportStructure
     mds = reader.get_single("MetadataSet")
@@ -1362,9 +1371,9 @@ def _md_report(reader: Reader, elem):
 def _tov(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
 
-    # "id" identifies a MetadataTarget within the ReportStructure. Push this, to be
-    # collected in _md_report().
-    reader.push("MetadataTarget.id", elem.attrib["id"])
+    # Retrieve the ID for a MetadataTarget within the ReportStructure; push to be
+    # collected in _md_report()
+    reader.push("MetadataTarget.id", _get_id(reader, elem))
 
     return cls(
         key_values={
@@ -1382,12 +1391,9 @@ def _rv(reader: Reader, elem):
     # TODO resolve the TargetObject
     del mds
 
-    if QName(elem).namespace is None:
-        # Structure-specific: the TargetObject ID is stored in the "xsi:type" attribute
-        # as the last part of a value like "esms:CATEGORY_TARGET.ReportPeriodTarget"
-        args = dict(value_for=elem.attrib[reader.qname("xsi", "type")].split(".")[-1])
-    else:
-        args = dict(value_for=elem.attrib["id"])
+    # Retrieve the ID for a TargetObject. If structure-specific, the "xsi:type"
+    # attribute has a value like "esms:CATEGORY_TARGET.ReportPeriodTarget"
+    args = dict(value_for=_get_id(reader, elem))
 
     if cls is v21.TargetReportPeriod:
         args["report_period"] = reader.pop_single("ReportPeriod")
