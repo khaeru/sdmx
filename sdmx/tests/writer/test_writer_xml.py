@@ -24,16 +24,51 @@ log = logging.getLogger(__name__)
 # Fixtures
 
 
-@pytest.fixture
-def structure_message() -> message.StructureMessage:
-    """A StructureMessage that serializes to XSD-valid SDMX-XML."""
-    return message.StructureMessage(
-        header=message.Header(
-            id="N_A",
-            prepared=datetime.now(),
-            sender=common.Agency(id="N_A"),
-        )
+@pytest.fixture(scope="module")
+def header() -> message.Header:
+    return message.Header(
+        id="N_A",
+        prepared=datetime.now(),
+        sender=common.Agency(id="N_A"),
     )
+
+
+@pytest.fixture
+def metadata_message(header) -> message.MetadataMessage:
+    """A metadata message with the minimum content to write valid SDMX-ML 2.1."""
+    a = common.Agency(id="TEST")
+    dfd = v21.DataflowDefinition(id="DFD", maintainer=a)
+    ma = v21.MetadataAttribute(id="MA")
+    rs = v21.ReportStructure(id="RS", components=[ma])
+    mdsd = v21.MetadataStructureDefinition(
+        id="MDS", maintainer=a, report_structure={rs.id: rs}
+    )
+    iot = v21.IdentifiableObjectTarget(id="IOT")
+    mdt = v21.MetadataTarget(id="MDT", components=[iot])
+    mdr = v21.MetadataReport(
+        annotations=[v21.Annotation(id="FOO", text="foo value")],
+        attaches_to=v21.TargetObjectKey(
+            key_values={iot.id: v21.TargetIdentifiableObject(value_for=iot, obj=dfd)}
+        ),
+        metadata=[
+            v21.OtherNonEnumeratedAttributeValue(value_for=ma, value=f"{ma.id} value")
+        ],
+        target=mdt,
+    )
+    mds = v21.MetadataSet(
+        annotations=[v21.Annotation(id="FOO", text="foo value")],
+        structured_by=mdsd,
+        report_structure=rs,
+        report=[mdr],
+    )
+
+    return message.MetadataMessage(header=header, data=[mds])
+
+
+@pytest.fixture
+def structure_message(header) -> message.StructureMessage:
+    """A StructureMessage that serializes to XSD-valid SDMX-XML."""
+    return message.StructureMessage(header=header)
 
 
 @pytest.fixture
@@ -265,6 +300,15 @@ def test_DataMessage(datamessage):
     sdmx.to_xml(datamessage)
 
 
+def test_MetadataMessage(metadata_message, *, debug: bool = False) -> None:
+    """:class:`.MetadataMessage` can be written."""
+    # Write to SDMX-ML
+    buf = io.BytesIO(sdmx.to_xml(metadata_message, pretty_print=debug))
+
+    # Validate using XSD
+    assert validate_xml(buf), buf.getvalue().decode()
+
+
 def test_ErrorMessage(errormessage):
     """:class:`.ErrorMessage` can be written."""
     sdmx.to_xml(errormessage)
@@ -308,8 +352,14 @@ class RoundTripTests(ABC):
         # Validate using XSD
         assert not validate or validate_xml(data), "Invalid SDMX-ML"
 
-        # Read again
-        msg1 = sdmx.read_sdmx(data, structure=structure)
+        # Contents can be read again
+        try:
+            msg1 = sdmx.read_sdmx(data, structure=structure)
+        except Exception:
+            path = tmp_path.joinpath("output.xml")
+            path.write_bytes(data.getbuffer())
+            log.error(f"See {path}")
+            raise
 
         # Contents are identical
         try:
