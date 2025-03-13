@@ -465,8 +465,7 @@ def _item_start(reader, elem):
         pass
 
     # Avoid stealing the name & description of the parent ItemScheme from the stack
-    # TODO check this works for annotations
-    reader.stash(model.Annotation, "Name", "Description")
+    reader.stash(reader.model.Annotation, "Name", "Description")
 
 
 @end(
@@ -650,7 +649,7 @@ def _component_end(reader: Reader, elem):  # noqa: C901
         )
         log.error(message)
         args.setdefault("annotations", []).append(
-            v21.Annotation(id=f"{__name__}-parse-error", text=message)
+            reader.model.Annotation(id=f"{__name__}-parse-error", text=message)
         )
 
     # DataAttributeOnly
@@ -1038,7 +1037,7 @@ def _structure_end(reader, elem):
 
     if obj:
         # Collect annotations, name, and description
-        obj.annotations = list(reader.pop_all(model.Annotation))
+        obj.annotations = list(reader.pop_all(reader.model.Annotation))
         add_localizations(obj.name, reader.pop_all("Name"))
         add_localizations(obj.description, reader.pop_all("Description"))
 
@@ -1468,14 +1467,33 @@ def _ra(reader: Reader, elem):
 # §8: Hierarchical Code List
 
 
-@end("str:HierarchicalCode")
-def _hc(reader: Reader, elem):
-    cls = reader.class_for_tag(elem.tag)
+@start("str:HierarchicalCode", only=False)
+def _hc_start(reader: Reader, elem):
+    # Stash:
+    # - any NameableArtefacts belonging to the parent Hierarchy or HierarchicalCode
+    # - any references to Code or Level belonging to a parent HierarchicalCode
+    reader.stash(
+        reader.model.Annotation,
+        "Name",
+        "Description",
+        reader.Reference,
+        name="ex str:HierarchicalCode",
+    )
 
-    code = reader.resolve(reader.pop_single(reader.Reference))
 
-    if code is None:
-        # Retrieve and resolve the reference to the Codelist
+@end("str:HierarchicalCode", only=False)
+def _hc_end(reader: Reader, elem):
+    # Retrieve up to 2 references: one to a Code, one to a Level
+    refs = {
+        getattr(r, "cls", None): r
+        for r in [reader.pop_single(reader.Reference) for _ in range(2)]
+    }
+
+    # Resolve the reference to a Code
+    if code := reader.resolve(refs.pop(common.Codelist, None)):
+        pass
+    else:
+        # Retrieve and resolve a reference to the Codelist
         cl_alias = reader.pop_single("CodelistAliasRef")
         cl_ref = reader.peek("CodelistAlias")[cl_alias]
         cl = reader.resolve(cl_ref)
@@ -1490,34 +1508,58 @@ def _hc(reader: Reader, elem):
             else:  # pragma: no cover
                 raise
 
+    # Handle the reference to a Level
+    level = None
+    if level_ref := refs.pop(v21.Hierarchy, None):
+        try:
+            level = reader.resolve(level_ref)
+        except TypeError:
+            level = common.Level(id=level_ref.id)
+
     # Create the HierarchicalCode
-    obj = reader.identifiable(cls, elem, code=code)
+    obj = reader.identifiable(
+        reader.class_for_tag(elem.tag), elem, code=code, level=level
+    )
 
     # Count children represented as XML sub-elements of the parent
     n_child = sum(e.tag == elem.tag for e in elem)
     # Collect this many children and append them to `obj`
-    obj.child.extend(reversed([reader.pop_single(cls) for i in range(n_child)]))
+    obj.child.extend(reversed([reader.pop_single(type(obj)) for i in range(n_child)]))
+
+    reader.unstash(name="ex str:HierarchicalCode")
 
     return obj
 
 
 @end("str:Level")
+@possible_reference()
 def _l(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
 
     return reader.nameable(cls, elem, child=reader.pop_single(cls))
 
 
-@end("str:Hierarchy")
-def _h(reader: Reader, elem):
-    cls = reader.class_for_tag(elem.tag)
-    return reader.nameable(
-        cls,
+@start("str:Hierarchy", only=False)
+def _h_start(reader: Reader, elem):
+    # Stash any NameableArtefact objects belonging to the parent HierarchicalCodelist
+    reader.stash(
+        reader.model.Annotation, "Name", "Description", name="ex str:Hierarchy"
+    )
+
+
+@end("str:Hierarchy", only=False)
+def _h_end(reader: Reader, elem):
+    result = reader.nameable(
+        reader.class_for_tag(elem.tag),
         elem,
         has_formal_levels=eval(elem.attrib.get("leveled", "false").title()),
         codes={c.id: c for c in reader.pop_all(model.HierarchicalCode)},
         level=reader.pop_single(common.Level),
     )
+
+    reader.unstash(name="ex str:Hierarchy")
+
+    return result
 
 
 @end("str:IncludedCodelist")
