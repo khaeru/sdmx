@@ -38,8 +38,8 @@ jobs:
         - GROW
         - ILO
         - IMF
-        - IMF_beta
-        - IMF_beta3
+        - IMF_DATA
+        - IMF_DATA3
         - INEGI
         - INSEE
         - ISTAT

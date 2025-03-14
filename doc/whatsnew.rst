@@ -63,6 +63,7 @@ All changes
   - Write annotations associated with :class:`DataSet <.BaseDataSet>`, :class:`MetadataSet <.BaseMetadataSet>`, and :class:`.MetadataReport`.
   - Pending resolution of :issue:`228`, ignore :xml:`<com:Link>` in SDMX-ML 3.0.0 .
 
+- Rename :ref:`IMF_beta, IMF_beta3 <IMF>` data sources to :ref:`IMF_DATA, IMF_DATA3 <IMF>` and update documentation on 3 distinct IMF-run web services (thanks :gh-user:`aboddie` for :pull:`225` and :issue:`224`).
 - Update and expand :ref:`sdmx-version-policy` in the documentation (:pull:`227`).
   A table is now included showing the correspondence of versions of component SDMX standards.
 

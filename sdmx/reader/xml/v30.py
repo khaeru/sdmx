@@ -92,14 +92,22 @@ def _link(reader, elem) -> None:
 
 @end("str:Codelist")
 def _cl(reader, elem):
-    try:
-        sdmx.urn.match(elem.text)
-    except ValueError:
-        result = v21._itemscheme(reader, elem)
-        result.extends = reader.pop_all(v30.CodelistExtension)
-        return result
-    else:
-        reader.push(elem, elem.text)
+    # Handle <str:Codelist>urn:…</str:Codelist>; occurs within <str:CodelistExtension>
+    if len(elem) == 0 and elem.text:
+        try:
+            # Validate the contained URN, return to str
+            urn = str(sdmx.urn.URN(elem.text))
+        except Exception:
+            pass  # Malformed, or not a URN
+        else:
+            reader.push(elem, urn)
+            return
+
+    # Use the .v21 reader function
+    result = v21._itemscheme(reader, elem)
+    # Attach CodelistExtensions
+    result.extends = reader.pop_all(v30.CodelistExtension)
+    return result
 
 
 @end("str:CodelistExtension")
