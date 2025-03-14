@@ -319,7 +319,8 @@ SDMX-ML —
 - This is an instance of the “Fusion Metadata Registry” software.
   Such instances also expose SDMX 2.1 and 3.0 APIs.
 - The :mod:`sdmx` source with ID ``IMF`` corresponds to the SDMX 2.1 (SDMX-REST 1.x) API with base URL https://sdmxcentral.imf.org/ws/public/sdmxapi/rest.
-  The web interface suggests URLs for the SDMX 3.0.0 (SDMX-REST 2.x) API with base URL https://sdmxcentral.imf.org/sdmx/v2.
+
+  The web interface suggests URLs for an SDMX 3.0.0 (SDMX-REST 2.x) API with base URL https://sdmxcentral.imf.org/sdmx/v2.
   This API can be accessed by modifying the :attr:`.Source.url` and :attr:`~.Source.versions` attributes, or by constructing a new Source.
   For example:
 
@@ -332,29 +333,31 @@ SDMX-ML —
      client.source.url = "https://sdmxcentral.imf.org/sdmx/v2"
      client.source.versions = {Version["3.0.0"]}
 
-
-
 ``IMF_DATA``, ``IMF_DATA3``: api.imf.org
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SDMX-ML —
-Website `(beta) <https://betadata.imf.org>`__, 
-`(main) <https://data.imf.org>`__
-API documentation `(beta) <https://betadata.imf.org/en/Resource-Pages/IMF-API>`__, 
-`(main) <https://data.imf.org/en/Resource-Pages/IMF-API>`__
+Website `(main) <https://data.imf.org>`__, `(beta) <https://betadata.imf.org>`__ —
+API documentation `(main) <https://data.imf.org/en/Resource-Pages/IMF-API>`__, `(beta) <https://betadata.imf.org/en/Resource-Pages/IMF-API>`__.
 
-- `Effective end-March the IMF Data Portal will formally launch, replacing data.imf.org <https://datasupport.imf.org/knowledge?id=knowledge_category&sys_kb_id=967337049388ea50102cf4647aba1024&category_id=4e49be7c1b6391903dba646fbd4bcb00>`__. At which time the main links above will point at the new portal and the beta links will be retired
-- Metadataflows, Metadata sets, and metadata structures are only supported for IMF_DATA3.
-- HierarchicalCodelist are only supported for IMF_DATA.
-.. warning:: As of 2025-01-10, this source carries a banner:
+.. note:: As of **2025-01-10**, this source carries a banner:
 
-       We're in Beta!
-       Help us improve by `testing <https://datasupport.imf.org/knowledge?id=kb_article_view&sys_kb_id=372b9c5493019610102cf4647aba1015&category_id=4e49be7c1b6391903dba646fbd4bcb00>`__ and sharing `feedback <https://forms.office.com/pages/responsepage.aspx?id=Q_qFgC4wvUWxcaZkjDtr54N7EnsUWMNKll1Zs-zgwh9UODA5MTFBVlA1MDFaWEpIMFVaSE83TzJYTy4u&route=shorturl>`__.
-       This is a beta version; the data is not final and should not be used for actual work.
+      We're in Beta!
+      Help us improve by `testing <https://datasupport.imf.org/knowledge?id=kb_article_view&sys_kb_id=372b9c5493019610102cf4647aba1015&category_id=4e49be7c1b6391903dba646fbd4bcb00>`__ and sharing `feedback <https://forms.office.com/pages/responsepage.aspx?id=Q_qFgC4wvUWxcaZkjDtr54N7EnsUWMNKll1Zs-zgwh9UODA5MTFBVlA1MDFaWEpIMFVaSE83TzJYTy4u&route=shorturl>`__.
+      This is a beta version; the data is not final and should not be used for actual work.
 
    Users should heed this message.
 
-   
+   `This documentation page <https://datasupport.imf.org/knowledge?id=knowledge_category&sys_kb_id=967337049388ea50102cf4647aba1024&category_id=4e49be7c1b6391903dba646fbd4bcb00>`__ states that the “IMF Data portal” associated with the above URL endpoints “will launch at the end of Q1 2025,” thus **on or about 2025-03-31**.
+   At that point, the ‘(main)’ links above will point to the new portal, and the ‘(beta)’ links will no longer be accessible.
+
+- The ``IMF_DATA`` source points to an SDMX-REST 1.x API endpoint that serves SDMX-ML 2.1.
+  This endpoint does not support access of :class:`.v21.MetadataSet`, :class:`.v21.MetadataflowDefinition`, or :class:`.v21.MetadataStructureDefinition`.
+
+- The ``IMF_DATA3`` source points to an SDMX-REST 2.x API endpoint that serves SDMX-ML 3.0.0 and SDMX-JSON 2.0.0.
+  Only the former is supported by :mod:`sdmx`.
+  This endpoint does not support access of :class:`.HierarchicalCodelist`.
+
 .. _INEGI:
 
 ``INEGI``: National Institute of Statistics and Geography (Mexico)
