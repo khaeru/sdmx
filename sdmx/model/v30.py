@@ -25,6 +25,9 @@ from .internationalstring import InternationalStringDescriptor
 # Classes defined directly in the current file, in the order they appear
 __all__ = [
     "Annotation",
+    "CodeSelection",
+    "ExclusiveCodeSelection",
+    "InclusiveCodeSelection",
     "CodelistExtension",
     "GeoRefCode",
     "GeoGridCode",

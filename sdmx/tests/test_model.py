@@ -14,6 +14,7 @@ CLASSES = [
     "ConstraintRoleType",
     "FacetValueType",
     "ExtendedFacetValueType",
+    "UsageStatus",
     "Item",
     "ItemScheme",
     "FacetType",
@@ -46,6 +47,7 @@ CLASSES = [
     "GroupRelationship",
     "DataAttribute",
     "AttributeDescriptor",
+    "AllDimensions",
     "KeyValue",
     "TimeKeyValue",
     "AttributeValue",
@@ -160,6 +162,9 @@ V21_ONLY = [
 ]
 
 V30_ONLY = [
+    "CodeSelection",
+    "ExclusiveCodeSelection",
+    "InclusiveCodeSelection",
     "CodelistExtension",
     "GeoRefCode",
     "GeoGridCode",

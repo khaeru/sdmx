@@ -1,11 +1,19 @@
 """SDMX-ML v2.1 reader."""
-
 # Contents of this file are organized in the order:
 #
 # - Utility methods and global variables.
 # - Reference and Reader classes.
 # - Parser functions for sdmx.message classes, in the same order as message.py
-# - Parser functions for sdmx.model classes, in the same order as model.py
+# - Parser functions for sdmx.model classes, in the same order as model.common/model.v21
+#
+# When accessing sdmx.model classes, use:
+#
+# - common.Class for classes common to multiple/all versions of the SDMX IM.
+# - v21.Class for classes specific to v21 of the IM.
+# - reader.model.Class or reader.model.get_class for code that can handle classes from
+#   either version 2.1 or 3.0.0 of the IM and SDMX-ML. When used in .reader.xml.v30,
+#   these references will be to sdmx.model.v30.
+
 import logging
 import re
 from copy import copy
@@ -22,7 +30,6 @@ from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
 from sdmx.format import Version
 from sdmx.model import common, v21
-from sdmx.model import v21 as model
 
 from .common import (
     BaseReference,
@@ -148,7 +155,7 @@ def _message(reader: Reader, elem):
         if supplied_structure is None:
             log.warning(f"xml.Reader got no structure=… argument for {qname.localname}")
             ss_without_structure = True
-        elif isinstance(supplied_structure, model.MetadataStructureDefinition):
+        elif isinstance(supplied_structure, reader.model.MetadataStructureDefinition):
             add_mds_events(reader, supplied_structure)
     elif supplied_structure:
         log.info("Use supplied structure=… argument for non–structure-specific message")
@@ -156,7 +163,9 @@ def _message(reader: Reader, elem):
     # Store values for other methods
     reader.push("SS without structure", ss_without_structure)
     if elem.tag.endswith("Data"):
-        reader.push("DataSetClass", model.get_class(f"{QName(elem).localname}Set"))
+        reader.push(
+            "DataSetClass", reader.model.get_class(f"{QName(elem).localname}Set")
+        )
 
     # Handle namespaces mapped on `elem` but not part of the standard set
     existing_ns = set(reader.format.NS.values())
@@ -199,7 +208,7 @@ def _header_org(reader, elem):
     reader.push(
         elem,
         reader.nameable(
-            reader.class_for_tag(elem.tag), elem, contact=reader.pop_all(model.Contact)
+            reader.class_for_tag(elem.tag), elem, contact=reader.pop_all(common.Contact)
         ),
     )
 
@@ -270,7 +279,7 @@ def _header_structure(reader, elem):
         # Store
         if dim_at_obs == "AllDimensions":
             # Use a singleton object
-            dim = model.AllDimensions
+            dim = common.AllDimensions
         elif provided_structure:
             # Use existing dimension from the provided DSD
             dim = structure.dimensions.get(dim_at_obs)
@@ -279,9 +288,9 @@ def _header_structure(reader, elem):
             dim = structure.dimensions.getdefault(
                 dim_at_obs,
                 cls=(
-                    model.TimeDimension
+                    common.TimeDimension
                     if "TimeSeries" in elem.getparent().getparent().tag
-                    else model.Dimension
+                    else common.Dimension
                 ),
                 # TODO later, reduce this
                 order=maxsize,
@@ -298,7 +307,7 @@ def _footer(reader, elem):
         args["code"] = int(args["code"])
 
     reader.get_single(message.Message, subclass=True).footer = message.Footer(
-        text=list(map(model.InternationalString, reader.pop_all("Text"))), **args
+        text=list(map(common.InternationalString, reader.pop_all("Text"))), **args
     )
 
 
@@ -376,7 +385,7 @@ def _datetime(reader, elem):
 def _localization(reader, elem):
     reader.push(
         elem,
-        (elem.attrib.get(reader.qname("xml:lang"), model.DEFAULT_LOCALE), elem.text),
+        (elem.attrib.get(reader.qname("xml:lang"), common.DEFAULT_LOCALE), elem.text),
     )
 
 
@@ -509,12 +518,9 @@ def _item_end(reader: Reader, elem):
             # Backward reference
             parent.append_child(item)
 
-    # Agency only
-    try:
-        item.contact = reader.pop_all(model.Contact)
-    except ValueError:
-        # NB this is a ValueError from pydantic, rather than AttributeError from Python
-        pass
+    # Agency and subclasses
+    if hasattr(item, "contact"):
+        item.contact = reader.pop_all(common.Contact)
 
     reader.unstash()
     return item
@@ -579,11 +585,11 @@ def _facet(reader, elem):
     # default is "String".
     tt = args.pop("text_type", "String")
     try:
-        fvt = model.FacetValueType[f"{tt[0].lower()}{tt[1:]}"]
+        fvt = common.FacetValueType[f"{tt[0].lower()}{tt[1:]}"]
     except KeyError:
         # ExtendedFacetValueType instead. Convert case of the value: in XML, the string
         # is "XHTML", upper case; in the spec and Python enum, "Xhtml", title case.
-        fvt = model.ExtendedFacetValueType[f"{tt[0]}{tt[1:].lower()}"]
+        fvt = common.ExtendedFacetValueType[f"{tt[0]}{tt[1:].lower()}"]
 
     # NB Erratum: "isMultiLingual" appears in XSD schemas ("The isMultiLingual attribute
     #    indicates for a text format of type 'string', whether the value should allow
@@ -592,9 +598,9 @@ def _facet(reader, elem):
     args.pop("is_multi_lingual", None)
 
     # All other attributes are for FacetType
-    ft = model.FacetType(**args)
+    ft = common.FacetType(**args)
 
-    reader.push(elem, model.Facet(type=ft, value_type=fvt))
+    reader.push(elem, common.Facet(type=ft, value_type=fvt))
 
 
 @end("str:CoreRepresentation str:LocalRepresentation")
@@ -663,13 +669,13 @@ def _component_end(reader: Reader, elem):  # noqa: C901
 
     # DataAttributeOnly
     if us := elem.attrib.get("assignmentStatus"):
-        args["usage_status"] = model.UsageStatus[us.lower()]
+        args["usage_status"] = common.UsageStatus[us.lower()]
 
     if cr := reader.pop_resolved_ref("ConceptRole"):
         args["concept_role"] = cr
 
     # DataAttribute only
-    if ar := reader.pop_all(model.AttributeRelationship, subclass=True):
+    if ar := reader.pop_all(common.AttributeRelationship, subclass=True):
         assert len(ar) == 1, ar
         args["related_to"] = ar[0]
 
@@ -683,7 +689,7 @@ def _component_end(reader: Reader, elem):  # noqa: C901
         if children := reader.pop_all(cls):
             args["child"] = children
     elif cls is v21.IdentifiableObjectTarget:
-        args["object_type"] = model.get_class(elem.attrib["objectType"])
+        args["object_type"] = reader.model.get_class(elem.attrib["objectType"])
 
     reader.unstash()
 
@@ -703,7 +709,7 @@ def _component_end(reader: Reader, elem):  # noqa: C901
     str:ReportStructure
     """
 )
-@possible_reference(cls_hint=model.GroupDimensionDescriptor)  # <str:Group>
+@possible_reference(cls_hint=common.GroupDimensionDescriptor)  # <str:Group>
 def _cl(reader: Reader, elem):
     # Retrieve the DSD (or MSD)
     dsd: common.Structure = reader.peek("current DSD")
@@ -714,7 +720,7 @@ def _cl(reader: Reader, elem):
 
     args = dict(
         # Retrieve the components
-        components=reader.pop_all(model.Component, subclass=True),
+        components=reader.pop_all(common.Component, subclass=True),
         # SDMX-ML spec for, e.g. DimensionList: "The id attribute is provided in this
         # case for completeness. However, its value is fixed to 'DimensionDescriptor'."
         id=elem.attrib.get("id", cls.__name__),
@@ -728,7 +734,7 @@ def _cl(reader: Reader, elem):
             for ref in reader.pop_all("DimensionReference")
         ]
     elif cls is v21.ReportStructure:
-        assert isinstance(dsd, v21.MetadataStructureDefinition)
+        assert isinstance(dsd, reader.model.MetadataStructureDefinition)
         # Assemble MetadataTarget references for the `report_for` field
         args["report_for"] = list()
         for target_ref in reader.pop_all(reader.Reference):
@@ -756,7 +762,7 @@ def _cl(reader: Reader, elem):
 @end("str:Categorisation")
 def _cat(reader, elem):
     return reader.maintainable(
-        model.Categorisation,
+        common.Categorisation,
         elem,
         artefact=reader.pop_resolved_ref("Source"),
         category=reader.pop_resolved_ref("Target"),
@@ -801,21 +807,21 @@ def _key0(reader, elem):
 
     if parent == "DataKeySet":
         # DataKey within DataKeySet
-        return model.DataKey(
+        return reader.model.DataKey(
             included=elem.attrib.get("isIncluded", True),
             # Convert MemberSelection/MemberValue from _ms() to ComponentValue
             key_value={
-                ms.values_for: model.ComponentValue(
+                ms.values_for: common.ComponentValue(
                     value_for=ms.values_for, value=ms.values.pop().value
                 )
-                for ms in reader.pop_all(model.MemberSelection)
+                for ms in reader.pop_all(reader.model.MemberSelection)
             },
         )
     else:
         # VTLSpaceKey within VTLMapping
         cls = {
-            "FromVtlSuperSpace": model.FromVTLSpaceKey,
-            "ToVtlSubSpace": model.ToVTLSpaceKey,
+            "FromVtlSuperSpace": common.FromVTLSpaceKey,
+            "ToVtlSubSpace": common.ToVTLSpaceKey,
         }[parent]
 
         return cls(key=elem.text)
@@ -823,8 +829,8 @@ def _key0(reader, elem):
 
 @end("str:DataKeySet")
 def _dks(reader, elem):
-    return model.DataKeySet(
-        included=elem.attrib["isIncluded"], keys=reader.pop_all(model.DataKey)
+    return reader.model.DataKeySet(
+        included=elem.attrib["isIncluded"], keys=reader.pop_all(reader.model.DataKey)
     )
 
 
@@ -852,11 +858,11 @@ def _ms_component(reader, elem, kind):
         )
     obj = reader.resolve(next(iter(cc_content.values())))
 
-    if isinstance(obj, model.DataflowDefinition):
+    if isinstance(obj, common.BaseDataflow):
         # The constrained DFD has a corresponding DSD, which has a Dimension- or
         # AttributeDescriptor
         dsd = obj.structure
-    elif isinstance(obj, model.DataStructureDefinition):
+    elif isinstance(obj, common.BaseDataStructureDefinition):
         # The DSD is constrained directly
         dsd = obj
     else:
@@ -902,8 +908,8 @@ def _ms(reader, elem):
     # Identify the component
     # Values are for either a Dimension or Attribute, based on tag name
     kinds = {
-        "KeyValue": ("dimensions", model.Dimension),
-        "Attribute": ("attributes", model.DataAttribute),
+        "KeyValue": ("dimensions", common.Dimension),
+        "Attribute": ("attributes", common.DataAttribute),
     }
     kind = kinds.get(QName(elem).localname)
 
@@ -925,9 +931,9 @@ def _ms(reader, elem):
 
     # Convert to SelectionValue
     mvs = reader.pop_all("Value")
-    trv = reader.pop_all(model.TimeRangeValue, subclass=True)
+    trv = reader.pop_all(v21.TimeRangeValue, subclass=True)
     if mvs:
-        arg["values"] = list(map(lambda v: model.MemberValue(value=v), mvs))
+        arg["values"] = list(map(lambda v: reader.model.MemberValue(value=v), mvs))
     elif trv:
         arg["values"] = trv
     else:  # pragma: no cover
@@ -940,15 +946,17 @@ def _ms(reader, elem):
         )
         return None
     else:
-        return model.MemberSelection(**arg)
+        return reader.model.MemberSelection(**arg)
 
 
 @end("str:CubeRegion")
 def _cr(reader, elem):
-    return model.CubeRegion(
+    return common.CubeRegion(
         included=elem.attrib["include"],
         # Combine member selections for Dimensions and Attributes
-        member={ms.values_for: ms for ms in reader.pop_all(model.MemberSelection)},
+        member={
+            ms.values_for: ms for ms in reader.pop_all(reader.model.MemberSelection)
+        },
     )
 
 
@@ -974,10 +982,10 @@ def _cc(reader, elem):
     return reader.maintainable(
         cls,
         elem,
-        role=model.ConstraintRole(role=model.ConstraintRoleType[cr_str]),
+        role=common.ConstraintRole(role=common.ConstraintRoleType[cr_str]),
         content=content,
-        data_content_keys=reader.pop_single(model.DataKeySet),
-        data_content_region=reader.pop_all(model.CubeRegion),
+        data_content_keys=reader.pop_single(reader.model.DataKeySet),
+        data_content_region=reader.pop_all(common.CubeRegion),
     )
 
 
@@ -1001,17 +1009,17 @@ def _ar(reader, elem):
     args = dict(dimensions=list())
     for ref in refs:
         # Use the <Ref id="..."> to retrieve a Component from the DSD
-        if issubclass(ref.target_cls, model.DimensionComponent):
+        if issubclass(ref.target_cls, common.DimensionComponent):
             component = dsd.dimensions.get(ref.target_id)
             args["dimensions"].append(component)
-        elif ref.target_cls is model.PrimaryMeasure:
+        elif ref.target_cls is v21.PrimaryMeasure:
             # Since <str:AttributeList> occurs before <str:MeasureList>, this is
             # usually a forward reference. We *could* eventually resolve it to confirm
             # consistency (the referenced ID is same as the PrimaryMeasure.id), but
             # that doesn't affect the returned value, since PrimaryMeasureRelationship
             # has no attributes.
-            return model.PrimaryMeasureRelationship()
-        elif ref.target_cls is model.GroupDimensionDescriptor:
+            return v21.PrimaryMeasureRelationship()
+        elif ref.target_cls is common.GroupDimensionDescriptor:
             args["group_key"] = dsd.group_dimensions[ref.target_id]
 
     ref = reader.pop_single("AttachmentGroup")
@@ -1077,7 +1085,7 @@ def _avs(reader, elem):
     result = {}
     for e in elem.iterchildren():
         da = ad.getdefault(e.attrib["id"])
-        result[da.id] = model.AttributeValue(value=e.attrib["value"], value_for=da)
+        result[da.id] = common.AttributeValue(value=e.attrib["value"], value_for=da)
 
     reader.push("Attributes", result)
 
@@ -1093,59 +1101,49 @@ def _key1(reader, elem):
     return dsd.make_key(cls, kv, extend=True)
 
 
-@end("gen:Series")
+@end(":Series gen:Series")
 def _series(reader, elem):
     ds = reader.get_single("DataSet")
-    sk = reader.pop_single(model.SeriesKey)
+    if QName(elem).namespace:  # Generic: collect a parsed <gen:SeriesKey> element
+        sk = reader.pop_single(common.SeriesKey)
+    else:  # Structure-specific: construct the key from attributes of `elem`
+        sk = ds.structured_by.make_key(
+            common.SeriesKey, elem.attrib, extend=reader.peek("SS without structure")
+        )
     sk.attrib.update(reader.pop_single("Attributes") or {})
-    ds.add_obs(reader.pop_all(model.Observation), sk)
+    ds.add_obs(reader.pop_all(reader.model.Observation), series_key=sk)
 
 
-@end(":Series")
-def _series_ss(reader, elem):
-    ds = reader.get_single("DataSet")
-    ds.add_obs(
-        reader.pop_all(model.Observation),
-        ds.structured_by.make_key(
-            model.SeriesKey, elem.attrib, extend=reader.peek("SS without structure")
-        ),
-    )
-
-
-@end("gen:Group")
+@end(":Group gen:Group")
 def _group(reader, elem):
     ds = reader.get_single("DataSet")
 
-    gk = reader.pop_single(model.GroupKey)
+    if QName(elem).namespace:  # Generic: collect as parsed <gen:GroupKey>
+        gk = reader.pop_single(common.GroupKey)
+    else:  # Structure-specific: construct the key from attributes of `elem`
+        # First remove the group ID
+        attrib = copy(elem.attrib)
+        group_id = attrib.pop(reader.qname("xsi", "type"), None)
+
+        gk = ds.structured_by.make_key(
+            common.GroupKey, attrib, extend=reader.peek("SS without structure")
+        )
+
+        if group_id:
+            # The group_id is in a format like "foo:GroupName", where "foo" is an XML
+            # namespace
+            ns, group_id = group_id.split(":")
+            assert ns in elem.nsmap
+
+            try:
+                gk.described_by = ds.structured_by.group_dimensions[group_id]
+            except KeyError:
+                if not reader.peek("SS without structure"):
+                    raise
+
     gk.attrib.update(reader.pop_single("Attributes") or {})
 
     # Group association of Observations is done in _ds_end()
-    ds.group[gk] = []
-
-
-@end(":Group")
-def _group_ss(reader, elem):
-    ds = reader.get_single("DataSet")
-    attrib = copy(elem.attrib)
-
-    group_id = attrib.pop(reader.qname("xsi", "type"), None)
-
-    gk = ds.structured_by.make_key(
-        model.GroupKey, attrib, extend=reader.peek("SS without structure")
-    )
-
-    if group_id:
-        # The group_id is in a format like "foo:GroupName", where "foo" is an XML
-        # namespace
-        ns, group_id = group_id.split(":")
-        assert ns in elem.nsmap
-
-        try:
-            gk.described_by = ds.structured_by.group_dimensions[group_id]
-        except KeyError:
-            if not reader.peek("SS without structure"):
-                raise
-
     ds.group[gk] = []
 
 
@@ -1163,15 +1161,15 @@ def _obs(reader, elem):
         elif localname == "ObsDimension":
             # Mutually exclusive with ObsKey
             args["dimension"] = dsd.make_key(
-                model.Key, {dim_at_obs.id: e.attrib["value"]}
+                common.Key, {dim_at_obs.id: e.attrib["value"]}
             )
         elif localname == "ObsKey":
             # Mutually exclusive with ObsDimension
-            args["dimension"] = reader.pop_single(model.Key)
+            args["dimension"] = reader.pop_single(common.Key)
         elif localname == "ObsValue":
             args["value"] = e.attrib["value"]
 
-    return model.Observation(**args)
+    return reader.model.Observation(**args)
 
 
 @end(":Obs")
@@ -1209,23 +1207,23 @@ def _obs_ss(reader, elem):
     else:
         _, elem.attrib[dim_at_obs.id] = tmp.split(":", maxsplit=2)
 
-    if ss_without_structure and dim_at_obs is not model.AllDimensions:
+    if ss_without_structure and dim_at_obs is not common.AllDimensions:
         # Create the observation key
-        key = dsd.make_key(model.Key, {dim_at_obs.id: elem.attrib.pop(dim_at_obs.id)})
+        key = dsd.make_key(common.Key, {dim_at_obs.id: elem.attrib.pop(dim_at_obs.id)})
         # Remaining element attributes are SDMX attribute values
         aa = {}
         for ak, av in elem.attrib.items():
             # Create the DataAttribute in the DSD
             da = dsd.attributes.getdefault(id=ak)
-            aa[ak] = model.AttributeValue(value_for=da, value=av)
+            aa[ak] = common.AttributeValue(value_for=da, value=av)
     else:
         # Use all remaining attributes as dimensions; extend the DSD if appropriate
-        key = dsd.make_key(model.Key, elem.attrib, extend=ss_without_structure)
+        key = dsd.make_key(common.Key, elem.attrib, extend=ss_without_structure)
         # Remove attributes from the Key to be attached to the Observation
         aa = key.attrib
         key.attrib = {}
 
-    return model.Observation(
+    return reader.model.Observation(
         dimension=key, value=value, value_for=pm, attached_attribute=aa
     )
 
@@ -1263,11 +1261,13 @@ def _ds_start(reader, elem):
 def _ds_end(reader, elem):
     ds = reader.pop_single("DataSet")
 
-    # Collect attributes attached to the data set
-    ds.attrib.update(reader.pop_single("Attributes") or {})
+    # Collect attributes attached to the data set. SDMX 2.1 only; this attribute is
+    # removed in SDMX 3.0.0.
+    if hasattr(ds, "attrib"):
+        ds.attrib.update(reader.pop_single("Attributes") or {})
 
     # Collect observations not grouped by SeriesKey
-    ds.add_obs(reader.pop_all(model.Observation))
+    ds.add_obs(reader.pop_all(reader.model.Observation))
 
     # Add any group associations not made above in add_obs() or in _series()
     for obs in ds.obs:
@@ -1362,7 +1362,7 @@ def _md_report(reader: Reader, elem):
 
     return cls(
         target=mdt,
-        attaches_to=reader.pop_single(model.TargetObjectKey),
+        attaches_to=reader.pop_single(v21.TargetObjectKey),
         metadata=reader.pop_single("AttributeSet"),
     )
 
@@ -1397,7 +1397,7 @@ def _rv(reader: Reader, elem):
 
     if cls is v21.TargetReportPeriod:
         args["report_period"] = reader.pop_single("ReportPeriod")
-    elif cls is model.TargetIdentifiableObject:
+    elif cls is reader.model.TargetIdentifiableObject:
         or_ = reader.pop_resolved_ref("ObjectReference")
         reader.ignore.add(id(or_.parent))
         args["obj"] = or_
@@ -1405,16 +1405,16 @@ def _rv(reader: Reader, elem):
     return cls(**args)
 
 
-def add_mds_events(reader: Reader, mds: model.MetadataStructureDefinition):
+def add_mds_events(reader: Reader, mds: common.BaseMetadataStructureDefinition):
     """Add parser events for structure-specific metadata."""
 
     # TODO these persist after reading a particular message; avoid this
-    def _add_events_for_ma(ma: model.MetadataAttribute):
+    def _add_events_for_ma(ma: common.MetadataAttribute):
         reader.end(f":{ma.id}")(_ra)
         for child in ma.child:
             _add_events_for_ma(child)
 
-    for rs in mds.report_structure.values():
+    for rs in getattr(mds, "report_structure", {}).values():
         for ma in rs.components:
             _add_events_for_ma(ma)
 
@@ -1444,7 +1444,7 @@ def _ra(reader: Reader, elem):
 
     # TODO Match value_for to specific common.MetadataAttribute in the ReportStructure
     # # Retrieve the current MetadataSet, MDSD, and ReportStructure
-    # mds = cast(model.MetadataSet, reader.get_single("MetadataSet"))
+    # mds = cast(v21.MetadataSet, reader.get_single("MetadataSet"))
 
     try:
         # Set `value_for` using the "id" attribute
@@ -1452,14 +1452,14 @@ def _ra(reader: Reader, elem):
     except KeyError:
         args["value_for"] = elem.tag
 
-    # Identify a concrete subclass of model.ReportedAttribute
+    # Identify a concrete subclass of v21.ReportedAttribute
     xhtml_value_root_elem = reader.pop_single("StructuredText")
     if xhtml_value_root_elem is not None:
         cls: type = v21.XHTMLAttributeValue
         args["value"] = xhtml_value_root_elem
     else:
-        # TODO Distinguish model.EnumeratedAttributeValue
-        cls = model.OtherNonEnumeratedAttributeValue
+        # TODO Distinguish v21.EnumeratedAttributeValue
+        cls = v21.OtherNonEnumeratedAttributeValue
         try:
             args["value"] = elem.attrib["value"]
         except KeyError:
@@ -1516,7 +1516,7 @@ def _hc_end(reader: Reader, elem):
 
     # Handle the reference to a Level
     level = None
-    if level_ref := refs.pop(v21.Hierarchy, None):
+    if level_ref := refs.pop(reader.model.Hierarchy, None):
         try:
             level = reader.resolve(level_ref)
         except TypeError:
@@ -1559,7 +1559,7 @@ def _h_end(reader: Reader, elem):
         reader.class_for_tag(elem.tag),
         elem,
         has_formal_levels=eval(elem.attrib.get("leveled", "false").title()),
-        codes={c.id: c for c in reader.pop_all(model.HierarchicalCode)},
+        codes={c.id: c for c in reader.pop_all(common.HierarchicalCode)},
         level=reader.pop_single(common.Level),
     )
 
@@ -1583,7 +1583,9 @@ def _icl(reader: Reader, elem):
 def _hcl(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
     reader.pop_all("CodelistAlias")
-    return reader.maintainable(cls, elem, hierarchy=reader.pop_all(model.Hierarchy))
+    return reader.maintainable(
+        cls, elem, hierarchy=reader.pop_all(reader.model.Hierarchy)
+    )
 
 
 # §9: Structure Set and Mappings
@@ -1591,21 +1593,21 @@ def _hcl(reader: Reader, elem):
 
 @start("str:CodelistMap", only=False)
 def _ismap_start(reader: Reader, elem):
-    cls: type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    cls: type[v21.ItemSchemeMap] = reader.class_for_tag(elem.tag)
     # Push class for reference while parsing sub-elements
     reader.push("ItemAssociation class", cls._ItemAssociation._Item)
 
 
 @end("str:CodelistMap", only=False)
 def _ismap_end(reader: Reader, elem):
-    cls: type[model.ItemSchemeMap] = reader.class_for_tag(elem.tag)
+    cls: type[common.ItemSchemeMap] = reader.class_for_tag(elem.tag)
 
     # Remove class from stacks
     reader.pop_single("ItemAssociation class")
 
     # Retrieve the source and target ItemSchemes
-    source: model.ItemScheme = reader.pop_resolved_ref("Source")
-    target: model.ItemScheme = reader.pop_resolved_ref("Target")
+    source: common.ItemScheme = reader.pop_resolved_ref("Source")
+    target: common.ItemScheme = reader.pop_resolved_ref("Target")
 
     # Iterate over the ItemAssociation instances
     ia_all = list()
@@ -1633,7 +1635,7 @@ def _ismap_end(reader: Reader, elem):
 
 @end("str:CodeMap")
 def _item_map(reader: Reader, elem):
-    cls: type[model.ItemAssociation] = reader.class_for_tag(elem.tag)
+    cls: type[v21.ItemAssociation] = reader.class_for_tag(elem.tag)
 
     # Store Source and Target as Reference instances
     return reader.annotable(
@@ -1647,10 +1649,10 @@ def _item_map(reader: Reader, elem):
 @end("str:StructureSet")
 def _ss(reader: Reader, elem):
     return reader.maintainable(
-        model.StructureSet,
+        v21.StructureSet,
         elem,
         # Collect all ItemSchemeMaps
-        item_scheme_map=reader.pop_all(model.ItemSchemeMap, subclass=True),
+        item_scheme_map=reader.pop_all(v21.ItemSchemeMap, subclass=True),
     )
 
 
@@ -1661,7 +1663,7 @@ def _ss(reader: Reader, elem):
 @possible_reference()  # <str:ProvisionAgreement> in <str:ConstraintAttachment>
 def _pa(reader, elem):
     return reader.maintainable(
-        model.ProvisionAgreement,
+        common.ProvisionAgreement,
         elem,
         structure_usage=reader.pop_resolved_ref("StructureUsage"),
         data_provider=reader.pop_resolved_ref(Reference),
@@ -1706,7 +1708,7 @@ def _vtlm_to(reader: Reader, elem):
 def _rs(reader: Reader, elem):
     # TODO handle .scope, .type
     return reader.nameable(
-        model.Ruleset, elem, definition=reader.pop_single("RulesetDefinition")
+        common.Ruleset, elem, definition=reader.pop_single("RulesetDefinition")
     )
 
 
@@ -1714,7 +1716,7 @@ def _rs(reader: Reader, elem):
 def _trans(reader: Reader, elem):
     # TODO handle .is_persistent
     return reader.nameable(
-        model.Transformation,
+        common.Transformation,
         elem,
         expression=reader.pop_single("Expression"),
         result=reader.pop_single("Result"),
@@ -1740,7 +1742,7 @@ def _ts(reader: Reader, elem):
 @end("str:UserDefinedOperator")
 def _udo(reader: Reader, elem):
     return reader.nameable(
-        model.UserDefinedOperator,
+        common.UserDefinedOperator,
         elem,
         definition=reader.pop_single("OperatorDefinition"),
     )
@@ -1751,14 +1753,14 @@ def _vtlm(reader: Reader, elem):
     ref = reader.resolve(reader.pop_single(reader.Reference))
     args: dict[str, Any] = dict()
     if isinstance(ref, common.BaseDataflow):
-        cls = model.VTLDataflowMapping
+        cls: type["common.VTLMapping"] = common.VTLDataflowMapping
         args["dataflow_alias"] = ref
         args["to_vtl_method"] = reader.pop_single(common.SDMXtoVTL)
         args["to_vtl_subspace"] = reader.pop_all(common.ToVTLSpaceKey)
         args["from_vtl_method"] = reader.pop_single(common.VTLtoSDMX)
         args["from_vtl_superspace"] = reader.pop_all(common.FromVTLSpaceKey)
     else:
-        cls = model.VTLConceptMapping
+        cls = common.VTLConceptMapping
         args["concept_alias"] = ref
 
     return reader.nameable(cls, elem, **args)

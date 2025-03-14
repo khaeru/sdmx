@@ -5,8 +5,7 @@ from typing import Any
 
 import sdmx.urn
 from sdmx.format import Version
-from sdmx.model import common
-from sdmx.model import v30 as model
+from sdmx.model import common, v30
 
 from . import v21
 from .common import BaseReference, NotReference, XMLEventReader
@@ -97,7 +96,7 @@ def _cl(reader, elem):
         sdmx.urn.match(elem.text)
     except ValueError:
         result = v21._itemscheme(reader, elem)
-        result.extends = reader.pop_all(model.CodelistExtension)
+        result.extends = reader.pop_all(v30.CodelistExtension)
         return result
     else:
         reader.push(elem, elem.text)
@@ -105,9 +104,9 @@ def _cl(reader, elem):
 
 @end("str:CodelistExtension")
 def _cl_ext(reader, elem):
-    cs = reader.pop_all(model.CodeSelection, subclass=True) or [None]
+    cs = reader.pop_all(v30.CodeSelection, subclass=True) or [None]
     assert 1 == len(cs)
-    return model.CodelistExtension(
+    return v30.CodelistExtension(
         extends=reader.pop_resolved_ref("Codelist"),
         prefix=elem.attrib.get("prefix", None),
         selection=cs[0],
@@ -116,7 +115,7 @@ def _cl_ext(reader, elem):
 
 @end("str:ExclusiveCodeSelection str:InclusiveCodeSelection")
 def _code_selection(reader, elem):
-    return reader.class_for_tag(elem.tag)(mv=reader.pop_all(model.MemberValue))
+    return reader.class_for_tag(elem.tag)(mv=reader.pop_all(reader.model.MemberValue))
 
 
 @end("str:MemberValue")
@@ -153,17 +152,17 @@ def _ar(reader: Reader, elem):
     args: dict[str, Any] = dict(dimensions=list())
     for ref in refs:
         # Use the <Ref id="..."> to retrieve a Component from the DSD
-        if issubclass(ref.target_cls, model.DimensionComponent):
+        if issubclass(ref.target_cls, common.DimensionComponent):
             component = dsd.dimensions.get(ref.target_id)
             args["dimensions"].append(component)
-        elif ref.target_cls is model.Measure:
+        elif ref.target_cls is common.Measure:
             # Since <str:AttributeList> occurs before <str:MeasureList>, this is
             # usually a forward reference. We *could* eventually resolve it to confirm
             # consistency (the referenced ID is same as the PrimaryMeasure.id), but
             # that doesn't affect the returned value, since PrimaryMeasureRelationship
             # has no attributes.
-            return model.ObservationRelationship()
-        elif ref.target_cls is model.GroupDimensionDescriptor:
+            return v30.ObservationRelationship()
+        elif ref.target_cls is common.GroupDimensionDescriptor:
             args["group_key"] = dsd.group_dimensions[ref.target_id]
 
     ref = reader.pop_single("AttachmentGroup")
@@ -180,7 +179,7 @@ def _ar(reader: Reader, elem):
 @end(":Value")
 def _complex_value(reader: Reader, elem):
     try:
-        reader.push("ComplexValue", model.InternationalString(reader.pop_all("Text")))
+        reader.push("ComplexValue", common.InternationalString(reader.pop_all("Text")))
     except Exception:  # pragma: no cover
         raise NotImplementedError
 
@@ -194,8 +193,10 @@ def _complex(reader: Reader, elem):
 
     reader.stack.setdefault("Attributes", {-1: {}})
 
-    reader.stack["Attributes"][-1][da.id] = model.AttributeValue(
-        value=reader.pop_all("ComplexValue"), value_for=da
+    reader.stack["Attributes"][-1][da.id] = common.AttributeValue(
+        # See comment on AttributeValue.value
+        value=reader.pop_all("ComplexValue"),  # type: ignore [arg-type]
+        value_for=da,
     )
 
 
@@ -209,6 +210,6 @@ def _h(reader: Reader, elem):
         cls,
         elem,
         has_formal_levels=eval(elem.attrib["hasFormalLevels"].title()),
-        codes={c.id: c for c in reader.pop_all(model.HierarchicalCode)},
+        codes={c.id: c for c in reader.pop_all(common.HierarchicalCode)},
         level=reader.pop_single(common.Level),
     )

@@ -3,6 +3,7 @@
 :obj:`~.v30.AfterPeriod`
 :obj:`~.v30.Annotation`
 :obj:`~.v30.BeforePeriod`
+:obj:`~.v30.CodeSelection`
 :obj:`~.v30.CodedMetadataAttributeValue`
 :obj:`~.v30.CodelistExtension`
 :obj:`~.v30.Constraint`
@@ -13,6 +14,7 @@
 :obj:`~.v30.DataStructureDefinition`
 :obj:`~.v30.Dataflow`
 :obj:`~.v30.DataflowRelationship`
+:obj:`~.v30.ExclusiveCodeSelection`
 :obj:`~.v30.GeoCodelist`
 :obj:`~.v30.GeoFeatureSetCode`
 :obj:`~.v30.GeoGridCode`
@@ -22,6 +24,7 @@
 :obj:`~.v30.Hierarchy`
 :obj:`~.v30.HierarchyAssociation`
 :obj:`~.v30.IdentifiableObjectSelection`
+:obj:`~.v30.InclusiveCodeSelection`
 :obj:`~.v30.Measure`
 :obj:`~.v30.MeasureDescriptor`
 :obj:`~.v30.MeasureRelationship`

@@ -62,6 +62,7 @@ __all__ = [
     "ConstraintRoleType",
     "FacetValueType",
     "ExtendedFacetValueType",
+    "UsageStatus",
     "Item",
     "ItemScheme",
     "FacetType",
@@ -94,6 +95,7 @@ __all__ = [
     "GroupRelationship",
     "DataAttribute",
     "AttributeDescriptor",
+    "AllDimensions",
     "KeyValue",
     "TimeKeyValue",
     "AttributeValue",
@@ -1715,9 +1717,24 @@ class AttributeValue:
 
     In the spec, AttributeValue is an abstract class. Here, it serves as both the
     concrete subclasses CodedAttributeValue and UncodedAttributeValue.
+
+    .. important:: The SDMX 3.0.0 “Summary of major changes and new functionality”
+       document mentions (§2.3 Information Model, p.8) “new features such as
+       multiple measures and value arrays for measures and attributes,” and the
+       SDMX-ML 3.0.0 examples (such as `ECB_EXR_CA.xml <https://github.com/sdmx-twg/
+       sdmx-ml/blob/29f1a3d856c4259429f5ec0eae811653adc5cdb5/samples/
+       Data%20-%20Complex%20Data%20Attributes/ECB_EXR_CA.xml>`_) indicate that this
+       can be a “value array,” but the SDMX 3.0.0 IM (Figure 31/§5.4.2, p.84) gives
+       only ‘String’ as the type of :py:`UncodedAttributeValue.value`. No class for
+       multiple values is described.
+
+       As a consequence, when such multiply-valued attributes are parsed from SDMX-ML,
+       the type annotation for :attr:`value` will be incorrect. The actual type may be
+       :py:`list[str]`, :py:`list[Code]`, or something else.
+
+    .. todo:: Separate and enforce properties of Coded- and UncodedAttributeValue.
     """
 
-    # TODO separate and enforce properties of Coded- and UncodedAttributeValue
     #:
     value: Union[str, Code]
     #:
