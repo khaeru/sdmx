@@ -35,6 +35,7 @@ Migration notes
 All changes
 -----------
 
+- :meth:`StructureMessage.get` handles full and partial :class:`URNs <URN>` (:pull:`227`).
 - :class:`.v21.Annotation` and :class:`.v30.Annotation` are derived from :class:`.common.BaseAnnotation` (:pull:`227`).
   This allows to reflect that the latter has an attribute, :attr:`.v30.Annotation.value`, that the former does not.
   This is a change in the SDMX 3.0.0 Information Model that is not mentioned in the “Summary of major changes and new functionality” or IM document.

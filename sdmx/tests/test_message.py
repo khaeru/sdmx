@@ -74,7 +74,7 @@ class TestDataMessage:
 
 
 class TestStructureMessage:
-    def test_add_contains_get(self):
+    def test_add_contains_get(self) -> None:
         dsd = v21.DataStructureDefinition(id="foo")
         msg = message.StructureMessage()
 
@@ -89,7 +89,7 @@ class TestStructureMessage:
         assert dsd is msg.get("foo")
 
         # add() with an object not collected in a StructureMessage raises TypeError
-        item = common.Item(id="bar")
+        item: "common.Item" = common.Item(id="bar")
         with pytest.raises(TypeError):
             msg.add(item)
 
@@ -102,15 +102,58 @@ class TestStructureMessage:
         with pytest.raises(ValueError):
             msg.get("foo")
 
-    def test_dictlike_attribute_access(self):
+    def test_dictlike_attribute_access(self) -> None:
         dsd = v21.DataStructureDefinition(id="foo")
         msg = message.StructureMessage()
         msg.add(dsd)
 
         # Attribute access works when added to the default, empty DictLike
-        assert msg.structure.foo is dsd
+        # NB This offends mypy because DictLike.__getattr__ is not defined explicitly
+        assert msg.structure.foo is dsd  # type: ignore [attr-defined]
 
-    def test_iter_objects(self):
+    @pytest.fixture
+    def msg0(self) -> message.StructureMessage:
+        msg = message.StructureMessage()
+
+        # Add several objects
+        for maintainer, id, version, with_urn in (
+            ("FOO", "CL_BAR", "1.0", True),
+            ("FOO", "CL_BAR", "1.1", False),
+            ("BAZ", "CL_BAR", "1.0", True),
+        ):
+            cl: "common.Codelist" = common.Codelist(
+                id=id, maintainer=common.Agency(id=maintainer), version=version
+            )
+            if with_urn:
+                cl.urn = sdmx.urn.make(cl)
+            msg.codelist[f"{maintainer}:{id}({version})"] = cl
+
+        return msg
+
+    def test_get(self, msg0: message.StructureMessage) -> None:
+        # Get with ID only
+        with pytest.raises(ValueError, match="ambiguous"):
+            msg0.get("CL_BAR")
+
+        # with partial URN: id + version
+        assert msg0.get("CL_BAR(1.1)") is not None
+
+        # with partial URN: maintainer + id
+        assert msg0.get("BAZ:CL_BAR") is not None
+
+        # with partial URN: class + maintainer + id
+        assert msg0.get("Codelist=BAZ:CL_BAR") is not None
+
+        # with partial URN: class + maintainer + id + version
+        assert msg0.get("Codelist=FOO:CL_BAR(1.0)") is not None
+
+        # with complete URN: class + maintainer + id + version
+        assert (
+            msg0.get("urn:sdmx:org.sdmx.infomodel.codelist.Codelist=FOO:CL_BAR(1.0)")
+            is not None
+        )
+
+    def test_iter_objects(self) -> None:
         """:meth:`.iter_objects` can be used to iterate over all objects."""
         msg = message.StructureMessage()
 
@@ -134,10 +177,10 @@ class TestStructureMessage:
             obj.id for obj in msg.iter_objects(external_reference=False)
         )
 
-    def test_objects(self):
+    def test_objects(self) -> None:
         """:meth:`.objects` can be used to access a collection according to class."""
         msg = message.StructureMessage()
-        cl = common.Codelist(id="foo")
+        cl: "common.Codelist" = common.Codelist(id="foo")
         msg.add(cl)
 
         assert cl is msg.objects(common.Codelist)["foo"]
