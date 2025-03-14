@@ -355,7 +355,7 @@ class RoundTripTests(ABC):
         # Contents can be read again
         try:
             msg1 = sdmx.read_sdmx(data, structure=structure)
-        except Exception:
+        except Exception:  # pragma: no cover
             path = tmp_path.joinpath("output.xml")
             path.write_bytes(data.getbuffer())
             log.error(f"See {path}")

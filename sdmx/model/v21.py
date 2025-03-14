@@ -586,7 +586,7 @@ class MetadataReport(common.AnnotableArtefact):
             ),
         ):
             return ra.value
-        else:
+        else:  # pragma: no cover
             return None
 
 

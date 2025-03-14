@@ -36,6 +36,7 @@ from sdmx.model.v21 import (
     MemberValue,
     Observation,
     TargetObjectKey,
+    TextAttributeValue,
     value_for_dsd_ref,
 )
 
@@ -782,3 +783,14 @@ class TestTargetObjectKey:
         )
 
         assert tok["FOO"].obj is c  # type: ignore [attr-defined]
+
+
+class TestTextAttributeValue:
+    def test_value_attr(self) -> None:
+        av = TextAttributeValue(
+            text={"en": "foo", "fr": "bar"}, value_for=v21.MetadataAttribute()
+        )
+
+        assert "en: foo\nfr: bar" == repr(av.text)
+        # Value can also be accessed via .value
+        assert "en: foo\nfr: bar" == repr(av.value)
