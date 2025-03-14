@@ -3,10 +3,70 @@
 What's new?
 ***********
 
-.. _2.21.1:
+.. _2.22.0:
 
-.. Next release
-.. ============
+Next release
+============
+
+Migration notes
+---------------
+
+- Modify code that imports :class:`~.v21.Annotation` from :mod:`sdmx.model.common` to import from either :mod:`sdmx.model.v21` or :mod:`sdmx.model.v30`, as appropriate.
+  For example, instead of:
+
+  .. code-block:: python
+
+     from sdmx.model.common import Annotation
+
+     a = Annotation(id="FOO", ...)
+
+  …do:
+
+  .. code-block:: python
+
+     from sdmx.model.v21 import Annotation
+
+     a = Annotation(id="FOO", ...)
+- Adjust code that accesses :class:`.ReportStructure` via the :attr:`v21.MetadataSet.described_by` attribute:
+
+  1. To access ReportStructure, use the new :attr:`~.v21.MetadataSet.report_structure` attribute.
+  2. To access :class:`.MetadataStructureDefinition`, use :attr:`~v21.MetadataSet.described_by`.
+
+All changes
+-----------
+
+- :meth:`StructureMessage.get` handles full and partial :class:`URNs <URN>` (:pull:`227`).
+- :class:`.v21.Annotation` and :class:`.v30.Annotation` are derived from :class:`.common.BaseAnnotation` (:pull:`227`).
+  This allows to reflect that the latter has an attribute, :attr:`.v30.Annotation.value`, that the former does not.
+  This is a change in the SDMX 3.0.0 Information Model that is not mentioned in the “Summary of major changes and new functionality” or IM document.
+
+  Code like :py:`from sdmx.model.common import Annotation` now emits :class:`DeprecationWarning`, and in the future will raise :class:`ImportError`.
+- :func:`.validate_xml` now supports :xml:`<com:StructuredText>` elements representing, for instance, :class:`.XHTMLAttributeValue` (:pull:`227`).
+  A new function :func:`.construct_schema` modifies the official SDMX-ML schemas to insert an import of the `XML Schema for XHTML 1.0 <https://www.w3.org/TR/xhtml1-schema/>`_, allowing to validate the XHTML content within these elements.
+- Improve :mod:`.model` (:pull:`227`):
+
+  - :class:`.IdentifiableArtefact` is comparable with :class:`str` via its :attr:`~.IdentifiableArtefact.id`.
+    This means that :func:`sorted` can be used with mixed collections of these two types.
+  - :attr:`.Structure.grouping` now returns a list of :class:`.ComponentList`.
+    In :mod:`sdmx` v2.21.1 and earlier, this list would include a :class:`dict` of 0 or more :class:`.GroupDimensionDescriptor`, keyed by the ID of each.
+    Now, each group dimension descriptor is directly an item in the list.
+  - :attr:`.v21.MetadataSet.report_structure` is added and distinguished from :attr:`~.v21.MetadataSet.described_by`.
+    This works around an issue in the SDMX 2.1 IM; see the class docstring for details.
+  - New convenience methods :meth:`.MetadataReport.get`, :meth:`.MetadataReport.get_value`, and :meth:`.ReportedAttribute.get_child`.
+
+- Improve reading and writing of SDMX-ML (:pull:`227`):
+
+  - Read :xml:`<str:AnnotationValue>` in SDMX-ML 3.0.0 (:issue:`226`).
+  - Read :xml:`<str:Hierarchy>` where the optional :xml:`<... leveled="...">` attribute is not present (:issue:`226`).
+  - Read and write XSD-valid :class:`.v21.MetadataSet` and :class:`.v21.HierarchicalCodelist`.
+  - Write :attr:`.Dimension.concept_role`.
+  - Write annotations associated with :class:`DataSet <.BaseDataSet>`, :class:`MetadataSet <.BaseMetadataSet>`, and :class:`.MetadataReport`.
+  - Pending resolution of :issue:`228`, ignore :xml:`<com:Link>` in SDMX-ML 3.0.0 .
+
+- Update and expand :ref:`sdmx-version-policy` in the documentation (:pull:`227`).
+  A table is now included showing the correspondence of versions of component SDMX standards.
+
+.. _2.21.1:
 
 v2.21.1 (2025-01-14)
 ====================

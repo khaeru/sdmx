@@ -32,12 +32,7 @@ def test_doc_example():
 
     sm = estat.datastructure("UNE_RT_A")
 
-    for cl in (
-        "AGE",
-        "SEX",
-        # "UNIT",  # As of 2024-03-15, the service returns versions 22.0 and 28.0 of
-        # #          this artefact, so a lookup by ID alone is ambiguous
-    ):
+    for cl in "AGE(10.3)", "SEX(1.13)", "UNIT(55.0)":
         print(sdmx.to_pandas(sm.get(cl)))
 
     dm = estat.data("UNE_RT_A", key={"geo": "EL+ES+IE"}, params={"startPeriod": "2007"})
@@ -109,7 +104,7 @@ def test_doc_index1() -> None:
     # NB At some times (e.g. between 2024-03-15 and 2024-06-18) this query retrieves
     #    multiple versions of similar artefacts. A more explicit argument to get() that
     #    includes the version (like get("GEO(21.0)")) may be temporarily needed.
-    s = sdmx.to_pandas(sm1.get("GEO"))
+    s = sdmx.to_pandas(sm1.get("GEO(23.4)"))
     assert_pd_equal(s.sort_index().head(), expected)
 
 

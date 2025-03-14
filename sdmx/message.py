@@ -22,6 +22,7 @@ from typing import (
     get_args,
 )
 
+import sdmx.urn
 from sdmx import model
 from sdmx.dictlike import DictLike, summarize_dictlike
 from sdmx.dictlike import DictLikeDescriptor as DLD
@@ -281,11 +282,14 @@ class StructureMessage(Message):
         Parameters
         ----------
         obj_or_id : str or .IdentifiableArtefact
-            If an IdentifiableArtefact, return an object of the same class and
-            :attr:`~.IdentifiableArtefact.id`; if :class:`str`, an object with this ID
-            *or* this string as part of its :attr:`~.IdentifiableArtefact.urn`.
+            - if an IdentifiableArtefact, return an object of the same class and
+              :attr:`~.IdentifiableArtefact.id`.
+            - if :class:`str`, this may be:
 
-            .. todo:: Support passing a URN.
+              - An exact match for some :attr:`.IdentifiableArtefact.id`.
+              - Part of an SDMX :class:`URN`, for instance "FOO(1.2.3)", "MAINT:FOO", or
+                "MAINT:FOO(1.2.3)".
+              - A full SDMX :class:`URN`.
 
         Returns
         -------
@@ -306,13 +310,29 @@ class StructureMessage(Message):
             else obj_or_id
         )
 
-        # Expression for matching URN. Ensure `id_` appears immediately after one of the
-        # separator characters
-        urn_expr = re.compile(rf"[=:]{re.escape(id_)}")
+        # Regular expression for matching object URNs
+        try:
+            # - Handle `id_` as if it is a partial or complete URN.
+            # - Convert to a regular expression pattern.
+            # - If the version is not given, match any version.
+            urn_expr = re.escape(str(sdmx.urn.URN(sdmx.urn.expand(id_)))).replace(
+                r"\(None\)", r"\([^\)]*\)"
+            )
+        except ValueError:
+            # `id_` is not a (partial) URN. Match it `id_` immediately after one of the
+            # separator characters
+            urn_expr = rf"[=:\.]{re.escape(id_)}"
+
+        urn_pat = re.compile(urn_expr)  # Compile re.Pattern object once
 
         candidates: list[model.IdentifiableArtefact] = []
         for key, obj in chain(*[c.items() for c in self._collections]):
-            if id_ in (key, obj.id) or urn_expr.search(obj.urn or ""):
+            # Obtain a matchable string with the URN of `obj`
+            try:
+                urn = obj.urn or sdmx.urn.make(obj)  # Existing or constructed URN
+            except ValueError:
+                urn = ""  # No existing URN and unable to construct one
+            if id_ in (key, obj.id) or urn_pat.search(urn):
                 candidates.append(obj)
 
         if len(candidates) > 1:

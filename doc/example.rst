@@ -24,11 +24,11 @@ These include *structural metadata* that together completely describe the data a
     sm
 
 :py:`sm` is a Python object of class :class:`.StructureMessage`.
-We can explore some of the specific artifacts—for example, two **code lists**—using :meth:`.StructureMessage.get` to retrieve them and :func:`.to_pandas` to convert to :class:`.pandas.Series`:
+We can explore some of the specific artifacts—for example, three **code lists**—using :meth:`.StructureMessage.get` to retrieve them and :func:`.to_pandas` to convert to :class:`.pandas.Series`:
 
 .. ipython:: python
 
-    for cl in "AGE", "SEX":
+    for cl in "AGE(10.3)", "SEX(1.13)", "UNIT(55.0)":
         print(sdmx.to_pandas(sm.get(cl)))
 
 Next, we download a **data set** containing a portion of the data in this data flow, structured by this DSD.

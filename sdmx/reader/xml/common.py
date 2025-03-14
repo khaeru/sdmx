@@ -347,17 +347,17 @@ class XMLEventReader(BaseReader):
 
         self.stack[s][id] = obj
 
-    def stash(self, *stacks):
+    def stash(self, *stacks, name: str = "_stash"):
         """Temporarily hide all objects in the given `stacks`."""
-        self.push("_stash", {s: self.stack.pop(s, dict()) for s in stacks})
+        self.push(name, {s: self.stack.pop(s, dict()) for s in stacks})
 
-    def unstash(self):
+    def unstash(self, name: str = "_stash"):
         """Restore the objects hidden by the last :meth:`stash` call to their stacks.
 
         Calls to :meth:`.stash` and :meth:`.unstash` should be matched 1-to-1; if the
         latter outnumber the former, this will raise :class:`.KeyError`.
         """
-        for s, values in (self.pop_single("_stash") or {}).items():
+        for s, values in (self.pop_single(name) or {}).items():
             self.stack[s].update(values)
 
     # Delegate to version-specific module
@@ -494,7 +494,7 @@ class XMLEventReader(BaseReader):
         """
         if elem is not None:
             kwargs.setdefault("annotations", [])
-            kwargs["annotations"].extend(self.pop_all(common.Annotation))
+            kwargs["annotations"].extend(self.pop_all(self.model.Annotation))
         return cls(**kwargs)
 
     def identifiable(self, cls, elem, **kwargs):

@@ -1,6 +1,8 @@
 import io
 import logging
+from abc import ABC
 from datetime import datetime
+from typing import TYPE_CHECKING, Optional, cast
 
 import pytest
 from lxml import etree
@@ -14,21 +16,59 @@ from sdmx.model import v21 as m
 from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
 from sdmx.writer.xml import writer as XMLWriter
 
+if TYPE_CHECKING:
+    from sdmx.model.common import Structure
+
 log = logging.getLogger(__name__)
 
 # Fixtures
 
 
-@pytest.fixture
-def structure_message() -> message.StructureMessage:
-    """A StructureMessage that serializes to XSD-valid SDMX-XML."""
-    return message.StructureMessage(
-        header=message.Header(
-            id="N_A",
-            prepared=datetime.now(),
-            sender=common.Agency(id="N_A"),
-        )
+@pytest.fixture(scope="module")
+def header() -> message.Header:
+    return message.Header(
+        id="N_A",
+        prepared=datetime.now(),
+        sender=common.Agency(id="N_A"),
     )
+
+
+@pytest.fixture
+def metadata_message(header) -> message.MetadataMessage:
+    """A metadata message with the minimum content to write valid SDMX-ML 2.1."""
+    a = common.Agency(id="TEST")
+    dfd = v21.DataflowDefinition(id="DFD", maintainer=a)
+    ma = v21.MetadataAttribute(id="MA")
+    rs = v21.ReportStructure(id="RS", components=[ma])
+    mdsd = v21.MetadataStructureDefinition(
+        id="MDS", maintainer=a, report_structure={rs.id: rs}
+    )
+    iot = v21.IdentifiableObjectTarget(id="IOT")
+    mdt = v21.MetadataTarget(id="MDT", components=[iot])
+    mdr = v21.MetadataReport(
+        annotations=[v21.Annotation(id="FOO", text="foo value")],
+        attaches_to=v21.TargetObjectKey(
+            key_values={iot.id: v21.TargetIdentifiableObject(value_for=iot, obj=dfd)}
+        ),
+        metadata=[
+            v21.OtherNonEnumeratedAttributeValue(value_for=ma, value=f"{ma.id} value")
+        ],
+        target=mdt,
+    )
+    mds = v21.MetadataSet(
+        annotations=[v21.Annotation(id="FOO", text="foo value")],
+        structured_by=mdsd,
+        report_structure=rs,
+        report=[mdr],
+    )
+
+    return message.MetadataMessage(header=header, data=[mds])
+
+
+@pytest.fixture
+def structure_message(header) -> message.StructureMessage:
+    """A StructureMessage that serializes to XSD-valid SDMX-XML."""
+    return message.StructureMessage(header=header)
 
 
 @pytest.fixture
@@ -86,7 +126,7 @@ class TestNameableArtefact:
         )
         dsd = v21.DataStructureDefinition(**args)
         na = v21.DataflowDefinition(
-            annotations=[common.Annotation(id="baz", text="qux")],  # Annotable Artefact
+            annotations=[v21.Annotation(id="baz", text="qux")],  # Annotable Artefact
             **args,  # Identifiable, Nameable, Versionable, Maintainable
             structure=dsd,  # Dataflow-specific attributes
         )
@@ -260,13 +300,79 @@ def test_DataMessage(datamessage):
     sdmx.to_xml(datamessage)
 
 
+def test_MetadataMessage(metadata_message, *, debug: bool = False) -> None:
+    """:class:`.MetadataMessage` can be written."""
+    # Write to SDMX-ML
+    buf = io.BytesIO(sdmx.to_xml(metadata_message, pretty_print=debug))
+
+    # Validate using XSD
+    assert validate_xml(buf), buf.getvalue().decode()
+
+
 def test_ErrorMessage(errormessage):
     """:class:`.ErrorMessage` can be written."""
     sdmx.to_xml(errormessage)
 
 
+@pytest.mark.usefixtures("tmp_path", "specimen")
+class RoundTripTests(ABC):
+    """Abstract base class for tests that read-write-read SDMX-ML."""
+
+    structure_class: type["Structure"] = common.Structure
+
+    def rw_test(
+        self,
+        request,
+        specimen_id: str,
+        structure_id: Optional[str],
+        *,
+        strict: bool,
+        validate: bool,
+    ) -> None:
+        # Unpack fixture using the request_fixture
+        tmp_path = request.getfixturevalue("tmp_path")
+        specimen = request.getfixturevalue("specimen")
+
+        if structure_id:
+            # Read {D,Metad}ataStructure from file
+            with specimen(structure_id) as f:
+                structure = cast("message.StructureMessage", sdmx.read_sdmx(f)).objects(
+                    self.structure_class
+                )[0]
+        else:
+            structure = None
+
+        # Read message, using the `structure`, if any
+        with specimen(specimen_id) as f:
+            msg0 = sdmx.read_sdmx(f, structure=structure)
+
+        # Write to a bytes buffer (faster than to file)
+        data = io.BytesIO(sdmx.to_xml(msg0, pretty_print=True))
+
+        # Validate using XSD
+        assert not validate or validate_xml(data), "Invalid SDMX-ML"
+
+        # Contents can be read again
+        try:
+            msg1 = sdmx.read_sdmx(data, structure=structure)
+        except Exception:  # pragma: no cover
+            path = tmp_path.joinpath("output.xml")
+            path.write_bytes(data.getbuffer())
+            log.error(f"See {path}")
+            raise
+
+        # Contents are identical
+        try:
+            assert msg0.compare(msg1, strict)
+        except AssertionError:  # pragma: no cover
+            path = tmp_path.joinpath("output.xml")
+            path.write_bytes(data.getbuffer())
+            log.error(f"compare(…, strict={strict}) = False; see {path}")
+            raise
+
+
 @pytest.mark.parametrize(
-    "data_id, structure_id",
+    "specimen_id, structure_id",
     [
         (
             "INSEE/CNA-2010-CONSO-SI-A17.xml",
@@ -276,7 +382,6 @@ def test_ErrorMessage(errormessage):
         ("ECB_EXR/1/M.USD.EUR.SP00.A.xml", "ECB_EXR/1/structure.xml"),
         ("ECB_EXR/ng-ts.xml", "ECB_EXR/ng-structure-full.xml"),
         ("ECB_EXR/ng-ts-ss.xml", "ECB_EXR/ng-structure-full.xml"),
-        ("ESTAT/esms.xml", "ESTAT/esms-structure.xml"),
         # DSD reference does not round-trip correctly
         pytest.param(
             "ECB_EXR/rg-xs.xml",
@@ -291,28 +396,28 @@ def test_ErrorMessage(errormessage):
         ),
     ],
 )
-def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path):
+class TestRoundTripData(RoundTripTests):
     """Test that SDMX-ML DataMessages can be 'round-tripped'."""
 
-    # Read structure from file
-    with specimen(structure_id) as f:
-        dsd = sdmx.read_sdmx(f).structure[0]
+    structure_class = common.BaseDataStructureDefinition
 
-    # Read data from file, using the DSD
-    with specimen(data_id) as f:
-        msg0 = sdmx.read_sdmx(f, structure=dsd)
+    def test_specimens(self, request, specimen_id: str, structure_id: str) -> None:
+        self.rw_test(request, specimen_id, structure_id, strict=False, validate=False)
 
-    # Write to file
-    path = tmp_path / "output.xml"
-    path.write_bytes(sdmx.to_xml(msg0, pretty_print=True))
 
-    # Read again, using the same DSD
-    msg1 = sdmx.read_sdmx(path, structure=dsd)
+@pytest.mark.parametrize(
+    "specimen_id, structure_id",
+    [
+        ("ESTAT/esms.xml", "ESTAT/esms-structure.xml"),
+    ],
+)
+class TestRoundTripMetadata(RoundTripTests):
+    """Test that SDMX-ML MetadataMessages can be 'round-tripped'."""
 
-    # Contents are identical
-    assert msg0.compare(msg1, strict=True), (
-        path.read_text() if pytestconfig.getoption("verbose") else path
-    )
+    structure_class = common.BaseMetadataStructureDefinition
+
+    def test_specimens(self, request, specimen_id: str, structure_id: str) -> None:
+        self.rw_test(request, specimen_id, structure_id, strict=True, validate=True)
 
 
 @pytest.mark.parametrize(
@@ -324,9 +429,13 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("ESTAT/apro_mk_cola-structure.xml", True),
         ("ESTAT/esms-structure.xml", True),
         pytest.param(
-            "ISTAT/47_850-structure.xml", True, marks=[pytest.mark.skip(reason="Slow")]
+            "ISTAT/47_850-structure.xml",
+            True,
+            marks=[pytest.mark.skip(reason="Slow")],
         ),
         ("IMF/ECOFIN_DSD-structure.xml", True),
+        ("IMF/datastructure-0.xml", True),
+        ("IMF/hierarchicalcodelist-1.xml", True),
         ("INSEE/CNA-2010-CONSO-SI-A17-structure.xml", False),
         ("INSEE/IPI-2010-A21-structure.xml", False),
         ("INSEE/dataflow.xml", False),
@@ -336,24 +445,8 @@ def test_data_roundtrip(pytestconfig, specimen, data_id, structure_id, tmp_path)
         ("TEST/gh-149.xml", False),
     ],
 )
-def test_structure_roundtrip(specimen, specimen_id, strict, tmp_path):
+class TestRoundTripStructure(RoundTripTests):
     """Test that SDMX-ML StructureMessages can be 'round-tripped'."""
 
-    # Read a specimen file
-    with specimen(specimen_id) as f:
-        msg0 = sdmx.read_sdmx(f)
-
-    # Write to a bytes buffer
-    data = io.BytesIO(sdmx.to_xml(msg0, pretty_print=True))
-
-    # Read again
-    msg1 = sdmx.read_sdmx(data)
-
-    # Contents are identical
-    try:
-        assert msg0.compare(msg1, strict)
-    except AssertionError:  # pragma: no cover
-        path = tmp_path.joinpath("output.xml")
-        path.write_bytes(data.getbuffer())
-        log.error(f"compare() = False; see {path}")
-        raise
+    def test_specimens(self, request, specimen_id, strict) -> None:
+        self.rw_test(request, specimen_id, None, strict=strict, validate=False)

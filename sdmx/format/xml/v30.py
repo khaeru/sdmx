@@ -11,6 +11,8 @@ FORMAT = XMLFormat(
         ("model.DataflowRelationship", "str:None"),
         ("model.ObservationRelationship", "str:Observation"),
         ("model.Dataflow", "str:Dataflow"),
+        ("model.DataSet", "mes:DataSet"),
+        ("model.StructureSpecificDataSet", "mes:DataSet"),
         ("model.MetadataAttributeDescriptor", "str:MetadataAttributeList"),
         ("model.Metadataflow", "str:Metadataflow"),
         ("model.MetadataSet", "mes:MetadataSet"),

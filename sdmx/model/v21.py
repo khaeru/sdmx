@@ -1,18 +1,11 @@
 """SDMX 2.1 Information Model."""
-
-import logging
-
 # TODO for complete implementation of the IM, enforce TimeKeyValue (instead of KeyValue)
 #      for {Generic,StructureSpecific} TimeSeriesDataSet.
+
+import logging
+from collections.abc import Generator
 from dataclasses import dataclass, field
-from typing import (
-    ClassVar,
-    Generator,
-    Generic,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, ClassVar, Generic, Optional, TypeVar, Union, cast
 
 from sdmx.dictlike import DictLikeDescriptor
 from sdmx.util import compare
@@ -32,8 +25,19 @@ from .common import (
     NameableArtefact,
 )
 
+if TYPE_CHECKING:
+    from .internationalstring import InternationalString
+
+    TReportedAttribute = Union[
+        "EnumeratedAttributeValue",
+        "OtherNonEnumeratedAttributeValue",
+        "TextAttributeValue",
+        "XHTMLAttributeValue",
+    ]
+
 # Classes defined directly in the current file, in the order they appear
 __all__ = [
+    "Annotation",
     "SelectionValue",
     "MemberValue",
     "TimeRangeValue",
@@ -92,6 +96,16 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+
+# §3.2: Base Structures
+
+
+@dataclass
+class Annotation(common.BaseAnnotation):
+    """SDMX 2.1 Annotation.
+
+    Identical to its parent class.
+    """
 
 
 # §10.3: Constraints
@@ -454,11 +468,28 @@ class ReportedAttribute:
     parent: Optional["ReportedAttribute"] = None
     child: list["ReportedAttribute"] = field(default_factory=list)
 
+    def __bool__(self) -> bool:
+        return True
+
     def __getitem__(self, index: int) -> "ReportedAttribute":
         return self.child[index]
 
     def __len__(self) -> int:
         return len(self.child)
+
+    def get_child(
+        self, mda_or_id: Union[common.MetadataAttribute, str]
+    ) -> Optional["TReportedAttribute"]:
+        """Retrieve the child :class:`ReportedAttribute` for the given `mda_or_id`."""
+        mda_id = (
+            mda_or_id.id
+            if isinstance(mda_or_id, common.MetadataAttribute)
+            else mda_or_id
+        )
+        for child in self.child:
+            if child.value_for.id == mda_id:
+                return cast("TReportedAttribute", child)
+        return None
 
 
 class EnumeratedAttributeValue(ReportedAttribute):
@@ -488,8 +519,20 @@ class OtherNonEnumeratedAttributeValue(NonEnumeratedAttributeValue):
     value: Optional[str] = None
 
 
-class TextAttributeValue(NonEnumeratedAttributeValue, common.BaseTextAttributeValue):
+@dataclass
+class TextAttributeValue(common.BaseTextAttributeValue, NonEnumeratedAttributeValue):
     """SDMX 2.1 TextAttributeValue."""
+
+    @property
+    def value(self) -> "InternationalString":
+        """Convenience access to :attr:`.BaseTextAttributeValue.text`.
+
+        This allows accessing the value of any :class:`.ReportedAttribute` subclass with
+        the same attribute name.
+
+        :mod:`sdmx` extension not in the IM.
+        """
+        return self.text
 
 
 @dataclass
@@ -500,24 +543,78 @@ class XHTMLAttributeValue(NonEnumeratedAttributeValue, common.BaseXHTMLAttribute
 
 
 @dataclass
-class MetadataReport:
-    """SDMX 2.1 MetadataReport."""
+class MetadataReport(common.AnnotableArtefact):
+    """SDMX 2.1 MetadataReport.
 
-    metadata: list[ReportedAttribute] = field(default_factory=list)
+    .. note:: The SDMX 2.1 IM does not specify that this is a subtype of
+       :class:`.AnnotableArtefact`, but this is implied by the XSD schemas for SDMX-ML.
+    """
+
+    metadata: list["TReportedAttribute"] = field(default_factory=list)
     target: Optional[MetadataTarget] = None
     attaches_to: Optional[TargetObjectKey] = None
+
+    def get(
+        self, mda_or_id: Union[common.MetadataAttribute, str]
+    ) -> "TReportedAttribute":
+        """Retrieve the :class:`ReportedAttribute` for the given `mda_or_id`."""
+        mda_id = (
+            mda_or_id.id
+            if isinstance(mda_or_id, common.MetadataAttribute)
+            else mda_or_id
+        )
+        for ra in self.metadata:
+            if ra.value_for.id == mda_id:
+                return cast("TReportedAttribute", ra)
+            elif child := ra.get_child(mda_id):
+                return cast("TReportedAttribute", child)
+        raise KeyError(mda_id)
+
+    def get_value(
+        self, mda_or_id: Union[common.MetadataAttribute, str]
+    ) -> Union["InternationalString", str, None]:
+        """Retrieve the value of a ReportedAttribute for the given `mda_or_id`."""
+        ra = self.get(mda_or_id)
+        if isinstance(ra, TextAttributeValue):
+            return ra.text
+        elif isinstance(
+            ra,
+            (
+                EnumeratedAttributeValue,
+                OtherNonEnumeratedAttributeValue,
+                XHTMLAttributeValue,
+            ),
+        ):
+            return ra.value
+        else:  # pragma: no cover
+            return None
 
 
 @dataclass
 class MetadataSet(NameableArtefact, common.BaseMetadataSet):
     """SDMX 2.1 MetadataSet.
 
-    .. note:: Contrast :class:`.v30.MetadataSet`, which is a
-       :class:`.MaintainableArtefact`.
+    .. important:: The SDMX 2.1 IM (Figure 29/§7.4.1 on p.84 and §7.4.2.2 on p.87) gives
+       *two* associations from MetadataSet with the *same* name "+describedBy".
+
+       One is an association to a MetadataflowDefinition. :mod:`sdmx` implements this
+       as the attribute :attr:`MetadataSet.described_by`.
+
+       The second is to a ReportStructure. Because Python does not allow for multiple
+       class attributes with the same name, :mod:`sdmx` implements this as the attribute
+       :attr:`MetadataSet.report_structure`, which differs from the name given in the
+       standard.
+
+       One reason for this implementation choice is that
+       :attr:`.MetadataSet.described_by` is similar to :attr:`DataSet.described_by
+       <.BaseDataSet.described_by>` in that each refers to a (meta)data flow definition.
+
+    .. note:: Contrast :class:`.v30.MetadataSet`, which inherits from
+       :class:`.MaintainableArtefact` instead of NameableArtefact.
     """
 
+    #: See note above.
     described_by: Optional[MetadataflowDefinition] = None
-    # described_by: Optional[ReportStructure] = None
 
     #: .. seealso::
     #:    :attr:`.v30.MetadataSet.structured_by`, which has different semantics.
@@ -527,6 +624,9 @@ class MetadataSet(NameableArtefact, common.BaseMetadataSet):
     published_by: Optional[common.DataProvider] = None
 
     report: list[MetadataReport] = field(default_factory=list)
+
+    #: See note above.
+    report_structure: Optional[ReportStructure] = None
 
 
 # §8 Hierarchical Code List
@@ -613,6 +713,7 @@ CF = common.ClassFinder(
     },
     parent_map={
         common.HierarchicalCode: Hierarchy,
+        common.Level: Hierarchy,
         PrimaryMeasure: MeasureDescriptor,
         MetadataTarget: MetadataStructureDefinition,
     },

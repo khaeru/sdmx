@@ -14,6 +14,7 @@ from functools import lru_cache
 from itertools import product
 from operator import attrgetter, itemgetter
 from typing import (
+    TYPE_CHECKING,
     Any,
     ClassVar,
     Generator,
@@ -41,13 +42,17 @@ from .internationalstring import (
 )
 from .version import Version
 
+if TYPE_CHECKING:
+    from dataclasses import Field
+
 __all__ = [
+    # Re-exported from other modules
     "DEFAULT_LOCALE",
     "InternationalString",
     "Version",
-    # In the order they appear in this file
+    # From the current module, in the order they appear in this file.
+    # Classes named Base* are not included
     "ConstrainableArtefact",
-    "Annotation",
     "AnnotableArtefact",
     "IdentifiableArtefact",
     "NameableArtefact",
@@ -57,6 +62,7 @@ __all__ = [
     "ConstraintRoleType",
     "FacetValueType",
     "ExtendedFacetValueType",
+    "UsageStatus",
     "Item",
     "ItemScheme",
     "FacetType",
@@ -89,6 +95,7 @@ __all__ = [
     "GroupRelationship",
     "DataAttribute",
     "AttributeDescriptor",
+    "AllDimensions",
     "KeyValue",
     "TimeKeyValue",
     "AttributeValue",
@@ -158,7 +165,7 @@ class ConstrainableArtefact:
 
 
 @dataclass
-class Annotation:
+class BaseAnnotation:
     #: Can be used to disambiguate multiple annotations for one AnnotableArtefact.
     id: Optional[str] = None
     #: Title, used to identify an annotation.
@@ -171,6 +178,19 @@ class Annotation:
     #: Content of the annotation.
     text: InternationalStringDescriptor = InternationalStringDescriptor()
 
+    @property
+    def value(self) -> Optional[str]:
+        """A non-localised version of the Annotation content.
+
+        This feature was added by SDMX 3.0.0. In :class:`v30.Annotation`, this can be
+        read and written. In this default implementation and in :class:`v21.Annotation`
+        the value is always :any:`None`.
+
+        :mod:`sdmx` provides a common attribute so that both classes have identical type
+        signatures.
+        """
+        return None
+
 
 @dataclass
 class AnnotableArtefact:
@@ -178,7 +198,7 @@ class AnnotableArtefact:
     #:
     #: :mod:`.sdmx` implementation detail: The IM does not specify the name of this
     #: feature.
-    annotations: list[Annotation] = field(default_factory=list)
+    annotations: list[BaseAnnotation] = field(default_factory=list)
 
     def get_annotation(self, **attrib):
         """Return a :class:`Annotation` with given `attrib`, e.g. 'id'.
@@ -286,13 +306,24 @@ class IdentifiableArtefact(AnnotableArtefact):
             and compare("urn", self, other, strict and self.urn is not None)
         )
 
+    def __gt__(self, other: Any) -> bool:
+        # NB __lt__ handles the case where other is the same type as self
+        if isinstance(other, str):
+            return self.id > other
+        else:
+            return NotImplemented
+
     def __hash__(self):
         return id(self) if self.id == MissingID else hash(self.id)
 
-    def __lt__(self, other):
-        return (
-            self.id < other.id if isinstance(other, self.__class__) else NotImplemented
-        )
+    def __lt__(self, other: Any) -> bool:
+        if isinstance(other, type(self)):
+            other_id = other.id
+        elif isinstance(other, str):
+            other_id = other
+        else:
+            return NotImplemented
+        return self.id < other_id
 
     def __str__(self):
         return self.id
@@ -1017,7 +1048,7 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
             try:
                 result &= c.compare(other.get(c.id), strict)
             except KeyError:
-                log.debug(f"{other} has no component with ID {c.id!r}")
+                # log.debug(f"{other} has no component with ID {c.id!r}")
                 result = False
         return result and super().compare(other, strict)
 
@@ -1123,40 +1154,50 @@ class DataProviderScheme(OrganisationScheme[DataProvider]):
 
 @dataclass(repr=False)
 class Structure(MaintainableArtefact):
+    @classmethod
+    @lru_cache
+    def _cl_fields(cls) -> tuple[tuple["Field", bool, type[ComponentList]], ...]:
+        """Tuple of fields typed as ComponentList or DictLike[…, ComponentList]."""
+        result = []
+        for f in fields(cls):
+            is_dictlike = get_origin(f.type) is DictLikeDescriptor
+            cl_type = get_args(f.type)[1] if is_dictlike else f.type
+            if type(cl_type) is type and issubclass(cl_type, ComponentList):
+                result.append((f, is_dictlike, cl_type))
+        return tuple(result)
+
     @property
     def grouping(self) -> Sequence[ComponentList]:
         """A collection of all the ComponentLists associated with a subclass."""
         result: list[ComponentList] = []
-        for f in fields(self):
-            types = get_args(f.type) or (f.type,)
-            try:
-                if any(issubclass(t, ComponentList) for t in types):
-                    result.append(getattr(self, f.name))
-            except TypeError:
-                pass
+        for f, is_dictlike, _ in self._cl_fields():
+            value = getattr(self, f.name)
+            if is_dictlike:
+                result.extend(value.values())
+            else:
+                result.append(value)
         return result
 
     def replace_grouping(self, cl: ComponentList) -> None:
         """Replace existing component list with `cl`."""
-        field = None
-        for f in fields(self):
-            is_dictlike = get_origin(f.type) is DictLikeDescriptor
-            if f.type is type(cl) or (is_dictlike and get_args(f.type)[1] is type(cl)):
-                field = f
-                break
-
-        if not field:
+        try:
+            (field, is_dictlike, _), *_ = filter(
+                lambda t: t[2] is type(cl), self._cl_fields()
+            )
+        except ValueError:
             raise TypeError(f"No grouping of type {type(cl)} on {type(self)}")
 
         if is_dictlike:
+            # Set an element in e.g. BaseDataStructureDefinition.group_dimension
             getattr(self, field.name).setdefault(cl.id, cl)
         else:
+            # Set an instance attribute, e.g. BaseDataStructureDefinition.attributes
             setattr(self, field.name, cl)
 
     def compare(self, other: "Structure", strict: bool = True) -> bool:
-        # DictLike of ComponentList will not have an "id" attribute
         def _key(item) -> str:
-            return getattr(item, "id", str(type(item)))
+            """Key for sorting: item type + its ID."""
+            return f"{type(item)} {item.id}"
 
         return all(
             s.compare(o, strict)
@@ -1676,9 +1717,24 @@ class AttributeValue:
 
     In the spec, AttributeValue is an abstract class. Here, it serves as both the
     concrete subclasses CodedAttributeValue and UncodedAttributeValue.
+
+    .. important:: The SDMX 3.0.0 “Summary of major changes and new functionality”
+       document mentions (§2.3 Information Model, p.8) “new features such as
+       multiple measures and value arrays for measures and attributes,” and the
+       SDMX-ML 3.0.0 examples (such as `ECB_EXR_CA.xml <https://github.com/sdmx-twg/
+       sdmx-ml/blob/29f1a3d856c4259429f5ec0eae811653adc5cdb5/samples/
+       Data%20-%20Complex%20Data%20Attributes/ECB_EXR_CA.xml>`_) indicate that this
+       can be a “value array,” but the SDMX 3.0.0 IM (Figure 31/§5.4.2, p.84) gives
+       only ‘String’ as the type of :py:`UncodedAttributeValue.value`. No class for
+       multiple values is described.
+
+       As a consequence, when such multiply-valued attributes are parsed from SDMX-ML,
+       the type annotation for :attr:`value` will be incorrect. The actual type may be
+       :py:`list[str]`, :py:`list[Code]`, or something else.
+
+    .. todo:: Separate and enforce properties of Coded- and UncodedAttributeValue.
     """
 
-    # TODO separate and enforce properties of Coded- and UncodedAttributeValue
     #:
     value: Union[str, Code]
     #:
@@ -2697,3 +2753,17 @@ class ClassFinder:
     # To allow lru_cache() above
     def __hash__(self):
         return hash(self.module_name)
+
+
+def __getattr__(name: str):
+    if name == "Annotation":
+        from warnings import warn
+
+        from .v21 import Annotation
+
+        warn(
+            "from sdmx.model.common import Annotation. Use one of sdmx.model.{v21,v30}",
+            DeprecationWarning,
+        )
+        return Annotation
+    raise AttributeError(name)

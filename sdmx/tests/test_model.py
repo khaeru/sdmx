@@ -1,11 +1,10 @@
 import pytest
 
 from sdmx import Resource, model
-from sdmx.model import v21, v30
+from sdmx.model import common, v21, v30
 
 CLASSES = [
     # Appearing in .model.common
-    "Annotation",
     "AnnotableArtefact",
     "IdentifiableArtefact",
     "NameableArtefact",
@@ -15,6 +14,7 @@ CLASSES = [
     "ConstraintRoleType",
     "FacetValueType",
     "ExtendedFacetValueType",
+    "UsageStatus",
     "Item",
     "ItemScheme",
     "FacetType",
@@ -47,6 +47,7 @@ CLASSES = [
     "GroupRelationship",
     "DataAttribute",
     "AttributeDescriptor",
+    "AllDimensions",
     "KeyValue",
     "TimeKeyValue",
     "AttributeValue",
@@ -99,6 +100,7 @@ CLASSES = [
     # Appearing in model.Version
     "Version",
     # Classes that are distinct in .model.v21 versus .model.v30
+    "Annotation",
     "SelectionValue",
     "MemberValue",
     "TimeRangeValue",
@@ -160,6 +162,9 @@ V21_ONLY = [
 ]
 
 V30_ONLY = [
+    "CodeSelection",
+    "ExclusiveCodeSelection",
+    "InclusiveCodeSelection",
     "CodelistExtension",
     "GeoRefCode",
     "GeoGridCode",
@@ -243,8 +248,8 @@ def test_package(klass, expected) -> None:
     assert expected == model.v30.PACKAGE[klass]
 
 
-def test_deprecated_import():
-    """Deprecation warning when importing SDMX 2.1-specific class from :mod:`.model`."""
+def test_deprecated_import0():
+    """:class:`DeprecationWarning` on import of SDMX 2.1 class from :mod:`.model`."""
     with pytest.warns(
         DeprecationWarning, match=r"DataStructureDefinition from sdmx\.model"
     ):
@@ -252,6 +257,14 @@ def test_deprecated_import():
 
     with pytest.raises(ImportError):
         from sdmx.model import Foo  # noqa: F401
+
+
+def test_deprecated_import1():
+    """:class:`DeprecationWarning` on import of :class:`.Annotation` :mod:`.common`."""
+    with pytest.warns(
+        DeprecationWarning, match=r"from sdmx.model.common import Annotation"
+    ):
+        common.Annotation
 
 
 def test_dir():

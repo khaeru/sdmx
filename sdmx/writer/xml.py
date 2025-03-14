@@ -6,9 +6,11 @@
 # - writer functions for sdmx.message classes, in the same order as message.py
 # - writer functions for sdmx.model classes, in the same order as model.py
 import logging
+from collections.abc import Iterable, MutableMapping
 from datetime import datetime
-from typing import Iterable, Literal, MutableMapping, Optional
+from typing import Literal, Optional
 
+import lxml
 from lxml import etree
 from lxml.builder import ElementMaker
 
@@ -191,6 +193,7 @@ def _sm(obj: message.StructureMessage):
         ("categorisation", "Categorisations"),
         ("codelist", "Codelists"),
         ("concept_scheme", "Concepts"),
+        ("hierarchical_codelist", "HierarchicalCodelists"),
         ("structure", "DataStructures"),
         ("constraint", "Constraints"),
         ("metadatastructure", "MetadataStructures"),
@@ -439,23 +442,17 @@ def _contact(obj: model.Contact):
 
 
 @writer
-def _component(obj: model.Component, dsd, *, attrib: Optional[dict] = None):
+def _component(obj: model.Component, dsd=None, *, attrib: Optional[dict] = None):
     child = []
     attrib = attrib or dict()
 
-    try:
-        child.append(
-            reference(obj.concept_identity, tag="str:ConceptIdentity", style="Ref")
-        )
-    except AttributeError:  # pragma: no cover
-        pass  # concept_identity is None
-
-    try:
-        child.append(
-            writer.recurse(obj.local_representation, "LocalRepresentation", style="Ref")
-        )
-    except NotImplementedError:
-        pass  # None
+    for func, name, tag in (
+        (reference, "concept_identity", "str:ConceptIdentity"),
+        (reference, "concept_role", "str:ConceptRole"),
+        (writer.recurse, "local_representation", "LocalRepresentation"),
+    ):
+        if value := getattr(obj, name, None):
+            child.append(func(value, tag=tag, style="Ref"))
 
     if isinstance(obj, model.DataAttribute) and obj.usage_status:
         child.append(writer.recurse(obj.related_to, dsd))
@@ -717,7 +714,7 @@ def _obs(obj: model.Observation, struct_spec=False):
 
 
 @writer
-def _ds(obj: model.DataSet):
+def _ds(obj: model.DataSet) -> "lxml.etree._Element":
     if len(obj.group):
         raise NotImplementedError("to_xml() for DataSet with groups")
 
@@ -726,7 +723,7 @@ def _ds(obj: model.DataSet):
         attrib["action"] = str(obj.action)
     if obj.structured_by:
         attrib["structureRef"] = obj.structured_by.id
-    elem = Element("mes:DataSet", **attrib)
+    elem = annotable(obj, **attrib)
 
     # AttributeValues attached to the data set
     if len(obj.attrib):
@@ -830,24 +827,24 @@ def _rpt(obj: v21.ReportPeriodTarget, *args):
 
 
 @writer
-def _mds(obj: model.MetadataSet):
+def _mds(obj: model.MetadataSet) -> "lxml.etree._Element":
     attrib = {}
     if obj.structured_by:
         attrib["structureRef"] = obj.structured_by.id
-    return Element(
-        "mes:MetadataSet", *[writer.recurse(mdr) for mdr in obj.report], **attrib
-    )
+    elem = annotable(obj, **attrib)
+    elem.extend(writer.recurse(mdr, rs=obj.report_structure) for mdr in obj.report)
+    return elem
 
 
 @writer
-def _mdr(obj: model.MetadataReport):
-    # TODO Write the id=… attribute
-    elem = Element("md:Report")
+def _mdr(
+    obj: model.MetadataReport, *, rs: v21.ReportStructure
+) -> "lxml.etree._Element":
+    # id attribute: the ID of the ReportStructure
+    elem = annotable(obj, id=rs.id, _tag="md:Report")
 
-    if obj.target:  # pragma: no cover
-        elem.append(writer.recurse(obj.target))
-    if obj.attaches_to:
-        elem.append(writer.recurse(obj.attaches_to))
+    if obj.attaches_to is not None:
+        elem.append(writer.recurse(obj.attaches_to, mdt=obj.target))
 
     elem.append(
         Element("md:AttributeSet", *[writer.recurse(ra) for ra in obj.metadata])
@@ -857,10 +854,13 @@ def _mdr(obj: model.MetadataReport):
 
 
 @writer
-def _tok(obj: model.TargetObjectKey):
-    # TODO Write the id=… attribute
+def _tok(
+    obj: model.TargetObjectKey, *, mdt: v21.MetadataTarget
+) -> "lxml.etree._Element":
     return Element(
-        "md:Target", *[writer.recurse(tov) for tov in obj.key_values.values()]
+        "md:Target",
+        *[writer.recurse(tov) for tov in obj.key_values.values()],
+        id=mdt.id,
     )
 
 
@@ -899,7 +899,7 @@ def _ra(obj: model.ReportedAttribute):
     else:  # pragma: no cover
         attrib.update(id=obj.value_for.id)
 
-    if isinstance(obj, model.OtherNonEnumeratedAttributeValue):
+    if isinstance(obj, v21.OtherNonEnumeratedAttributeValue):
         # Only write the "value" attribute if defined; some attributes are only
         # containers for child attributes
         if obj.value:
@@ -916,3 +916,31 @@ def _ra(obj: model.ReportedAttribute):
         )
 
     return Element("md:ReportedAttribute", *child, **attrib)
+
+
+# SDMX 2.1 §8: Hierarchical Code List
+
+
+@writer
+def _level(obj: common.Level):
+    return Element("str:Level", Element("Ref", id=obj.id))
+
+
+@writer
+def _hc(obj: common.HierarchicalCode):
+    return identifiable(
+        obj,
+        reference(obj.code, style="Ref"),
+        *([writer.recurse(obj.level)] if obj.level else []),
+        *[writer.recurse(hc) for hc in obj.child],
+    )
+
+
+@writer
+def _hierarchy(obj: v21.Hierarchy):
+    return nameable(obj, *[writer.recurse(hc) for hc in obj.codes.values()])
+
+
+@writer
+def _hcl(obj: v21.HierarchicalCodelist):
+    return maintainable(obj, *[writer.recurse(h) for h in obj.hierarchy])

@@ -5,9 +5,10 @@ import pytest
 
 import sdmx
 import sdmx.message
-from sdmx.model import v21
+from sdmx.model import common, v21
 from sdmx.model import v21 as model
 from sdmx.model.v21 import (
+    Annotation,
     AttributeDescriptor,
     AttributeValue,
     Code,
@@ -35,8 +36,21 @@ from sdmx.model.v21 import (
     MemberValue,
     Observation,
     TargetObjectKey,
+    TextAttributeValue,
     value_for_dsd_ref,
 )
+
+
+class TestAnnotation:
+    def test_value(self) -> None:
+        a0 = Annotation()
+
+        # Value defaults None
+        assert None is a0.value
+
+        # Value cannot be set
+        with pytest.raises(AttributeError):
+            a0.value = "foo"  # type: ignore [misc]
 
 
 class TestComponent:
@@ -586,6 +600,112 @@ class TestDataSet:
         assert ds0.action == ds1.action
 
 
+class TestReportedAttribute:
+    @pytest.fixture
+    def ra(self) -> v21.ReportedAttribute:
+        mda1 = common.MetadataAttribute(id="FOO")
+        mda2 = common.MetadataAttribute(id="BAR")
+        return v21.ReportedAttribute(
+            value_for=mda1,
+            child=[v21.OtherNonEnumeratedAttributeValue(value_for=mda2, value="baz")],
+        )
+
+    def test_get_child(self, ra: v21.ReportedAttribute) -> None:
+        # Child can be retrieved by MetadataAttribute instance
+        mda = common.MetadataAttribute(id="BAR")
+        result1 = ra.get_child(mda)
+        assert result1 is not None and "baz" == result1.value
+
+        # Child can be retrieved by MetadataAttribute.id
+        result2 = ra.get_child(mda.id)
+        assert result2 is not None and "baz" == result2.value
+
+        # Retrieval with an ID not among the children gives None
+        mda = common.MetadataAttribute(id="QUX")
+        assert None is ra.get_child(mda) is ra.get_child(mda.id)
+
+
+class TestMetadataReport:
+    @pytest.fixture
+    def mdr(self) -> v21.MetadataReport:
+        ra1 = v21.OtherNonEnumeratedAttributeValue(
+            value_for=common.MetadataAttribute(id="FOO"),
+            value="foo value",
+            child=[
+                v21.TextAttributeValue(
+                    value_for=common.MetadataAttribute(id="QUX"),
+                    text={"en": "qux value", "fr": "value du qux"},
+                )
+            ],
+        )
+        ra2 = v21.OtherNonEnumeratedAttributeValue(
+            value_for=common.MetadataAttribute(id="BAR"),
+            value="bar value",
+            child=[
+                v21.OtherNonEnumeratedAttributeValue(
+                    value_for=common.MetadataAttribute(id="BAZ"), value="baz value"
+                )
+            ],
+        )
+        return v21.MetadataReport(metadata=[ra1, ra2])
+
+    def test_get(self, mdr: v21.MetadataReport) -> None:
+        # Top-level can be retrieved by MetadataAttribute instance
+        mda1 = common.MetadataAttribute(id="FOO")
+        result1 = mdr.get(mda1)
+        assert "foo value" == result1.value
+
+        # … by MetadataAttribute.id
+        result2 = mdr.get(mda1.id)
+        assert "foo value" == result2.value
+
+        # Child can be retrieved by MetadataAttribute instance
+        mda2 = common.MetadataAttribute(id="BAZ")
+        result3 = mdr.get(mda2)
+        assert "baz value" == result3.value
+
+        # … by MetadataAttribute.id
+        result4 = mdr.get(mda2.id)
+        assert "baz value" == result4.value
+
+        # Retrieval with an ID not among the ReportedAttributes raises KeyError
+        mda3 = common.MetadataAttribute(id="ZZZ")
+        with pytest.raises(KeyError):
+            mdr.get(mda3)
+        with pytest.raises(KeyError):
+            mdr.get(mda3.id)
+
+    def test_get_value(self, mdr: v21.MetadataReport) -> None:
+        # Top-level can be retrieved by MetadataAttribute instance
+        mda1 = common.MetadataAttribute(id="FOO")
+        assert "foo value" == mdr.get_value(mda1) == mdr.get_value(mda1.id)
+
+        # Child can be retrieved by MetadataAttribute instance
+        mda2 = common.MetadataAttribute(id="BAZ")
+        assert "baz value" == mdr.get_value(mda2) == mdr.get_value(mda2.id)
+
+        # InternationalString value can be retrieved
+        mda3 = common.MetadataAttribute(id="QUX")
+        result3a = mdr.get_value(mda3)
+        result3b = mdr.get_value(mda3.id)
+        assert (
+            isinstance(result3a, common.InternationalString)
+            and isinstance(result3b, common.InternationalString)
+            and (
+                {"en": "qux value", "fr": "value du qux"}
+                == result3a.localizations
+                == result3b.localizations
+            )
+        )
+
+        # Retrieval with an ID not among the ReportedAttributes raises KeyError
+        mda4 = common.MetadataAttribute(id="ZZZ")
+        with pytest.raises(KeyError):
+            mdr.get_value(mda4)
+        with pytest.raises(KeyError):
+            mdr.get_value(mda4.id)
+
+
 class TestMetadataSet:
     @pytest.fixture(scope="class")
     def msg(self, specimen) -> sdmx.message.MetadataMessage:
@@ -663,3 +783,14 @@ class TestTargetObjectKey:
         )
 
         assert tok["FOO"].obj is c  # type: ignore [attr-defined]
+
+
+class TestTextAttributeValue:
+    def test_value_attr(self) -> None:
+        av = TextAttributeValue(
+            text={"en": "foo", "fr": "bar"}, value_for=v21.MetadataAttribute()
+        )
+
+        assert "en: foo\nfr: bar" == repr(av.text)
+        # Value can also be accessed via .value
+        assert "en: foo\nfr: bar" == repr(av.value)

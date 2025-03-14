@@ -4,13 +4,17 @@ Implementation notes
 :mod:`sdmx` aims for a **precise, Pythonic, and useful implementation of the SDMX standards**.
 This means:
 
-- Classes and their attributes have the same names, types, cardinality that appear in the standard.
+- Classes and their attributes have the names, types, cardinality, and directionality given in the standard.
 
-  - Where the standard uses non-Pythonic naming conventions (for instance, "dimensionAtObservation"), :mod:`sdmx` follows the `PEP-8 naming conventions <https://peps.python.org/pep-0008/#naming-conventions>`_ (for instance, "dimension_at_observation" for an attribute).
+  - Where the standard has non-Pythonic names (for instance, "dimensionAtObservation"), :mod:`sdmx` follows the `PEP-8 naming conventions <https://peps.python.org/pep-0008/#naming-conventions>`_ (for instance, "dimension_at_observation" for a class attribute).
   - Where the standard is ambiguous or imprecise itself, implementation (for instance, naming) choices in :mod:`sdmx` are clearly labelled.
 
 - Extensions, additional features, and conveniences in :mod:`sdmx` that do not appear in the standards are clearly labeled.
-- All behaviour visible “in the wild”—that is, from publicly available data sources and files—is supported, so long as it is verifiably standards compliant.
+- All behaviour visible “in the wild”—that is, from publicly available data sources and files—is either:
+
+  - supported, if it is verifiably standards-compliant, or
+  - tolerated if otherwise, so long as this does not complicate the implementation of standards.
+    Non-standard content is flagged using log messages and by other means.
 
 This page gives brief explanations of **how** this implementation is achieved.
 Although this page is organized (see the contents in the sidebar) to correspond to the standards, it (:ref:`again <not-the-standard>`) **does not restate them** or set out to explain all their details.
@@ -18,23 +22,43 @@ For those purposes, see :doc:`resources`; or the :doc:`walkthrough`, which inclu
 
 .. _sdmx-version-policy:
 
-SDMX standard versions 2.0, 2.1, and 3.0
-========================================
+Standards versions
+==================
 
+SDMX standards documents are available `on the SDMX website <https://sdmx.org/?page_id=5008>`__ and via links to other locations.
 Multiple versions of the SDMX standards have been adopted:
 
 - 2.0 in November 2005.
 - 2.1 in August 2011; published at the International Standards Organization (ISO) in January 2013; and revised multiple times since.
-- 3.0 in October 2021.
+- 3.0.0 in October 2021.
+- 3.1 planned for some time in 2025.
 
-The standards are available on the SDMX website: https://sdmx.org/?page_id=5008
+Some notes about the organization of the standards:
 
-- In SDMX 2.1, sections of the standards were numbered from 1 to 7.
-  For instance, the :ref:`im` is Section 2.
-- From SDMX 3.0, some of these section numbers have been removed.
-  For instance, SDMX-ML was described in SDMX 2.1 sections 3A and 3B; in SDMX 3.0, these section numbers are no longer used, replaced with a reference to the SDMX Technical Working Group (TWG) Git repository at https://github.com/sdmx-twg/sdmx-ml .
-- Some of these sections or sub-standards are versioned differently from the overall standard.
-  See in particular :ref:`sdmx-csv`, :ref:`sdmx-json`, and :ref:`sdmx-rest` below.
+- In SDMX 2.1, **‘sections’** of the standards were numbered from 1 to 7.
+  For instance, the :ref:`im` is referred to as “Section 2”.
+
+  - This is distinct from numbered sections or headings *within* the particular standards documents.
+    For instance, SDMX 2.1 Section 2 “Information Model/UML Conceptual Design” is a document that contains numbered sections/headings such as “2. Actors and Use Cases” and “2.1. Introduction.”
+    Documentation and code comments for the :mod:`sdmx` package attempts to be unambiguous about such references, and uses the “§” character to refer to these (sub-)headings.
+- From SDMX 3.0.0, some of these section numbers have been removed or disused.
+  For instance, the SDMX-ML file format was described in SDMX 2.1 sections 3A and 3B; in SDMX 3.0.0, these section numbers are no longer used, replaced with a reference to the SDMX Technical Working Group (TWG) Git repository at https://github.com/sdmx-twg/sdmx-ml.
+- Some of the sections or component standards are versioned differently from SDMX as a whole.
+  The following table lists the *apparent* correspondences between versions of the component standards (The SDMX TWG does not publish such a table, so this should not be taken as official):
+
+  ======== ========================== =============== =============== ==========================
+  SDMX     SDMX-REST                  SDMX-CSV        SDMX-JSON       SDMX-ML
+  ======== ========================== =============== =============== ==========================
+  1.0      (not versioned separately) (did not exist) (did not exist) (not versioned separately)
+  2.0      (not versioned separately) (did not exist) (did not exist) (not versioned separately)
+  2.1      1.x; latest 1.5            1.0             1.0             (not versioned separately)
+  3.0.0    2.x; latest 2.2            2.0.0           2.0.0           3.0.0
+  3.1      ?                          ?               ?               ?
+  ======== ========================== =============== =============== ==========================
+
+  See further details under the :ref:`sdmx-csv`, :ref:`sdmx-json`, and :ref:`sdmx-rest` sections, below.
+- The version numbers `do not <https://github.com/sdmx-twg/sdmx-3_1_0/issues/1#issuecomment-2519837607>`_ follow the `semantic versioning <https://semver.org>`_ system.
+  This means that increments to the second (3.0 → 3.1) or first (3.1 → 4.0) version part do not necessarily indicate the presence/absence of 'breaking' or backwards-incompatible changes.
 
 For the current Python package, :mod:`sdmx`:
 
@@ -45,20 +69,20 @@ For the current Python package, :mod:`sdmx`:
     This makes it more difficult and costly to support them.
   - While no SDMX 2.0 implementation is planned, contributions from new developers are possible and welcome.
 
-- **SDMX 2.1 and 3.0** are implemented as described on this page, with exhaustive implementation as the design goal for :mod:`sdmx`.
-- For **SDMX 3.0** specifically, as of v2.14.0 :mod:`sdmx` implements:
+- **SDMX 2.1 and 3.0.0** are implemented as described on this page, with exhaustive implementation as the design goal for :mod:`sdmx`.
+- For **SDMX 3.0.0** specifically, as of v2.14.0 :mod:`sdmx` implements:
 
-  - The SDMX 3.0 information model (:mod:`.model.v30`), to the same extent as SDMX 2.1.
-  - Reading of SDMX-ML 3.0 (:mod:`.reader.xml.v30`).
+  - The SDMX 3.0.0 information model (:mod:`.model.v30`), to the same extent as SDMX 2.1.
+  - Reading of SDMX-ML 3.0.0 (:mod:`.reader.xml.v30`).
   - Construction of URLs and querying SDMX-REST API v2.1.0 data sources (:mod:`.rest.v30`).
 
   This implies the following are not yet supported:
 
-  - Writing SDMX-ML 3.0.
+  - Writing SDMX-ML 3.0.0.
   - Reading and writing SDMX-JSON 2.0 (see :ref:`sdmx-json`).
 
-  Follow the :doc:`whatsnew`; :issue:`87`; and other GitHub issues and pull requests for details.
-  Please `open an issue <https://github.com/khaeru/sdmx/issues>`_ on GitHub to report examples of real-world SDMX 3.0 web services examples and specimens of data that can be added.
+  Follow the :doc:`whatsnew` and GitHub issues and pull requests with the `'sdmx-3' label <https://github.com/khaeru/sdmx/labels/sdmx-3>`__ for details.
+  Please `open an issue <https://github.com/khaeru/sdmx/issues>`_ on GitHub to report examples of real-world SDMX 3.0.0 web services examples and specimens of data that can be added.
 
 .. _im:
 
@@ -68,14 +92,14 @@ Information model (SDMX-IM)
 Reference:
 
 - `SDMX 2.1 Section 2 — Information Model <https://sdmx.org/wp-content/uploads/SDMX_2-1-1_SECTION_2_InformationModel_201108.pdf>`_ (PDF).
-- `SDMX 3.0 Section 2 — Information Model <https://sdmx.org/wp-content/uploads/SDMX_3-0-0_SECTION_2_FINAL-1_0.pdf>`_ (PDF).
+- `SDMX 3.0.0 Section 2 — Information Model <https://sdmx.org/wp-content/uploads/SDMX_3-0-0_SECTION_2_FINAL-1_0.pdf>`_ (PDF).
 
 In general:
 
 - :mod:`sdmx.model.common` implements:
 
-  1. Classes that are fully identical in the SDMX 2.1 and 3.0 information models.
-  2. Base classes like :class:`.BaseDataStructureDefinition` that contain **common attributes and features** shared by SDMX 2.1 and 3.0 classes that differ in some ways.
+  1. Classes that are fully identical in the SDMX 2.1 and 3.0.0 information models.
+  2. Base classes like :class:`.BaseDataStructureDefinition` that contain **common attributes and features** shared by SDMX 2.1 and 3.0.0 classes that differ in some ways.
      These classes should not be instantiated or used directly, except for type checking and hinting.
 
 - :mod:`sdmx.model.v21` and :mod:`sdmx.model.v30` contain:
@@ -254,7 +278,7 @@ The IM provides terms and concepts for data and metadata, but does not specify h
 The SDMX standards include multiple formats for storing data, metadata, and structures.
 In general, :mod:`sdmx`:
 
-- Reads most SDMX-ML 2.1 and 3.0 and SDMX-JSON 1.0 messages.
+- Reads most SDMX-ML 2.1 and 3.0.0 and SDMX-JSON 1.0 messages.
 - Uses collected specimens of messages in various formats, stored in the `khaeru/sdmx-test-data <https://github.com/khaeru/sdmx-test-data/>`_ Git repository.
   These are used by the test suite to check that the code functions as intended, but can also be viewed to understand the data formats.
 
@@ -272,7 +296,7 @@ SDMX-ML can represent every class and property in the IM.
 
 .. versionadded:: 2.11.0
 
-   Support for reading SDMX-ML 3.0.
+   Support for reading SDMX-ML 3.0.0.
 
 .. _sdmx-json:
 
@@ -345,17 +369,17 @@ These generally elaborate the SDMX standards, but in some cases also document so
 The SDMX-REST *web service API* is versioned differently from the overall SDMX *standard*:
 
 - SDMX-REST API v1.5.0 and earlier corresponding to SDMX 2.1 and earlier.
-- SDMX-REST API v2.0.0 and later corresponding to SDMX 3.0 and later.
+- SDMX-REST API v2.0.0 and later corresponding to SDMX 3.0.0 and later.
 
 :mod:`sdmx` aims to support:
 
 - SDMX-REST API versions in the 1.x series from v1.5.0 and later
 - SDMX-REST API versions in the 2.x series from v2.1.0 and later.
-- Data retrieved in SDMX 2.1 and 3.0 :ref:`formats <formats>`.
+- Data retrieved in SDMX 2.1 and 3.0.0 :ref:`formats <formats>`.
   Some existing services offer a parameter to select SDMX 2.1 *or* 2.0 format; :mod:`sdmx` does not support the latter.
   Other services *only* provide SDMX 2.0-formatted data; these cannot be used with :mod:`sdmx` (:ref:`see above <sdmx-version-policy>`).
 
-:class:`.Client` constructs valid URLs (using :class:`~.rest.URL` subclasses :class:`.v21.URL` and :class:`.v30.URL`).
+:class:`.Client` constructs valid URLs using the :class:`~.rest.URL` subclasses :class:`.v21.URL` and :class:`.v30.URL`.
 
 - For example, :meth:`.Client.get` automatically adds the HTTP header ``Accept: application/vnd.sdmx.structurespecificdata+xml;`` when a :py:`structure=...` argument is provided and the data source supports this content type.
 - :class:`.v21.URL` supplies some default parameters in certain cases.

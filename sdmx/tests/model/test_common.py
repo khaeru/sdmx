@@ -9,7 +9,7 @@ from sdmx.model import common, v21
 from sdmx.model.common import (
     Agency,
     AnnotableArtefact,
-    Annotation,
+    BaseAnnotation,
     Component,
     ComponentList,
     Contact,
@@ -21,10 +21,10 @@ from sdmx.model.common import (
 )
 
 
-class TestAnnotation:
+class TestBaseAnnotation:
     def test_text(self) -> None:
         """`text` can be :class:`str`."""
-        a = Annotation(text="Foo")
+        a = BaseAnnotation(text="Foo")
 
         assert a.text.localizations["en"] == "Foo"
 
@@ -33,8 +33,8 @@ class TestAnnotableArtefact:
     def test_get_annotation(self):
         aa = AnnotableArtefact(
             annotations=[
-                Annotation(id="foo", text="bar"),
-                Annotation(id="baz", title="baz_title", text="baz_text"),
+                v21.Annotation(id="foo", text="bar"),
+                v21.Annotation(id="baz", title="baz_title", text="baz_text"),
             ]
         )
 
@@ -52,7 +52,7 @@ class TestAnnotableArtefact:
 
     def test_pop_annotation(self):
         aa = AnnotableArtefact()
-        anno = Annotation(id="foo", text="bar")
+        anno = v21.Annotation(id="foo", text="bar")
 
         assert 0 == len(aa.annotations)
         aa.annotations.append(anno)
@@ -69,8 +69,8 @@ class TestAnnotableArtefact:
 
         value = dict(foo=1.1, bar=2, baz=True)
 
-        aa.annotations.append(Annotation(id="test-anno0", text=repr(value)))
-        aa.annotations.append(Annotation(id="test-anno1", text="value['foo']"))
+        aa.annotations.append(v21.Annotation(id="test-anno0", text=repr(value)))
+        aa.annotations.append(v21.Annotation(id="test-anno1", text="value['foo']"))
 
         # Returns None for a missing ID
         assert None is aa.eval_annotation(id="wrong-id")
@@ -128,19 +128,14 @@ class TestIdentifiableArtefact:
         ad = model.AttributeDescriptor()
         assert hash(ad) == id(ad)
 
-    def test_hash_subclass(self):
-        @dataclass
-        class Foo(IdentifiableArtefact):
-            __hash__ = IdentifiableArtefact.__hash__
-
-        f = Foo(id="FOO")
-        assert hash("FOO") == hash(f)
-
-    def test_sort(self):
-        """Test IdentifiableArtefact.__lt__."""
-        # Items of the same class can be sorted
+    def test_gt_lt(self):
+        """Test IdentifiableArtefact.__gt__ and IdentifiableArtefact.__lt__."""
+        # IdentifiableArtefact of the same class can be sorted
         items = [Item(id="b"), Item(id="a")]
         assert list(reversed(items)) == sorted(items)
+
+        # Mixed IdentifiableArtefact and str can be sorted
+        assert [Item(id="a"), "b", "c"] == sorted(["b", Item(id="a"), "c"])
 
         with pytest.raises(
             TypeError,
@@ -150,6 +145,14 @@ class TestIdentifiableArtefact:
             ),
         ):
             sorted([v21.DataStructureDefinition(id="c")] + items)
+
+    def test_hash_subclass(self):
+        @dataclass
+        class Foo(IdentifiableArtefact):
+            __hash__ = IdentifiableArtefact.__hash__
+
+        f = Foo(id="FOO")
+        assert hash("FOO") == hash(f)
 
 
 class TestNameableArtefact:
@@ -376,8 +379,9 @@ class TestComponentList:
         # cl1 and cl2 compare as different
         assert False is cl1.compare(cl2)
 
-        # Log message is emitted for mismatched components
-        assert "CL has no component with ID 'BAZ'" in caplog.messages
+        # commented: This message is currently disabled
+        # # Log message is emitted for mismatched components
+        # assert "CL has no component with ID 'BAZ'" in caplog.messages
 
 
 class TestContact:
@@ -401,10 +405,15 @@ class TestStructure:
         return model.BaseDataStructureDefinition()
 
     def test_grouping(self, obj) -> None:
-        result = obj.grouping
-        # Class has an AttributeDescriptor, DimensionDescriptor, and dict-like of
-        # GroupDimensionDescriptor
-        assert 3 == len(result)
+        # Class has an AttributeDescriptor, DimensionDescriptor
+        assert 2 == len(obj.grouping)
+
+        # With GroupDimensionDescriptor, these are each included separately
+        obj.group_dimensions = {
+            "FOO": model.GroupDimensionDescriptor(id="FOO"),
+            "BAR": model.GroupDimensionDescriptor(id="BAR"),
+        }
+        assert 4 == len(obj.grouping)
 
     def test_replace_grouping(self, obj) -> None:
         class Foo(model.ComponentList):

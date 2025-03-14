@@ -3,8 +3,8 @@
 :obj:`~.common.ActionType`
 :obj:`~.common.Agency`
 :obj:`~.common.AgencyScheme`
+:obj:`~.common.AllDimensions`
 :obj:`~.common.AnnotableArtefact`
-:obj:`~.common.Annotation`
 :obj:`~.common.AttributeDescriptor`
 :obj:`~.common.AttributeRelationship`
 :obj:`~.common.AttributeValue`
@@ -77,6 +77,7 @@
 :obj:`~.common.ToVTLSpaceKey`
 :obj:`~.common.Transformation`
 :obj:`~.common.TransformationScheme`
+:obj:`~.common.UsageStatus`
 :obj:`~.common.UserDefinedOperator`
 :obj:`~.common.UserDefinedOperatorScheme`
 :obj:`~.common.VTLConceptMapping`

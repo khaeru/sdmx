@@ -24,6 +24,10 @@ from .internationalstring import InternationalStringDescriptor
 
 # Classes defined directly in the current file, in the order they appear
 __all__ = [
+    "Annotation",
+    "CodeSelection",
+    "ExclusiveCodeSelection",
+    "InclusiveCodeSelection",
     "CodelistExtension",
     "GeoRefCode",
     "GeoGridCode",
@@ -72,6 +76,17 @@ __all__ = [
     "DataConstraint",
     "MetadataConstraint",
 ]
+
+# §3.2: Base Structures
+
+
+@dataclass
+class Annotation(common.BaseAnnotation):
+    """SDMX 3.0 Annotation."""
+
+    #: A non-localised version of the Annotation content.
+    value: Optional[str] = None
+
 
 # §4.3: Codelist
 

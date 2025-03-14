@@ -2,6 +2,7 @@ import pytest
 
 from sdmx.model.common import ConstraintRole, ConstraintRoleType
 from sdmx.model.v30 import (
+    Annotation,
     DataConstraint,
     GeoCodelistType,
     GeoFeatureSetCode,
@@ -16,6 +17,27 @@ from sdmx.model.v30 import (
     MetadataProvider,
     MetadataProviderScheme,
 )
+
+# §3.2: Basic structures
+
+
+class TestAnnotation:
+    def test_value(self) -> None:
+        a0 = Annotation()
+
+        # Value defaults None
+        assert None is a0.value
+
+        # Value can be set
+        a0.value = "foo"
+
+        # Value can be retrieved
+        assert "foo" == a0.value
+
+        # Value can be set through constructor
+        a1 = Annotation(value="bar")
+        assert "bar" == a1.value
+
 
 # §4.3: Codelist
 
