@@ -5,6 +5,7 @@ from io import BytesIO
 
 import pandas as pd
 import pytest
+from requests import HTTPError
 
 import sdmx
 from sdmx.util.requests import save_response
@@ -219,6 +220,9 @@ def test_request_get_args():
 
 
 @pytest.mark.network
+@pytest.mark.xfail(
+    reason="Flaky; see https://github.com/khaeru/sdmx/issues/148", raises=HTTPError
+)
 def test_read_url0():
     """URL can be queried without instantiating Client."""
     sdmx.read_url(
