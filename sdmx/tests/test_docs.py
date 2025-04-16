@@ -24,15 +24,17 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.network
-def test_doc_example():
+def test_doc_example() -> None:
     """Code from example.rst."""
     import sdmx
 
     estat = sdmx.Client("ESTAT")
 
-    sm = estat.datastructure("UNE_RT_A")
+    sm: "sdmx.message.StructureMessage" = estat.datastructure("UNE_RT_A")
 
-    for cl in "AGE(10.3)", "SEX(1.13)", "UNIT(55.0)":
+    # NB Use partial URNs to match even if only single versions are stored under keys
+    #    like "AGE"
+    for cl in "ESTAT:AGE(11.0)", "ESTAT:SEX(1.13)", "ESTAT:UNIT(59.0)":
         print(sdmx.to_pandas(sm.get(cl)))
 
     dm = estat.data("UNE_RT_A", key={"geo": "EL+ES+IE"}, params={"startPeriod": "2007"})
@@ -44,7 +46,7 @@ def test_doc_example():
     # Further checks per https://github.com/dr-leo/pandaSDMX/issues/157
 
     # DimensionDescriptor for the structure message
-    dd1 = sm.structure.UNE_RT_A.dimensions
+    dd1 = sm.structure.UNE_RT_A.dimensions  # type: ignore [attr-defined]
 
     # DimensionDescriptor retrieved whilst validating the data message
     dd2 = dm.data[0].structured_by.dimensions
@@ -104,7 +106,7 @@ def test_doc_index1() -> None:
     # NB At some times (e.g. between 2024-03-15 and 2024-06-18) this query retrieves
     #    multiple versions of similar artefacts. A more explicit argument to get() that
     #    includes the version (like get("GEO(21.0)")) may be temporarily needed.
-    s = sdmx.to_pandas(sm1.get("GEO(23.4)"))
+    s = sdmx.to_pandas(sm1.get("ESTAT:GEO"))
     assert_pd_equal(s.sort_index().head(), expected)
 
 
