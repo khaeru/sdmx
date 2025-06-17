@@ -2,6 +2,7 @@ import logging
 import os
 import re
 from collections import ChainMap
+from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
@@ -321,7 +322,7 @@ def test_data_path(pytestconfig):
 
 
 @pytest.fixture(scope="class")
-def testsource(pytestconfig):
+def testsource(pytestconfig) -> Generator[str, None, None]:
     """Fixture: the :attr:`.Source.id` of a temporary data source."""
     from sdmx.source import sources
 

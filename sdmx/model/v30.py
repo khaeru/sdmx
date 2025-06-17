@@ -236,7 +236,8 @@ class SelectionValue(common.BaseSelectionValue):
     valid_to: Optional[str] = None
 
 
-class MemberValue(common.BaseMemberValue, SelectionValue):
+@dataclass
+class MemberValue(SelectionValue, common.BaseMemberValue):
     """SDMX 3.0 MemberValue."""
 
 
@@ -244,12 +245,14 @@ class TimeRangeValue(SelectionValue):
     """SDMX 3.0 TimeRangeValue."""
 
 
+@dataclass
 class BeforePeriod(TimeRangeValue, common.Period):
-    pass
+    """SDMX 3.0 BeforePeriod."""
 
 
+@dataclass
 class AfterPeriod(TimeRangeValue, common.Period):
-    pass
+    """SDMX 3.0 AfterPeriod."""
 
 
 @dataclass

@@ -3,10 +3,12 @@
 What's new?
 ***********
 
-.. _2.22.0:
+Next release
+============
 
-.. Next release
-.. ============
+- Correct a broken link to :ref:`im` in the README (:pull:`233`; thanks :gh-user:`econometricsfanboy` for :issue:`232`).
+
+.. _2.22.0:
 
 v2.22.0 (2025-03-25)
 ====================

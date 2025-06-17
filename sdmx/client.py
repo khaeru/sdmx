@@ -247,7 +247,7 @@ class Client:
             "get", url.join(with_query=False), params=url.query, headers=headers
         )
 
-    def _request_from_url(self, kwargs):
+    def _request_from_url(self, kwargs) -> "requests.Request":
         url = kwargs.pop("url")
         parameters = kwargs.pop("params", {})
         headers = kwargs.pop("headers", {})
@@ -455,26 +455,26 @@ class Client:
         else:
             req = self._request_from_args(kwargs)
 
-        req = self.session.prepare_request(req)
+        req_prepared = self.session.prepare_request(req)
 
         # Now get the SDMX message via HTTP
-        log.info(f"Request {req.url}")
-        log.info(f"with headers {req.headers}")
+        log.info(f"Request {req_prepared.url}")
+        log.info(f"with headers {req_prepared.headers}")
 
         # Try to get resource from memory cache if specified
-        if use_cache:
+        if use_cache and req_prepared.url:
             try:
-                return self.cache[req.url]
+                return self.cache[req_prepared.url]
             except KeyError:
                 log.info("Not found in cache")
                 pass
 
         if dry_run:
-            return req
+            return req_prepared  # type: ignore [return-value]
 
         try:
             # Send the request
-            response = self.session.send(req, **self._send_kwargs)
+            response = self.session.send(req_prepared, **self._send_kwargs)
             response.raise_for_status()
         except requests.exceptions.ConnectionError as e:
             raise e from None

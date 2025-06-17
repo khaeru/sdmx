@@ -6,6 +6,7 @@ these tests, a command-line argument must be given:
 $ pytest -m network [...]
 """
 
+import logging
 import re
 from typing import TYPE_CHECKING
 
@@ -19,22 +20,32 @@ from sdmx.dictlike import DictLike
 from sdmx.model.v21 import GenericDataSet
 from sdmx.testing import assert_pd_equal
 
+log = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     import sdmx.message
 
 
 @pytest.mark.network
-def test_doc_example() -> None:
-    """Code from example.rst."""
+def test_example() -> None:
+    """Code from :file:`doc/example.rst`."""
     import sdmx
 
     estat = sdmx.Client("ESTAT")
 
     sm: "sdmx.message.StructureMessage" = estat.datastructure("UNE_RT_A")
 
+    # Identify partial URNs for some code lists
+    partial_urns = []
+    for cl in sm.codelist.values():
+        if cl.id in ("AGE", "UNIT", "SEX"):
+            partial_urns.append(cl.urn.rpartition("=")[2])
+    # These strings should be the ones hard-coded in example.rst
+    log.info(f"for cl in {repr(partial_urns).strip('[]')}:")
+
     # NB Use partial URNs to match even if only single versions are stored under keys
     #    like "AGE"
-    for cl in "ESTAT:AGE(11.0)", "ESTAT:SEX(1.13)", "ESTAT:UNIT(59.0)":
+    for cl in partial_urns:
         print(sdmx.to_pandas(sm.get(cl)))
 
     dm = estat.data("UNE_RT_A", key={"geo": "EL+ES+IE"}, params={"startPeriod": "2007"})
