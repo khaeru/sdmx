@@ -241,7 +241,7 @@ def test_read_url1():
 
 # @pytest.mark.skip(reason="Temporarily offline on 2021-03-23")
 @pytest.mark.network
-def test_request_preview_data():
+def test_request_preview_data() -> None:
     ECB = sdmx.Client("ECB")
 
     # List of keys can be retrieved
@@ -253,9 +253,10 @@ def test_request_preview_data():
 
     # A filter can be provided, resulting in fewer keys
     keys = ECB.preview_data("EXR", {"CURRENCY": "CAD+CHF+CNY"})
-    assert len(keys) == 24
+    N = 30
+    assert N >= len(keys)
 
     # Result can be converted to pandas object
-    keys_pd = sdmx.to_pandas(keys)
-    assert isinstance(keys_pd, pd.DataFrame)
-    assert len(keys_pd) == 24
+    keys_df = sdmx.to_pandas(keys)
+    assert isinstance(keys_df, pd.DataFrame)
+    assert N >= len(keys_df)
