@@ -767,6 +767,7 @@ class TestHierarchicalCodelist:
         # The code has a child associated with a different code list
         c3 = c2.child[0]
         assert "6J" == c3.code
+        assert c3.code and c3.code.parent and c3.code.parent.urn
         assert c3.code.parent.urn.endswith("Codelist=BIS:CL_BIS_IF_REF_AREA(1.0)")
 
     def test_repr(self, obj: model.HierarchicalCodelist):

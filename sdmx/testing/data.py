@@ -9,8 +9,7 @@ import platformdirs
 import pytest
 
 if TYPE_CHECKING:
-    from requests_cache import CachedSession
-
+    from sdmx.session import Session
     from sdmx.source import Source
 
 log = logging.getLogger(__name__)
@@ -203,9 +202,7 @@ class SpecimenCollection:
         metafunc.parametrize(mark.args[0], self.as_params(**mark.kwargs))
 
 
-def add_responses(
-    session: "CachedSession", file_cache_path: Path, source: "Source"
-) -> None:
+def add_responses(session: "Session", file_cache_path: Path, source: "Source") -> None:
     """Populate cached responses for `session`.
 
     Two sources are used:
