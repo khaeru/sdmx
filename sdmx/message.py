@@ -457,3 +457,14 @@ class MetadataMessage(DataMessage):
             Version["2.1"]: v21.MetadataStructureDefinition,
             Version["3.0.0"]: v30.MetadataStructureDefinition,
         }[self.version]
+
+
+class RegistryInterface(Message):
+    """Common base class for registry interface messages."""
+
+
+@dataclass
+class SubmitStructureResponse(RegistryInterface):
+    """SDMX SubmitStructureResponse."""
+
+    result: list[common.SubmissionResult] = field(default_factory=list)
