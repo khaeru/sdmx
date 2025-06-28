@@ -3,13 +3,15 @@ import typing
 from dataclasses import fields
 from typing import Generic, TypeVar, Union, get_args, get_origin
 
+from sdmx.compare import Comparable
+
 log = logging.getLogger(__name__)
 
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
 
-class DictLike(dict, typing.MutableMapping[KT, VT]):
+class DictLike(dict, typing.MutableMapping[KT, VT], Comparable):
     """Container with features of :class:`dict`, attribute access, and validation."""
 
     __slots__ = ("__dict__", "_types")
@@ -85,28 +87,6 @@ class DictLike(dict, typing.MutableMapping[KT, VT]):
                 )
 
         return key, value
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two DictLike instances are identical if they contain the same set of keys, and
-        corresponding values compare equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`compare` for the values.
-        """
-        if set(self.keys()) != set(other.keys()):
-            log.debug(f"Not identical: {sorted(self.keys())} / {sorted(other.keys())}")
-            return False
-
-        for key, value in self.items():
-            if not value.compare(other[key], strict):
-                log.debug(f"Not identical: {value} / {other[key]}")
-                return False
-
-        return True
 
 
 # Utility methods for DictLike
