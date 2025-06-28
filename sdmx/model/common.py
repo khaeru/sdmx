@@ -1712,7 +1712,7 @@ class TimeKeyValue(KeyValue):
 
 
 @dataclass
-class AttributeValue:
+class AttributeValue(Comparable):
     """SDMX AttributeValue.
 
     In the spec, AttributeValue is an abstract class. Here, it serves as both the
@@ -1996,7 +1996,7 @@ class SeriesKey(Key):
 
 
 @dataclass
-class BaseObservation:
+class BaseObservation(Comparable):
     """Common features of SDMX 2.1 and 3.0 Observation.
 
     This class also implements the IM classes ObservationValue, UncodedObservationValue,
