@@ -2,6 +2,7 @@ import io
 import logging
 from abc import ABC
 from datetime import datetime
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Optional, cast
 
 import pytest
@@ -25,11 +26,17 @@ log = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-def header() -> message.Header:
+def agency() -> common.Agency:
+    return common.Agency(id="TEST")
+
+
+@pytest.fixture(scope="module")
+def header(agency) -> message.Header:
     return message.Header(
         id="N_A",
         prepared=datetime.now(),
-        sender=common.Agency(id="N_A"),
+        receiver=common.Agency(id="N_A"),
+        sender=agency,
     )
 
 
@@ -72,8 +79,9 @@ def structure_message(header) -> message.StructureMessage:
 
 
 @pytest.fixture
-def dsd():
-    dsd = DataStructureDefinition()
+def dsd(agency):
+    dsd = DataStructureDefinition(id="DS_TEST", maintainer=agency, version="1.0")
+    dsd.urn = sdmx.urn.make(dsd)
 
     for order, id in enumerate(["FOO", "BAR", "BAZ"]):
         dsd.dimensions.append(Dimension(id=id, order=order))
@@ -98,6 +106,20 @@ def dks(dsd):
             )
         ],
     )
+
+
+@pytest.fixture
+def submit_structure_response(header, dsd) -> message.SubmitStructureResponse:
+    sr = common.SubmissionResult(
+        dsd,
+        common.ActionType.replace,
+        status_message=common.StatusMessage(
+            status=common.SubmissionStatusType.success,
+            text=[common.MessageText(text="Foo", code=HTTPStatus.OK)],
+        ),
+    )
+
+    return message.SubmitStructureResponse(header=header, result=[sr])
 
 
 # Test specific methods associated with specific classes
@@ -312,6 +334,15 @@ def test_MetadataMessage(metadata_message, *, debug: bool = False) -> None:
 def test_ErrorMessage(errormessage):
     """:class:`.ErrorMessage` can be written."""
     sdmx.to_xml(errormessage)
+
+
+def test_SubmitStructureResponse(submit_structure_response) -> None:
+    """:class:`SubmitStructureResponse` can be written to valid SDMX-ML."""
+    # Object can be written to SDMX-ML without error
+    data = io.BytesIO(sdmx.to_xml(submit_structure_response, pretty_print=True))
+
+    # SDMX-ML validates using the DSD
+    assert validate_xml(data), "Invalid SDMX-ML"
 
 
 @pytest.mark.usefixtures("tmp_path", "installed_schemas", "specimen")
