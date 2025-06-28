@@ -45,6 +45,7 @@ from .version import Version
 
 if TYPE_CHECKING:
     from dataclasses import Field
+    from typing import Self
 
 __all__ = [
     # Re-exported from other modules
@@ -1783,6 +1784,9 @@ class Key:
     def __hash__(self):
         # Hash of the individual KeyValues, in order
         return hash(tuple(hash(kv) for kv in self.values.values()))
+
+    def __lt__(self, other: "Self") -> bool:
+        return sorted(self.values.values()) < sorted(other.values.values())
 
     # Representations
 
