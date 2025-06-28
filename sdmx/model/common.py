@@ -301,7 +301,7 @@ class IdentifiableArtefact(AnnotableArtefact):
         return id(self) if self.id == MissingID else hash(self.id)
 
     def __lt__(self, other: Any) -> bool:
-        if isinstance(other, type(self)):
+        if isinstance(other, IdentifiableArtefact):
             other_id = other.id
         elif isinstance(other, str):
             other_id = other
