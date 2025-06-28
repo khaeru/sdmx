@@ -228,6 +228,20 @@ def _em(obj: message.ErrorMessage):
 
 
 @writer
+def _submit_structure_response(obj: message.SubmitStructureResponse):
+    elem = Element(
+        "mes:SubmitStructureResponse",
+        writer.recurse(obj.header),
+        Element(
+            "mes:SubmitStructureResponse", *[writer.recurse(r) for r in obj.result]
+        ),
+    )
+    if obj.footer:
+        elem.append(writer.recurse(obj.footer))
+    return elem
+
+
+@writer
 def _header(obj: message.Header):
     elem = Element(
         "mes:Header",
@@ -944,3 +958,32 @@ def _hierarchy(obj: v21.Hierarchy):
 @writer
 def _hcl(obj: v21.HierarchicalCodelist):
     return maintainable(obj, *[writer.recurse(h) for h in obj.hierarchy])
+
+
+# Section 5 Registration
+
+
+@writer
+def _submission_result(obj: common.SubmissionResult):
+    return Element(
+        "reg:SubmissionResult",
+        Element(
+            "reg:SubmittedStructure",
+            Element(
+                "reg:MaintainableObject", Element("URN", obj.maintainable_object.urn)
+            ),
+            action=obj.action.name.title(),
+        ),
+        Element(
+            "reg:StatusMessage",
+            *[
+                Element(
+                    "reg:MessageText",
+                    *i11lstring(mt.text, "com:Text"),
+                    code=str(mt.code),
+                )
+                for mt in obj.status_message.text
+            ],
+            status=obj.status_message.status.name.title(),
+        ),
+    )
