@@ -85,13 +85,14 @@ NS = {
     "xsi": "http://www.w3.org/2001/XMLSchema-instance",
     # To be formatted
     "com": "{}/common",
-    "md": "{}/metadata/generic",
-    "md_ss": "{}/metadata/structurespecific",
     "data": "{}/data/structurespecific",
-    "str": "{}/structure",
-    "mes": "{}/message",
-    "gen": "{}/data/generic",
     "footer": "{}/message/footer",
+    "gen": "{}/data/generic",
+    "md_ss": "{}/metadata/structurespecific",
+    "md": "{}/metadata/generic",
+    "mes": "{}/message",
+    "reg": "{}/registry",
+    "str": "{}/structure",
 }
 
 
