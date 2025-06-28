@@ -85,12 +85,12 @@ class TestDictLike:
         with pytest.raises(TypeError):
             f.items[123] = 456
 
-    def test_compare(self, caplog):
-        dl1 = DictLike(a="foo", b="bar")
-        dl2 = DictLike(c="baz", a="foo")
+    def test_compare(self, caplog: "pytest.LogCaptureFixture") -> None:
+        dl1: "DictLike" = DictLike(a="foo", b="bar")
+        dl2: "DictLike" = DictLike(c="baz", a="foo")
 
         assert not dl1.compare(dl2)
-        assert "Not identical: ['a', 'b'] / ['a', 'c']" in caplog.messages
+        assert "Mismatched DictLike keys: ['a', 'b'] != ['a', 'c']" in caplog.messages
 
     def test_pickle(self, specimen):
         """Instances included in a Pydantic model can be pickled."""
