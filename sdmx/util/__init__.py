@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import Field, fields
 from functools import lru_cache
 from typing import Any, Iterable
+from warnings import warn
 
 log = logging.getLogger(__name__)
 
@@ -12,12 +13,14 @@ def compare(attr, a, b, strict: bool) -> bool:
 
     If strict is :obj:`False`, :obj:`None` is permissible as `a` or `b`; otherwise,
     """
+    warn(
+        "sdmx.util.compare(); use sdmx.compare instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return getattr(a, attr) == getattr(b, attr) or (
         not strict and None in (getattr(a, attr), getattr(b, attr))
     )
-    # if not result:
-    #     log.info(f"Not identical: {attr}={getattr(a, attr)} / {getattr(b, attr)}")
-    # return result
 
 
 def only(iterator: Iterator) -> Any:
