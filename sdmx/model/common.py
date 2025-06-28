@@ -34,7 +34,7 @@ from sdmx.compare import Comparable
 from sdmx.dictlike import DictLikeDescriptor
 from sdmx.rest import Resource
 from sdmx.urn import URN
-from sdmx.util import direct_fields, only
+from sdmx.util import direct_fields, only, preserve_dunders
 
 from .internationalstring import (
     DEFAULT_LOCALE,
@@ -1169,6 +1169,7 @@ class GroupDimensionDescriptor(DimensionDescriptor):
         pass
 
 
+@dataclass
 class AttributeRelationship:
     pass
 
@@ -1805,6 +1806,8 @@ class Key:
         return tuple([kv.value for kv in self.values.values()])
 
 
+@dataclass
+@preserve_dunders(Key, "hash")
 class GroupKey(Key):
     #:
     id: Optional[str] = None
