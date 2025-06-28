@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar, Generic, Optional, TypeVar, Union, cast
 
 from sdmx.dictlike import DictLikeDescriptor
-from sdmx.util import compare
 
 from . import common
 from .common import (
@@ -362,22 +361,6 @@ class IdentifiableObjectTarget(TargetObject):
 
     #: Type of :class:`.IdentifiableArtefact` that is targeted.
     object_type: Optional[type[IdentifiableArtefact]] = None
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two IdentifiableObjectTargets are the same if
-        :meth:`.IdentifiableArtefact.compare` is :obj:`True` and they have the same
-        :attr:`object_type`.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return super().compare(other, strict) and compare(
-            "object_type", self, other, strict
-        )
 
 
 class ReportPeriodTarget(TargetObject):
