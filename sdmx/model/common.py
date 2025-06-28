@@ -30,10 +30,11 @@ from typing import (
     get_origin,
 )
 
+from sdmx.compare import Comparable
 from sdmx.dictlike import DictLikeDescriptor
 from sdmx.rest import Resource
 from sdmx.urn import URN
-from sdmx.util import compare, direct_fields, only
+from sdmx.util import direct_fields, only
 
 from .internationalstring import (
     DEFAULT_LOCALE,
@@ -193,7 +194,7 @@ class BaseAnnotation:
 
 
 @dataclass
-class AnnotableArtefact:
+class AnnotableArtefact(Comparable):
     #: :class:`Annotations <.Annotation>` of the object.
     #:
     #: :mod:`.sdmx` implementation detail: The IM does not specify the name of this
@@ -288,24 +289,6 @@ class IdentifiableArtefact(AnnotableArtefact):
         elif isinstance(other, str):
             return self.id == other
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two IdentifiableArtefacts are the same if they have the same :attr:`id`,
-        :attr:`uri`, and :attr:`urn`.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return (
-            compare("id", self, other, strict)
-            and compare("uri", self, other, strict)
-            # Allow non-strict comparison if self.urn is None
-            and compare("urn", self, other, strict and self.urn is not None)
-        )
-
     def __gt__(self, other: Any) -> bool:
         # NB __lt__ handles the case where other is the same type as self
         if isinstance(other, str):
@@ -352,34 +335,6 @@ class NameableArtefact(IdentifiableArtefact):
     #: Multi-lingual description of the object.
     description: InternationalStringDescriptor = InternationalStringDescriptor()
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two NameableArtefacts are the same if:
-
-        - :meth:`.IdentifiableArtefact.compare` is :obj:`True`, and
-        - they have the same :attr:`name` and :attr:`description`.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare` and :meth:`.IdentifiableArtefact.compare`.
-        """
-        if not super().compare(other, strict):
-            pass
-        elif self.name != other.name:
-            log.debug(
-                f"Not identical: name <{repr(self.name)}> != <{repr(other.name)}>"
-            )
-        elif self.description != other.description:
-            log.debug(
-                f"Not identical: description <{repr(self.description)}> != "
-                f"<{repr(other.description)}>"
-            )
-        else:
-            return True
-        return False
-
     def _repr_kw(self) -> MutableMapping[str, str]:
         name = self.name.localized_default()
         return dict(
@@ -410,23 +365,6 @@ class VersionableArtefact(NameableArtefact):
             raise ValueError(
                 f"Version {self.version!r} does not match URN {self.urn!r}"
             )
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two VersionableArtefacts are the same if:
-
-        - :meth:`.NameableArtefact.compare` is :obj:`True`, and
-        - they have the same :attr:`version`.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare` and :meth:`.NameableArtefact.compare`.
-        """
-        return super().compare(other, strict) and compare(
-            "version", self, other, strict
-        )
 
     def _repr_kw(self) -> MutableMapping[str, str]:
         return ChainMap(
@@ -459,23 +397,6 @@ class MaintainableArtefact(VersionableArtefact):
                 )
             else:
                 self.maintainer = Agency(id=self._urn.agency)
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two MaintainableArtefacts are the same if:
-
-        - :meth:`.VersionableArtefact.compare` is :obj:`True`, and
-        - they have the same :attr:`maintainer`.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare` and :meth:`.VersionableArtefact.compare`.
-        """
-        return super().compare(other, strict) and compare(
-            "maintainer", self, other, strict
-        )
 
     def _repr_kw(self) -> MutableMapping[str, str]:
         return ChainMap(
@@ -736,36 +657,6 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
         self.items[item.id] = item
         if item.parent is None:
             item.parent = self
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two ItemSchemes are the same if:
-
-        - :meth:`.MaintainableArtefact.compare` is :obj:`True`, and
-        - their :attr:`items` have the same keys, and corresponding
-          :class:`Items <Item>` compare equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare` and :meth:`.MaintainableArtefact.compare`.
-        """
-        if not super().compare(other, strict):
-            pass
-        elif set(self.items) != set(other.items):
-            log.debug(
-                f"ItemScheme contents differ: {repr(set(self.items))} != "
-                + repr(set(other.items))
-            )
-        else:
-            for id, item in self.items.items():
-                if not item.compare(other.items[id], strict):
-                    log.debug(f"…for items with id={repr(id)}")
-                    return False
-            return True
-
-        return False
 
     def __repr__(self):
         return "<{cls} {maint}{id}{version} ({N} items){name}>".format(
@@ -1030,28 +921,6 @@ class ComponentList(IdentifiableArtefact, Generic[CT]):
     def __hash__(self):
         return super().__hash__()
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two ComponentLists are the same if:
-
-        - :meth:`.IdentifiableArtefact.compare` is :obj:`True`, and
-        - corresponding :attr:`components` compare equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare` and :meth:`.IdentifiableArtefact.compare`.
-        """
-        result = True
-        for c in self.components:
-            try:
-                result &= c.compare(other.get(c.id), strict)
-            except KeyError:
-                # log.debug(f"{other} has no component with ID {c.id!r}")
-                result = False
-        return result and super().compare(other, strict)
-
 
 # §4.5: Category Scheme
 
@@ -1193,18 +1062,6 @@ class Structure(MaintainableArtefact):
         else:
             # Set an instance attribute, e.g. BaseDataStructureDefinition.attributes
             setattr(self, field.name, cl)
-
-    def compare(self, other: "Structure", strict: bool = True) -> bool:
-        def _key(item) -> str:
-            """Key for sorting: item type + its ID."""
-            return f"{type(item)} {item.id}"
-
-        return all(
-            s.compare(o, strict)
-            for s, o in zip(
-                sorted(self.grouping, key=_key), sorted(other.grouping, key=_key)
-            )
-        )
 
 
 class StructureUsage(MaintainableArtefact):
@@ -1763,21 +1620,6 @@ class AttributeValue(Comparable):
     def __repr__(self):
         return "<{}: {}={}>".format(self.__class__.__name__, self.value_for, self.value)
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two AttributeValues are equal if their properties are equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return all(
-            compare(attr, self, other, strict)
-            for attr in ["start_date", "value", "value_for"]
-        )
-
 
 @dataclass
 class Key:
@@ -2039,30 +1881,6 @@ class BaseObservation(Comparable):
     def __str__(self):
         return "{0.key}: {0.value}".format(self)
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two Observations are equal if:
-
-        - their :attr:`dimension`, :attr:`value`, :attr:`series_key`, and
-          :attr:`value_for` are all equal,
-        - their corresponding :attr:`attached_attribute` and :attr:`group_keys` are all
-          equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return (
-            all(
-                compare(attr, self, other, strict)
-                for attr in ["dimension", "series_key", "value", "value_for"]
-            )
-            and self.attached_attribute.compare(other.attached_attribute)
-            and self.group_keys == other.group_keys
-        )
-
 
 @dataclass
 class BaseDataSet(AnnotableArtefact):
@@ -2141,30 +1959,6 @@ class BaseDataSet(AnnotableArtefact):
         return (
             f"<DataSet structured_by={self.structured_by!r} with {len(self)} "
             "observations>"
-        )
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two DataSets are the same if:
-
-        - their :attr:`action`, :attr:`valid_from` compare equal.
-        - all dataset-level attached attributes compare equal.
-        - they have the same number of observations, series, and groups.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return (
-            compare("action", self, other, strict)
-            and compare("valid_from", self, other, strict)
-            and self.attrib.compare(other.attrib, strict)
-            and len(self.obs) == len(other.obs)
-            and len(self.series) == len(other.series)
-            and len(self.group) == len(other.group)
-            and all(o[0].compare(o[1], strict) for o in zip(self.obs, other.obs))
         )
 
 
