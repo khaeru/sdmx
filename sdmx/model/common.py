@@ -64,6 +64,7 @@ __all__ = [
     "ConstraintRoleType",
     "FacetValueType",
     "ExtendedFacetValueType",
+    "SubmissionStatusType",
     "UsageStatus",
     "Item",
     "ItemScheme",
@@ -136,6 +137,9 @@ __all__ = [
     "VTLDataflowMapping",
     "VTLMappingScheme",
     "TransformationScheme",
+    "MessageText",
+    "StatusMessage",
+    "SubmissionResult",
 ]
 
 log = logging.getLogger(__name__)
@@ -479,6 +483,8 @@ ExtendedFacetValueType = Enum(
     keyValues identifiableReference dataSetReference Xhtml""",
 )
 
+#: See :ref:`impl-im-reg`.
+SubmissionStatusType = Enum("SubmissionStatusType", "success failure warning")
 
 UsageStatus = Enum("UsageStatus", "mandatory conditional")
 
@@ -2426,6 +2432,44 @@ class TransformationScheme(ItemScheme[Transformation]):
 
 class BaseContentConstraint:
     """ABC for SDMX 2.1 and 3.0 ContentConstraint."""
+
+
+# Section 5 Registry / §7.4.3 Registration Response
+
+
+@dataclass
+class MessageText:
+    """SDMX MessageText.
+
+    See :ref:`impl-im-reg`.
+    """
+
+    code: int = 0
+    text: InternationalStringDescriptor = InternationalStringDescriptor()
+
+
+@dataclass
+class StatusMessage:
+    """SDMX StatusMessage.
+
+    See :ref:`impl-im-reg`.
+    """
+
+    status: SubmissionStatusType
+    text: list[MessageText] = field(default_factory=list)
+
+
+@dataclass
+class SubmissionResult:
+    """SDMX SubmissionResult.
+
+    See :ref:`impl-im-reg`.
+    """
+
+    maintainable_object: MaintainableArtefact
+    action: ActionType
+    status_message: StatusMessage
+    external_dependencies: bool = False
 
 
 # Internal
