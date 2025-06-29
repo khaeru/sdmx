@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import Field, fields
 from functools import lru_cache
 from typing import Any, Iterable
@@ -79,3 +79,17 @@ def direct_fields(cls) -> Iterable[Field]:
         parent_fields = set(fields(cls.mro()[1]))
         result = list(filter(lambda f: f not in parent_fields, fields(cls)))
         return _FIELDS_CACHE.setdefault(cls_name, result)
+
+
+def preserve_dunders(cls: type, *names: str) -> Callable[[type], type]:
+    """Copy dunder `names` from `cls` to a decorated class."""
+
+    def decorator(other_cls: type) -> type:
+        for name in map(lambda s: f"__{s}__", names):
+            candidates: Iterator[Callable] = filter(
+                None, map(lambda k: getattr(k, name), cls.__mro__)
+            )
+            setattr(other_cls, name, next(candidates))
+        return other_cls
+
+    return decorator
