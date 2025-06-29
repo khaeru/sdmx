@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
 from dataclasses import dataclass
+from datetime import date
 
 import pytest
 
@@ -19,6 +20,7 @@ from sdmx.model.common import (
     NameableArtefact,
     Representation,
 )
+from sdmx.testing import CompareTests
 
 
 class TestBaseAnnotation:
@@ -30,14 +32,21 @@ class TestBaseAnnotation:
 
 
 class TestAnnotableArtefact:
-    def test_get_annotation(self):
-        aa = AnnotableArtefact(
+    @pytest.fixture
+    def aa(self) -> AnnotableArtefact:
+        return AnnotableArtefact(
             annotations=[
                 v21.Annotation(id="foo", text="bar"),
                 v21.Annotation(id="baz", title="baz_title", text="baz_text"),
             ]
         )
 
+    def test_compare(self, aa: AnnotableArtefact) -> None:
+        aa_other = AnnotableArtefact()
+
+        assert False is aa.compare(aa_other)
+
+    def test_get_annotation(self, aa: AnnotableArtefact) -> None:
         with pytest.raises(KeyError):
             aa.get_annotation(id="bar")
 
@@ -92,7 +101,27 @@ class TestAnnotableArtefact:
 URN = "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=IT1:VARIAB_ALL(9.6)"
 
 
-class TestIdentifiableArtefact:
+class TestIdentifiableArtefact(CompareTests):
+    @pytest.fixture
+    def obj(self) -> common.IdentifiableArtefact:
+        return common.IdentifiableArtefact(
+            id="VARIAB_ALL",
+            uri="https://example.com",
+            urn=URN,
+        )
+
+    @pytest.mark.parametrize(
+        "callback",
+        (
+            None,
+            lambda obj: setattr(obj, "id", "VARIAB_ALL_"),
+            lambda obj: setattr(obj, "uri", "https://example.com/foo"),
+            lambda obj: setattr(obj, "urn", URN.replace("VARIAB_ALL", "X")),
+        ),
+    )
+    def test_compare(self, obj: common.IdentifiableArtefact, callback) -> None:
+        super().test_compare(obj, callback)
+
     def test_init_empty_id(self):
         """IdentifiableArtefact can be initialized with an empty :class:`str` as ID."""
         # No id= parameter → id attribute is MissingID
@@ -156,30 +185,52 @@ class TestIdentifiableArtefact:
 
 
 class TestNameableArtefact:
-    def test_eq(self):
-        na = NameableArtefact(id="FOO", name="Foo")
-        assert na == "FOO"
-
-    def test_namea(self, caplog) -> None:
+    def test_compare(self, caplog) -> None:
         na1 = NameableArtefact(name=dict(en="Name"), description=dict(en="Description"))
         na2 = NameableArtefact()
 
         assert not na1.compare(na2)
-        assert caplog.messages[-1] == "Not identical: name <en: Name> != <>"
+        assert "Not identical: NameableArtefact.name=en: Name != " in caplog.messages
+        caplog.clear()
 
         na2.name["en"] = "Name"
 
         assert not na1.compare(na2)
         assert (
-            caplog.messages[-1] == "Not identical: description <en: Description> != <>"
+            "Not identical: NameableArtefact.description=en: Description != "
+            in caplog.messages
         )
 
         na2.description["en"] = "Description"
 
         assert na1.compare(na2)
 
+    def test_eq(self):
+        na = NameableArtefact(id="FOO", name="Foo")
+        assert na == "FOO"
 
-class TestVersionableArtefact:
+
+class TestVersionableArtefact(CompareTests):
+    @pytest.fixture
+    def obj(self) -> common.VersionableArtefact:
+        return common.VersionableArtefact(
+            valid_from="0001-01-01",
+            valid_to="9999-12-31",
+            version="1.0.0",
+        )
+
+    @pytest.mark.parametrize(
+        "callback",
+        (
+            None,
+            lambda obj: setattr(obj, "valid_from", "0001-01-02"),
+            lambda obj: setattr(obj, "valid_to", "9999-12-30"),
+            lambda obj: setattr(obj, "version", "1.0.1"),
+        ),
+    )
+    def test_compare(self, obj: common.VersionableArtefact, callback) -> None:
+        super().test_compare(obj, callback)
+
     def test_urn(self) -> None:
         va = common.VersionableArtefact(id="VARIAB_ALL", urn=URN)
 
@@ -195,7 +246,31 @@ class TestVersionableArtefact:
         assert va.version is None
 
 
-class TestMaintainableArtefact:
+class TestMaintainableArtefact(CompareTests):
+    @pytest.fixture
+    def obj(self) -> common.MaintainableArtefact:
+        return common.MaintainableArtefact(
+            is_external_reference=True,
+            is_final=True,
+            maintainer=common.Agency(id="A1"),
+            service_url="https://example.com",
+            structure_url="https://example.com",
+        )
+
+    @pytest.mark.parametrize(
+        "callback",
+        (
+            None,
+            lambda obj: setattr(obj, "is_external_reference", False),
+            lambda obj: setattr(obj, "is_final", False),
+            lambda obj: setattr(obj, "maintainer", common.Agency(id="A2")),
+            lambda obj: setattr(obj, "service_url", "https://example.com/foo"),
+            lambda obj: setattr(obj, "structure_url", "https://example.com/foo"),
+        ),
+    )
+    def test_compare(self, obj: common.MaintainableArtefact, callback) -> None:
+        super().test_compare(obj, callback)
+
     def test_urn(self) -> None:
         ma = common.MaintainableArtefact(id="VARIAB_ALL", urn=URN)
 
@@ -256,10 +331,11 @@ class TestItemScheme:
         assert not is0.compare(is1)
 
         # Log shows that items with same ID have different name
-        assert caplog.messages[-2:] == [
-            "Not identical: name <en: Foo> != <en: Bar>",
-            "…for items with id='foo'",
-        ]
+        assert "Not identical: Item.name=en: Foo != en: Bar" in caplog.messages
+        assert (
+            "Not identical: ItemScheme.items={'foo': <Item foo: Foo>} != {'foo': <Item foo: Bar>}"
+            in caplog.messages
+        )
 
     def test_compare1(self) -> None:
         is0: ItemScheme = ItemScheme(id="is0")
@@ -398,11 +474,23 @@ class TestContact:
         assert repr(c1) != repr(c2)
 
 
-class TestStructure:
+class TestStructure(CompareTests):
     @pytest.fixture
     def obj(self):
         # Use BaseDataStructureDefinition as a concrete/less abstract subclass
-        return model.BaseDataStructureDefinition()
+        return common.BaseDataStructureDefinition()
+
+    @pytest.mark.parametrize(
+        "callback",
+        (
+            None,
+            lambda obj: obj.attributes.getdefault(id="a1"),
+            lambda obj: obj.dimensions.getdefault(id="d1"),
+        ),
+    )
+    def test_compare(self, obj: common.Structure, callback) -> None:
+        """:py:`compare(…)` is :any:`False` when attributes are changed."""
+        super().test_compare(obj, callback)
 
     def test_grouping(self, obj) -> None:
         # Class has an AttributeDescriptor, DimensionDescriptor
@@ -423,3 +511,88 @@ class TestStructure:
         # the type of any member of the class
         with pytest.raises(TypeError, match="No grouping of type"):
             obj.replace_grouping(Foo())
+
+
+class TestAttributeValue(CompareTests):
+    @pytest.fixture
+    def obj(self) -> common.AttributeValue:
+        return common.AttributeValue(
+            start_date=date.fromisoformat("0001-01-01"),
+            value="v1",
+            value_for=common.DataAttribute(id="da1"),
+        )
+
+    @pytest.mark.parametrize(
+        "callback",
+        (
+            None,
+            lambda obj: setattr(obj, "start_date", date.fromisoformat("0001-01-02")),
+            lambda obj: setattr(obj, "value", "v2"),
+            lambda obj: setattr(obj, "value_for", common.DataAttribute(id="da2")),
+        ),
+    )
+    def test_compare(self, obj: common.AttributeValue, callback) -> None:
+        """:py:`compare(…)` is :any:`False` when attributes are changed."""
+        super().test_compare(obj, callback)
+
+
+class TestBaseObservation(CompareTests):
+    @pytest.fixture
+    def obj(self) -> common.BaseObservation:
+        return common.BaseObservation(
+            attached_attribute={"FOO": common.AttributeValue(value="f1")},
+            dimension=common.Key(BAR="b1"),
+            group_keys={common.GroupKey(id="g1")},
+            series_key=common.SeriesKey(),
+            value=1.0,
+        )
+
+    @pytest.mark.parametrize(
+        "callback",
+        (
+            None,
+            lambda o: o.attached_attribute.popitem(),
+            lambda o: setattr(o, "dimension", common.Key(BAR="b2")),
+            lambda o: setattr(o, "group_keys", {common.GroupKey(id="g2")}),
+            lambda o: setattr(o, "series_key", None),
+            lambda o: setattr(o, "value", 1.1),
+        ),
+    )
+    def test_compare(self, obj: common.BaseObservation, callback) -> None:
+        """:py:`compare(…)` is :any:`False` when attributes are changed.
+
+        NB for .value_for, see test_v{21,30}.TestObservation.test_compare.
+        """
+        super().test_compare(obj, callback)
+
+
+class TestBaseDataSet(CompareTests):
+    @pytest.fixture
+    def obj(self) -> common.BaseDataSet:
+        k = common.Key(FOO=common.KeyValue(id="FOO", value="f1"))
+        o = common.BaseObservation(dimension=k, value=1.0)
+        result = common.BaseDataSet(
+            action=common.ActionType.information,
+            valid_from="0001-01-01",
+            obs=[o],
+            group={common.GroupKey(): [o]},
+            series={common.SeriesKey(): [o]},
+        )
+        return result
+
+    @pytest.mark.parametrize(
+        "callback",
+        (
+            None,
+            # Change attributes
+            lambda ds: setattr(ds, "action", common.ActionType.delete),
+            lambda ds: ds.group.popitem(),  # Remove a group key
+            lambda ds: ds.obs.pop(-1),  # Change *number* of obs
+            lambda ds: setattr(ds.obs[-1], "value", 1.1),  # Change *value* of one obs
+            lambda ds: ds.series.popitem(),  # Remove a series key
+            lambda ds: setattr(ds, "valid_from", "0001-01-02"),
+        ),
+    )
+    def test_compare(self, obj: common.BaseDataSet, callback) -> None:
+        """:py:`compare(…)` is :any:`False` when attributes are changed."""
+        super().test_compare(obj, callback)
