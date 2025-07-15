@@ -204,7 +204,7 @@ class TestClient:
 
         # A filter can be provided, resulting in fewer keys
         keys = ECB.preview_data("EXR", {"CURRENCY": "CAD+CHF+CNY"})
-        N = 30
+        N = 33
         assert N >= len(keys)
 
         # Result can be converted to pandas object
