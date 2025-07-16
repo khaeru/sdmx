@@ -1,8 +1,9 @@
 import logging
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import Field, fields
 from functools import lru_cache
 from typing import Any, Iterable
+from warnings import warn
 
 log = logging.getLogger(__name__)
 
@@ -12,12 +13,14 @@ def compare(attr, a, b, strict: bool) -> bool:
 
     If strict is :obj:`False`, :obj:`None` is permissible as `a` or `b`; otherwise,
     """
+    warn(
+        "sdmx.util.compare(); use sdmx.compare instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return getattr(a, attr) == getattr(b, attr) or (
         not strict and None in (getattr(a, attr), getattr(b, attr))
     )
-    # if not result:
-    #     log.info(f"Not identical: {attr}={getattr(a, attr)} / {getattr(b, attr)}")
-    # return result
 
 
 def only(iterator: Iterator) -> Any:
@@ -79,3 +82,17 @@ def direct_fields(cls) -> Iterable[Field]:
         parent_fields = set(fields(cls.mro()[1]))
         result = list(filter(lambda f: f not in parent_fields, fields(cls)))
         return _FIELDS_CACHE.setdefault(cls_name, result)
+
+
+def preserve_dunders(cls: type, *names: str) -> Callable[[type], type]:
+    """Copy dunder `names` from `cls` to a decorated class."""
+
+    def decorator(other_cls: type) -> type:
+        for name in map(lambda s: f"__{s}__", names):
+            candidates: Iterator[Callable] = filter(
+                None, map(lambda k: getattr(k, name), cls.__mro__)
+            )
+            setattr(other_cls, name, next(candidates))
+        return other_cls
+
+    return decorator

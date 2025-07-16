@@ -1,5 +1,6 @@
 import pytest
 
+from sdmx.model import common, v30
 from sdmx.model.common import ConstraintRole, ConstraintRoleType
 from sdmx.model.v30 import (
     Annotation,
@@ -17,6 +18,7 @@ from sdmx.model.v30 import (
     MetadataProvider,
     MetadataProviderScheme,
 )
+from sdmx.testing import CompareTests
 
 # §3.2: Basic structures
 
@@ -77,6 +79,31 @@ class TestMetadataProvider:
 class TestMetadataProviderScheme:
     def test_init(self):
         MetadataProviderScheme()
+
+
+# §5.4: Data Set
+
+
+class TestObservation(CompareTests):
+    @pytest.fixture
+    def obj(self) -> v30.Observation:
+        return v30.Observation(
+            attached_attribute={"FOO": common.AttributeValue(value="f1")},
+            dimension=common.Key(BAR="b1"),
+            group_keys={common.GroupKey(id="g1")},
+            series_key=common.SeriesKey(),
+            value=1.0,
+            value_for=v30.Measure(id="m1"),
+        )
+
+    def test_compare(self, obj: v30.Observation, callback=None) -> None:
+        """:py:`compare(…)` is :any:`False` when .value_for is changed.
+
+        For other attributes, see test_common.TestBaseObservation.test_compare.
+        """
+        super().test_compare(
+            obj, lambda obs: setattr(obs, "value_for", v30.Measure(id="m2"))
+        )
 
 
 # §8: Hierarchy
