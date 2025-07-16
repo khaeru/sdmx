@@ -189,11 +189,11 @@ def construct_schema(
     if schema_etree is None:
         raise FileNotFoundError(f"Could not find XSD files in {schema_dir}")
 
-    # Modify the schema by inserting an <xs:import > reference to the XHTML schema URL
+    # Modify the schema by inserting an <xs:import > reference to the XHTML schema file
     elem = etree.Element(
         "{http://www.w3.org/2001/XMLSchema}import",
         namespace="http://www.w3.org/1999/xhtml",
-        schemaLocation="http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd",
+        schemaLocation="xhtml1-strict.xsd",
     )
     schema_etree.getroot().insert(0, elem)
 
@@ -268,6 +268,10 @@ def _extracted_zipball(version: Version, force: bool = False) -> Path:
         else:
             # Unpack the entire archive
             zf.extractall(target.parent)
+
+    # Fetch a copy of the XHTML1 XSD, which is missing from the SDMX bundle
+    resp = requests.get(url="http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd")
+    result.joinpath("schemas", "xhtml1-strict.xsd").write_bytes(resp.content)
 
     return result
 

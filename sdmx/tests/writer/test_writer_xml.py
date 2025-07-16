@@ -314,7 +314,7 @@ def test_ErrorMessage(errormessage):
     sdmx.to_xml(errormessage)
 
 
-@pytest.mark.usefixtures("tmp_path", "specimen")
+@pytest.mark.usefixtures("tmp_path", "installed_schemas", "specimen")
 class RoundTripTests(ABC):
     """Abstract base class for tests that read-write-read SDMX-ML."""
 
@@ -332,6 +332,7 @@ class RoundTripTests(ABC):
         # Unpack fixture using the request_fixture
         tmp_path = request.getfixturevalue("tmp_path")
         specimen = request.getfixturevalue("specimen")
+        schemas_dir = request.getfixturevalue("installed_schemas")
 
         if structure_id:
             # Read {D,Metad}ataStructure from file
@@ -350,7 +351,7 @@ class RoundTripTests(ABC):
         data = io.BytesIO(sdmx.to_xml(msg0, pretty_print=True))
 
         # Validate using XSD
-        assert not validate or validate_xml(data), "Invalid SDMX-ML"
+        assert not validate or validate_xml(data, schemas_dir), "Invalid SDMX-ML"
 
         # Contents can be read again
         try:

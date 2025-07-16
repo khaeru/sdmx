@@ -233,7 +233,7 @@ def test_doc_usage_data():
 
     series_keys = list(data.series)
 
-    assert len(series_keys) == 16
+    assert len(series_keys) == 22
 
     series_keys[5]
 

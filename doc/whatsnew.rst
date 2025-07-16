@@ -6,6 +6,10 @@ What's new?
 Next release
 ============
 
+- :func:`.install_schemas` and :func:`.construct_schema` fetch, store, and use a local copy of :file:`xhtml1-strict.dsd` (:pull:`236`, :issue:`235`).
+  This enables use of :func:`.validate_xml`
+  with lxml version 6.0.0 (`released 2025-06-26 <https://lxml.de/6.0/changes-6.0.0.html>`__)
+  for SDMX-ML messages containing XHTML values.
 - Correct a broken link to :ref:`im` in the README (:pull:`233`; thanks :gh-user:`econometricsfanboy` for :issue:`232`).
 
 .. _2.22.0:
