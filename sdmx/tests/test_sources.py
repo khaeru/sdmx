@@ -348,13 +348,13 @@ class TestILO(DataSourceTest):
         "structureset": NotImplementedError,  # 501
     }
 
-    @pytest.mark.network
-    def test_gh_96(self, caplog, client):
+    def test_gh_96(self, caplog, client_with_stored_responses) -> None:
         """Test of https://github.com/khaeru/sdmx/issues/96.
 
         As of 2024-02-13, the web service no longer has the prior limitations on
         the `references` query parameter, so the special handling is removed.
         """
+        client = client_with_stored_responses
         client.get("codelist", "CL_ECO", params=dict(references="parentsandsiblings"))
 
         # As of 2024-02-13, no longer needed

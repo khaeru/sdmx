@@ -199,7 +199,7 @@
   {
     "id": "ILO",
     "name": "International Labor Organization",
-    "url": "http://sdmx.ilo.org/rest",
+    "url": "https://sdmx.ilo.org/rest",
     "headers": {
       "data": {
         "Accept": "application/vnd.sdmx.structurespecificdata+xml;version=2.1"

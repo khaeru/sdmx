@@ -11,6 +11,7 @@ Next release
   with lxml version 6.0.0 (`released 2025-06-26 <https://lxml.de/6.0/changes-6.0.0.html>`__)
   for SDMX-ML messages containing XHTML values.
 - Correct a broken link to :ref:`im` in the README (:pull:`233`; thanks :gh-user:`econometricsfanboy` for :issue:`232`).
+- Update the base URL of the :ref:`ILO <ILO>` source to use HTTPS instead of plain HTTP (:pull:`237`).
 
 .. _2.22.0:
 

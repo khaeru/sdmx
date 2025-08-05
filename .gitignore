@@ -8,6 +8,7 @@ __pycache__
 # Development and build files
 .benchmarks
 .coverage*
+.dmypy*
 .mypy_cache
 .pytest_cache
 .ruff_cache
