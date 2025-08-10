@@ -474,7 +474,7 @@ def _component(obj: model.Component, dsd=None, *, attrib: Optional[dict] = None)
         # assignmentStatus attribute
         if obj.usage_status:
             attrib["assignmentStatus"] = obj.usage_status.name.title()
-    elif isinstance(obj, model.Dimension):
+    elif isinstance(obj, common.DimensionComponent):
         # position attribute
         attrib["position"] = str(obj.order)
 
