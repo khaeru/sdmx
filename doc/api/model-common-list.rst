@@ -55,6 +55,7 @@
 :obj:`~.common.KeyValue`
 :obj:`~.common.Level`
 :obj:`~.common.MaintainableArtefact`
+:obj:`~.common.MessageText`
 :obj:`~.common.MetadataTargetRegion`
 :obj:`~.common.NamePersonalisation`
 :obj:`~.common.NamePersonalisationScheme`
@@ -70,8 +71,11 @@
 :obj:`~.common.SeriesKey`
 :obj:`~.common.SimpleDatasource`
 :obj:`~.common.StartPeriod`
+:obj:`~.common.StatusMessage`
 :obj:`~.common.Structure`
 :obj:`~.common.StructureUsage`
+:obj:`~.common.SubmissionResult`
+:obj:`~.common.SubmissionStatusType`
 :obj:`~.common.TimeDimension`
 :obj:`~.common.TimeKeyValue`
 :obj:`~.common.ToVTLSpaceKey`

@@ -251,8 +251,9 @@ def test_gh_180(caplog, installed_schemas, specimen) -> None:
         assert isinstance(msg, sdmx.message.StructureMessage)
 
         # Reader logs a warning regarding the missing reference
-        assert re.match(
-            "Cannot resolve reference to non-SDMX class", caplog.messages[-1]
+        assert any(
+            re.match("Cannot resolve reference to non-SDMX class", m)
+            for m in caplog.messages
         )
 
 

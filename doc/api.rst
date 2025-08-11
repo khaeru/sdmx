@@ -48,6 +48,15 @@ Top-level methods and classes
       to_sdmx
       validate_xml
 
+``compare``: Compare SDMX artefacts
+===================================
+
+.. currentmodule:: sdmx.compare
+
+.. automodule:: sdmx.compare
+   :members:
+   :show-inheritance:
+
 ``format``: SDMX file formats
 =============================
 

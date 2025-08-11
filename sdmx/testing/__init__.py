@@ -3,6 +3,7 @@ import os
 import re
 from collections import ChainMap
 from collections.abc import Generator
+from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
@@ -211,6 +212,32 @@ def generate_endpoint_tests(metafunc):  # noqa: C901  TODO reduce complexity 11 
     # commented: for debugging
     # else:
     #     pytest.skip("No endpoints to be tested")
+
+
+class CompareTests:
+    """Base class for testing of :meth:`.Comparable.compare` in subclasses.
+
+    For usage, see :class:`.test_common.TestIdentifiableArtefact`.
+    """
+
+    def test_compare(self, left, callback) -> None:
+        """Test comparison of `left` to a copy modified using `callback`."""
+        # Make a copy
+        right = deepcopy(left)
+
+        if callback is None:
+            expected = True  # No callback → should compare equal
+        else:
+            callback(right)  # Apply some modification to the copy
+            expected = False  # Should compare different
+
+        try:
+            assert expected is left.compare(right)
+        except Exception:  # pragma: no cover
+            # Show information about the objects
+            log.error(f"{left.__dict__ = !r}")
+            log.error(f"{right.__dict__ = !r}")
+            raise
 
 
 class MessageTest:

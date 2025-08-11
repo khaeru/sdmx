@@ -24,6 +24,7 @@ from typing import (
 
 import sdmx.urn
 from sdmx import model
+from sdmx.compare import Comparable
 from sdmx.dictlike import DictLike, summarize_dictlike
 from sdmx.dictlike import DictLikeDescriptor as DLD
 from sdmx.format import Version
@@ -32,7 +33,7 @@ from sdmx.model.internationalstring import (
     InternationalString,
     InternationalStringDescriptor,
 )
-from sdmx.util import compare, direct_fields
+from sdmx.util import direct_fields
 
 if TYPE_CHECKING:
     import requests
@@ -95,24 +96,9 @@ class Header:
         lines.extend(_summarize(self))
         return "\n  ".join(lines)
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two Headers are the same if their corresponding attributes are equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return all(
-            compare(f, self, other, strict)
-            for f in map(attrgetter("name"), fields(self))
-        )
-
 
 @dataclass
-class Footer:
+class Footer(Comparable):
     """Footer of an SDMX-ML message.
 
     SDMX-JSON messages do not have footers.
@@ -132,25 +118,9 @@ class Footer:
             for t in self.text
         ]
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two Footers are the same if their :attr:`code`, :attr:`severity`, and
-        :attr:`text` are equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return all(
-            compare(f, self, other, strict)
-            for f in map(attrgetter("name"), fields(self))
-        )
-
 
 @dataclass
-class Message:
+class Message(Comparable):
     #: SDMX version.
     version: Version = Version["2.1"]
 
@@ -173,22 +143,6 @@ class Message:
         ]
         lines.extend(_summarize(self, ["footer", "response"]))
         return "\n  ".join(lines)
-
-    def compare(self, other, strict=True) -> bool:
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two Messages are the same if their :attr:`header` and :attr:`footer` compare
-        equal.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return self.header.compare(other.header, strict) and (
-            self.footer is other.footer is None
-            or self.footer.compare(other.footer, strict)  # type: ignore [union-attr]
-        )
 
 
 class ErrorMessage(Message):
@@ -248,22 +202,6 @@ class StructureMessage(Message):
         self._collections = [
             getattr(self, f.name) for f in direct_fields(self.__class__)
         ]
-
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two StructureMessages compare equal if :meth:`.DictLike.compare` is :obj:`True`
-        for each of the object collection attributes.
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :meth:`.DictLike.compare`.
-        """
-        return super().compare(other, strict) and all(
-            getattr(self, f.name).compare(getattr(other, f.name), strict)
-            for f in direct_fields(self.__class__)
-        )
 
     def add(self, obj: model.IdentifiableArtefact):
         """Add `obj` to the StructureMessage."""
@@ -440,29 +378,6 @@ class DataMessage(Message):
 
         return "\n  ".join(lines)
 
-    def compare(self, other, strict=True):
-        """Return :obj:`True` if `self` is the same as `other`.
-
-        Two DataMessages are the same if:
-
-        - :meth:`.Message.compare` is :obj:`True`
-        - their :attr:`dataflow` and :attr:`observation_dimension` compare equal.
-        - they have the same number of :class:`DataSets <DataSet>`, and
-        - corresponding DataSets compare equal (see :meth:`.DataSet.compare`).
-
-        Parameters
-        ----------
-        strict : bool, optional
-            Passed to :func:`.compare`.
-        """
-        return (
-            super().compare(other, strict)
-            and compare("dataflow", self, other, strict)
-            and compare("observation_dimension", self, other, strict)
-            and len(self.data) == len(other.data)
-            and all(ds[0].compare(ds[1], strict) for ds in zip(self.data, other.data))
-        )
-
     def update(self) -> None:
         """Update :attr:`.observation_dimension`.
 
@@ -542,3 +457,14 @@ class MetadataMessage(DataMessage):
             Version["2.1"]: v21.MetadataStructureDefinition,
             Version["3.0.0"]: v30.MetadataStructureDefinition,
         }[self.version]
+
+
+class RegistryInterface(Message):
+    """Common base class for registry interface messages."""
+
+
+@dataclass
+class SubmitStructureResponse(RegistryInterface):
+    """SDMX SubmitStructureResponse."""
+
+    result: list[common.SubmissionResult] = field(default_factory=list)

@@ -6,12 +6,30 @@ What's new?
 Next release
 ============
 
+- Expand :mod:`.model`, :mod:`.reader.xml`, and :mod:`.writer.xml` support for :ref:`impl-im-reg` messages (:pull:`234`).
+  See the documentation for implementation details and errata in the standards documents.
+
+  - New classes
+    :class:`.model.common.MessageText`,
+    :class:`.StatusMessage`,
+    :class:`.SubmissionResult`, and
+    :class:`.SubmissionStatusType`.
+  - New classes :class:`.message.RegistryInterface` and :class:`.SubmitStructureResponse`.
+
+- New module :mod:`sdmx.compare` that collects logic for recursive comparison of SDMX artefacts (:pull:`234`).
+
+  - New mix-in :class:`.Comparable` that adds a :meth:`~.Comparable.compare` method to subclasses.
+  - New class :class:`.compare.Options` to control comparison behaviour and logging.
+  - :func:`sdmx.util.compare` is deprecated and will be removed in a future version.
+
+- :class:`.Key` is sortable (:pull:`234`).
 - :func:`.install_schemas` and :func:`.construct_schema` fetch, store, and use a local copy of :file:`xhtml1-strict.dsd` (:pull:`236`, :issue:`235`).
   This enables use of :func:`.validate_xml`
   with lxml version 6.0.0 (`released 2025-06-26 <https://lxml.de/6.0/changes-6.0.0.html>`__)
   for SDMX-ML messages containing XHTML values.
 - Correct a broken link to :ref:`im` in the README (:pull:`233`; thanks :gh-user:`econometricsfanboy` for :issue:`232`).
 - Update the base URL of the :ref:`ILO <ILO>` source to use HTTPS instead of plain HTTP (:pull:`237`).
+- New utilities :class:`.CompareTests` and :func:`.preserve_dunders` (:pull:`234`).
 
 .. _2.22.0:
 
