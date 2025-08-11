@@ -2610,6 +2610,7 @@ def __getattr__(name: str):
         warn(
             "from sdmx.model.common import Annotation. Use one of sdmx.model.{v21,v30}",
             DeprecationWarning,
+            stacklevel=2,
         )
         return Annotation
     raise AttributeError(name)
