@@ -365,7 +365,9 @@ def maintainable(obj: common.MaintainableArtefact, *args, **kwargs) -> etree._El
 
     # VersionableArtefact attributes (no separate method)
     kwargs.setdefault("version", str(obj.version))
-    # TODO Also write valid_from, valid_to
+    if obj.valid_from:
+        kwargs.setdefault("validFrom", str(obj.valid_from))
+        kwargs.setdefault("validTo", str(obj.valid_from))
 
     return nameable(obj, *args, **kwargs)
 
