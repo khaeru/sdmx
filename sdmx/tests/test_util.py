@@ -93,7 +93,7 @@ class TestDictLike:
         assert "Mismatched DictLike keys: ['a', 'b'] != ['a', 'c']" in caplog.messages
 
     def test_pickle(self, specimen):
-        """Instances included in a Pydantic model can be pickled."""
+        """Instances included as attributes of dataclasses can be pickled."""
         with specimen("sg-xs.xml") as f:
             msg1 = sdmx.read_sdmx(f)
 

@@ -1,12 +1,13 @@
 import pytest
 
 from sdmx import message
-from sdmx.model.v21 import Agency, Annotation, Code, Codelist
+from sdmx.model.common import Agency, Codelist
+from sdmx.model.v21 import Annotation
 
 CL_ITEMS = [
     dict(id="A", name={"en": "Average of observations through period"}),
     dict(id="B", name={"en": "Beginning of period"}),
-    dict(id="B1", name={"en": "Child code of B"}),
+    dict(id="B1", name={"en": "Child code of B"}, parent="B"),
 ]
 
 
@@ -26,10 +27,11 @@ def codelist():
 
     # Add items
     for info in CL_ITEMS:
-        cl.items[info["id"]] = Code(**info)
-
-    # Add a hierarchical relationship
-    cl.items["B"].append_child(cl.items["B1"])
+        # For B1, this also adds a hierarchical relationship to B
+        code = cl.setdefault(**info)
+        # FIXME setdefault should do this automatically
+        if "parent" not in info:
+            code.parent = cl
 
     # Add an annotation
     cl.items["A"].annotations.append(

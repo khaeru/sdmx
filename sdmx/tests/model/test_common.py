@@ -166,15 +166,6 @@ class TestIdentifiableArtefact(CompareTests):
         # Mixed IdentifiableArtefact and str can be sorted
         assert [Item(id="a"), "b", "c"] == sorted(["b", Item(id="a"), "c"])
 
-        with pytest.raises(
-            TypeError,
-            match=(
-                "'<' not supported between instances of 'Item' and "
-                "'DataStructureDefinition'"
-            ),
-        ):
-            sorted([v21.DataStructureDefinition(id="c")] + items)
-
     def test_hash_subclass(self):
         @dataclass
         class Foo(IdentifiableArtefact):

@@ -296,13 +296,14 @@ def test_Footer(footer):
     sdmx.to_xml(footer)
 
 
-def test_structuremessage(tmp_path, structuremessage):
+def test_structuremessage(tmp_path, header, structuremessage) -> None:
+    structuremessage.header = header
     result = sdmx.to_xml(structuremessage, pretty_print=True)
 
     # Message can be round-tripped to/from file
     path = tmp_path / "output.xml"
     path.write_bytes(result)
-    msg = sdmx.read_sdmx(path)
+    msg = cast(message.StructureMessage, sdmx.read_sdmx(path))
 
     # Contents match the original object
     assert (
@@ -312,7 +313,7 @@ def test_structuremessage(tmp_path, structuremessage):
 
     # False because `structuremessage` lacks URNs, which are constructed automatically
     # by `to_xml`
-    assert not msg.compare(structuremessage, strict=True)
+    assert not msg.compare(structuremessage, strict=True, allow_implied_urn=False)
     # Compares equal when allowing this difference
     assert msg.compare(structuremessage, strict=False)
 
