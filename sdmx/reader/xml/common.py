@@ -1,3 +1,4 @@
+import logging
 import re
 from abc import abstractmethod
 from collections import ChainMap, defaultdict
@@ -570,7 +571,7 @@ class XMLEventReader(BaseReader):
         existing = self.get_single(cls, obj.id, version=obj.version)
 
         if existing and (
-            existing.compare(obj, strict=True)
+            existing.compare(obj, strict=True, log_level=logging.CRITICAL)
             or (existing.urn or sdmx.urn.make(existing)) == sdmx.urn.make(obj)
         ):
             if elem is not None:

@@ -2,6 +2,8 @@ import logging
 import os
 import re
 from collections import ChainMap
+from collections.abc import Generator
+from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
@@ -212,6 +214,32 @@ def generate_endpoint_tests(metafunc):  # noqa: C901  TODO reduce complexity 11 
     #     pytest.skip("No endpoints to be tested")
 
 
+class CompareTests:
+    """Base class for testing of :meth:`.Comparable.compare` in subclasses.
+
+    For usage, see :class:`.test_common.TestIdentifiableArtefact`.
+    """
+
+    def test_compare(self, left, callback) -> None:
+        """Test comparison of `left` to a copy modified using `callback`."""
+        # Make a copy
+        right = deepcopy(left)
+
+        if callback is None:
+            expected = True  # No callback → should compare equal
+        else:
+            callback(right)  # Apply some modification to the copy
+            expected = False  # Should compare different
+
+        try:
+            assert expected is left.compare(right)
+        except Exception:  # pragma: no cover
+            # Show information about the objects
+            log.error(f"{left.__dict__ = !r}")
+            log.error(f"{right.__dict__ = !r}")
+            raise
+
+
 class MessageTest:
     """Base class for tests of specific specimen files."""
 
@@ -262,6 +290,7 @@ def mock_gh_api():
     mock = responses.RequestsMock(assert_all_requests_are_fired=False)
     mock.add_passthru(re.compile(rf"{base}/zipball/\w+"))
     mock.add_passthru(re.compile(r"https://codeload.github.com/\w+"))
+    mock.add_passthru(re.compile(r"http://www.w3.org/\w+"))
 
     for v in "2.1", "3.0", "3.0.0":
         mock.get(
@@ -321,7 +350,7 @@ def test_data_path(pytestconfig):
 
 
 @pytest.fixture(scope="class")
-def testsource(pytestconfig):
+def testsource(pytestconfig) -> Generator[str, None, None]:
     """Fixture: the :attr:`.Source.id` of a temporary data source."""
     from sdmx.source import sources
 

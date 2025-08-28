@@ -14,6 +14,7 @@ CLASSES = [
     "ConstraintRoleType",
     "FacetValueType",
     "ExtendedFacetValueType",
+    "SubmissionStatusType",
     "UsageStatus",
     "Item",
     "ItemScheme",
@@ -94,6 +95,9 @@ CLASSES = [
     "VTLDataflowMapping",
     "VTLMappingScheme",
     "TransformationScheme",
+    "MessageText",
+    "StatusMessage",
+    "SubmissionResult",
     # Appearing in model.InternationalString
     "DEFAULT_LOCALE",
     "InternationalString",

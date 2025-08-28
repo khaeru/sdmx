@@ -6,6 +6,7 @@ these tests, a command-line argument must be given:
 $ pytest -m network [...]
 """
 
+import logging
 import re
 from typing import TYPE_CHECKING
 
@@ -19,20 +20,32 @@ from sdmx.dictlike import DictLike
 from sdmx.model.v21 import GenericDataSet
 from sdmx.testing import assert_pd_equal
 
+log = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     import sdmx.message
 
 
 @pytest.mark.network
-def test_doc_example():
-    """Code from example.rst."""
+def test_example() -> None:
+    """Code from :file:`doc/example.rst`."""
     import sdmx
 
     estat = sdmx.Client("ESTAT")
 
-    sm = estat.datastructure("UNE_RT_A")
+    sm: "sdmx.message.StructureMessage" = estat.datastructure("UNE_RT_A")
 
-    for cl in "AGE(10.3)", "SEX(1.13)", "UNIT(55.0)":
+    # Identify partial URNs for some code lists
+    partial_urns = []
+    for cl in sm.codelist.values():
+        if cl.id in ("AGE", "UNIT", "SEX"):
+            partial_urns.append(cl.urn.rpartition("=")[2])
+    # These strings should be the ones hard-coded in example.rst
+    log.info(f"for cl in {repr(partial_urns).strip('[]')}:")
+
+    # NB Use partial URNs to match even if only single versions are stored under keys
+    #    like "AGE"
+    for cl in partial_urns:
         print(sdmx.to_pandas(sm.get(cl)))
 
     dm = estat.data("UNE_RT_A", key={"geo": "EL+ES+IE"}, params={"startPeriod": "2007"})
@@ -44,7 +57,7 @@ def test_doc_example():
     # Further checks per https://github.com/dr-leo/pandaSDMX/issues/157
 
     # DimensionDescriptor for the structure message
-    dd1 = sm.structure.UNE_RT_A.dimensions
+    dd1 = sm.structure.UNE_RT_A.dimensions  # type: ignore [attr-defined]
 
     # DimensionDescriptor retrieved whilst validating the data message
     dd2 = dm.data[0].structured_by.dimensions
@@ -104,7 +117,7 @@ def test_doc_index1() -> None:
     # NB At some times (e.g. between 2024-03-15 and 2024-06-18) this query retrieves
     #    multiple versions of similar artefacts. A more explicit argument to get() that
     #    includes the version (like get("GEO(21.0)")) may be temporarily needed.
-    s = sdmx.to_pandas(sm1.get("GEO(23.4)"))
+    s = sdmx.to_pandas(sm1.get("ESTAT:GEO"))
     assert_pd_equal(s.sort_index().head(), expected)
 
 
@@ -220,7 +233,7 @@ def test_doc_usage_data():
 
     series_keys = list(data.series)
 
-    assert len(series_keys) == 16
+    assert len(series_keys) == 22
 
     series_keys[5]
 

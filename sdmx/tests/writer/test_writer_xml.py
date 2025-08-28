@@ -2,6 +2,7 @@ import io
 import logging
 from abc import ABC
 from datetime import datetime
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Optional, cast
 
 import pytest
@@ -25,11 +26,17 @@ log = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
-def header() -> message.Header:
+def agency() -> common.Agency:
+    return common.Agency(id="TEST")
+
+
+@pytest.fixture(scope="module")
+def header(agency) -> message.Header:
     return message.Header(
         id="N_A",
         prepared=datetime.now(),
-        sender=common.Agency(id="N_A"),
+        receiver=common.Agency(id="N_A"),
+        sender=agency,
     )
 
 
@@ -72,8 +79,9 @@ def structure_message(header) -> message.StructureMessage:
 
 
 @pytest.fixture
-def dsd():
-    dsd = DataStructureDefinition()
+def dsd(agency):
+    dsd = DataStructureDefinition(id="DS_TEST", maintainer=agency, version="1.0")
+    dsd.urn = sdmx.urn.make(dsd)
 
     for order, id in enumerate(["FOO", "BAR", "BAZ"]):
         dsd.dimensions.append(Dimension(id=id, order=order))
@@ -98,6 +106,20 @@ def dks(dsd):
             )
         ],
     )
+
+
+@pytest.fixture
+def submit_structure_response(header, dsd) -> message.SubmitStructureResponse:
+    sr = common.SubmissionResult(
+        dsd,
+        common.ActionType.replace,
+        status_message=common.StatusMessage(
+            status=common.SubmissionStatusType.success,
+            text=[common.MessageText(text="Foo", code=HTTPStatus.OK)],
+        ),
+    )
+
+    return message.SubmitStructureResponse(header=header, result=[sr])
 
 
 # Test specific methods associated with specific classes
@@ -274,13 +296,14 @@ def test_Footer(footer):
     sdmx.to_xml(footer)
 
 
-def test_structuremessage(tmp_path, structuremessage):
+def test_structuremessage(tmp_path, header, structuremessage) -> None:
+    structuremessage.header = header
     result = sdmx.to_xml(structuremessage, pretty_print=True)
 
     # Message can be round-tripped to/from file
     path = tmp_path / "output.xml"
     path.write_bytes(result)
-    msg = sdmx.read_sdmx(path)
+    msg = cast(message.StructureMessage, sdmx.read_sdmx(path))
 
     # Contents match the original object
     assert (
@@ -290,7 +313,7 @@ def test_structuremessage(tmp_path, structuremessage):
 
     # False because `structuremessage` lacks URNs, which are constructed automatically
     # by `to_xml`
-    assert not msg.compare(structuremessage, strict=True)
+    assert not msg.compare(structuremessage, strict=True, allow_implied_urn=False)
     # Compares equal when allowing this difference
     assert msg.compare(structuremessage, strict=False)
 
@@ -314,7 +337,16 @@ def test_ErrorMessage(errormessage):
     sdmx.to_xml(errormessage)
 
 
-@pytest.mark.usefixtures("tmp_path", "specimen")
+def test_SubmitStructureResponse(submit_structure_response) -> None:
+    """:class:`SubmitStructureResponse` can be written to valid SDMX-ML."""
+    # Object can be written to SDMX-ML without error
+    data = io.BytesIO(sdmx.to_xml(submit_structure_response, pretty_print=True))
+
+    # SDMX-ML validates using the DSD
+    assert validate_xml(data), "Invalid SDMX-ML"
+
+
+@pytest.mark.usefixtures("tmp_path", "installed_schemas", "specimen")
 class RoundTripTests(ABC):
     """Abstract base class for tests that read-write-read SDMX-ML."""
 
@@ -332,6 +364,7 @@ class RoundTripTests(ABC):
         # Unpack fixture using the request_fixture
         tmp_path = request.getfixturevalue("tmp_path")
         specimen = request.getfixturevalue("specimen")
+        schemas_dir = request.getfixturevalue("installed_schemas")
 
         if structure_id:
             # Read {D,Metad}ataStructure from file
@@ -350,7 +383,7 @@ class RoundTripTests(ABC):
         data = io.BytesIO(sdmx.to_xml(msg0, pretty_print=True))
 
         # Validate using XSD
-        assert not validate or validate_xml(data), "Invalid SDMX-ML"
+        assert not validate or validate_xml(data, schemas_dir), "Invalid SDMX-ML"
 
         # Contents can be read again
         try:

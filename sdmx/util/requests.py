@@ -1,5 +1,6 @@
 """Utilities for working with :mod:`requests` and related packages."""
 
+from importlib.util import find_spec
 from typing import TYPE_CHECKING, Optional, TypedDict, Union
 
 import urllib3
@@ -7,13 +8,11 @@ from requests import PreparedRequest, Response
 from requests.adapters import BaseAdapter
 
 #: :any:`True` if :class:`requests_cache` is installed.
-HAS_REQUESTS_CACHE = True
+HAS_REQUESTS_CACHE = bool(find_spec("requests_cache"))
 
-try:
+if HAS_REQUESTS_CACHE:
     from requests_cache import CacheMixin
-
-except ImportError:  # pragma: no cover
-    HAS_REQUESTS_CACHE = False
+else:  # pragma: no cover
 
     class CacheMixin:  # type: ignore [no-redef]
         """Null parent class for sdmx.session.Session."""
@@ -22,8 +21,7 @@ except ImportError:  # pragma: no cover
 if TYPE_CHECKING:
     import http.cookiejar
 
-    from requests_cache import CachedSession
-
+    from requests import Session
 
 __all__ = [
     "HAS_REQUESTS_CACHE",
@@ -82,9 +80,15 @@ def offline(s) -> None:
 
 
 def save_response(
-    session: "CachedSession", method: str, url: str, content: bytes, headers: dict
+    session: "Session", method: str, url: str, content: bytes, headers: dict
 ) -> None:
-    """Store a response in the cache of `session`."""
+    """Store a response in the cache of `session`.
+
+    If :mod:`requests_cache` is not available, this has no effect.
+    """
+    if not hasattr(session, "cache"):  # pragma: no cover
+        return
+
     # Response object and its direct attributes
     resp = Response()
     resp._content = content

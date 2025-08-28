@@ -48,6 +48,15 @@ Top-level methods and classes
       to_sdmx
       validate_xml
 
+``compare``: Compare SDMX artefacts
+===================================
+
+.. currentmodule:: sdmx.compare
+
+.. automodule:: sdmx.compare
+   :members:
+   :show-inheritance:
+
 ``format``: SDMX file formats
 =============================
 
@@ -71,6 +80,11 @@ SDMX-ML
 
 .. automodule:: sdmx.format.xml
    :members:
+   :exclude-members: validate_xml
+
+.. automodule:: sdmx.format.xml.common
+   :members:
+   :exclude-members: install_schemas, validate_xml
 
 ``message``: SDMX messages
 ==========================

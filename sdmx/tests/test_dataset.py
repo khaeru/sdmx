@@ -218,9 +218,7 @@ class TestGenericSeriesData_SiblingGroup_TS(DataMessageTest):
         # GroupKeys can be retrieved from keys of DataSet.group
         g2_key, g2 = list(data.group.items())[2]
         assert g2_key.CURRENCY == "JPY"
-        assert g2[0].attrib.TITLE == (
-            "ECB reference exchange rate, Japanese " "yen/Euro"
-        )
+        assert g2[0].attrib.TITLE == ("ECB reference exchange rate, Japanese yen/Euro")
 
         # Check group attributes of a series
         s = list(data.series)[0]
@@ -241,7 +239,7 @@ class TestGenericSeriesData_RateGroup_TS(DataMessageTest):
         g2_key, g2 = list(data.group.items())[2]
         assert g2_key.CURRENCY == "GBP"
         assert g2_key.attrib.TITLE == (
-            "ECB reference exchange rate, U.K. " "Pound sterling /Euro"
+            "ECB reference exchange rate, U.K. Pound sterling /Euro"
         )
         # Check group attributes of a series
         s = list(data.series)[0]

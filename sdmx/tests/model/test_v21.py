@@ -39,6 +39,7 @@ from sdmx.model.v21 import (
     TextAttributeValue,
     value_for_dsd_ref,
 )
+from sdmx.testing import CompareTests
 
 
 class TestAnnotation:
@@ -550,7 +551,27 @@ class TestKey:
         assert k1.get_values() == (1, 2, 3)
 
 
-class TestObservation:
+class TestObservation(CompareTests):
+    @pytest.fixture
+    def obj(self) -> v21.Observation:
+        return v21.Observation(
+            attached_attribute={"FOO": common.AttributeValue(value="f1")},
+            dimension=common.Key(BAR="b1"),
+            group_keys={common.GroupKey(id="g1")},
+            series_key=common.SeriesKey(),
+            value=1.0,
+            value_for=v21.PrimaryMeasure(id="m1"),
+        )
+
+    def test_compare(self, obj: v21.Observation, callback=None) -> None:
+        """:py:`compare(…)` is :any:`False` when .value_for is changed.
+
+        For other attributes, see test_common.TestBaseObservation.test_compare.
+        """
+        super().test_compare(
+            obj, lambda obs: setattr(obs, "value_for", v21.PrimaryMeasure(id="m2"))
+        )
+
     def test_str(self) -> None:
         obs = Observation(value=3.4, dimension=Key(FOO="bar", BAZ="qux"))
 
@@ -767,6 +788,7 @@ class TestHierarchicalCodelist:
         # The code has a child associated with a different code list
         c3 = c2.child[0]
         assert "6J" == c3.code
+        assert c3.code and c3.code.parent and c3.code.parent.urn
         assert c3.code.parent.urn.endswith("Codelist=BIS:CL_BIS_IF_REF_AREA(1.0)")
 
     def test_repr(self, obj: model.HierarchicalCodelist):

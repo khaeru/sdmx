@@ -31,7 +31,7 @@ Multiple versions of the SDMX standards have been adopted:
 - 2.0 in November 2005.
 - 2.1 in August 2011; published at the International Standards Organization (ISO) in January 2013; and revised multiple times since.
 - 3.0.0 in October 2021.
-- 3.1 planned for some time in 2025.
+- 3.1 in May 2025.
 
 Some notes about the organization of the standards:
 
@@ -93,6 +93,7 @@ Reference:
 
 - `SDMX 2.1 Section 2 — Information Model <https://sdmx.org/wp-content/uploads/SDMX_2-1-1_SECTION_2_InformationModel_201108.pdf>`_ (PDF).
 - `SDMX 3.0.0 Section 2 — Information Model <https://sdmx.org/wp-content/uploads/SDMX_3-0-0_SECTION_2_FINAL-1_0.pdf>`_ (PDF).
+- `SDMX 3.1 Section 2 — Information Model <https://sdmx.org/wp-content/uploads/SDMX_3-1-0_SECTION_2_FINAL.pdf>`_ (PDF).
 
 In general:
 
@@ -268,6 +269,37 @@ Constraints
    :attr:`~.v21.Constraint.data_content_keys` are ignored.
    None of the data sources supported by :mod:`sdmx` appears to use this latter form.
 
+.. _impl-im-reg:
+
+Registration and maintenance
+----------------------------
+
+As of SDMX 3.1,
+Section 5 (“SDMX Registry Specification”) §7.4.3 Registry Response and Figure 18 (“Section 5”)
+show information that is only partly complete
+and that does not clearly align with the XSD schemas for SDMX-ML (specifically :file:`SDMXRegistryStructure.xsd`)
+or the `draft standards for structural metadata maintenance`_ (“the schemas”).
+For example, the UML diagrams and tables do not include all the types and classes that appear in the schemas.
+
+Generally, :mod:`sdmx` chooses an implementation that is consistent with the XSD schemas.
+In particular:
+
+- :class:`.SubmissionResult` appears in the schemas,
+  but does not appear in Section 5 or other standards documents.
+- Section 5 does not give a name for the relationship between,
+  for instance, :py:`RegistrationStatus` and :class:`.StatusMessage`.
+- Section 5 shows that :attr:`.StatusMessage.status` has type String.
+  The schemas require that the attribute be one of a few fixed values.
+
+  :mod:`sdmx` implements these values in the :class:`.SubmissionStatusType` enumeration.
+- Section 5 shows :class:`.MessageText` with attributes ``errorCode`` and ``errorText``.
+  The schemas and draft standards for structural metadata maintenance show that
+  these codes and texts can be used for *successes* (not only errors)
+  and do not include "error" in the XML attribute and tag names, respectively.
+
+  :mod:`sdmx` implements :attr:`.MessageText.text` and :attr:`.MessageText.code`.
+
+.. _`draft standards for structural metadata maintenance`: https://github.com/sdmx-twg/sdmx-rest/blob/409064fe335f12eaf6456b95a530dd379dff2728/doc/maintenance.md
 
 .. _formats:
 
