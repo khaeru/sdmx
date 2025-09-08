@@ -216,6 +216,8 @@ def write_dataset(  # noqa: C901 TODO reduce complexity 12 → ≤10
     dtype=np.float64,
     constraint=None,
     datetime=False,
+    labels=False,
+    dsd=None,
     **kwargs,
 ):
     """Convert :class:`~.DataSet`.
@@ -335,6 +337,21 @@ def write_dataset(  # noqa: C901 TODO reduce complexity 12 → ≤10
 
     # Reshape for compatibility with v0.9
     result, datetime, kwargs = _dataset_compat(result, datetime, kwargs)
+
+    # Replace codes with names if labels=True
+    if labels:
+        if dsd is None:
+            raise ValueError("dsd argument is required if labels=True")
+        relabel_dimensions = {}
+        for dimension in result.index.names:
+            dim_order = {comp.id: idx for idx, comp in enumerate(dsd.dimensions.components)}
+            codelist = dsd.dimensions.components[dim_order[dimension]].local_representation.enumerated
+            relabel_dimensions[dimension] = dsd.dimensions.components[dim_order[dimension]].concept_identity.name.localized_default()
+            if codelist is not None:
+                codelist_dic = {code.id: code.name.localized_default() for code in codelist.items.values()}
+                result = result.rename(index=codelist_dic, level=dimension)
+        result = result.rename_axis(index=relabel_dimensions, axis=0)
+    
     # Handle the datetime argument, if any
     return _maybe_convert_datetime(result, datetime, obj=obj, **kwargs)
 
