@@ -1,11 +1,13 @@
 from functools import singledispatch
 
+from sdmx.convert import Converter
+
 
 class NoWriterImplementation(NotImplementedError):
     pass
 
 
-class BaseWriter:
+class BaseWriter(Converter):
     """Base class for recursive writers.
 
     Usage:

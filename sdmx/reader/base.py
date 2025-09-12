@@ -2,11 +2,12 @@ import io
 import logging
 import pathlib
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional
 from warnings import warn
 
 import requests
 
+from sdmx.convert import Converter
 from sdmx.format import MediaType
 
 if TYPE_CHECKING:
@@ -16,21 +17,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class Converter:
-    """Base class for conversion to :mod:`sdmx` objects."""
-
-    @classmethod
-    def handles(cls, data: Any, kwargs: dict) -> bool:
-        """Return :any:`True` if the class can convert `data` using `kwargs`."""
-        return False
-
-    def convert(self, data: Any, **kwargs) -> "sdmx.message.Message":
-        """Convert `data` to an instance of an SDMX Message subclass."""
-        raise NotImplementedError
-
-
 class BaseReader(Converter):
-    """Converter of file or binary data in standard SDMX formats."""
+    """Converter of file/binary data from SDMX formats to :mod:`.model` objects."""
 
     #: First byte(s) of file or response body content, used by
     #: :meth:`~.BaseReader.handles`.
@@ -139,7 +127,7 @@ class BaseReader(Converter):
 
     def convert(
         self, data, structure: Optional["sdmx.model.common.Structure"] = None, **kwargs
-    ):
+    ) -> "sdmx.message.Message":
         """Convert `data` to an instance of an SDMX Message subclass.
 
         Parameters
