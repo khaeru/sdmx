@@ -574,7 +574,7 @@ class MetadataReport(common.AnnotableArtefact):
 
 
 @dataclass
-class MetadataSet(NameableArtefact, common.BaseMetadataSet):
+class MetadataSet(common.BaseMetadataSet, NameableArtefact):
     """SDMX 2.1 MetadataSet.
 
     .. important:: The SDMX 2.1 IM (Figure 29/§7.4.1 on p.84 and §7.4.2.2 on p.87) gives
