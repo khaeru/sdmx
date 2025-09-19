@@ -774,6 +774,8 @@ class Code(Item["Code"]):
     """SDMX Code."""
 
 
+@dataclass
+@ItemScheme._preserve("repr")
 class Codelist(ItemScheme[IT]):
     """SDMX Codelist."""
 
@@ -800,6 +802,8 @@ class Concept(Item["Concept"]):
     iso_concept: Optional[ISOConceptReference] = None
 
 
+@dataclass
+@ItemScheme._preserve("repr")
 class ConceptScheme(ItemScheme[Concept]):
     _Item = Concept
 
