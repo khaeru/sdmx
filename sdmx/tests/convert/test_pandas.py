@@ -1,4 +1,4 @@
-"""Tests for pandasdmx/writer.py."""
+"""Tests for :mod:`.convert.pandas`."""
 
 from typing import cast
 
@@ -334,7 +334,7 @@ def test_dataset_datetime(specimen) -> None:
         sdmx.to_pandas(msg, datetime=dict(dim=TIME_PERIOD, freq="X"))
     with pytest.raises(ValueError, match="foo"):
         sdmx.to_pandas(ds, datetime=dict(foo="bar"))
-    with pytest.raises(ValueError, match="43"):
+    with pytest.raises(TypeError, match="class 'int'"):
         sdmx.to_pandas(ds, datetime=43)
 
 

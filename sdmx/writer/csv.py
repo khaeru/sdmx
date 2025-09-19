@@ -12,7 +12,6 @@ from sdmx import urn
 from sdmx.model import v21 as model
 
 from .base import BaseWriter
-from .pandas import writer as pandas_writer
 
 writer = BaseWriter("csv")
 
@@ -131,14 +130,17 @@ def dataset(
     ValueError
         If :attr:`.DataSet.described_by` is :data:`None`.
     """
+    from sdmx.convert.pandas import PandasConverter
+
     if labels == "both":
         raise NotImplementedError(f"labels={labels}")
     elif time_format != "original":
         raise NotImplementedError(f"time_format={time_format}")
 
-    # Use .writer.pandas for the conversion
+    # Use PandasConverter for the conversion
     tmp = (
-        pandas_writer.recurse(obj, **kwargs)
+        PandasConverter(**kwargs)
+        .convert(obj)
         .reset_index()
         .rename(columns={"value": "OBS_VALUE"})
     )
