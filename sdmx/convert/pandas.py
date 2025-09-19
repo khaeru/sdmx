@@ -1,20 +1,26 @@
 """Convert :mod:`sdmx.message`/:mod:`.model` objects to :mod:`pandas` objects."""
 
+import operator
 from dataclasses import dataclass, field
+from enum import Flag, auto
+from functools import reduce
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Hashable, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from sdmx import message
+from sdmx import message, urn
 from sdmx.dictlike import DictLike
+from sdmx.format import csv
+from sdmx.format.csv.common import CSVFormat, Labels, TimeFormat
 from sdmx.model import common, v21
 from sdmx.model.internationalstring import DEFAULT_LOCALE
 
 from .common import DispatchConverter
 
 if TYPE_CHECKING:
+    from sdmx.format.csv.common import CSVFormatOptions
     from sdmx.model.common import BaseDataStructureDefinition, Item
     from sdmx.model.v21 import ContentConstraint
 
@@ -32,18 +38,50 @@ ALL_CONTENTS = {
 }
 
 
+class Attributes(Flag):
+    """Attributes to include."""
+
+    #: No attributes.
+    none = 0
+
+    #: Attributes attached to each :class:`Observation <.BaseObservation>`.
+    observation = auto()
+    o = observation
+
+    #: Attributes attached to any (0 or 1) :class:`~.SeriesKey` associated with each
+    #: Observation.
+    series_key = auto()
+    s = series_key
+
+    #: Attributes attached to any (0 or more) :class:`~.GroupKey` associated with each
+    #: Observation.
+    group_key = auto()
+    g = group_key
+
+    #: Attributes attached to the :class:`~.DataSet` containing the Observations.
+    dataset = auto()
+    d = dataset
+
+    all = observation | series_key | group_key | dataset
+
+    @classmethod
+    def parse(cls, value: str) -> "Attributes":
+        try:
+            values = [Attributes.none] + [cls[v] for v in value.lower()]
+        except KeyError as e:
+            raise ValueError(f"{e.args[0]!r} is not a member of {cls}")
+        return reduce(operator.or_, values)
+
+
 @dataclass
 class PandasConverter(DispatchConverter):
-    #: Types of attributes to return with the data. A string containing zero or more of:
-    #:
-    #: - ``'o'``: attributes attached to each :class:`Observation <.BaseObservation>` .
-    #: - ``'s'``: attributes attached to any (0 or 1) :class:`~.SeriesKey` associated
-    #:   with each Observation.
-    #: - ``'g'``: attributes attached to any (0 or more) :class:`~.GroupKey` associated
-    #:   with each Observation.
-    #: - ``'d'``: attributes attached to the :class:`~.DataSet` containing the
-    #:   Observations.
-    attributes: str = ""
+    #: SDMX-CSV format options.
+    format_options: "CSVFormatOptions"
+
+    format: Optional["CSVFormat"] = None
+
+    #: Attributes to include.
+    attributes: Attributes = Attributes.none
 
     #: If given, only Observations included by the *constraint* are returned.
     constraint: Optional["ContentConstraint"] = None
@@ -57,31 +95,8 @@ class PandasConverter(DispatchConverter):
     #: attribute is returned.
     dtype: Any = np.float64
 
-    #: bool or str or or .Dimension or dict, optional
-    #:
-    #: If given, return a DataFrame with a :class:`~pandas.DatetimeIndex` or
-    #: :class:`~pandas.PeriodIndex` as the index and all other dimensions as columns.
-    #: Valid `datetime` values include:
-    #:
-    #: - :class:`bool`: if :obj:`True`, determine the time dimension automatically by
-    #:   detecting a :class:`~.TimeDimension`.
-    #: - :class:`str`: ID of the time dimension.
-    #: - :class:`~.Dimension`: the matching Dimension is the time dimension.
-    #: - :class:`dict`: advanced behaviour. Keys may include:
-    #:
-    #:    - **dim** (:class:`~.Dimension` or :class:`str`): the time dimension or its
-    #:      ID.
-    #:    - **axis** (`{0 or 'index', 1 or 'columns'}`): axis on which to place the time
-    #:      dimension (default: 0).
-    #:    - **freq** (:obj:`True` or :class:`str` or :class:`~.Dimension`): produce
-    #:      :class:`pandas.PeriodIndex`. If :class:`str`, the ID of a Dimension
-    #:      containing a frequency specification. If a Dimension, the specified
-    #:      dimension is used for the frequency specification.
-    #:
-    #:      Any Dimension used for the frequency specification is does not appear in the
-    #:      returned DataFrame.
-    datetime: Any = False
-
+    #: :any:`True` to convert datetime.
+    datetime: bool = False
     #: ID of a dimension to convert to :class:`pandas.DatetimeIndex`.
     datetime_dimension_id: Optional[str] = None
     #: Frequency for conversion to :class:`pandas.PeriodIndex`.
@@ -102,39 +117,74 @@ class PandasConverter(DispatchConverter):
 
     _data_message: Optional[message.DataMessage] = None
 
+    def handle_datetime_option(self) -> None:
+        """Handle alternate forms of :attr:`datetime`.
+
+        If given, return a DataFrame with a :class:`~pandas.DatetimeIndex` or
+        :class:`~pandas.PeriodIndex` as the index and all other dimensions as columns.
+        Valid `datetime` values include:
+
+        - :class:`bool`: if :obj:`True`, determine the time dimension automatically by
+          detecting a :class:`~.TimeDimension`.
+        - :class:`str`: ID of the time dimension.
+        - :class:`~.Dimension`: the matching Dimension is the time dimension.
+        - :class:`dict`: advanced behaviour. Keys may include:
+
+           - **dim** (:class:`~.Dimension` or :class:`str`): the time dimension or its
+             ID.
+           - **axis** (`{0 or 'index', 1 or 'columns'}`): axis on which to place the time
+             dimension (default: 0).
+           - **freq** (:obj:`True` or :class:`str` or :class:`~.Dimension`): produce
+             :class:`pandas.PeriodIndex`. If :class:`str`, the ID of a Dimension
+             containing a frequency specification. If a Dimension, the specified
+             dimension is used for the frequency specification.
+
+             Any Dimension used for the frequency specification is does not appear in the
+             returned DataFrame.
+        """
+        value = self.datetime
+        if isinstance(value, bool):
+            pass
+        elif isinstance(value, str):
+            self.datetime_dimension_id = value
+            self.datetime = True
+        elif isinstance(value, common.DimensionComponent):
+            self.datetime_dimension_id = value.id
+            self.datetime = True
+        elif isinstance(value, dict):
+            self.datetime = True
+            # Unpack a dict of 'advanced' arguments
+            self.datetime_axis = value.pop("axis", 0)
+            self.datetime_dimension_id = value.pop("dim", None)
+            self.datetime_freq = value.pop("freq", False)
+            if len(value):
+                raise ValueError(f"Unexpected datetime={tuple(sorted(value))!r}")
+        else:
+            raise TypeError(f"PandasConverter(…, datetime={type(value)})")
+
     def __post_init__(self) -> None:
         """Transform and validate arguments."""
-        if isinstance(self.datetime, str):
-            self.datetime_dimension_id = self.datetime
-            self.datetime = True
-        elif isinstance(self.datetime, common.DimensionComponent):
-            self.datetime_dimension_id = self.datetime.id
-            self.datetime = True
-        elif isinstance(self.datetime, dict):
-            # Unpack a dict of 'advanced' arguments
-            self.datetime_axis = self.datetime.pop("axis", 0)
-            self.datetime_dimension_id = self.datetime.pop("dim", None)
-            self.datetime_freq = self.datetime.pop("freq", False)
-            if len(self.datetime):
-                raise ValueError(
-                    "Unexpected PandasConverter.datetime=… keys"
-                    + repr(tuple(sorted(self.datetime)))
-                )
-            self.datetime = True
-        elif not isinstance(self.datetime, bool):
-            raise TypeError(f"PandasConverter(…, datetime={type(self.datetime)})")
+        if self.format_options.labels not in {Labels.id}:
+            raise NotImplementedError(
+                f"convert to SDMX-CSV with labels={self.format_options.labels}"
+            )
+
+        if self.format_options.time_format not in {TimeFormat.original}:
+            raise NotImplementedError(
+                f"convert to SDMX-CSV with time_format={self.format_options.time_format}"
+            )
 
         # Handle arguments
+        self.handle_datetime_option()
+
         if isinstance(self.include, str):
             self.include = set([self.include])
         # Silently discard invalid names
         self.include &= ALL_CONTENTS
 
         # Validate attributes argument
-        try:
-            self.attributes = self.attributes.lower()
-        except AttributeError:
-            raise TypeError("'attributes' argument must be str")
+        if isinstance(self.attributes, str):
+            self.attributes = Attributes.parse(self.attributes)
 
         if (
             self.rtype == "compat"
@@ -142,9 +192,7 @@ class PandasConverter(DispatchConverter):
             and self._data_message.observation_dimension is not common.AllDimensions
         ):
             # Cannot return attributes in this case
-            self.attributes = ""
-        elif set(self.attributes) - {"o", "s", "g", "d"}:
-            raise ValueError(f"attributes must be in 'osgd'; got {self.attributes}")
+            self.attributes = Attributes.none
 
 
 def to_pandas(obj, **kwargs):
@@ -152,6 +200,10 @@ def to_pandas(obj, **kwargs):
 
     See :ref:`sdmx.convert.pandas <convert-pandas>`.
     """
+    from sdmx.format.csv.v1 import FormatOptions
+
+    kwargs.setdefault("format_options", FormatOptions())
+
     return PandasConverter(**kwargs).convert(obj)
 
 
@@ -309,6 +361,22 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):  # noqa: C90
     :class:`pandas.Series` with :class:`pandas.MultiIndex`
         Otherwise.
     """
+    # FIXME Reduce complexity from 13 to ≤10
+
+    common: dict[str, Any] = {}  # Common values for every row
+
+    if c.format is csv.v1.FORMAT:
+        # SDMX-CSV 1.0 'DATAFLOW' column
+        if obj.described_by is None:
+            raise ValueError(f"No associated data flow definition for {obj}")
+        dfd_urn = urn.make(obj.described_by).split("=", maxsplit=1)[1]
+        common.update(DATAFLOW=dfd_urn)
+    elif c.format and c.format is csv.v2.FORMAT:
+        raise NotImplementedError(f"convert DataSet to SDMX-CSV {c.format.version}")
+
+    # Add the attributes of the data set (SDMX 2.1 only)
+    if (c.attributes & Attributes.dataset) and isinstance(obj, v21.DataSet):
+        common.update(obj.attrib)
 
     # Iterate on observations
     data: dict[Hashable, dict[str, Any]] = {}
@@ -319,15 +387,12 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):  # noqa: C90
             continue
 
         # Add value and attributes
-        row = {}
+        row = common.copy()
         if c.dtype:
             row["value"] = observation.value
         if c.attributes:
             # Add the combined attributes from observation, series- and group keys
             row.update(observation.attrib)
-        if "d" in c.attributes and isinstance(obj, v21.DataSet):
-            # Add the attributes of the data set
-            row.update(obj.attrib)
 
         data[tuple(map(str, key.get_values()))] = row
 
@@ -373,10 +438,10 @@ def _dataset_compat(c: "PandasConverter", df) -> pd.DataFrame:
         if c.datetime is False or c.datetime is True:
             # Either datetime is not given, or True without specifying a dimension;
             # overwrite
-            c.datetime = obs_dim
+            c.datetime_dimension_id = obs_dim.id
         elif isinstance(c.datetime, dict):
             # Dict argument; ensure the 'dim' key is the same as obs_dim
-            if c.datetime.setdefault("dim", obs_dim) != obs_dim:
+            if c.datetime_dimension_id != obs_dim.id:
                 raise ValueError(
                     f"datetime={c.datetime} conflicts with rtype='compat' and {obs_dim} "
                     "at observation level"
