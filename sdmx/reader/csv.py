@@ -7,10 +7,10 @@ from itertools import zip_longest
 from typing import TYPE_CHECKING, MutableSequence, Optional, Sequence, Union
 
 import sdmx.message
+from sdmx.convert import Converter
 from sdmx.format import list_media_types
 from sdmx.format.csv.v2 import FormatOptions
 from sdmx.model import common, v30
-from sdmx.reader import base
 from sdmx.reader.base import BaseReader
 
 if TYPE_CHECKING:
@@ -191,7 +191,7 @@ class Reader(BaseReader):
         assert len(self.handlers) == len(header)
 
 
-class DataFrameConverter(base.Converter):
+class DataFrameConverter(Converter):
     @classmethod
     def handles(cls, data, kwargs) -> bool:
         import pandas as pd

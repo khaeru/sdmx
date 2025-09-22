@@ -1,19 +1,29 @@
 """Tests for :mod:`.convert.pandas`."""
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
+import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
 from pytest import raises
 
 import sdmx
+from sdmx.convert.pandas import Attributes
 from sdmx.message import DataMessage, StructureMessage
 from sdmx.model import common, v21
 from sdmx.model.v21 import TimeDimension
 from sdmx.testing import assert_pd_equal
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from sdmx.testing.data import SpecimenCollection
+
 MARKS = {
+    "ECB_EXR/action-delete.json": pytest.mark.xfail(
+        reason="Incomplete", raises=AssertionError
+    ),
     "ESTAT/esms.xml": pytest.mark.xfail(raises=NotImplementedError),
 }
 
@@ -96,6 +106,44 @@ def test_codelist(specimen) -> None:
     assert area_hierarchy.loc["002", "name_parent"] == "World"
 
 
+def test_compat(specimen) -> None:
+    with specimen("sg-ts-gf.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    # Conversion succeeds, warns about the rtype argument
+    with pytest.warns(DeprecationWarning):
+        result = sdmx.to_pandas(msg, rtype="compat")
+        assert isinstance(result, pd.DataFrame)
+
+    assert ["TIME_PERIOD"] == result.index.names
+    exp_cols = ["CURRENCY", "CURRENCY_DENOM", "EXR_TYPE", "EXR_VAR", "FREQ"]
+    assert exp_cols == result.columns.names, "\n" + result.to_string()
+
+    # Same with provided structure that identifies a TimeDimension
+    with specimen("sg-structure.xml") as f:
+        dsd = cast("StructureMessage", sdmx.read_sdmx(f)).structure["ECB_EXR_SG"]
+
+    with specimen("sg-ts-gf.xml") as f:
+        msg = sdmx.read_sdmx(f, structure=dsd)
+
+    with pytest.warns(DeprecationWarning):
+        result = sdmx.to_pandas(msg, rtype="compat")
+        assert isinstance(result, pd.DataFrame)
+
+    assert ["TIME_PERIOD"] == result.index.names
+    assert set(exp_cols) == set(result.columns.names)
+
+
+def test_componentlist() -> None:
+    dd = common.DimensionDescriptor()
+    for i in range(3):
+        dd.getdefault(id=f"DIM_{i}", concept_identity=common.Concept(id=f"CONCEPT_{i}"))
+
+    result = sdmx.to_pandas(dd)
+
+    assert ["CONCEPT_0", "CONCEPT_1", "CONCEPT_2"] == result
+
+
 def test_conceptscheme(specimen) -> None:
     with specimen("common-structure.xml") as f:
         msg = sdmx.read_sdmx(f)
@@ -106,21 +154,52 @@ def test_conceptscheme(specimen) -> None:
 
 
 @pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
-def test_data(specimen, path) -> None:
+@pytest.mark.parametrize("attributes", [Attributes.none, Attributes.all])
+def test_data(
+    specimen: "SpecimenCollection", path: "Path", attributes: "Attributes"
+) -> None:
     if ("v3", "csv") == path.parts[-3:-1]:
         pytest.skip("SDMX-CSV 3.0.0 examples cannot be read without DSD")
 
-    msg = sdmx.read_sdmx(path)
+    msg = cast("DataMessage", sdmx.read_sdmx(path))
 
-    result = sdmx.to_pandas(msg)
-
-    expected = specimen.expected_data(path)
-    if expected is not None:
-        print(expected, result, sep="\n")
-    assert_pd_equal(expected, result)
-
-    # TODO incomplete
+    result = sdmx.to_pandas(msg, attributes=attributes)
     assert isinstance(result, (pd.Series, pd.DataFrame, list)), type(result)
+
+    # Retrieve expected data from the sdmx-test-data. These are only available for
+    # Attributes.none (the default)
+    expected = specimen.expected_data(path) if attributes is Attributes.none else None
+    try:
+        # Readers inferring DSD for messages can produce different dimension order.
+        # Treat these as equivalent.
+        if expected is not None:
+            assert isinstance(result.index, pd.MultiIndex)
+            expected.index = expected.index.reorder_levels(result.index.names)
+        assert_pd_equal(expected, result)
+    except Exception:
+        print(expected.head().to_string(), result.head().to_string(), sep="\n")  # type: ignore
+        raise
+
+    # Resulting NDFrame has the same number of observations as the input
+    assert sum(len(ds) for ds in msg.data) == len(result)
+
+
+def test_data_arguments(specimen) -> None:
+    # The identity here is not important; any non-empty DataMessage will work
+    with specimen("INSEE/CNA-2010-CONSO-SI-A17.xml") as f:
+        msg = sdmx.read_sdmx(f)
+
+    # 'attributes=' argument must be a string
+    with raises(TypeError):
+        sdmx.to_pandas(msg, attributes=2)
+
+    # 'attributes=' must contain only 'dgso'
+    with raises(ValueError):
+        sdmx.to_pandas(msg, attributes="foobarbaz")
+
+    # 'dtype=None' prevents conversion of obs_value to numeric type; remains str/object
+    result = sdmx.to_pandas(msg, dtype=None)
+    assert np.dtype("O") == result.dtype
 
 
 def test_data_decimal() -> None:
@@ -145,32 +224,6 @@ def test_data_decimal() -> None:
     result = sdmx.to_pandas(ds)
     # Result is as expected
     pdt.assert_series_equal(exp, result)
-
-
-def test_data_arguments(specimen) -> None:
-    # The identity here is not important; any non-empty DataMessage will work
-    with specimen("INSEE/CNA-2010-CONSO-SI-A17.xml") as f:
-        msg = sdmx.read_sdmx(f)
-
-    # Attributes must be a string
-    with raises(TypeError):
-        sdmx.to_pandas(msg, attributes=2)
-
-    # Attributes must contain only 'dgso'
-    with raises(ValueError):
-        sdmx.to_pandas(msg, attributes="foobarbaz")
-
-
-@pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
-def test_data_attributes(path) -> None:
-    if ("v3", "csv") == path.parts[-3:-1]:
-        pytest.skip("SDMX-CSV 3.0.0 examples cannot be read without DSD")
-
-    msg = sdmx.read_sdmx(path)
-
-    result = sdmx.to_pandas(msg, attributes="osgd")
-    # TODO incomplete
-    assert isinstance(result, (pd.Series, pd.DataFrame, list)), type(result)
 
 
 def test_dataflow(specimen) -> None:
@@ -232,7 +285,7 @@ def test_dataset_constraint(specimen) -> None:
 
 
 def test_dataset_datetime(specimen) -> None:
-    """Test datetime arguments to write_dataset()."""
+    """Test :py:`PandasConverter.datetime_…` fields."""
     # Load structure
     with specimen("IPI-2010-A21-structure.xml") as f:
         dsd = cast(StructureMessage, sdmx.read_sdmx(f)).structure["IPI-2010-A21"]
@@ -256,8 +309,122 @@ def test_dataset_datetime(specimen) -> None:
 
     def expected(df, axis=0, cls=pd.DatetimeIndex):
         axes = ["index", "columns"] if axis else ["columns", "index"]
-        assert getattr(df, axes[0]).names == other_dims
-        assert isinstance(getattr(df, axes[1]), cls)
+        try:
+            assert getattr(df, axes[0]).names == other_dims
+            assert isinstance(getattr(df, axes[1]), cls)
+        except Exception:  # pragma: no cover
+            print(df.to_string())
+            raise
+
+    # Write with datetime=str
+    df = sdmx.to_pandas(ds, datetime_dimension="TIME_PERIOD")
+    expected(df)
+
+    # Write with datetime=Dimension instance
+    df = sdmx.to_pandas(ds, datetime_dimension=TIME_PERIOD)
+    expected(df)
+
+    # Write with datetime=True fails because the data message contains no
+    # actual structure information
+    with pytest.raises(ValueError, match=r"no TimeDimension in \[.*\]"):
+        sdmx.to_pandas(msg_no_structure, datetime_axis=0)
+    with pytest.raises(ValueError, match=r"no TimeDimension in \[.*\]"):
+        sdmx.to_pandas(msg_no_structure.data[0], datetime_axis=0)
+
+    # DataMessage parsed with a DSD allows convert_dataset to infer the TimeDimension
+    df = sdmx.to_pandas(msg, datetime_axis=0)
+    expected(df)
+    # Same for DataSet
+    df = sdmx.to_pandas(ds, datetime_axis=0)
+    expected(df)
+
+    # As above, with axis=1
+    df = sdmx.to_pandas(ds, datetime_dimension="TIME_PERIOD", datetime_axis=1)
+    expected(df, axis=1)
+    df = sdmx.to_pandas(ds, datetime_dimension=TIME_PERIOD, datetime_axis=1)
+    expected(df, axis=1)
+    ds.structured_by = dsd
+    df = sdmx.to_pandas(ds, datetime_axis=1)
+    expected(df, axis=1)
+    df = sdmx.to_pandas(msg, datetime_axis=1)
+    expected(df, axis=1)
+
+    # Write with freq='M' works
+    df = sdmx.to_pandas(ds, datetime_dimension="TIME_PERIOD", datetime_freq="M")
+    expected(df, cls=pd.PeriodIndex)
+
+    # Write with freq='Y' (in older pandas, freq='A') works
+    df = sdmx.to_pandas(ds, datetime_dimension="TIME_PERIOD", datetime_freq="Y")
+    expected(df, cls=pd.PeriodIndex)
+    # …but the index is not unique, because month information was discarded
+    assert not df.index.is_unique
+
+    # Write specifying the FREQ dimension by name fails
+    with pytest.raises(
+        ValueError,
+        match="cannot convert to PeriodIndex with " r"non-unique freq=\['A', 'M'\]",
+    ):
+        sdmx.to_pandas(ds, datetime_dimension="TIME_PERIOD", datetime_freq="FREQ")
+
+    # Remove non-monthly obs
+    # TODO use a constraint, when this is supported
+    ds.obs = list(filter(lambda o: o.key.FREQ != "A", ds.obs))
+
+    # Now specifying the dimension by name works
+    df = sdmx.to_pandas(ds, datetime_dimension="TIME_PERIOD", datetime_freq="FREQ")
+
+    # and FREQ is no longer in the columns index
+    other_dims.pop(other_dims.index("FREQ"))
+    expected(df, cls=pd.PeriodIndex)
+
+    # Specifying a Dimension works
+    df = sdmx.to_pandas(ds, datetime_dimension=TIME_PERIOD, datetime_freq=FREQ)
+    expected(df, cls=pd.PeriodIndex)
+
+    # As above, using DSD attached to the DataMessage
+    df = sdmx.to_pandas(msg, datetime_dimension=TIME_PERIOD, datetime_freq="FREQ")
+    expected(df, cls=pd.PeriodIndex)
+
+    # Invalid arguments
+    with pytest.raises(ValueError, match="X"):
+        sdmx.to_pandas(msg, datetime_dimension=TIME_PERIOD, datetime_freq="X")
+
+
+@pytest.mark.filterwarnings(
+    # Every to_pandas() call in this test raises the same warning; ignore all
+    "ignore::DeprecationWarning:sdmx.convert.pandas"
+)
+def test_dataset_datetime_deprecated(specimen) -> None:
+    """Test :py:`PandasConverter.datetime_…` fields."""
+    # Load structure
+    with specimen("IPI-2010-A21-structure.xml") as f:
+        dsd = cast(StructureMessage, sdmx.read_sdmx(f)).structure["IPI-2010-A21"]
+        TIME_PERIOD = dsd.dimensions.get("TIME_PERIOD")
+        FREQ = dsd.dimensions.get("FREQ")
+
+    assert isinstance(TIME_PERIOD, TimeDimension)
+
+    # Load data, two ways
+    with specimen("IPI-2010-A21.xml") as f:
+        msg = sdmx.read_sdmx(f, structure=dsd)
+        assert isinstance(msg, DataMessage)
+        ds = msg.data[0]
+    with specimen("IPI-2010-A21.xml") as f:
+        msg_no_structure = sdmx.read_sdmx(f)
+        assert isinstance(msg_no_structure, DataMessage)
+
+    other_dims = list(
+        filter(lambda n: n != "TIME_PERIOD", [d.id for d in dsd.dimensions.components])
+    )
+
+    def expected(df, axis=0, cls=pd.DatetimeIndex):
+        axes = ["index", "columns"] if axis else ["columns", "index"]
+        try:
+            assert getattr(df, axes[0]).names == other_dims
+            assert isinstance(getattr(df, axes[1]), cls)
+        except Exception:  # pragma: no cover
+            print(df.to_string())
+            raise
 
     # Write with datetime=str
     df = sdmx.to_pandas(ds, datetime="TIME_PERIOD")
@@ -347,10 +514,30 @@ def test_list_of_obs(specimen) -> None:
     sdmx.to_pandas(msg.data[0].obs)
 
 
+def test_rtype_deprecated() -> None:
+    # Warnings are raised when passing rtype
+    with pytest.warns(DeprecationWarning):
+        sdmx.to_pandas({}, rtype="rows")
+    with pytest.warns(DeprecationWarning):
+        sdmx.to_pandas({}, rtype="compat")
+
+
+def test_serieskey() -> None:
+    data = [common.SeriesKey(), common.SeriesKey()]
+    result = sdmx.to_pandas(data)
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_set() -> None:
+    s = {common.Code(id="FOO", name="Foo"), common.Code(id="BAR", name="Bar")}
+
+    result = sdmx.to_pandas(s)
+
+    assert {"Bar", "Foo"} == result
+
+
 @pytest.mark.parametrize_specimens("path", kind="structure")
 def test_structure(path) -> None:
     msg = sdmx.read_sdmx(path)
 
     sdmx.to_pandas(msg)
-
-    # TODO test contents
