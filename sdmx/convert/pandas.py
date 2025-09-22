@@ -1,11 +1,13 @@
 """Convert :mod:`sdmx.message`/:mod:`.model` objects to :mod:`pandas` objects."""
 
 import operator
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Sequence
+from dataclasses import InitVar, dataclass, field
 from enum import Flag, auto
 from functools import reduce
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Hashable, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -20,9 +22,18 @@ from sdmx.model.internationalstring import DEFAULT_LOCALE
 from .common import DispatchConverter
 
 if TYPE_CHECKING:
+    from typing import TypedDict
+
+    from pandas.core.dtypes.base import ExtensionDtype
+    from pandas.tseries.offsets import DateOffset
+
     from sdmx.format.csv.common import CSVFormatOptions
-    from sdmx.model.common import BaseDataStructureDefinition, Item
+    from sdmx.model.common import BaseObservation, Item
     from sdmx.model.v21 import ContentConstraint
+
+    class ToDatetimeKeywords(TypedDict, total=False):
+        format: str
+
 
 _HAS_PANDAS_2 = pd.__version__.split(".")[0] >= "2"
 
@@ -74,10 +85,46 @@ class Attributes(Flag):
 
 
 @dataclass
+class ColumnSpec:
+    """Information about columns and index levels for conversion."""
+
+    #: Initial columns.
+    start: list[str] = field(default_factory=list)
+    #: Columns related to observation keys.
+    key: list[str] = field(default_factory=list)
+    #: Columns related to observation measures.
+    measure: list[str] = field(default_factory=list)
+    #: Columns related to observation-attached attributes.
+    obs_attrib: list[str] = field(default_factory=list)
+    #: Final columns.
+    end: list[str] = field(default_factory=list)
+
+    #: Fixed values for some columns.
+    assign: dict[str, str] = field(default_factory=dict)
+
+    #: Columns to be set as index levels, then unstacked.
+    unstack: list[str] = field(default_factory=list)
+
+    @property
+    def obs(self) -> list[str]:
+        return self.key + self.measure + self.obs_attrib
+
+    @property
+    def full(self) -> list[str]:
+        return self.start + self.obs + self.end
+
+    def add_obs_attrib(self, values: Iterable[str]) -> None:
+        if missing := set(values) - set(self.obs_attrib):
+            self.obs_attrib.extend(missing)
+
+
+@dataclass
 class PandasConverter(DispatchConverter):
     #: SDMX-CSV format options.
     format_options: "CSVFormatOptions"
 
+    #: If given, DataMessage and contents are converted to valid SDMX-CSV of this
+    #: format, with the given :attr:`format_options`.
     format: Optional["CSVFormat"] = None
 
     #: Attributes to include.
@@ -86,23 +133,16 @@ class PandasConverter(DispatchConverter):
     #: If given, only Observations included by the *constraint* are returned.
     constraint: Optional["ContentConstraint"] = None
 
-    dsd: Optional["BaseDataStructureDefinition"] = None
+    #: Datatype for observation values. If :any:`None`, data values remain
+    #: :class:`object`/:class:`str`.
+    dtype: Union[type["np.generic"], type["ExtensionDtype"], str, None] = np.float64
 
-    #: str or :class:`numpy.dtype` or None
-    #:
-    #: Datatype for values. If None, do not return the values of a series. In this case,
-    #: `attributes` must be something other than :attr:`Attributes.none`, so that some
-    #: attribute is returned.
-    dtype: Any = np.float64
-
-    #: :any:`True` to convert datetime.
-    datetime: bool = False
     #: ID of a dimension to convert to :class:`pandas.DatetimeIndex`.
-    datetime_dimension_id: Optional[str] = None
+    datetime_dimension: Optional["common.DimensionComponent"] = None
     #: Frequency for conversion to :class:`pandas.PeriodIndex`.
-    datetime_freq: Any = False
-    #: Axis on which to place a time dimension. Default 0 (index).
-    datetime_axis: int = 0
+    datetime_freq: Optional["DateOffset"] = None
+    #: Axis on which to place a time dimension.
+    datetime_axis: Union[int, str] = -1
 
     #: include : iterable of str or str, optional
     #:     One or more of the attributes of the StructureMessage ('category_scheme',
@@ -111,13 +151,45 @@ class PandasConverter(DispatchConverter):
 
     locale: str = DEFAULT_LOCALE
 
+    #: :any:`True` to convert datetime.
+    datetime: InitVar = None
     #: Default return type for :func:`write_dataset` and similar methods. Either
     #: 'compat' or 'rows'. See the ref:`HOWTO <howto-rtype>`.
-    rtype: str = "rows"
+    rtype: InitVar[str] = ""
 
-    _data_message: Optional[message.DataMessage] = None
+    _context: dict[Union[str, type], Any] = field(
+        default_factory=lambda: dict(compat=False)
+    )
 
-    def handle_datetime_option(self) -> None:
+    def get_components(self, kind) -> list["common.Component"]:
+        """Return an appropriate list of dimensions or attributes."""
+        if ds := self._context.get(common.BaseDataSet, None):
+            return getattr(ds.structured_by, kind).components
+        elif dsd := self._context.get(
+            common.BaseDataStructureDefinition
+        ):  # pragma: no cover
+            return getattr(dsd, kind).components
+        else:  # pragma: no cover
+            return []
+
+    def handle_compat(self) -> None:
+        """Analyse and alter settings for deprecated :py:`rtype=compat` argument."""
+        if not self._context["compat"]:
+            return
+
+        # "Dimension at observation level" from the overall message
+        obs_dim = self._context[message.DataMessage].observation_dimension
+
+        if isinstance(obs_dim, common.TimeDimension):
+            # Set datetime_dimension; convert_datetime() does the rest
+            self.datetime_dimension = obs_dim
+        elif isinstance(obs_dim, common.DimensionComponent):
+            # Explicitly mark the other dimensions to be unstacked
+            self._context[ColumnSpec].unstack = [
+                d.id for d in self.get_components("dimensions") if d.id != obs_dim.id
+            ]
+
+    def handle_datetime(self, value: Any) -> None:
         """Handle alternate forms of :attr:`datetime`.
 
         If given, return a DataFrame with a :class:`~pandas.DatetimeIndex` or
@@ -142,57 +214,75 @@ class PandasConverter(DispatchConverter):
              Any Dimension used for the frequency specification is does not appear in the
              returned DataFrame.
         """
-        value = self.datetime
-        if isinstance(value, bool):
-            pass
-        elif isinstance(value, str):
-            self.datetime_dimension_id = value
-            self.datetime = True
-        elif isinstance(value, common.DimensionComponent):
-            self.datetime_dimension_id = value.id
-            self.datetime = True
+        if value is None:
+            return
+
+        warn(
+            f"datetime={value} argument of type {type(value)}. Instead, set other "
+            "datetime_… fields directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        if isinstance(value, (str, common.DimensionComponent)):
+            self.datetime_dimension = value  # type: ignore [assignment]
         elif isinstance(value, dict):
-            self.datetime = True
             # Unpack a dict of 'advanced' arguments
-            self.datetime_axis = value.pop("axis", 0)
-            self.datetime_dimension_id = value.pop("dim", None)
-            self.datetime_freq = value.pop("freq", False)
+            self.datetime_axis = value.pop("axis", self.datetime_axis)
+            self.datetime_dimension = value.pop("dim", self.datetime_dimension)
+            self.datetime_freq = value.pop("freq", self.datetime_freq)
             if len(value):
                 raise ValueError(f"Unexpected datetime={tuple(sorted(value))!r}")
+        elif isinstance(value, bool):
+            self.datetime_axis = 0 if value else -1
         else:
             raise TypeError(f"PandasConverter(…, datetime={type(value)})")
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, datetime: Any, rtype: Optional[str]) -> None:
         """Transform and validate arguments."""
-        if self.format_options.labels not in {Labels.id}:
+        # Raise on unsupported arguments
+        fo = self.format_options
+        if self.format and self.format is csv.v2.FORMAT:
             raise NotImplementedError(
-                f"convert to SDMX-CSV with labels={self.format_options.labels}"
+                f"convert DataSet to SDMX-CSV {self.format.version}"
+            )
+        elif fo.labels not in {Labels.id}:
+            raise NotImplementedError(f"convert to SDMX-CSV with labels={fo.labels}")
+        elif fo.time_format not in {TimeFormat.original}:
+            raise NotImplementedError(
+                f"convert to SDMX-CSV with time_format={fo.time_format}"
             )
 
-        if self.format_options.time_format not in {TimeFormat.original}:
-            raise NotImplementedError(
-                f"convert to SDMX-CSV with time_format={self.format_options.time_format}"
+        # Handle deprecated arguments
+        self.handle_datetime(datetime)
+        if rtype:
+            warn(
+                f"rtype={rtype!r} argument to to_pandas()/PandasConverter.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self._context["compat"] = rtype == "compat"
+
+        # Convert other arguments to types expected by other code
+        if isinstance(self.attributes, str):
+            self.attributes = Attributes.parse(self.attributes)
+
+        if isinstance(self.datetime_dimension, str):
+            self.datetime_dimension = common.DimensionComponent(
+                id=self.datetime_dimension
             )
 
-        # Handle arguments
-        self.handle_datetime_option()
+        if isinstance(self.datetime_freq, str):
+            try:
+                # A frequency string recognized by pandas.PeriodDtype
+                self.datetime_freq = pd.PeriodDtype(freq=self.datetime_freq).freq
+            except ValueError:
+                self.datetime_freq = common.Component(id=self.datetime_freq)
 
         if isinstance(self.include, str):
             self.include = set([self.include])
         # Silently discard invalid names
         self.include &= ALL_CONTENTS
-
-        # Validate attributes argument
-        if isinstance(self.attributes, str):
-            self.attributes = Attributes.parse(self.attributes)
-
-        if (
-            self.rtype == "compat"
-            and self._data_message
-            and self._data_message.observation_dimension is not common.AllDimensions
-        ):
-            # Cannot return attributes in this case
-            self.attributes = Attributes.none
 
 
 def to_pandas(obj, **kwargs):
@@ -211,12 +301,16 @@ def to_pandas(obj, **kwargs):
 @PandasConverter.register
 def _list(c: "PandasConverter", obj: list):
     """Convert a :class:`list` of SDMX objects."""
-    if isinstance(obj[0], common.BaseObservation):
-        return convert_dataset(c, v21.DataSet(obs=obj))
-    elif isinstance(obj[0], common.BaseDataSet) and len(obj) == 1:
+    member_type = type(obj[0]) if len(obj) else object
+    if issubclass(member_type, common.BaseDataSet) and 1 == len(obj):
+        # Unpack a single data set
         return c.convert(obj[0])
-    elif isinstance(obj[0], common.SeriesKey):
-        return convert_serieskeys(obj)
+    elif issubclass(member_type, common.BaseObservation):
+        # Wrap a bare list of observations in DataSet
+        return convert_dataset(c, v21.DataSet(obs=obj))
+    elif issubclass(member_type, common.SeriesKey):
+        # Return as pd.DataFrame instead of list
+        return pd.DataFrame([c.convert(item) for item in obj])
     else:
         return [c.convert(item) for item in obj]
 
@@ -242,12 +336,10 @@ def _dict(c: "PandasConverter", obj: dict):
     elif result_type == {str}:
         return pd.Series(result)
     elif result_type < {dict, DictLike}:
+        # Includes result_type == {}, i.e. no results
         return result
-    elif result_type == set():
-        # No results
-        return pd.Series()
-    else:
-        raise ValueError(result_type)
+    else:  # pragma: no cover
+        raise RuntimeError(f"Recursive conversion of {obj} returned {result_type}")
 
 
 @PandasConverter.register
@@ -276,16 +368,19 @@ def convert_datamessage(c: "PandasConverter", obj: message.DataMessage):
     list of (:class:`pandas.Series` or :class:`pandas.DataFrame`)
         if `obj` has more than one data set.
     """
-    # Store a reference to `obj`
-    c._data_message = obj
+    # Update the context
+    c._context[message.DataMessage] = obj
     # Use the specified structure of the message
     assert obj.dataflow
-    c.dsd = obj.dataflow.structure
+    c._context[common.BaseDataStructureDefinition] = obj.dataflow.structure
 
-    if len(obj.data) == 1:
-        return c.convert(obj.data[0])
-    else:
-        return [c.convert(ds) for ds in obj.data]
+    # Convert list of data set objects
+    result = c.convert(obj.data)
+
+    c._context.pop(common.BaseDataStructureDefinition)
+    c._context.pop(message.DataMessage)
+
+    return result
 
 
 @PandasConverter.register
@@ -340,225 +435,228 @@ def _rp(c: "PandasConverter", obj: v21.RangePeriod):
 
 
 @PandasConverter.register
-def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):  # noqa: C901
+def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
     """Convert :class:`~.DataSet`.
 
     See the :ref:`walkthrough <datetime>` for examples of using the `datetime` argument.
 
-    Parameters
-    ----------
-    obj : :class:`~.DataSet` or iterable of :class:`Observation <.BaseObservation>`
+        Parameters
+        ----------
+        obj : :class:`~.DataSet` or iterable of :class:`Observation <.BaseObservation>`
 
-    Returns
-    -------
-    :class:`pandas.DataFrame`
-        - if :attr:`~PandasConverter.attributes` is not ``''``, a data frame with one
-          row per Observation, ``value`` as the first column, and additional columns for
-          each attribute;
-        - if `datetime` is given, various layouts as described above; or
-        - if `_rtype` (passed from :func:`convert_datamessage`) is 'compat', various
-          layouts as described in the :ref:`HOWTO <howto-rtype>`.
-    :class:`pandas.Series` with :class:`pandas.MultiIndex`
-        Otherwise.
+        Returns
+        -------
+        :class:`pandas.DataFrame`
+            - if :attr:`~PandasConverter.attributes` is not ``''``, a data frame with one
+              row per Observation, ``value`` as the first column, and additional columns
+              for each attribute;
+            - if `datetime` is given, various layouts as described above; or
+            - if `_rtype` (passed from :func:`convert_datamessage`) is 'compat', various
+              layouts as described in the :ref:`HOWTO <howto-rtype>`.
+        :class:`pandas.Series` with :class:`pandas.MultiIndex`
+            Otherwise.
     """
-    # FIXME Reduce complexity from 13 to ≤10
-
-    common: dict[str, Any] = {}  # Common values for every row
+    # Sets of columns
+    columns = c._context[ColumnSpec] = ColumnSpec()
+    c._context[common.BaseDataSet] = obj
 
     if c.format is csv.v1.FORMAT:
-        # SDMX-CSV 1.0 'DATAFLOW' column
         if obj.described_by is None:
             raise ValueError(f"No associated data flow definition for {obj}")
-        dfd_urn = urn.make(obj.described_by).split("=", maxsplit=1)[1]
-        common.update(DATAFLOW=dfd_urn)
-    elif c.format and c.format is csv.v2.FORMAT:
-        raise NotImplementedError(f"convert DataSet to SDMX-CSV {c.format.version}")
+
+        # SDMX-CSV 1.0 'DATAFLOW' column
+        dfd_urn = urn.make(obj.described_by)
+        columns.start.append("DATAFLOW")
+        columns.assign.update(DATAFLOW=dfd_urn.partition("=")[2])
+
+    c.handle_compat()
 
     # Add the attributes of the data set (SDMX 2.1 only)
     if (c.attributes & Attributes.dataset) and isinstance(obj, v21.DataSet):
-        common.update(obj.attrib)
+        columns.end.extend(obj.attrib.keys())
+        columns.assign.update(obj.attrib)
 
-    # Iterate on observations
-    data: dict[Hashable, dict[str, Any]] = {}
-    for observation in obj.obs:
-        # Check that the Observation is within the constraint, if any
-        key = observation.key.order()
+    # Peek at first observation to determine column names
+    try:
+        obs0 = obj.obs[0]
+    except IndexError:  # pragma: no cover
+        return pd.DataFrame()
+    columns.key.extend(obs0.key.order().values.keys())
+    columns.measure.append("OBS_VALUE")
+    if c.attributes:
+        columns.obs_attrib.extend(obs0.attrib)
+
+    def convert_obs(obs: "BaseObservation") -> Sequence[Union[str, None]]:
+        """Convert a single Observation to pd.Series."""
+        key = obs.key.order()
         if c.constraint and key not in c.constraint:
-            continue
+            # Emit an empty row to be dropped
+            row: Sequence[Union[str, None]] = [None] * len(columns.obs)
+        else:
+            row = list(map(str, key.get_values())) + [
+                None if obs.value is None else str(obs.value)
+            ]
+            if c.attributes:
+                # Add the combined attributes from observation, series- and group keys
+                row.extend(obs.attrib.values())
+                columns.add_obs_attrib(obs.attrib)
 
-        # Add value and attributes
-        row = common.copy()
-        if c.dtype:
-            row["value"] = observation.value
-        if c.attributes:
-            # Add the combined attributes from observation, series- and group keys
-            row.update(observation.attrib)
+        return row
 
-        data[tuple(map(str, key.get_values()))] = row
-
-    result: Union[pd.Series, pd.DataFrame] = pd.DataFrame.from_dict(
-        data, orient="index"
+    # - Apply convert_obs() to every obs → iterable of list.
+    # - Create a pd.DataFrame.
+    # - Drop empty rows (not in constraint).
+    # - Set column names.
+    # - Assign common values for all rows.
+    # - Set column order.
+    # - (Possibly) apply PandasConverter.dtype.
+    # - (Possibly) convert certain columns to datetime.
+    # - (Possibly) reshape.
+    result = (
+        pd.DataFrame(map(convert_obs, obj.obs))
+        .dropna(how="all")
+        .set_axis(columns.obs, axis=1)  # NB This must come after DataFrame(map(…))
+        .assign(**columns.assign)
+        .pipe(_apply_dtype, c)
+        .pipe(_convert_datetime, c)
+        .pipe(_reshape, c)
+        .pipe(_to_periodindex, c)
     )
 
-    if len(result):
-        result.index.names = observation.key.order().values.keys()
-        if c.dtype:
-            try:
-                result["value"] = result["value"].astype(c.dtype)
-            except ValueError:
-                # Attempt to handle locales in which LC_NUMERIC.decimal_point is ","
-                # TODO Make this more robust by inferring and changing locale settings
-                result["value"] = result["value"].str.replace(",", ".").astype(c.dtype)
-            if not c.attributes:
-                result = result["value"]
+    c._context.pop(common.BaseDataSet)
+    c._context.pop(ColumnSpec)
 
-    # Reshape for compatibility with v0.9
-    result = _dataset_compat(c, result)
-    # Handle the datetime argument, if any
-    return _maybe_convert_datetime(c, result, obj=obj)
+    return result
 
 
-def _dataset_compat(c: "PandasConverter", df) -> pd.DataFrame:
-    """Helper for :meth:`.convert_dataset` 0.9 compatibility."""
-    if c.rtype != "compat":
-        return df  # Do nothing
-
-    # FIXME Reword old comment: Remove compatibility arguments from kwargs
-    assert c._data_message is not None
-    obs_dim = c._data_message.observation_dimension
-    if isinstance(obs_dim, list) and len(obs_dim) == 1:
-        # Unwrap a length-1 list
-        obs_dim = obs_dim[0]
-
-    if obs_dim in (common.AllDimensions, None):
-        pass  # Do nothing
-    elif isinstance(obs_dim, common.TimeDimension):
-        # Don't modify *df*; only change arguments so that _maybe_convert_datetime
-        # performs the desired changes
-        if c.datetime is False or c.datetime is True:
-            # Either datetime is not given, or True without specifying a dimension;
-            # overwrite
-            c.datetime_dimension_id = obs_dim.id
-        elif isinstance(c.datetime, dict):
-            # Dict argument; ensure the 'dim' key is the same as obs_dim
-            if c.datetime_dimension_id != obs_dim.id:
-                raise ValueError(
-                    f"datetime={c.datetime} conflicts with rtype='compat' and {obs_dim} "
-                    "at observation level"
-                )
-        else:
-            assert c.datetime == obs_dim, (c.datetime, obs_dim)
-    elif isinstance(obs_dim, common.DimensionComponent):
-        # Pivot all levels except the observation dimension
-        df = df.unstack([n for n in df.index.names if n != obs_dim.id])
-    else:
-        # E.g. some JSON messages have two dimensions at the observation level;
-        # behaviour is unspecified here, so do nothing.
-        pass
-
-    return df
-
-
-def _maybe_convert_datetime(  # noqa: C901
-    c: "PandasConverter", df: "pd.DataFrame", obj
-) -> "pd.DataFrame":
-    """Helper for :func:`convert_dataset` to handle datetime indices.
-
-    Parameters
-    ----------
-    c :
-        Converter. :attr:`.PandasConverter.datetime`, :attr:`.PandasConverter.dsd` and
-        related attributes affect the conversion.
-    df :
-    obj :
-        From the `obj` argument to :meth:`convert_dataset`.
-    """
-    # TODO Simplify this method to reduce its McCabe complexity from 18 to <=10
-    if c.datetime is False:
+def _apply_dtype(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
+    """Apply `dtype` to 0 or more `columns`."""
+    if c.dtype is None:
         return df
 
-    # Unpack argument values
-    dim_id = c.datetime_dimension_id  # ID of a Dimension containing datetimes
-    axis = c.datetime_axis
-    freq = c.datetime_freq  # FIXME This is either a frequency spec or dimension ID
+    # Create a mapping to apply `dtype` to multiple columns
+    measure_cols = c._context[ColumnSpec].measure
+    dtypes = {col: c.dtype for col in measure_cols}
 
-    def _get(kind: str):
-        """Return an appropriate list of dimensions or attributes."""
-        if len(getattr(obj.structured_by, kind).components):
-            return getattr(obj.structured_by, kind).components
-        elif c.dsd:
-            return getattr(c.dsd, kind).components
-        else:
-            return []
+    try:
+        return df.astype(dtypes)
+    except ValueError:
+        # Attempt to handle locales in which LC_NUMERIC.decimal_point is ","
+        # TODO Make this more robust by inferring and changing locale settings
+        assign_kw = {col: df[col].str.replace(",", ".") for col in measure_cols}
+        return df.assign(**assign_kw).astype(dtypes)
 
-    # Determine time dimension
-    if not dim_id:
-        for dim in filter(
-            lambda d: isinstance(d, common.TimeDimension), _get("dimensions")
-        ):
-            dim_id = dim
-            break
-    if not dim_id:
-        raise ValueError(f"no TimeDimension in {_get('dimensions')}")
 
-    # Unstack all but the time dimension and convert
-    other_dims = list(filter(lambda d: d != dim_id, df.index.names))
-    # FIXME Satisfy mypy in the following
-    df = df.unstack(other_dims)  # type: ignore
-    # Only provide format in pandas >= 2.0.0
-    kw = dict(format="mixed") if _HAS_PANDAS_2 else {}
-    # FIXME Address mypy errors here
-    df.index = pd.to_datetime(df.index, **kw)  # type: ignore
+def _convert_datetime(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
+    """Possibly convert a column to a pandas datetime dtype."""
+    if c.datetime_dimension is c.datetime_freq is None and c.datetime_axis == -1:
+        return df
+
+    # Identify a time dimension
+    dims = c.get_components("dimensions")
+    try:
+        dim = c.datetime_dimension or next(
+            filter(lambda d: isinstance(d, common.TimeDimension), dims)
+        )
+    except StopIteration:
+        raise ValueError(f"no TimeDimension in {dims}")
+
+    # Record index columns to be unstacked
+    columns: "ColumnSpec" = c._context[ColumnSpec]
+    columns.unstack = columns.unstack or list(
+        map(str, filter(lambda d: d.id != dim.id, dims))
+    )
+
+    # Keyword args to pd.to_datetime(): only provide format= for pandas >=2.0.0
+    dt_kw: "ToDatetimeKeywords" = dict(format="mixed") if _HAS_PANDAS_2 else {}
+
+    # Convert the given column to a pandas datetime dtype
+    return df.assign(**{dim.id: pd.to_datetime(df[dim.id], **dt_kw)})
+
+
+def _ensure_multiindex(obj: Union[pd.Series, pd.DataFrame]):
+    if not isinstance(obj.index, pd.MultiIndex):
+        obj.index = pd.MultiIndex.from_product(
+            [obj.index.to_list()], names=[obj.index.name]
+        )
+    return obj
+
+
+def _reshape(
+    df: "pd.DataFrame", c: "PandasConverter"
+) -> Union[pd.Series, pd.DataFrame]:
+    """Reshape `df` to provide expected return types."""
+    columns: "ColumnSpec" = c._context[ColumnSpec]
+
+    if c.format is not None:
+        # SDMX-CSV → no reshaping
+        return df.reindex(columns=columns.full)
+
+    # Set key columns as a pd.MultiIndex
+    result = (
+        df.set_index(columns.key)
+        .pipe(_ensure_multiindex)
+        .rename(columns={c: "value" for c in columns.measure})
+    )
+
+    # Single column for measure(s) + attribute(s) → return pd.Series
+    if 1 == len(columns.obs) - len(columns.key):
+        result = result.iloc[:, 0]
+
+    # Unstack 1 or more index levels
+    if columns.unstack:
+        result = result.unstack(columns.unstack)
+
+    return result
+
+
+def _to_periodindex(obj: Union["pd.Series", "pd.DataFrame"], c: "PandasConverter"):
+    """Convert a 1-D datetime index on `obj` to a PeriodIndex."""
+    result = obj
+
+    freq = c.datetime_freq
 
     # Convert to a PeriodIndex with a particular frequency
-    if freq:
+    if isinstance(freq, common.Component):
+        # ID of a Dimension; Attribute; or column of `df`
+        components = chain(
+            c.get_components("dimensions"),
+            c.get_components("attributes"),
+            map(lambda id: common.Dimension(id=str(id)), result.columns.names),
+        )
         try:
-            # A frequency string recognized by pandas.PeriodDtype
-            if isinstance(freq, str):
-                freq = pd.PeriodDtype(freq=freq).freq
-        except ValueError:
-            # ID of a Dimension; Attribute; or column of `df`
-            result = None
-            for component in chain(
-                _get("dimensions"),
-                _get("attributes"),
-                map(lambda id: common.Dimension(id=str(id)), df.columns.names),
-            ):
-                if component.id == freq:
-                    freq = result = component
-                    break
+            component = next(filter(lambda c: c.id == freq.id, components))
+        except StopIteration:
+            raise ValueError(freq)
 
-            if not result:
-                raise ValueError(freq)
-
-        if isinstance(freq, common.Dimension):
-            # Retrieve Dimension values from pd.MultiIndex level
-            level = freq.id
-            assert isinstance(df.columns, pd.MultiIndex)
-            i = df.columns.names.index(level)
-            values = set(df.columns.levels[i])
-
-            if len(values) > 1:
-                raise ValueError(
-                    f"cannot convert to PeriodIndex with non-unique freq={sorted(values)}"
-                )
-
-            # Store the unique value
-            freq = values.pop()
-
+        if isinstance(component, common.Dimension):
+            # Retrieve Dimension values from a pd.MultiIndex level
+            level = component.id
+            assert isinstance(result.columns, pd.MultiIndex)
+            i = result.columns.names.index(level)
+            values = set(result.columns.levels[i])
             # Remove the index level
-            df.columns = df.columns.droplevel(i)
-        elif isinstance(freq, common.DataAttribute):
-            raise NotImplementedError
+            result.columns = result.columns.droplevel(i)
+        elif isinstance(component, common.DataAttribute):  # pragma: no cover
+            # Retrieve Attribute values from a column
+            values = result[component.id].unique()
 
-        assert isinstance(df.index, pd.DatetimeIndex)
-        df.index = df.index.to_period(freq=freq)
+        if len(values) > 1:
+            raise ValueError(
+                f"cannot convert to PeriodIndex with non-unique freq={sorted(values)}"
+            )
 
-    if axis in {1, "columns"}:
-        # Change axis
-        df = df.transpose()
+        # Store the unique value
+        freq = values.pop()
 
-    return df
+    if freq is not None:
+        assert isinstance(result.index, pd.DatetimeIndex)
+        result.index = result.index.to_period(freq=freq)
+
+    if c.datetime_axis in {1, "columns"}:
+        result = result.transpose()
+
+    return result
 
 
 @PandasConverter.register
@@ -638,9 +736,6 @@ def _na(c: "PandasConverter", obj: common.NameableArtefact):
     return str(obj.name)
 
 
-def convert_serieskeys(obj: list["common.SeriesKey"]) -> pd.DataFrame:
-    result = []
-    for sk in obj:
-        result.append({dim: kv.value for dim, kv in sk.order().values.items()})
-    # TODO perhaps return as a pd.MultiIndex if that is more useful
-    return pd.DataFrame(result)
+@PandasConverter.register
+def convert_serieskey(c: "PandasConverter", obj: common.SeriesKey):
+    return {dim: kv.value for dim, kv in obj.order().values.items()}

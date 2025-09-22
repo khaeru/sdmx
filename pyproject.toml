@@ -110,8 +110,6 @@ ignore = ["E501", "W191"]
 # - .reader.csv.Reader.inspect_header: 12
 # - .reader.xml.v21._component_end: 12
 # - .testing.generate_endpoint_tests: 11
-# - .writer.pandas._maybe_convert_datetime: 23
-# - .writer.pandas.write_dataset: 12
 mccabe.max-complexity = 10
 
 [tool.versioningit]
