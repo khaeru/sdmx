@@ -57,11 +57,11 @@ class DictLike(dict, typing.MutableMapping[KT, VT], Comparable):
 
     def update(self, other):
         """Update the DictLike with elements from `other`, validating entries."""
-        try:
-            it = other.items()
-        except AttributeError:
-            it = iter(other)
+        it = other.items() if hasattr(other, "items") else iter(other)
         super().update(map(self._validate_entry, it))
+
+    def update_fast(self, other) -> None:
+        super().update(other.items() if hasattr(other, "items") else iter(other))
 
     # Satisfy dataclass(), which otherwise complains when InternationalStringDescriptor
     # is used
