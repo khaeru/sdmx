@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from collections import ChainMap
-from collections.abc import Generator
+from collections.abc import Generator, Iterator
 from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
@@ -338,7 +338,7 @@ def session_with_stored_responses(pytestconfig):
 
 
 @pytest.fixture(scope="session")
-def specimen(pytestconfig):
+def specimen(pytestconfig) -> Iterator["data.SpecimenCollection"]:
     """Fixture: the :class:`SpecimenCollection`."""
     yield pytestconfig.stash[KEY_SPECIMENS]
 

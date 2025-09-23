@@ -176,7 +176,7 @@ def test_data(
             assert isinstance(result.index, pd.MultiIndex)
             expected.index = expected.index.reorder_levels(result.index.names)
         assert_pd_equal(expected, result)
-    except Exception:
+    except Exception:  # pragma: no cover
         print(expected.head().to_string(), result.head().to_string(), sep="\n")  # type: ignore
         raise
 
