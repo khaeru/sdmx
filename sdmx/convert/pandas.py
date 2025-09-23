@@ -1,12 +1,14 @@
 """Convert :mod:`sdmx.message`/:mod:`.model` objects to :mod:`pandas` objects."""
 
 import operator
-from collections.abc import Iterable, Sequence
+from abc import ABC, abstractmethod
+from collections.abc import Iterable, Mapping
 from dataclasses import InitVar, dataclass, field
 from enum import Flag, auto
 from functools import reduce
-from itertools import chain
-from typing import TYPE_CHECKING, Any, Optional, Union
+from itertools import chain, product, repeat
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 from warnings import warn
 
 import numpy as np
@@ -15,8 +17,8 @@ import pandas as pd
 from sdmx import message, urn
 from sdmx.dictlike import DictLike
 from sdmx.format import csv
-from sdmx.format.csv.common import CSVFormat, Labels, TimeFormat
-from sdmx.model import common, v21
+from sdmx.format.csv.common import Labels, TimeFormat
+from sdmx.model import common, v21, v30
 from sdmx.model.internationalstring import DEFAULT_LOCALE
 
 from .common import DispatchConverter
@@ -28,7 +30,7 @@ if TYPE_CHECKING:
     from pandas.tseries.offsets import DateOffset
 
     from sdmx.format.csv.common import CSVFormatOptions
-    from sdmx.model.common import BaseObservation, Item
+    from sdmx.model.common import Item
     from sdmx.model.v21 import ContentConstraint
 
     class ToDatetimeKeywords(TypedDict, total=False):
@@ -84,38 +86,259 @@ class Attributes(Flag):
         return reduce(operator.or_, values)
 
 
-@dataclass
+class Column(ABC):
+    """Representation of conversion of a column."""
+
+    __slots__ = ("name", "id", "_hash")
+
+    #: Column name/header.
+    name: str
+    #: SDMX component ID.
+    id: str
+
+    @abstractmethod
+    def __call__(self, *args, **kwargs) -> str: ...
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<{type(self).__name__} id={self.id!r} name={self.name!r}>"
+
+
+NO_CONCEPT = SimpleNamespace(name="")
+NO_VALUE = SimpleNamespace(value="")
+
+
+class Fixed(Column):
+    def __init__(self, name: str, value: str) -> None:
+        self.name = name
+        self._value = value
+
+    def __call__(self) -> str:
+        return self._value
+
+
+class AttributeValueBoth(Column):
+    def __init__(self, attr: "common.DataAttribute") -> None:
+        self.name = f"{attr.id}: {getattr(attr, 'concept_identity', NO_CONCEPT).name}"
+        self.id = attr.id
+
+    def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
+        v = avs[self.id].value
+        return f"{v.id}: {v.name}" if isinstance(v, common.Code) else str(v)
+
+
+class AttributeValueID(Column):
+    def __init__(self, attr: "common.DataAttribute") -> None:
+        self.name = self.id = attr.id
+
+    def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
+        return str(avs.get(self.id, NO_VALUE).value)
+
+
+class AttributeValueName(Column):
+    def __init__(self, attr: "common.DataAttribute") -> None:
+        self.name = str(getattr(attr, "concept_identity", NO_CONCEPT).name or attr.id)
+        self.id = attr.id
+
+    def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
+        v = avs[self.id].value
+        return str(v.name) if isinstance(v, common.Code) else v
+
+
+class KeyValueBoth(Column):
+    def __init__(self, dim: "common.DimensionComponent") -> None:
+        self.name = f"{dim.id}: {getattr(dim, 'concept_identity', NO_CONCEPT).name}"
+        self.id = dim.id
+
+    def __call__(self, key: "common.Key") -> str:
+        v = key[self.id].value
+        return f"{v.id}: {v.name if isinstance(v, common.Code) else v}"
+
+
+class KeyValueID(Column):
+    def __init__(self, dim: "common.DimensionComponent") -> None:
+        self.name = self.id = dim.id
+
+    def __call__(self, key: "common.Key") -> str:
+        return str(key[self.id].value)
+
+
+class KeyValueName(Column):
+    def __init__(self, dim: "common.DimensionComponent") -> None:
+        self.name = str(getattr(dim, "concept_identity", NO_CONCEPT).name or dim.id)
+        self.id = dim.id
+
+    def __call__(self, key: "common.Key") -> str:
+        v = key[self.id].value
+        return str(v.name) if isinstance(v, common.Code) else v
+
+
 class ColumnSpec:
-    """Information about columns and index levels for conversion."""
+    """Information about columns for conversion."""
 
     #: Initial columns.
-    start: list[str] = field(default_factory=list)
+    start: list[Fixed]
     #: Columns related to observation keys.
-    key: list[str] = field(default_factory=list)
-    #: Columns related to observation measures.
-    measure: list[str] = field(default_factory=list)
+    key: list[Column]
+    #: Name(s) of column(s) related to observation measure(s).
+    measure: list[str]
     #: Columns related to observation-attached attributes.
-    obs_attrib: list[str] = field(default_factory=list)
+    obs_attrib: list[Column]
     #: Final columns.
-    end: list[str] = field(default_factory=list)
+    end: list[Fixed]
 
-    #: Fixed values for some columns.
-    assign: dict[str, str] = field(default_factory=dict)
+    def __init__(
+        self,
+        pc: Optional["PandasConverter"] = None,
+        ds: Optional["common.BaseDataSet"] = None,
+    ) -> None:
+        if pc is None or ds is None:
+            return  # Empty/placeholder
 
-    #: Columns to be set as index levels, then unstacked.
-    unstack: list[str] = field(default_factory=list)
+        self.constraint = pc.constraint
+
+        # Construct the short URN for the DFD
+        dfd_urn = ""
+        if pc.format:
+            if ds.described_by is None:
+                raise ValueError(f"No associated data flow definition for {ds}")
+            dfd_urn = urn.make(ds.described_by).partition("=")[2]
+
+        # Either use a provided DSD, or construct one by inspecting the first
+        # observation
+        dsd = self._maybe_construct_dsd(
+            pc._context.get(common.BaseDataStructureDefinition, None),
+            ds.obs[0] if len(ds.obs) else common.BaseObservation(),
+        )
+
+        # Unpack some other attributes
+        fmt = csv.v2 if pc.format is csv.v2.FORMAT else csv.v1
+        labels = pc.format_options.labels
+
+        # Fixed columns
+        self.start = {
+            None: [],
+            csv.v1.FORMAT: [Fixed("DATAFLOW", dfd_urn)],
+            csv.v2.FORMAT: [
+                Fixed("STRUCTURE", "dataflow"),
+                Fixed("STRUCTURE_ID", dfd_urn),
+                Fixed("ACTION", "I"),
+            ],
+        }[pc.format]
+
+        # Identify classes for key columns
+        classes_d = cast(
+            list,
+            {
+                (csv.v1, Labels.id): [KeyValueID],
+                (csv.v1, Labels.both): [KeyValueBoth],
+                (csv.v2, Labels.id): [KeyValueID],
+                (csv.v2, Labels.both): [KeyValueID, KeyValueName],
+            }[(fmt, labels)],
+        )
+
+        # Construct key columns: 1 or 2 columns for each dimension
+        self.key = [
+            cls_d(d) for d, cls_d in product(dsd.dimensions.components, classes_d)
+        ]
+
+        # Measure columns
+        self.measure = ["OBS_VALUE" if fmt is csv.v1 else dsd.measures[0].id]
+
+        # Identify classes for attribute columns
+        classes_a = cast(
+            list,
+            {
+                (csv.v1, Labels.id): [AttributeValueID],
+                (csv.v1, Labels.both): [AttributeValueBoth],
+                (csv.v2, Labels.id): [AttributeValueID],
+                (csv.v2, Labels.both): [AttributeValueID, AttributeValueName],
+            }[(fmt, labels)],
+        )
+
+        _attributes = dsd.attributes.components
+        if pc.attributes is Attributes.none:
+            # Omit attribute columns if so configured
+            _attributes = []
+            # Disable callback to extend self.obs_attrib
+            setattr(self, "add_obs_attrib", lambda v: None)
+
+        # Construct attribute columns: 1 or 2 columns for each attribute
+        self.obs_attrib = [cls_a(a) for a, cls_a in product(_attributes, classes_a)]
+
+        # Add the attributes of the data set (SDMX 2.1 only)
+        self.end = []
+        if (pc.attributes & Attributes.dataset) and isinstance(ds, v21.DataSet):
+            self.end.extend(Fixed(id, value) for id, value in ds.attrib.items())
+
+    @staticmethod
+    def _maybe_construct_dsd(
+        dsd: Optional["common.BaseDataStructureDefinition"],
+        obs: "common.BaseObservation",
+    ) -> Union["v21.DataStructureDefinition", "v30.DataStructure"]:
+        """If `dsd` is None, construct a DSD by inspection of `obs`."""
+        if dsd is not None:
+            return dsd
+
+        result = v21.DataStructureDefinition()
+        for dim_id in obs.key.order().values.keys():
+            result.dimensions.getdefault(id=dim_id)
+
+        for attr_id in obs.attrib:
+            result.attributes.getdefault(id=attr_id)
+
+        return result
 
     @property
-    def obs(self) -> list[str]:
-        return self.key + self.measure + self.obs_attrib
+    def assign(self) -> Mapping[str, str]:
+        """Return values for :meth:`pandas.DataFrame.assign`."""
+        return {c.name: c() for c in self.start + self.end}
 
     @property
     def full(self) -> list[str]:
-        return self.start + self.obs + self.end
+        """Full list of column names."""
+        return [c.name for c in self.start] + self.obs + [c.name for c in self.end]
+
+    @property
+    def obs(self) -> list[str]:
+        """List of column names for observation data."""
+        return (
+            [c.name for c in self.key]
+            + self.measure
+            + [c.name for c in self.obs_attrib]
+        )
 
     def add_obs_attrib(self, values: Iterable[str]) -> None:
-        if missing := set(values) - set(self.obs_attrib):
-            self.obs_attrib.extend(missing)
+        """Extend :attr:`obs_attrib` using `values`."""
+        if missing := set(values) - set(c.id for c in self.obs_attrib):
+            # Convert missing attributes to DataAttribute → Columns
+            self.obs_attrib.extend(
+                AttributeValueID(common.DataAttribute(id=id))
+                for id in filter(missing.__contains__, values)
+            )
+
+    def convert_obs(self, obs: "common.BaseObservation") -> list:
+        """Convert a single Observation to a data row.
+
+        The items of the result correspond to the column names in :attr:`obs`.
+        """
+        key = obs.key
+        if self.constraint and key not in self.constraint:
+            # Emit an empty row to be dropped
+            result: Iterable[Union[str, None]] = repeat(None, len(self.obs))
+        else:
+            # Combined attributes from observation, series-, and group keys
+            avs = obs.attrib
+            self.add_obs_attrib(avs)
+
+            # - Convert the observation Key using key Columns.
+            # - Convert the value to Optional[str].
+            # - Convert the attribute values using attribute Columns.
+            result = chain(
+                [c(key) for c in self.key],
+                [None if obs.value is None else str(obs.value)],
+                [c(avs) for c in self.obs_attrib],
+            )
+        return list(result)
 
 
 @dataclass
@@ -125,7 +348,7 @@ class PandasConverter(DispatchConverter):
 
     #: If given, DataMessage and contents are converted to valid SDMX-CSV of this
     #: format, with the given :attr:`format_options`.
-    format: Optional["CSVFormat"] = None
+    format: Union[type["csv.v1.FORMAT"], type["csv.v2.FORMAT"], None] = None
 
     #: Attributes to include.
     attributes: Attributes = Attributes.none
@@ -157,6 +380,12 @@ class PandasConverter(DispatchConverter):
     #: 'compat' or 'rows'. See the ref:`HOWTO <howto-rtype>`.
     rtype: InitVar[str] = ""
 
+    # Internal variables
+    _columns: "ColumnSpec" = field(default_factory=ColumnSpec)
+
+    # Columns to be set as index levels, then unstacked.
+    _unstack: list[str] = field(default_factory=list)
+
     _context: dict[Union[str, type], Any] = field(
         default_factory=lambda: dict(compat=False)
     )
@@ -185,7 +414,7 @@ class PandasConverter(DispatchConverter):
             self.datetime_dimension = obs_dim
         elif isinstance(obs_dim, common.DimensionComponent):
             # Explicitly mark the other dimensions to be unstacked
-            self._context[ColumnSpec].unstack = [
+            self._unstack = [
                 d.id for d in self.get_components("dimensions") if d.id != obs_dim.id
             ]
 
@@ -242,11 +471,7 @@ class PandasConverter(DispatchConverter):
         """Transform and validate arguments."""
         # Raise on unsupported arguments
         fo = self.format_options
-        if self.format and self.format is csv.v2.FORMAT:
-            raise NotImplementedError(
-                f"convert DataSet to SDMX-CSV {self.format.version}"
-            )
-        elif fo.labels not in {Labels.id}:
+        if fo.labels not in {Labels.id, Labels.both}:
             raise NotImplementedError(f"convert to SDMX-CSV with labels={fo.labels}")
         elif fo.time_format not in {TimeFormat.original}:
             raise NotImplementedError(
@@ -373,6 +598,8 @@ def convert_datamessage(c: "PandasConverter", obj: message.DataMessage):
     # Use the specified structure of the message
     assert obj.dataflow
     c._context[common.BaseDataStructureDefinition] = obj.dataflow.structure
+    # Handle the deprecated rtype="compat" argument
+    c.handle_compat()
 
     # Convert list of data set objects
     result = c.convert(obj.data)
@@ -456,52 +683,8 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
         :class:`pandas.Series` with :class:`pandas.MultiIndex`
             Otherwise.
     """
-    # Sets of columns
-    columns = c._context[ColumnSpec] = ColumnSpec()
     c._context[common.BaseDataSet] = obj
-
-    if c.format is csv.v1.FORMAT:
-        if obj.described_by is None:
-            raise ValueError(f"No associated data flow definition for {obj}")
-
-        # SDMX-CSV 1.0 'DATAFLOW' column
-        dfd_urn = urn.make(obj.described_by)
-        columns.start.append("DATAFLOW")
-        columns.assign.update(DATAFLOW=dfd_urn.partition("=")[2])
-
-    c.handle_compat()
-
-    # Add the attributes of the data set (SDMX 2.1 only)
-    if (c.attributes & Attributes.dataset) and isinstance(obj, v21.DataSet):
-        columns.end.extend(obj.attrib.keys())
-        columns.assign.update(obj.attrib)
-
-    # Peek at first observation to determine column names
-    try:
-        obs0 = obj.obs[0]
-    except IndexError:  # pragma: no cover
-        return pd.DataFrame()
-    columns.key.extend(obs0.key.order().values.keys())
-    columns.measure.append("OBS_VALUE")
-    if c.attributes:
-        columns.obs_attrib.extend(obs0.attrib)
-
-    def convert_obs(obs: "BaseObservation") -> Sequence[Union[str, None]]:
-        """Convert a single Observation to pd.Series."""
-        key = obs.key.order()
-        if c.constraint and key not in c.constraint:
-            # Emit an empty row to be dropped
-            row: Sequence[Union[str, None]] = [None] * len(columns.obs)
-        else:
-            row = list(map(str, key.get_values())) + [
-                None if obs.value is None else str(obs.value)
-            ]
-            if c.attributes:
-                # Add the combined attributes from observation, series- and group keys
-                row.extend(obs.attrib.values())
-                columns.add_obs_attrib(obs.attrib)
-
-        return row
+    c._columns = ColumnSpec(pc=c, ds=obj)
 
     # - Apply convert_obs() to every obs → iterable of list.
     # - Create a pd.DataFrame.
@@ -513,10 +696,10 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
     # - (Possibly) convert certain columns to datetime.
     # - (Possibly) reshape.
     result = (
-        pd.DataFrame(map(convert_obs, obj.obs))
+        pd.DataFrame(map(c._columns.convert_obs, obj.obs))
         .dropna(how="all")
-        .set_axis(columns.obs, axis=1)  # NB This must come after DataFrame(map(…))
-        .assign(**columns.assign)
+        .set_axis(c._columns.obs, axis=1)  # NB This must come after DataFrame(map(…))
+        .assign(**c._columns.assign)
         .pipe(_apply_dtype, c)
         .pipe(_convert_datetime, c)
         .pipe(_reshape, c)
@@ -524,7 +707,6 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
     )
 
     c._context.pop(common.BaseDataSet)
-    c._context.pop(ColumnSpec)
 
     return result
 
@@ -535,7 +717,7 @@ def _apply_dtype(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
         return df
 
     # Create a mapping to apply `dtype` to multiple columns
-    measure_cols = c._context[ColumnSpec].measure
+    measure_cols = c._columns.measure
     dtypes = {col: c.dtype for col in measure_cols}
 
     try:
@@ -562,10 +744,7 @@ def _convert_datetime(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame
         raise ValueError(f"no TimeDimension in {dims}")
 
     # Record index columns to be unstacked
-    columns: "ColumnSpec" = c._context[ColumnSpec]
-    columns.unstack = columns.unstack or list(
-        map(str, filter(lambda d: d.id != dim.id, dims))
-    )
+    c._unstack = c._unstack or list(map(str, filter(lambda d: d.id != dim.id, dims)))
 
     # Keyword args to pd.to_datetime(): only provide format= for pandas >=2.0.0
     dt_kw: "ToDatetimeKeywords" = dict(format="mixed") if _HAS_PANDAS_2 else {}
@@ -586,26 +765,25 @@ def _reshape(
     df: "pd.DataFrame", c: "PandasConverter"
 ) -> Union[pd.Series, pd.DataFrame]:
     """Reshape `df` to provide expected return types."""
-    columns: "ColumnSpec" = c._context[ColumnSpec]
 
     if c.format is not None:
         # SDMX-CSV → no reshaping
-        return df.reindex(columns=columns.full)
+        return df.reindex(columns=c._columns.full)
 
     # Set key columns as a pd.MultiIndex
     result = (
-        df.set_index(columns.key)
+        df.set_index([col.name for col in c._columns.key])
         .pipe(_ensure_multiindex)
-        .rename(columns={c: "value" for c in columns.measure})
+        .rename(columns={c: "value" for c in c._columns.measure})
     )
 
     # Single column for measure(s) + attribute(s) → return pd.Series
-    if 1 == len(columns.obs) - len(columns.key):
+    if 1 == len(c._columns.obs) - len(c._columns.key):
         result = result.iloc[:, 0]
 
     # Unstack 1 or more index levels
-    if columns.unstack:
-        result = result.unstack(columns.unstack)
+    if c._unstack:
+        result = result.unstack(c._unstack)
 
     return result
 
