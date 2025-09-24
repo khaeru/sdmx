@@ -614,6 +614,10 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     def __getitem__(self, name: str) -> IT:
         return self.__dict__["items"][name]
 
+    def get(self, id: str, default: Union[str, IT, None] = None) -> Union[str, IT]:
+        """Get an Item by its `id`; if not present, return `default`."""
+        return self.__dict__["items"].get(id, default)
+
     def get_hierarchical(self, id: str) -> IT:
         """Get an Item by its :attr:`~.Item.hierarchical_id`."""
         if "." not in id:
