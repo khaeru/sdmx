@@ -12,6 +12,7 @@ from lxml import etree
 from lxml.etree import QName
 
 from sdmx.format import Version
+from sdmx.format.common import Format
 
 log = logging.getLogger(__name__)
 
@@ -330,7 +331,7 @@ def install_schemas(
     return schema_dir
 
 
-class XMLFormat:
+class XMLFormat(Format):
     """Information about an SDMX-ML format."""
 
     NS: Mapping[str, Optional[str]]

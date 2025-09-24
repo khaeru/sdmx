@@ -642,7 +642,7 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
 
         Parameters
         ----------
-        items : iterable of :class:`.Item`
+        items :
             Elements must be of the same class as :attr:`items`.
         """
         for i in items:
@@ -656,8 +656,8 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
 
         Parameters
         ----------
-        item : same class as :attr:`items`
-            Item to add.
+        item :
+            Item to add. Elements must be of the same class as :attr:`items`.
         """
         if item.id in self.items:
             raise ValueError(f"Item with id {repr(item.id)} already exists")
@@ -774,6 +774,8 @@ class Code(Item["Code"]):
     """SDMX Code."""
 
 
+@dataclass
+@ItemScheme._preserve("repr")
 class Codelist(ItemScheme[IT]):
     """SDMX Codelist."""
 
@@ -800,6 +802,8 @@ class Concept(Item["Concept"]):
     iso_concept: Optional[ISOConceptReference] = None
 
 
+@dataclass
+@ItemScheme._preserve("repr")
 class ConceptScheme(ItemScheme[Concept]):
     _Item = Concept
 
@@ -1132,7 +1136,7 @@ class DimensionDescriptor(ComponentList[DimensionComponent]):
         result = key.__class__()
         for dim in sorted(self.components, key=attrgetter("order")):
             try:
-                result[dim.id] = key[dim.id]
+                result.values[dim.id] = key[dim.id]
             except KeyError:
                 continue
         return result
@@ -1722,7 +1726,7 @@ class Key:
         yield from self.values.values()
 
     # Convenience access to values by name
-    def __getitem__(self, name):
+    def __getitem__(self, name) -> "KeyValue":
         return self.values[name]
 
     def __setitem__(self, name, value):
@@ -1740,11 +1744,10 @@ class Key:
 
     # Copying
     def __copy__(self):
-        result = Key()
+        result = type(self)()
         if self.described_by:
             result.described_by = self.described_by
-        for kv in self.values.values():
-            result[kv.id] = kv
+        result.values.update_fast(self.values)
         return result
 
     def copy(self, arg=None, **kwargs):
@@ -1754,15 +1757,11 @@ class Key:
         return result
 
     def __add__(self, other):
-        if other is None:
-            other_values = dict()
-        elif not isinstance(other, Key):
+        result = copy(self)
+        if not isinstance(other, Key) and other is not None:
             raise NotImplementedError
         else:
-            other_values = other.values
-        result = copy(self)
-        for id, value in other_values.items():
-            result[id] = value
+            result.values.update_fast(other.values)
         return result
 
     def __radd__(self, other):
@@ -1928,21 +1927,27 @@ class BaseDataSet(AnnotableArtefact):
     def __len__(self):
         return len(self.obs)
 
-    def _add_group_refs(self, target):
+    def _add_group_refs(self, target) -> None:
         """Associate *target* with groups in this dataset.
 
         *target* may be an instance of SeriesKey or Observation.
         """
+
         for group_key in self.group:
             if group_key in (target if isinstance(target, SeriesKey) else target.key):
                 target.group_keys.add(group_key)
                 if isinstance(target, BaseObservation):
                     self.group[group_key].append(target)
 
-    def add_obs(self, observations, series_key=None):
-        """Add *observations* to a series with *series_key*.
+    def add_obs(
+        self,
+        observations: Iterable[BaseObservation],
+        series_key: Optional[SeriesKey] = None,
+    ) -> None:
+        """Add `observations` to the data set, and to a series with `series_key`.
 
-        Checks consistency and adds group associations."""
+        Checks consistency and adds group associations.
+        """
         if series_key is not None:
             # Associate series_key with any GroupKeys that apply to it
             self._add_group_refs(series_key)
@@ -2034,6 +2039,7 @@ class BaseMetadataSet:
     publication_period: Optional[date] = None
     publication_year: Optional[date] = None
 
+    #: Association to the metadata flow definition of which the metadataset is part.
     described_by: Optional[BaseMetadataflow] = None
 
     #: Note that the class of this attribute differs from SDMX 2.1 to SDMX 3.0.

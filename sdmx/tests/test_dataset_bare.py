@@ -1,18 +1,24 @@
+from datetime import datetime
+from typing import TYPE_CHECKING
+
 import sdmx
 from sdmx.message import DataMessage, Header
 from sdmx.model import v21 as model
 from sdmx.model.v21 import AttributeValue, DataAttribute, DataSet, Key, Observation
 from sdmx.testing import assert_pd_equal
 
+if TYPE_CHECKING:
+    from sdmx.testing.data import SpecimenCollection
 
-def test_flat(specimen):
+
+def test_flat(specimen: "SpecimenCollection") -> None:
     # Create a bare Message
     msg = DataMessage()
 
     # Recreate the content from exr-flat.json
     header = Header(
         id="62b5f19d-f1c9-495d-8446-a3661ed24753",
-        prepared="2012-11-29T08:40:26Z",
+        prepared=datetime.fromisoformat("2012-11-29T08:40:26+00:00"),
         sender=model.Agency(id="ECB"),
     )
     msg.header = header
@@ -22,12 +28,14 @@ def test_flat(specimen):
     # Create a Key and attributes
     key = Key(
         FREQ="D",
-        CURRENCY="NZD",
         CURRENCY_DENOM="EUR",
         EXR_TYPE="SP00",
         EXR_SUFFIX="A",
+        CURRENCY="NZD",
         TIME_PERIOD="2013-01-18",
     )
+    assert msg.dataflow is not None
+    [msg.dataflow.structure.dimensions.getdefault(id=d) for d in key.values]
     obs_status = DataAttribute(id="OBS_STATUS")
     attr = {"OBS_STATUS": AttributeValue(value_for=obs_status, value="A")}
 

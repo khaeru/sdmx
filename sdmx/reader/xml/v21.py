@@ -30,6 +30,7 @@ from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
 from sdmx.format import Version
 from sdmx.model import common, v21
+from sdmx.tools import dimensions_to_attributes
 
 from .common import (
     BaseReference,
@@ -1258,8 +1259,8 @@ def _ds_start(reader, elem):
 
 
 @end("mes:DataSet", only=False)
-def _ds_end(reader, elem):
-    ds = reader.pop_single("DataSet")
+def _ds_end(reader, elem) -> None:
+    ds: "common.BaseDataSet" = reader.pop_single("DataSet")
 
     # Collect attributes attached to the data set. SDMX 2.1 only; this attribute is
     # removed in SDMX 3.0.0.
@@ -1268,6 +1269,22 @@ def _ds_end(reader, elem):
 
     # Collect observations not grouped by SeriesKey
     ds.add_obs(reader.pop_all(reader.model.Observation))
+
+    if reader.peek("SS without structure"):
+        # Possibly convert some inferred dimensions to attributes based on the contents
+        # of data
+
+        # Identify dimensions appearing at observation, series, and group keys
+        dims = dict(
+            obs=set(chain(*[o.dimension.values.keys() for o in ds.obs if o.dimension])),
+            series=set(chain(*[sk.values.keys() for sk in ds.series])),
+            group=set(chain(*[gk.values.keys() for gk in ds.group])),
+        )
+
+        # IDs that appear only on group keys and not on series- or observation keys are
+        # likely DataAttribute, not Dimension → convert
+        if to_attr := dims["group"] - dims["obs"] - dims["series"]:
+            dimensions_to_attributes(ds, to_attr)
 
     # Add any group associations not made above in add_obs() or in _series()
     for obs in ds.obs:

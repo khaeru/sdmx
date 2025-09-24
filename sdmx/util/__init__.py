@@ -13,7 +13,7 @@ def compare(attr, a, b, strict: bool) -> bool:
 
     If strict is :obj:`False`, :obj:`None` is permissible as `a` or `b`; otherwise,
 
-    .. deprecated:: v2.23.0
+    .. deprecated:: 2.23.0
 
        Use :meth:`.Comparable.compare` or :func:`.compare` instead.
     """

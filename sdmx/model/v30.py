@@ -491,7 +491,7 @@ class TargetIdentifiableObject:
 
 
 @dataclass
-class MetadataSet(MaintainableArtefact, common.BaseMetadataSet):
+class MetadataSet(common.BaseMetadataSet, MaintainableArtefact):
     """SDMX 3.0 MetadataSet.
 
     .. note:: Contrast :class:`.v21.MetadataSet`, which is a :class:`.NameableArtefact`.
