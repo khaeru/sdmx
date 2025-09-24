@@ -113,6 +113,15 @@ NO_CONCEPT = SimpleNamespace(name="")
 NO_VALUE = SimpleNamespace(value="")
 
 
+def _component_to_column_name(
+    obj: Union["common.DataAttribute", "common.DimensionComponent"],
+) -> str:
+    """Return a string column name given `obj`."""
+    if obj.concept_identity:
+        result = str(obj.concept_identity.name)
+    return result or f"(Name of {obj.id!r})"
+
+
 class Fixed(Column):
     def __init__(self, name: str, value: str) -> None:
         self.name = name
@@ -124,7 +133,7 @@ class Fixed(Column):
 
 class AttributeValueBoth(Column):
     def __init__(self, attr: "common.DataAttribute") -> None:
-        self.name = f"{attr.id}: {getattr(attr, 'concept_identity', NO_CONCEPT).name}"
+        self.name = f"{attr.id}: {_component_to_column_name(attr)}"
         self.id = attr.id
 
     def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
@@ -142,7 +151,7 @@ class AttributeValueID(Column):
 
 class AttributeValueName(Column):
     def __init__(self, attr: "common.DataAttribute") -> None:
-        self.name = str(getattr(attr, "concept_identity", NO_CONCEPT).name or attr.id)
+        self.name = _component_to_column_name(attr)
         self.id = attr.id
 
     def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
@@ -152,7 +161,7 @@ class AttributeValueName(Column):
 
 class KeyValueBoth(Column):
     def __init__(self, dim: "common.DimensionComponent") -> None:
-        self.name = f"{dim.id}: {getattr(dim, 'concept_identity', NO_CONCEPT).name}"
+        self.name = f"{dim.id}: {_component_to_column_name(dim)}"
         self.id = dim.id
 
     def __call__(self, key: "common.Key") -> str:
@@ -170,7 +179,7 @@ class KeyValueID(Column):
 
 class KeyValueName(Column):
     def __init__(self, dim: "common.DimensionComponent") -> None:
-        self.name = str(getattr(dim, "concept_identity", NO_CONCEPT).name or dim.id)
+        self.name = _component_to_column_name(dim)
         self.id = dim.id
 
     def __call__(self, key: "common.Key") -> str:
