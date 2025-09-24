@@ -541,3 +541,20 @@ def test_structure(path) -> None:
     msg = sdmx.read_sdmx(path)
 
     sdmx.to_pandas(msg)
+
+
+def test_to_pandas_format_options(specimen: "SpecimenCollection") -> None:
+    """FormatOptions keyword arguments to :func:`.to_pandas` are handled."""
+    with specimen("sg-structure.xml") as f:
+        sm = cast("StructureMessage", sdmx.read_sdmx(f))
+        dsd = sm.structure["ECB_EXR_SG"]
+
+    with specimen("sg-ts-gf-ss.xml") as f:
+        msg = sdmx.read_sdmx(f, structure=dsd)
+
+    # Conversion succeeds with labels=<str>
+    sdmx.to_pandas(msg, labels="both")
+
+    # time_format=… is handled
+    with pytest.raises(NotImplementedError, match="TimeFormat.normalized"):
+        sdmx.to_pandas(msg, time_format="normalized")

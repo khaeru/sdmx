@@ -3,7 +3,7 @@
 import operator
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
-from dataclasses import InitVar, dataclass, field
+from dataclasses import InitVar, dataclass, field, fields, replace
 from enum import Flag, auto
 from functools import reduce
 from itertools import chain, product, repeat
@@ -541,9 +541,18 @@ class PandasConverter(DispatchConverter):
 def to_pandas(obj, **kwargs):
     """Convert an SDMX `obj` to :mod:`pandas` object(s).
 
-    `kwargs` can include any of the attributes of :class:`.PandasConverter`. If
-    :attr:`~.PandasConverter.format_options` is not given, an instance of
-    :class:`.v1.FormatOptions` is used as a default.
+    `kwargs` can include any of the attributes of :class:`.PandasConverter`.
+
+    Other parameters
+    ----------------
+    format_options :
+        if not given, an instance of :class:`.v1.FormatOptions` is used as a default.
+    labels :
+        if given, the :attr:`.CSVFormatOptions.labels` attribute of the `format_options`
+        keyword argument is replaced.
+    time_format :
+        if given, the :attr:`.CSVFormatOptions.time_format` attribute of the
+        `format_options` keyword argument is replaced.
 
     .. versionchanged:: 1.0
 
@@ -554,9 +563,18 @@ def to_pandas(obj, **kwargs):
 
        :func:`.to_pandas` is a thin wrapper for :class:`.PandasConverter`.
     """
+    from sdmx.format.csv.common import CSVFormatOptions
     from sdmx.format.csv.v1 import FormatOptions
 
-    kwargs.setdefault("format_options", FormatOptions())
+    # Separate keyword arguments associated with FormatOptions
+    keys = set(f.name for f in fields(CSVFormatOptions))
+
+    fo_kw = {k: kwargs.pop(k) for k in keys & set(kwargs)}
+
+    # - Use either existing, or a new instance, of FormatOptions.
+    # - Replace with directly-provided kwargs
+    fo = "format_options"
+    kwargs[fo] = replace(kwargs.get(fo, FormatOptions()), **fo_kw)
 
     return PandasConverter(**kwargs).convert(obj)
 
