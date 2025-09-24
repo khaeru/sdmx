@@ -20,26 +20,28 @@ class DispatchConverter(Converter):
 
     Usage:
 
-    - Create an instance of this class.
+    - Create a subclass of this class.
     - Use :meth:`register` (in the same manner as Python's built-in
       :func:`functools.singledispatch`) to decorate functions that convert certain types
       of :mod:`sdmx.model` or :mod:`sdmx.message` objects.
-    - Call :meth:`recurse` to kick off recursive writing of objects, including from
-      inside other functions.
+    - Call :meth:`convert` (including from inside other functions) to recursively
+      convert objects.
 
     Example
     -------
-    >>> MyWriter = BaseWriter('my')
+    >>> from sdmx.convert.common import DispatchConverter
+    >>> class CustomConverter(DispatchConverter):
+    ...     pass
 
-    >>> @MyWriter.register
-    >>> def _(obj: sdmx.model.ItemScheme):
-    >>>     ... code to write an ItemScheme ...
-    >>>     return result
+    >>> @CustomConverter.register
+    ... def _(c: "CustomConverter", obj: sdmx.model.ItemScheme):
+    ...     ... code to convert an ItemScheme ...
+    ...     return result
 
-    >>> @MyWriter.register
-    >>> def _(obj: sdmx.model.Codelist):
-    >>>     ... code to write a Codelist ...
-    >>>     return result
+    >>> @CustomConverter.register
+    ... def _(c: "CustomConverter", obj: sdmx.model.Codelist):
+    ...     ... code to convert a Codelist ...
+    ...     return result
     """
 
     _registry: dict[type, Callable]
@@ -56,10 +58,20 @@ class DispatchConverter(Converter):
                     self._registry[type(obj)] = func
                 break
 
-        return func(self, obj, **kwargs)
+        try:
+            return func(self, obj, **kwargs)
+        except UnboundLocalError:  # pragma: no cover
+            raise NotImplementedError(
+                f"Convert {type(obj)} using {type(self).__name__}"
+            ) from None
 
     @classmethod
-    def register(cls, func):
+    def register(cls, func: "Callable"):
+        """Register `func` as a conversion function.
+
+        `func` must have an argument named `obj` that is annotated with a particular
+        type.
+        """
         try:
             registry = getattr(cls, "_registry")
         except AttributeError:

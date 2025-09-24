@@ -1,4 +1,4 @@
-"""Convert :mod:`sdmx.message`/:mod:`.model` objects to :mod:`pandas` objects."""
+"""Convert :mod:`sdmx.message` and :mod:`.model` objects to :mod:`pandas` objects."""
 
 import operator
 from abc import ABC, abstractmethod
@@ -52,7 +52,10 @@ ALL_CONTENTS = {
 
 
 class Attributes(Flag):
-    """Attributes to include."""
+    """Attributes to include.
+
+    .. todo:: Migrate to :mod:`.format.csv.common` or similar.
+    """
 
     #: No attributes.
     none = 0
@@ -343,6 +346,13 @@ class ColumnSpec:
 
 @dataclass
 class PandasConverter(DispatchConverter):
+    """Convert SDMX messages and IM objects to :class:`pandas.DataFrame` and similar.
+
+    PandasConverter implements a dispatch pattern according to the type of the object
+    to be converted. The attributes/arguments to the class control the conversion
+    behaviour and return types.
+    """
+
     #: SDMX-CSV format options.
     format_options: "CSVFormatOptions"
 
@@ -360,12 +370,20 @@ class PandasConverter(DispatchConverter):
     #: :class:`object`/:class:`str`.
     dtype: Union[type["np.generic"], type["ExtensionDtype"], str, None] = np.float64
 
-    #: ID of a dimension to convert to :class:`pandas.DatetimeIndex`.
-    datetime_dimension: Optional["common.DimensionComponent"] = None
-    #: Frequency for conversion to :class:`pandas.PeriodIndex`.
-    datetime_freq: Optional["DateOffset"] = None
-    #: Axis on which to place a time dimension.
+    #: Axis on which to place a time dimension. One of:
+    #:
+    #: - :py:`-1`: disabled.
+    #: - :py:`0, "index"`: first/index axis.
+    #: - :py:`1, "columns"`: second/columns axis.
     datetime_axis: Union[int, str] = -1
+
+    #: Dimension to convert to :class:`pandas.DatetimeIndex`. A :class:`str` value is
+    #: interpreted as a dimension ID.
+    datetime_dimension: Optional["common.DimensionComponent"] = None
+
+    #: Frequency for conversion to :class:`pandas.PeriodIndex`. A :class:`str` value is
+    #: interpreted as one of the :ref:`pd:timeseries.period_aliases`.
+    datetime_freq: Optional["DateOffset"] = None
 
     #: include : iterable of str or str, optional
     #:     One or more of the attributes of the StructureMessage ('category_scheme',
@@ -375,9 +393,19 @@ class PandasConverter(DispatchConverter):
     locale: str = DEFAULT_LOCALE
 
     #: :any:`True` to convert datetime.
+    #:
+    #: .. deprecated:: 2.23.0
+    #:
+    #:    Use :attr:`datetime_axis`, :attr:`datetime_dimension`, or
+    #:    :attr:`datetime_freq`.
     datetime: InitVar = None
-    #: Default return type for :func:`write_dataset` and similar methods. Either
-    #: 'compat' or 'rows'. See the ref:`HOWTO <howto-rtype>`.
+
+    #: Return type for :func:`.convert_dataset` and similar methods.
+    #:
+    #: .. deprecated:: 2.23.0
+    #:
+    #:    User code should instead explicitly modify the returned
+    #:    :class:`~pandas.DataFrame` or :class:`~pandas.Series`.
     rtype: InitVar[str] = ""
 
     # Internal variables
@@ -511,9 +539,20 @@ class PandasConverter(DispatchConverter):
 
 
 def to_pandas(obj, **kwargs):
-    """Convert an SDMX *obj* to :mod:`pandas` object(s).
+    """Convert an SDMX `obj` to :mod:`pandas` object(s).
 
-    See :ref:`sdmx.convert.pandas <convert-pandas>`.
+    `kwargs` can include any of the attributes of :class:`.PandasConverter`. If
+    :attr:`~.PandasConverter.format_options` is not given, an instance of
+    :class:`.v1.FormatOptions` is used as a default.
+
+    .. versionchanged:: 1.0
+
+       :func:`.to_pandas` handles all types of objects,
+       replacing the earlier, separate ``data2pandas`` and ``structure2pd`` writers.
+
+    .. versionchanged:: 2.23.0
+
+       :func:`.to_pandas` is a thin wrapper for :class:`.PandasConverter`.
     """
     from sdmx.format.csv.v1 import FormatOptions
 
@@ -667,21 +706,17 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
 
     See the :ref:`walkthrough <datetime>` for examples of using the `datetime` argument.
 
-        Parameters
-        ----------
-        obj : :class:`~.DataSet` or iterable of :class:`Observation <.BaseObservation>`
-
-        Returns
-        -------
-        :class:`pandas.DataFrame`
-            - if :attr:`~PandasConverter.attributes` is not ``''``, a data frame with one
-              row per Observation, ``value`` as the first column, and additional columns
-              for each attribute;
-            - if `datetime` is given, various layouts as described above; or
-            - if `_rtype` (passed from :func:`convert_datamessage`) is 'compat', various
-              layouts as described in the :ref:`HOWTO <howto-rtype>`.
-        :class:`pandas.Series` with :class:`pandas.MultiIndex`
-            Otherwise.
+    Returns
+    -------
+    :class:`pandas.DataFrame`
+        - if :attr:`~PandasConverter.attributes` is not ``''``, a data frame with one
+          row per Observation, ``value`` as the first column, and additional columns
+          for each attribute;
+        - if `datetime` is given, various layouts as described above; or
+        - if `_rtype` (passed from :func:`convert_datamessage`) is 'compat', various
+          layouts as described in the :ref:`HOWTO <howto-rtype>`.
+    :class:`pandas.Series` with :class:`pandas.MultiIndex`
+        Otherwise.
     """
     c._context[common.BaseDataSet] = obj
     c._columns = ColumnSpec(pc=c, ds=obj)

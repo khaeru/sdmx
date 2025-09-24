@@ -6,6 +6,23 @@ What's new?
 Next release
 ============
 
+Migration notes
+---------------
+
+- :py:`to_pandas(..., rtype="compat")` is deprecated and will be removed in a future release.
+  Giving this argument raises :class:`DeprecationWarning`.
+  User code should be adapted to explicitly mutate the objects returned by :func:`.to_pandas`.
+- :py:`to_pandas(..., datetime=...)` is deprecated and will be removed in a future release.
+  Giving this argument raises :class:`DeprecationWarning`.
+  User code should be adapted to explicitly pass values for
+  :attr:`~.PandasConverter.datetime_axis`,
+  :attr:`~.PandasConverter.datetime_dimension`, and/or
+  :attr:`~.PandasConverter.datetime_freq`,
+  as required.
+
+All changes
+-----------
+
 - Expand :mod:`.model`, :mod:`.reader.xml`, and :mod:`.writer.xml` support for :ref:`impl-im-reg` messages (:pull:`234`).
   See the documentation for implementation details and errata in the standards documents.
 
@@ -22,14 +39,32 @@ Next release
   - New class :class:`.compare.Options` to control comparison behaviour and logging.
   - :func:`sdmx.util.compare` is deprecated and will be removed in a future version.
 
-- :class:`.Key` is sortable (:pull:`234`).
+- :func:`.to_csv` supports writing :ref:`sdmx-csv` version 2.0.0 (:pull:`243`).
+- :func:`.to_csv` and :func:`.to_pandas` support :attr:`.Labels.both`
+  (:pull:`243`, thanks :gh-user:`aboddie` for :pull:`242`).
+- New modules (:pull:`243`):
+
+  - :mod:`.convert` and :mod:`.convert.common`.
+  - :mod:`.convert.pandas` and :class:`.PandasConverter`, replacing :py:`.writer.pandas`.
+  - :mod:`.format.common` and classes :class:`~.format.common.Format`
+    and :class:`~.common.FormatOptions`.
+  - :mod:`.format.csv.common`, :mod:`~.format.csv.v1`, and :mod:`~.format.csv.v2`.
+  - :mod:`.types` for type hinting first-party and downstream code.
+
+- Improve :class:`.Key`:
+
+  - Key is sortable (:pull:`234`).
+  - :meth:`.Key.copy` returns the same type for subclasses (:pull:`243`).
+
 - :func:`.install_schemas` and :func:`.construct_schema` fetch, store, and use a local copy of :file:`xhtml1-strict.dsd` (:pull:`236`, :issue:`235`).
   This enables use of :func:`.validate_xml`
   with lxml version 6.0.0 (`released 2025-06-26 <https://lxml.de/6.0/changes-6.0.0.html>`__)
   for SDMX-ML messages containing XHTML values.
 - Correct a broken link to :ref:`im` in the README (:pull:`233`; thanks :gh-user:`econometricsfanboy` for :issue:`232`).
 - Update the base URL of the :ref:`ILO <ILO>` source to use HTTPS instead of plain HTTP (:pull:`237`).
-- New utilities :class:`.CompareTests` and :func:`.preserve_dunders` (:pull:`234`).
+- New utilities :class:`.CompareTests` and :func:`.preserve_dunders` (:pull:`234`);
+  :func:`.dimensions_to_attributes` (:pull:`243`).
+- Documentation for :doc:`api/format` moved to its own page (:pull:`243`).
 
 .. _2.22.0:
 

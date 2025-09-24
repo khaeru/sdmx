@@ -48,7 +48,7 @@ Specimens and data
 
 A variety of *specimens*—example files from real web services, or published with the standards—are used to test that :mod:`sdmx` correctly reads and writes the different SDMX message formats.
 
-Specimens are stored in the separate `sdmx-test-data <https://github.com/khaeru/sdmx-test-data>`_ repository.
+Specimens are stored in the separate `sdmx-test-data <https://github.com/khaeru/sdmx-test-data>`__ repository.
 
 Running the test suite requires these files.
 The simplest way to do this is to give the :program:`--sdmx-fetch-data` option when invoking :program:`pytest`::

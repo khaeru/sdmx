@@ -148,7 +148,7 @@ class Reader(BaseReader):
 
         if i < len(header) and header[i] == "SERIES_KEY":
             self.options.key = "series"
-            handlers[i] = SeriesKey()
+            handlers[i] = SeriesKeyHandler()
             i += 1
 
         if i < len(header) and header[i] == "OBS_KEY":
@@ -234,7 +234,10 @@ class DataFrameConverter(Converter):
 
 
 class Handler(ABC):
-    """Base class for :attr:`.Reader.handlers`."""
+    """Base class for :attr:`.Reader.handlers`.
+
+    .. todo:: Unify with :class:`.convert.pandas.Column`.
+    """
 
     @abstractmethod
     def __call__(self, obs: "common.BaseObservation", value: str) -> None:
@@ -278,7 +281,7 @@ class StoreTarget(Handler):
         obs.attached_attribute["__TARGET"].value.append(value)
 
 
-class SeriesKey(NotHandled):
+class SeriesKeyHandler(NotHandled):
     """ "SERIES_KEY" columns are currently not handled."""
 
     pass
@@ -303,7 +306,7 @@ class KeyValue(Handler):
 
 
 class ObsValue(Handler):
-    """Handle the :attr:`Observation.value <.BaseObservation.value>.
+    """Handle the :attr:`Observation.value <.BaseObservation.value>`.
 
     In line with :mod:`.model.v30`, multiple values (for data structures with multiple
     measures) are currently not handled.

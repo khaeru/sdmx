@@ -96,7 +96,7 @@ class MediaType:
         return bool(self.flags & Flag.ts)
 
 
-#: SDMX formats. Each record is an instance of :class:`Format`.
+#: SDMX media types. Each record is an instance of :class:`.MediaType`.
 MEDIA_TYPES = [
     # SDMX-ML
     # Version 2.1

@@ -12,7 +12,7 @@ On other pages:
 Access other SDMX data sources
 ------------------------------
 
-:mod:`sdmx` ships with a file, `sources.json`, that includes information about the capabilities of many :doc:`data sources <sources>`.
+:mod:`sdmx` ships with a file :file:`sources.json` that includes information about the capabilities of many :doc:`data sources <sources>`.
 However, any data source that generates SDMX 2.1 messages is supported.
 There are multiple ways to access these:
 
@@ -108,6 +108,11 @@ To display the categorized items, in our case the dataflow definitions contained
 Select data frame layouts returned by :func:`.to_pandas`
 --------------------------------------------------------
 
+.. warning:: This section describes the use of the deprecated :attr:`~.PandasConverter.rtype` argument.
+   See the migration notes for :ref:`v2.23.0`.
+
+.. todo:: Update the section to use the current arguments.
+
 :func:`.to_pandas` provides multiple ways to customize the type and layout of pandas objects returned for :class:`.DataMessage` input.
 One is the `datetime` argument; see :ref:`datetime`.
 The other is the `rtype` argument.
@@ -157,6 +162,7 @@ With the argument `rtype` = 'rows' (the default), data are *always* returned wit
 Convert SDMX data to other formats
 ----------------------------------
 
+See :doc:`/api/convert`.
 Pandas supports output to `many popular file formats <http://pandas.pydata.org/pandas-docs/stable/user_guide/io.html>`_.
 Call these methods on the objects returned by :meth:`~sdmx.to_pandas`.
 For instance::

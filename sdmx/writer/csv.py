@@ -1,7 +1,4 @@
-"""SDMX-CSV writer.
-
-See :ref:`sdmx-csv`.
-"""
+""":ref:`sdmx-csv` writer."""
 
 from os import PathLike
 from typing import TYPE_CHECKING, Optional, Union
@@ -25,25 +22,24 @@ def to_csv(
 ) -> Union[None, str, pd.DataFrame]:
     """Convert an SDMX *obj* to SDMX-CSV.
 
-    With `rtype` = :class:`~pandas.DataFrame`, the returned object is
-    **not necessarily** in SDMX-CSV format. In particular, writing this to file using
-    :meth:`pandas.DataFrame.to_csv` will yield **invalid** SDMX-CSV, because pandas
-    includes a CSV column corresponding to the index of the data frame. You must pass
-    `index=False` to disable this behaviour. With `rtype` = :class:`str` or when giving
-    `path`, this is done automatically.
+    With :py:`rtype=pandas.DataFrame`, the returned object is **not necessarily** valid
+    SDMX-CSV. In particular, writing this to file using :meth:`pandas.DataFrame.to_csv`
+    will yield invalid SDMX-CSV, because pandas includes a CSV column corresponding to
+    the index of the data frame. You must pass :py:`index=False` to disable this
+    behaviour. With :py:`rtype=str` or when giving `path`, this is done automatically.
 
     Parameters
     ----------
     path : os.PathLike, optional
         Path to write an SDMX-CSV file.
     rtype :
-        Return type; see below. Pass literally ``str`` or ``pd.DataFrame``; *not* an
-        instance of either class.
+        Return type; see below. Pass literally :class:`str` or
+        :class:`pandas.DataFrame`; *not* an instance of either class.
 
     Other parameters
     ----------------
     kwargs :
-        Keyword arguments passed to :func:`.PandasConverter` and
+        Keyword arguments passed to :class:`.PandasConverter` and
         :class:`.format.csv.v1.FormatOptions`.
 
     Returns
@@ -63,15 +59,16 @@ def to_csv(
 
         The two optional parameters are exactly as described in the specification.
 
-        Because SDMX-CSV includes a ``DATAFLOW`` column with an identifier (partial URN) for
-        the dataflow to which the data conform, it is mandatory that the
-        :attr:`~.DataSet.described_by` attribute of `obj` gives an association to a
-        :class:`.DataflowDefinition` object, from which a :mod:`.urn` can be constructed.
+        Because SDMX-CSV includes a column with an identifier (partial URN) for the
+        dataflow to which the data belong (the column is named differently according to
+        format version; see :ref:`sdmx-csv`), it is mandatory that the
+        :attr:`DataSet.described_by <.BaseDataSet.described_by>` attribute of `obj`
+        gives an association to an object from which a :class:`.URN` can be constructed.
 
     NotImplementedError
-        For ``labels="both"`` or ``time_format="normalized"``.
+        if the `kwargs` include :py:`labels="name"` or :py:`time_format="normalized"`.
     ValueError
-        If :attr:`.DataSet.described_by` is :data:`None`.
+        If :attr:`DataSet.described_by <.BaseDataSet.described_by>` is :any:`None`.
 
     See also
     --------

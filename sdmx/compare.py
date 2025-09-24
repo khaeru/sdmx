@@ -99,7 +99,10 @@ T = TypeVar("T", bound=object)
 
 @singledispatch
 def compare(left: object, right, opts: Options, context: str = "") -> bool:
-    """Compare `left` to `right`."""
+    """Compare `left` to `right`.
+
+    .. todo:: Reimplement as a subclass of :class:`.common.DispatchConverter`.
+    """
     if is_dataclass(left):
         return compare_dataclass(left, right, opts, context)
 

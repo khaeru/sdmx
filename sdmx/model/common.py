@@ -642,7 +642,7 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
 
         Parameters
         ----------
-        items : iterable of :class:`.Item`
+        items :
             Elements must be of the same class as :attr:`items`.
         """
         for i in items:
@@ -656,8 +656,8 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
 
         Parameters
         ----------
-        item : same class as :attr:`items`
-            Item to add.
+        item :
+            Item to add. Elements must be of the same class as :attr:`items`.
         """
         if item.id in self.items:
             raise ValueError(f"Item with id {repr(item.id)} already exists")
@@ -1939,10 +1939,15 @@ class BaseDataSet(AnnotableArtefact):
                 if isinstance(target, BaseObservation):
                     self.group[group_key].append(target)
 
-    def add_obs(self, observations, series_key=None):
-        """Add *observations* to a series with *series_key*.
+    def add_obs(
+        self,
+        observations: Iterable[BaseObservation],
+        series_key: Optional[SeriesKey] = None,
+    ) -> None:
+        """Add `observations` to the data set, and to a series with `series_key`.
 
-        Checks consistency and adds group associations."""
+        Checks consistency and adds group associations.
+        """
         if series_key is not None:
             # Associate series_key with any GroupKeys that apply to it
             self._add_group_refs(series_key)
@@ -2034,6 +2039,7 @@ class BaseMetadataSet:
     publication_period: Optional[date] = None
     publication_year: Optional[date] = None
 
+    #: Association to the metadata flow definition of which the metadataset is part.
     described_by: Optional[BaseMetadataflow] = None
 
     #: Note that the class of this attribute differs from SDMX 2.1 to SDMX 3.0.

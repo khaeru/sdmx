@@ -7,10 +7,14 @@ Some parts of the API are described on separate pages:
    :hidden:
 
    api/model
+   api/format
+   api/convert
    api/reader
    api/writer
 
 - :mod:`sdmx.model`: :doc:`api/model`.
+- :mod:`sdmx.format`: :doc:`api/format`.
+- :mod:`sdmx.convert`: :doc:`api/convert`.
 - :mod:`sdmx.reader`: :doc:`api/reader`.
 - :mod:`sdmx.writer`: :doc:`api/writer`.
 - :mod:`sdmx.source` on the page :doc:`sources`.
@@ -57,35 +61,6 @@ Top-level methods and classes
    :members:
    :show-inheritance:
 
-``format``: SDMX file formats
-=============================
-
-.. automodule:: sdmx.format
-   :members:
-   :exclude-members: Version
-   :undoc-members:
-   :show-inheritance:
-
-   This information is used across other modules including :mod:`sdmx.reader`,
-   :mod:`sdmx.client`, and :mod:`sdmx.writer`.
-
-SDMX-JSON
----------
-
-.. automodule:: sdmx.format.json
-   :members:
-
-SDMX-ML
--------
-
-.. automodule:: sdmx.format.xml
-   :members:
-   :exclude-members: validate_xml
-
-.. automodule:: sdmx.format.xml.common
-   :members:
-   :exclude-members: install_schemas, validate_xml
-
 ``message``: SDMX messages
 ==========================
 
@@ -119,9 +94,9 @@ SDMX-ML
 
 ``session``: HTTP sessions and responses
 ========================================
-.. autoclass:: sdmx.session.Session
-.. autoclass:: sdmx.session.ResponseIO
 
+.. automodule:: sdmx.session
+   :members: Session, ResponseIO
 
 ``urn``: Uniform Resource Names (URNs) for SDMX objects
 =======================================================
@@ -133,12 +108,23 @@ SDMX-ML
 Utilities and internals
 =======================
 
+.. currentmodule:: sdmx.tools
+
+.. automodule:: sdmx.tools
+   :members:
+   :show-inheritance:
+
 .. currentmodule:: sdmx.util
 
 .. automodule:: sdmx.util
    :members:
    :show-inheritance:
 
+.. currentmodule:: sdmx.types
+
+.. automodule:: sdmx.types
+   :members:
+   :show-inheritance:
 
 :class:`.DictLike` collections
 ------------------------------
@@ -148,7 +134,6 @@ Utilities and internals
 .. automodule:: sdmx.dictlike
    :members:
    :show-inheritance:
-
 
 Structure expressions in :class:`.Item` descriptions
 ----------------------------------------------------
