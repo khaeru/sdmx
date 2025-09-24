@@ -90,7 +90,10 @@ class Attributes(Flag):
 
 
 class Column(ABC):
-    """Representation of conversion of a column."""
+    """Representation of conversion of a column.
+
+    .. todo:: Unify with :class:`.reader.csv.Handler`.
+    """
 
     __slots__ = ("name", "id", "_hash")
 
