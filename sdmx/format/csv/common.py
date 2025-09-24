@@ -1,6 +1,6 @@
 """Information about SDMX-CSV file formats."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum, auto
 
 from sdmx.format.common import Format, FormatOptions
@@ -61,3 +61,12 @@ class CSVFormatOptions(FormatOptions):
             self.labels = Labels[str(self.labels).lower()]
         if isinstance(self.time_format, str):
             self.time_format = TimeFormat[str(self.time_format).lower()]
+
+
+def kwargs_to_format_options(kwargs: dict, cls: type["CSVFormatOptions"]) -> None:
+    """Separate from `kwargs` any attributes of :class:`CSVFormatOptions`."""
+    _fo = "format_options"
+    default = cls()
+    kwargs.setdefault(_fo, default)
+    replacements = {k: kwargs.pop(k) for k in {"labels", "time_format"} & set(kwargs)}
+    kwargs[_fo] = replace(kwargs.pop(_fo) or default, **replacements)

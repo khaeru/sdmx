@@ -1,5 +1,5 @@
 from itertools import product
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 import pytest
@@ -8,7 +8,9 @@ import sdmx
 from sdmx import message
 from sdmx.convert.pandas import Attributes
 from sdmx.format import csv
-from sdmx.format.csv.common import Labels
+from sdmx.format.csv.common import CSVFormatOptions, Labels
+from sdmx.format.csv.v1 import FormatOptions as V1FormatOptions
+from sdmx.format.csv.v2 import FormatOptions as V2FormatOptions
 from sdmx.model import common, v21
 
 if TYPE_CHECKING:
@@ -35,21 +37,14 @@ def _add_test_dsd(ds: v21.DataSet) -> None:
 
 
 @pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
-@pytest.mark.parametrize(
-    "format",
-    [
-        None,
-        csv.v1.FORMAT,
-        pytest.param(csv.v2.FORMAT, marks=pytest.mark.skip(reason="Not implemented")),
-    ],
-)
-def test_write_data(tmp_path: "Path", specimen, path, format) -> None:
+@pytest.mark.parametrize("format_options", [None, V1FormatOptions(), V2FormatOptions()])
+def test_write_data(tmp_path: "Path", specimen, path, format_options) -> None:
     if ("v3", "csv") == path.parts[-3:-1]:
         pytest.skip("SDMX-CSV 3.0.0 examples cannot be read without DSD")
 
     msg = cast("message.DataMessage", sdmx.read_sdmx(path))
 
-    kw: "ToCSVArgs" = dict(attributes=Attributes.all, format=format)
+    kw: "ToCSVArgs" = dict(attributes=Attributes.all, format_options=format_options)
     for i, dataset in enumerate(msg.data):
         _add_test_dsd(dataset)
 
@@ -59,17 +54,17 @@ def test_write_data(tmp_path: "Path", specimen, path, format) -> None:
 
         # print(result.head().to_string()) # DEBUG
 
-        # Standard features are respected
-        assert "DATAFLOW" == result.columns[0]
-        assert "OBS_VALUE" in result.columns
-
         # Write directly to file also works
         path_out = tmp_path.joinpath(f"{i}.csv")
         assert None is sdmx.to_csv(dataset, path=path_out, **kw)
         assert path_out.exists()
 
-        with open(path_out, "r") as f:
-            assert f.readline().startswith("DATAFLOW,")
+        # Standard features are respected
+        if isinstance(format_options, V1FormatOptions):
+            assert "DATAFLOW" == result.columns[0]
+            assert "OBS_VALUE" in result.columns
+            with open(path_out, "r") as f:
+                assert f.readline().startswith("DATAFLOW,")
 
 
 @pytest.fixture
@@ -155,11 +150,12 @@ EXP_COLS = {
 
 
 @pytest.mark.parametrize(
-    "format, exp_cols", [(None, "v1"), (csv.v1.FORMAT, "v1"), (csv.v2.FORMAT, "v2")]
+    "format_options, exp_cols",
+    [(None, "v2"), (csv.v1.FormatOptions(), "v1"), (csv.v2.FormatOptions(), "v2")],
 )
 def test_write_labels_both(
     messages: tuple[message.StructureMessage, message.DataMessage],
-    format: Optional[csv.common.CSVFormat],
+    format_options: CSVFormatOptions,
     exp_cols: str,
 ) -> None:
     """SDMX-CSV can be produced with :attr:`Labels.both`."""
@@ -168,7 +164,7 @@ def test_write_labels_both(
     result = sdmx.to_csv(
         dm,
         rtype=pd.DataFrame,
-        format=format,
+        format_options=format_options,
         labels=Labels.both,
         attributes=Attributes.all,
     )

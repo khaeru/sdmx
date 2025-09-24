@@ -3,7 +3,7 @@
 import operator
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
-from dataclasses import InitVar, dataclass, field, fields, replace
+from dataclasses import InitVar, dataclass, field
 from enum import Flag, auto
 from functools import reduce
 from itertools import chain, product, repeat
@@ -17,7 +17,7 @@ import pandas as pd
 from sdmx import message, urn
 from sdmx.dictlike import DictLike
 from sdmx.format import csv
-from sdmx.format.csv.common import Labels, TimeFormat
+from sdmx.format.csv.common import CSVFormatOptions, Labels, TimeFormat
 from sdmx.model import common, v21, v30
 from sdmx.model.internationalstring import DEFAULT_LOCALE
 
@@ -204,7 +204,7 @@ class ColumnSpec:
 
         # Construct the short URN for the DFD
         dfd_urn = ""
-        if pc.format:
+        if pc._strict:
             if ds.described_by is None:
                 raise ValueError(f"No associated data flow definition for {ds}")
             dfd_urn = urn.make(ds.described_by).partition("=")[2]
@@ -217,28 +217,33 @@ class ColumnSpec:
         )
 
         # Unpack some other attributes
-        fmt = csv.v2 if pc.format is csv.v2.FORMAT else csv.v1
-        labels = pc.format_options.labels
+        fmt, labels = pc.format_options.format, pc.format_options.labels
+        # Shorthand
+        no_format, csv_v1, csv_v2 = csv.common.CSVFormat, csv.v1.FORMAT, csv.v2.FORMAT
 
         # Fixed columns
         self.start = {
-            None: [],
+            csv.common.CSVFormat: [],  # No specific SDMX-CSV format
             csv.v1.FORMAT: [Fixed("DATAFLOW", dfd_urn)],
             csv.v2.FORMAT: [
                 Fixed("STRUCTURE", "dataflow"),
                 Fixed("STRUCTURE_ID", dfd_urn),
                 Fixed("ACTION", "I"),
             ],
-        }[pc.format]
+        }[fmt]
+
+        # For keys/dimensions and attributes, use the SDMX-CSV v2 style if no specific
+        # format was gievn
+        fmt = csv_v2 if fmt is no_format else fmt
 
         # Identify classes for key columns
         classes_d = cast(
             list,
             {
-                (csv.v1, Labels.id): [KeyValueID],
-                (csv.v1, Labels.both): [KeyValueBoth],
-                (csv.v2, Labels.id): [KeyValueID],
-                (csv.v2, Labels.both): [KeyValueID, KeyValueName],
+                (csv_v1, Labels.id): [KeyValueID],
+                (csv_v1, Labels.both): [KeyValueBoth],
+                (csv_v2, Labels.id): [KeyValueID],
+                (csv_v2, Labels.both): [KeyValueID, KeyValueName],
             }[(fmt, labels)],
         )
 
@@ -248,16 +253,19 @@ class ColumnSpec:
         ]
 
         # Measure columns
-        self.measure = ["OBS_VALUE" if fmt is csv.v1 else dsd.measures[0].id]
+        if fmt is csv_v1 or not (len(dsd.measures)):
+            self.measure = ["OBS_VALUE"]
+        else:
+            self.measure = [dsd.measures[0].id]
 
         # Identify classes for attribute columns
         classes_a = cast(
             list,
             {
-                (csv.v1, Labels.id): [AttributeValueID],
-                (csv.v1, Labels.both): [AttributeValueBoth],
-                (csv.v2, Labels.id): [AttributeValueID],
-                (csv.v2, Labels.both): [AttributeValueID, AttributeValueName],
+                (csv_v1, Labels.id): [AttributeValueID],
+                (csv_v1, Labels.both): [AttributeValueBoth],
+                (csv_v2, Labels.id): [AttributeValueID],
+                (csv_v2, Labels.both): [AttributeValueID, AttributeValueName],
             }[(fmt, labels)],
         )
 
@@ -357,11 +365,7 @@ class PandasConverter(DispatchConverter):
     """
 
     #: SDMX-CSV format options.
-    format_options: "CSVFormatOptions"
-
-    #: If given, DataMessage and contents are converted to valid SDMX-CSV of this
-    #: format, with the given :attr:`format_options`.
-    format: Union[type["csv.v1.FORMAT"], type["csv.v2.FORMAT"], None] = None
+    format_options: "CSVFormatOptions" = field(default_factory=CSVFormatOptions)
 
     #: Attributes to include.
     attributes: Attributes = Attributes.none
@@ -413,6 +417,9 @@ class PandasConverter(DispatchConverter):
 
     # Internal variables
     _columns: "ColumnSpec" = field(default_factory=ColumnSpec)
+
+    # True if converting to SDMX-CSV
+    _strict: bool = False
 
     # Columns to be set as index levels, then unstacked.
     _unstack: list[str] = field(default_factory=list)
@@ -540,6 +547,11 @@ class PandasConverter(DispatchConverter):
         # Silently discard invalid names
         self.include &= ALL_CONTENTS
 
+        # Set private attributes
+        self._strict = issubclass(
+            self.format_options.format, (csv.v1.FORMAT, csv.v2.FORMAT)
+        )
+
 
 def to_pandas(obj, **kwargs):
     """Convert an SDMX `obj` to :mod:`pandas` object(s).
@@ -549,7 +561,7 @@ def to_pandas(obj, **kwargs):
     Other parameters
     ----------------
     format_options :
-        if not given, an instance of :class:`.v1.FormatOptions` is used as a default.
+        if not given, an instance of :class:`.CSVFormatOptions` is used as a default.
     labels :
         if given, the :attr:`.CSVFormatOptions.labels` attribute of the `format_options`
         keyword argument is replaced.
@@ -566,19 +578,7 @@ def to_pandas(obj, **kwargs):
 
        :func:`.to_pandas` is a thin wrapper for :class:`.PandasConverter`.
     """
-    from sdmx.format.csv.common import CSVFormatOptions
-    from sdmx.format.csv.v1 import FormatOptions
-
-    # Separate keyword arguments associated with FormatOptions
-    keys = set(f.name for f in fields(CSVFormatOptions))
-
-    fo_kw = {k: kwargs.pop(k) for k in keys & set(kwargs)}
-
-    # - Use either existing, or a new instance, of FormatOptions.
-    # - Replace with directly-provided kwargs
-    fo = "format_options"
-    kwargs[fo] = replace(kwargs.get(fo, FormatOptions()), **fo_kw)
-
+    csv.common.kwargs_to_format_options(kwargs, csv.common.CSVFormatOptions)
     return PandasConverter(**kwargs).convert(obj)
 
 
@@ -822,7 +822,7 @@ def _reshape(
 ) -> Union[pd.Series, pd.DataFrame]:
     """Reshape `df` to provide expected return types."""
 
-    if c.format is not None:
+    if c._strict:
         # SDMX-CSV → no reshaping
         return df.reindex(columns=c._columns.full)
 
