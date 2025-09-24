@@ -154,7 +154,7 @@ class KeyValueBoth(Column):
 
     def __call__(self, key: "common.Key") -> str:
         v = key[self.id].value
-        return f"{v.id}: {v.name if isinstance(v, common.Code) else v}"
+        return f"{v.id}: {v.name}" if isinstance(v, common.Code) else str(v)
 
 
 class KeyValueID(Column):
