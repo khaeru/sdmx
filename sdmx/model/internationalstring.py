@@ -102,6 +102,9 @@ class InternationalString:
         result.localizations.update(other.localizations)
         return result
 
+    def __bool__(self) -> bool:
+        return bool(len(self.localizations))
+
     def localized_default(self, locale=None) -> str:
         """Return the string in *locale*, or else the first defined."""
         try:
