@@ -61,6 +61,7 @@ def test_install_schemas_invalid_version(version):
         sdmx.install_schemas(version=version)
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.network
 @pytest.mark.parametrize(
     "parts",
@@ -89,6 +90,7 @@ def v30_zipball_path(installed_schemas):
     yield _extracted_zipball(Version["3.0.0"])
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.network
 @pytest.mark.parametrize(
     "parts",
@@ -110,6 +112,7 @@ def test_validate_xml_from_v3_0_samples(installed_schemas, v30_zipball_path, par
     )
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.network
 def test_validate_xml_invalid_doc(tmp_path, installed_schemas):
     """Ensure that an invalid document fails validation."""
