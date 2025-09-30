@@ -47,6 +47,7 @@ tests = [
   "pytest >= 5",
   "pytest-cov",
   "pytest-xdist",
+  "pytest-rerunfailures",
   "responses",
   "sdmx1[cache]",
 ]
