@@ -614,6 +614,10 @@ class ItemScheme(MaintainableArtefact, Generic[IT]):
     def __getitem__(self, name: str) -> IT:
         return self.__dict__["items"][name]
 
+    def get(self, id: str, default: Union[str, IT, None] = None) -> Union[str, IT]:
+        """Get an Item by its `id`; if not present, return `default`."""
+        return self.__dict__["items"].get(id, default)
+
     def get_hierarchical(self, id: str) -> IT:
         """Get an Item by its :attr:`~.Item.hierarchical_id`."""
         if "." not in id:
@@ -1457,14 +1461,19 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
                 continue
 
             # Reference a Dimension from the DimensionDescriptor. If extend=False and
-            # the Dimension does not exist, this will raise KeyError
-            args = dict(id=id, value=value, value_for=dim(id))
+            # the Dimension does not exist, this will raise KeyError.
+            value_for = dim(id)
 
-            # Retrieve the order
-            order = args["value_for"].order
+            # Use the dimension's order instead of the order in `values`
+            order = value_for.order
+
+            # If an itemscheme is available, convert `value` into an Item
+            if value_for.local_representation:
+                if cl := value_for.local_representation.enumerated:
+                    value = cl.get(value, value)
 
             # Store a KeyValue, to be sorted later
-            keyvalues.append((order, KeyValue(**args)))
+            keyvalues.append((order, KeyValue(id=id, value=value, value_for=value_for)))
 
         # Sort the values according to *order*
         key.values.update({kv.id: kv for _, kv in sorted(keyvalues)})

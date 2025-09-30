@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional, Union
 import pandas as pd
 
 from sdmx.convert.pandas import PandasConverter
-from sdmx.format.csv import common, v1
+from sdmx.format.csv import common, v2
 
 if TYPE_CHECKING:
     from sdmx.message import DataMessage
@@ -74,15 +74,7 @@ def to_csv(
     --------
     :ref:`sdmx.writer.csv <writer-csv>`.
     """
-    # Extract format options from `kwargs`, store as an instance of FormatOptions
-    fo = dict(
-        labels=kwargs.pop("labels", None) or common.CSVFormatOptions.labels,
-        time_format=kwargs.pop("time_format", common.CSVFormatOptions.time_format),
-    )
-    kwargs["format"] = kwargs.get("format", None) or v1.FORMAT
-    kwargs.setdefault("format_options", v1.FormatOptions(**fo))
-
-    # Use PandasConverter for the conversion
+    common.kwargs_to_format_options(kwargs, v2.FormatOptions)
     result = PandasConverter(**kwargs).convert(obj)
 
     if path:

@@ -16,7 +16,7 @@ In general, the :mod:`sdmx` package:
 
 - **reads** most :ref:`sdmx-csv`, :ref:`sdmx-json` 1.0, and :ref:`sdmx-ml` messages;
   see details in the individual sections below and the linked :mod:`.reader` submodules.
-- **writes** certain :ref:`sdmx-csv` 1.0, and :ref:`sdmx-ml` formats;
+- **writes** certain :ref:`sdmx-csv` and :ref:`sdmx-ml` formats;
   see details below and the linked :ref:`.writer` submodules.
 - is **tested** using collected specimens of messages in various formats,
   stored in the `khaeru/sdmx-test-data <https://github.com/khaeru/sdmx-test-data/>`_ Git repository.
@@ -62,15 +62,19 @@ The SDMX-CSV *format* is versioned differently from the overall SDMX *standard*:
   The format differs from and is not backwards compatible with SDMX-CSV 1.0.
   SDMX-CSV 2.0.0 files are recognizable by the header ``STRUCTURE`` in the first column of the first row.
 
+  :mod:`.reader.csv` supports reading SDMX-CSV 2.0.0.
+
   .. versionadded:: 2.19.0
 
-     Initial support for *reading* SDMX-CSV 2.0.0.
-     See :mod:`.reader.csv`.
+     Initial support for reading SDMX-CSV 2.0.0.
+
+  :mod:`.writer.csv` supports writing SDMX-CSV 2.0.0.
+  Currently, only :attr:`Keys.none` is supported;
+  passing any other value raises :class:`ValueError`.
 
   .. versionadded:: 2.23.0
 
-     Initial support for *writing* SDMX-CSV 2.0.0.
-     See :mod:`.writer.csv`.
+     Initial support for writing SDMX-CSV 2.0.0.
 
 .. automodule:: sdmx.format.csv.common
    :members:

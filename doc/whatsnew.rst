@@ -40,9 +40,9 @@ All changes
   - :func:`sdmx.util.compare` is deprecated and will be removed in a future version.
 
 - :func:`.to_csv` supports writing :ref:`sdmx-csv` version 2.0.0 (:pull:`243`).
-- :func:`.to_csv` and :func:`.to_pandas` support :attr:`.Labels.both`
-  (:pull:`243`, thanks :gh-user:`aboddie` for :pull:`242`).
-- New modules (:pull:`243`):
+- :func:`.to_csv` and :func:`.to_pandas` support :attr:`.Labels.both` and :attr:`.Labels.name`
+  (:pull:`243`, :pull:`244`, thanks :gh-user:`aboddie` for :pull:`242`).
+- New modules (:pull:`243`, :pull:`244`):
 
   - :mod:`.convert` and :mod:`.convert.common`.
   - :mod:`.convert.pandas` and :class:`.PandasConverter`, replacing :py:`.writer.pandas`.
@@ -56,6 +56,10 @@ All changes
   - Key is sortable (:pull:`234`).
   - :meth:`.Key.copy` returns the same type for subclasses (:pull:`243`).
 
+- :meth:`DataStructure.make_key <.BaseDataStructureDefinition.make_key>`
+  associates :class:`.Code` to :attr:`.KeyValue.value`
+  when :attr:`.Representation.enumerated` is set
+  for the respective :attr:`Dimension.local_representation <.Component.local_representation>` (:pull:`244`).
 - :func:`.install_schemas` and :func:`.construct_schema` fetch, store, and use a local copy of :file:`xhtml1-strict.dsd` (:pull:`236`, :issue:`235`).
   This enables use of :func:`.validate_xml`
   with lxml version 6.0.0 (`released 2025-06-26 <https://lxml.de/6.0/changes-6.0.0.html>`__)

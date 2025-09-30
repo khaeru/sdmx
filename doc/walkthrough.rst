@@ -274,7 +274,6 @@ We also see that 'USD' and 'JPY' are valid values along both dimensions.
 
 Attribute names and allowed values can be obtained in a similar fashion.
 
-
 Select and query data from a dataflow
 =====================================
 
@@ -430,11 +429,15 @@ Thus we can now generate our pandas DataFrame from daily exchange rate data only
     cur_df.shape
     cur_df.tail()
 
-
 .. _datetime:
 
 Convert dimensions to :class:`pandas.DatetimeIndex` or :class:`~pandas.PeriodIndex`
 -----------------------------------------------------------------------------------
+
+.. warning:: This section describes the use of the deprecated :attr:`~.PandasConverter.datetime` argument.
+   See the migration notes for :ref:`v2.23.0`.
+
+.. todo:: Update the section to use the current arguments.
 
 SDMX datasets often have a :class:`~.Dimension` with a name like ``TIME_PERIOD``.
 To ease further processing of time-series data read from SDMX messages,

@@ -1,5 +1,7 @@
+import re
+from functools import partial
 from itertools import product
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 import pytest
@@ -8,7 +10,10 @@ import sdmx
 from sdmx import message
 from sdmx.convert.pandas import Attributes
 from sdmx.format import csv
-from sdmx.format.csv.common import Labels
+from sdmx.format.csv.common import CSVFormatOptions, Labels
+from sdmx.format.csv.v1 import FormatOptions as V1FormatOptions
+from sdmx.format.csv.v2 import FormatOptions as V2FormatOptions
+from sdmx.format.csv.v2 import Keys
 from sdmx.model import common, v21
 
 if TYPE_CHECKING:
@@ -35,21 +40,14 @@ def _add_test_dsd(ds: v21.DataSet) -> None:
 
 
 @pytest.mark.parametrize_specimens("path", kind="data", marks=MARKS)
-@pytest.mark.parametrize(
-    "format",
-    [
-        None,
-        csv.v1.FORMAT,
-        pytest.param(csv.v2.FORMAT, marks=pytest.mark.skip(reason="Not implemented")),
-    ],
-)
-def test_write_data(tmp_path: "Path", specimen, path, format) -> None:
+@pytest.mark.parametrize("format_options", [None, V1FormatOptions(), V2FormatOptions()])
+def test_write_data(tmp_path: "Path", specimen, path, format_options) -> None:
     if ("v3", "csv") == path.parts[-3:-1]:
         pytest.skip("SDMX-CSV 3.0.0 examples cannot be read without DSD")
 
     msg = cast("message.DataMessage", sdmx.read_sdmx(path))
 
-    kw: "ToCSVArgs" = dict(attributes=Attributes.all, format=format)
+    kw: "ToCSVArgs" = dict(attributes=Attributes.all, format_options=format_options)
     for i, dataset in enumerate(msg.data):
         _add_test_dsd(dataset)
 
@@ -59,17 +57,17 @@ def test_write_data(tmp_path: "Path", specimen, path, format) -> None:
 
         # print(result.head().to_string()) # DEBUG
 
-        # Standard features are respected
-        assert "DATAFLOW" == result.columns[0]
-        assert "OBS_VALUE" in result.columns
-
         # Write directly to file also works
         path_out = tmp_path.joinpath(f"{i}.csv")
         assert None is sdmx.to_csv(dataset, path=path_out, **kw)
         assert path_out.exists()
 
-        with open(path_out, "r") as f:
-            assert f.readline().startswith("DATAFLOW,")
+        # Standard features are respected
+        if isinstance(format_options, V1FormatOptions):
+            assert "DATAFLOW" == result.columns[0]
+            assert "OBS_VALUE" in result.columns
+            with open(path_out, "r") as f:
+                assert f.readline().startswith("DATAFLOW,")
 
 
 @pytest.fixture
@@ -98,7 +96,8 @@ def messages() -> tuple[message.StructureMessage, message.DataMessage]:
     dd.getdefault(id="DIM_FOO", concept_identity=cs["FOO"])
     dd.getdefault(id="DIM_BAR", concept_identity=cs["BAR"])
     # The primary measure has an ID different from "OBS_VALUE"
-    md.getdefault(id="OBS_VALUE_X")
+    OBS_VALUE = cs.setdefault(id="OBS_VALUE_X", name="Observation value")
+    md.getdefault(id="OBS_VALUE_X", concept_identity=OBS_VALUE)
     # BAZ and QUX are attributes
     ad.getdefault(id="ATTR_BAZ", concept_identity=cs["BAZ"])
     ad.getdefault(id="ATTR_QUX", concept_identity=cs["QUX"])
@@ -128,24 +127,40 @@ def messages() -> tuple[message.StructureMessage, message.DataMessage]:
     return sm, dm
 
 
-EXP_COLS = {
-    "v1": [
-        "DATAFLOW",
-        "DIM_FOO: Foo",
-        "DIM_BAR: Bar",
-        "OBS_VALUE",
-        "ATTR_BAZ: Baz",
-        "ATTR_QUX: Qux",
-    ],
-    "v2": [
+#: Mapping from format_options=… argument → expected initial columns.
+EXP_COLS_START = {
+    csv.v1.FormatOptions: ["DATAFLOW"],
+    csv.v2.FormatOptions: ["STRUCTURE", "STRUCTURE_ID", "ACTION"],
+    type(None): [
         "STRUCTURE",
         "STRUCTURE_ID",
         "ACTION",
+    ],  # Default: same as SDMX-CSV 2.x
+}
+
+#: Mapping from labels= keyword argument → expected column names.
+EXP_COLS = {
+    Labels.id: [
+        "DIM_FOO",
+        "DIM_BAR",
+        "OBS_VALUE_X",
+        "ATTR_BAZ",
+        "ATTR_QUX",
+    ],
+    Labels.both: [
+        "DIM_FOO: Foo",
+        "DIM_BAR: Bar",
+        "OBS_VALUE_X: Observation value",
+        "ATTR_BAZ: Baz",
+        "ATTR_QUX: Qux",
+    ],
+    Labels.name: [
         "DIM_FOO",
         "Foo",
         "DIM_BAR",
         "Bar",
         "OBS_VALUE_X",
+        "Observation value",
         "ATTR_BAZ",
         "Baz",
         "ATTR_QUX",
@@ -155,28 +170,58 @@ EXP_COLS = {
 
 
 @pytest.mark.parametrize(
-    "format, exp_cols", [(None, "v1"), (csv.v1.FORMAT, "v1"), (csv.v2.FORMAT, "v2")]
+    "keys",
+    (
+        Keys.none,
+        pytest.param(Keys.both, marks=pytest.mark.xfail(raises=NotImplementedError)),
+        pytest.param(Keys.obs, marks=pytest.mark.xfail(raises=NotImplementedError)),
+        pytest.param(Keys.both, marks=pytest.mark.xfail(raises=NotImplementedError)),
+    ),
 )
-def test_write_labels_both(
-    messages: tuple[message.StructureMessage, message.DataMessage],
-    format: Optional[csv.common.CSVFormat],
-    exp_cols: str,
+def test_write_keys(
+    messages: tuple[message.StructureMessage, message.DataMessage], keys: Keys
 ) -> None:
-    """SDMX-CSV can be produced with :attr:`Labels.both`."""
+    """SDMX-CSV can be produced with :attr:`Labels.both` and :attr:`Labels.name`."""
     sm, dm = messages
+
+    fo = csv.v2.FormatOptions()
+    result = sdmx.to_csv(
+        dm, rtype=pd.DataFrame, format_options=fo, keys=keys, attributes=Attributes.all
+    )
+    assert isinstance(result, pd.DataFrame)
+
+    assert EXP_COLS_START[type(fo)] + EXP_COLS[Labels.id] == result.columns.to_list()
+    assert len(dm.data[0]) == len(result)
+
+
+@pytest.mark.parametrize("fo", [None, csv.v1.FormatOptions(), csv.v2.FormatOptions()])
+@pytest.mark.parametrize("labels", list(Labels))
+def test_write_labels(
+    messages: tuple[message.StructureMessage, message.DataMessage],
+    fo: CSVFormatOptions,
+    labels: Labels,
+) -> None:
+    """SDMX-CSV can be produced with :attr:`Labels.both` and :attr:`Labels.name`."""
+    sm, dm = messages
+
+    if type(fo) is csv.v1.FormatOptions and labels is Labels.name:
+        pytest.skip(reason="Invalid combination")
 
     result = sdmx.to_csv(
         dm,
         rtype=pd.DataFrame,
-        format=format,
-        labels=Labels.both,
+        format_options=fo,
+        labels=labels,
         attributes=Attributes.all,
     )
     assert isinstance(result, pd.DataFrame)
 
     # print(result.to_string())  # DEBUG
-
-    assert EXP_COLS[exp_cols] == result.columns.to_list()
+    expr = re.compile("_X" if type(fo) is csv.v1.FormatOptions else "^$")
+    assert (
+        list(map(partial(expr.sub, ""), EXP_COLS_START[type(fo)] + EXP_COLS[labels]))
+        == result.columns.to_list()
+    )
     assert len(dm.data[0]) == len(result)
 
 
@@ -204,9 +249,6 @@ def test_unsupported(tmp_path, specimen):
 
     with pytest.raises(TypeError, match="positional"):
         sdmx.to_csv(ds, "foo")
-
-    with pytest.raises(NotImplementedError, match="labels"):
-        sdmx.to_csv(ds, labels="name")
 
     with pytest.raises(NotImplementedError, match="time_format"):
         sdmx.to_csv(ds, time_format="normalized")
