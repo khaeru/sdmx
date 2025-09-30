@@ -1,3 +1,5 @@
+import re
+from functools import partial
 from itertools import product
 from typing import TYPE_CHECKING, cast
 
@@ -93,7 +95,8 @@ def messages() -> tuple[message.StructureMessage, message.DataMessage]:
     dd.getdefault(id="DIM_FOO", concept_identity=cs["FOO"])
     dd.getdefault(id="DIM_BAR", concept_identity=cs["BAR"])
     # The primary measure has an ID different from "OBS_VALUE"
-    md.getdefault(id="OBS_VALUE_X")
+    OBS_VALUE = cs.setdefault(id="OBS_VALUE_X", name="Observation value")
+    md.getdefault(id="OBS_VALUE_X", concept_identity=OBS_VALUE)
     # BAZ and QUX are attributes
     ad.getdefault(id="ATTR_BAZ", concept_identity=cs["BAZ"])
     ad.getdefault(id="ATTR_QUX", concept_identity=cs["QUX"])
@@ -123,24 +126,40 @@ def messages() -> tuple[message.StructureMessage, message.DataMessage]:
     return sm, dm
 
 
-EXP_COLS = {
-    "v1": [
-        "DATAFLOW",
-        "DIM_FOO: Foo",
-        "DIM_BAR: Bar",
-        "OBS_VALUE",
-        "ATTR_BAZ: Baz",
-        "ATTR_QUX: Qux",
-    ],
-    "v2": [
+#: Mapping from format_options=… argument → expected initial columns.
+EXP_COLS_START = {
+    csv.v1.FormatOptions: ["DATAFLOW"],
+    csv.v2.FormatOptions: ["STRUCTURE", "STRUCTURE_ID", "ACTION"],
+    type(None): [
         "STRUCTURE",
         "STRUCTURE_ID",
         "ACTION",
+    ],  # Default: same as SDMX-CSV 2.x
+}
+
+#: Mapping from labels= keyword argument → expected column names.
+EXP_COLS = {
+    Labels.id: [
+        "DIM_FOO",
+        "DIM_BAR",
+        "OBS_VALUE_X",
+        "ATTR_BAZ",
+        "ATTR_QUX",
+    ],
+    Labels.both: [
+        "DIM_FOO: Foo",
+        "DIM_BAR: Bar",
+        "OBS_VALUE_X: Observation value",
+        "ATTR_BAZ: Baz",
+        "ATTR_QUX: Qux",
+    ],
+    Labels.name: [
         "DIM_FOO",
         "Foo",
         "DIM_BAR",
         "Bar",
         "OBS_VALUE_X",
+        "Observation value",
         "ATTR_BAZ",
         "Baz",
         "ATTR_QUX",
@@ -149,30 +168,34 @@ EXP_COLS = {
 }
 
 
-@pytest.mark.parametrize(
-    "format_options, exp_cols",
-    [(None, "v2"), (csv.v1.FormatOptions(), "v1"), (csv.v2.FormatOptions(), "v2")],
-)
-def test_write_labels_both(
+@pytest.mark.parametrize("fo", [None, csv.v1.FormatOptions(), csv.v2.FormatOptions()])
+@pytest.mark.parametrize("labels", list(Labels))
+def test_write_labels(
     messages: tuple[message.StructureMessage, message.DataMessage],
-    format_options: CSVFormatOptions,
-    exp_cols: str,
+    fo: CSVFormatOptions,
+    labels: Labels,
 ) -> None:
-    """SDMX-CSV can be produced with :attr:`Labels.both`."""
+    """SDMX-CSV can be produced with :attr:`Labels.both` and :attr:`Labels.name`."""
     sm, dm = messages
+
+    if type(fo) is csv.v1.FormatOptions and labels is Labels.name:
+        pytest.skip(reason="Invalid combination")
 
     result = sdmx.to_csv(
         dm,
         rtype=pd.DataFrame,
-        format_options=format_options,
-        labels=Labels.both,
+        format_options=fo,
+        labels=labels,
         attributes=Attributes.all,
     )
     assert isinstance(result, pd.DataFrame)
 
     # print(result.to_string())  # DEBUG
-
-    assert EXP_COLS[exp_cols] == result.columns.to_list()
+    expr = re.compile("_X" if type(fo) is csv.v1.FormatOptions else "^$")
+    assert (
+        list(map(partial(expr.sub, ""), EXP_COLS_START[type(fo)] + EXP_COLS[labels]))
+        == result.columns.to_list()
+    )
     assert len(dm.data[0]) == len(result)
 
 
@@ -200,9 +223,6 @@ def test_unsupported(tmp_path, specimen):
 
     with pytest.raises(TypeError, match="positional"):
         sdmx.to_csv(ds, "foo")
-
-    with pytest.raises(NotImplementedError, match="labels"):
-        sdmx.to_csv(ds, labels="name")
 
     with pytest.raises(NotImplementedError, match="time_format"):
         sdmx.to_csv(ds, time_format="normalized")

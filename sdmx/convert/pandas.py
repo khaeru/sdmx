@@ -36,6 +36,8 @@ if TYPE_CHECKING:
     class ToDatetimeKeywords(TypedDict, total=False):
         format: str
 
+    KeyOrAttributeValue = Union["common.KeyValue", "common.AttributeValue"]
+
 
 _HAS_PANDAS_2 = pd.__version__.split(".")[0] >= "2"
 
@@ -49,6 +51,9 @@ ALL_CONTENTS = {
     "structure",
     "organisation_scheme",
 }
+
+
+NO_VALUE = SimpleNamespace(value="")
 
 
 class Attributes(Flag):
@@ -95,7 +100,7 @@ class Column(ABC):
     .. todo:: Unify with :class:`.reader.csv.Handler`.
     """
 
-    __slots__ = ("name", "id", "_hash")
+    __slots__ = ("name", "id")
 
     #: Column name/header.
     name: str
@@ -106,23 +111,12 @@ class Column(ABC):
     def __call__(self, *args, **kwargs) -> str: ...
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"<{type(self).__name__} id={self.id!r} name={self.name!r}>"
-
-
-NO_CONCEPT = SimpleNamespace(name="")
-NO_VALUE = SimpleNamespace(value="")
-
-
-def _component_to_column_name(
-    obj: Union["common.DataAttribute", "common.DimensionComponent"],
-) -> str:
-    """Return a string column name given `obj`."""
-    if obj.concept_identity:
-        result = str(obj.concept_identity.name)
-    return result or f"(Name of {obj.id!r})"
+        return f"<{type(self).__name__} id={getattr(self, 'id', '—')!r} name={self.name!r}>"
 
 
 class Fixed(Column):
+    """Column with fixed value."""
+
     def __init__(self, name: str, value: str) -> None:
         self.name = name
         self._value = value
@@ -131,59 +125,52 @@ class Fixed(Column):
         return self._value
 
 
-class AttributeValueBoth(Column):
-    def __init__(self, attr: "common.DataAttribute") -> None:
-        self.name = f"{attr.id}: {_component_to_column_name(attr)}"
-        self.id = attr.id
+class ComponentColumn(Column):
+    """A column taking its header from a :class:`.Component`."""
 
-    def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
-        v = avs[self.id].value
+    labels: Labels
+
+    def __init__(self, component: "common.Component") -> None:
+        self.id = component.id
+        c_name = (
+            str(component.concept_identity.name)
+            if component.concept_identity
+            else f"(Name of {component.id!r})"
+        )
+        # Set column header according to subclass `labels` attribute
+        self.name = {
+            Labels.id: self.id,
+            Labels.both: f"{self.id}: {c_name}",
+            Labels.name: c_name,
+        }[self.labels]
+
+
+class ComponentBoth(ComponentColumn):
+    """:attr:`Labels.both` column."""
+
+    labels = Labels.both
+
+    def __call__(self, values: Mapping[str, "KeyOrAttributeValue"]) -> str:
+        v = values[self.id].value
         return f"{v.id}: {v.name}" if isinstance(v, common.Code) else str(v)
 
 
-class AttributeValueID(Column):
-    def __init__(self, attr: "common.DataAttribute") -> None:
-        self.name = self.id = attr.id
+class ComponentID(ComponentColumn):
+    """:attr:`Labels.id` column."""
 
-    def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
-        return str(avs.get(self.id, NO_VALUE).value)
+    labels = Labels.id
 
-
-class AttributeValueName(Column):
-    def __init__(self, attr: "common.DataAttribute") -> None:
-        self.name = _component_to_column_name(attr)
-        self.id = attr.id
-
-    def __call__(self, avs: Mapping[str, "common.AttributeValue"]) -> str:
-        v = avs[self.id].value
-        return str(v.name) if isinstance(v, common.Code) else v
+    def __call__(self, values: Mapping[str, "KeyOrAttributeValue"]) -> str:
+        return str(values.get(self.id, NO_VALUE).value)
 
 
-class KeyValueBoth(Column):
-    def __init__(self, dim: "common.DimensionComponent") -> None:
-        self.name = f"{dim.id}: {_component_to_column_name(dim)}"
-        self.id = dim.id
+class ComponentName(ComponentColumn):
+    """:attr:`Labels.name` column."""
 
-    def __call__(self, key: "common.Key") -> str:
-        v = key[self.id].value
-        return f"{v.id}: {v.name}" if isinstance(v, common.Code) else str(v)
+    labels = Labels.name
 
-
-class KeyValueID(Column):
-    def __init__(self, dim: "common.DimensionComponent") -> None:
-        self.name = self.id = dim.id
-
-    def __call__(self, key: "common.Key") -> str:
-        return str(key[self.id].value)
-
-
-class KeyValueName(Column):
-    def __init__(self, dim: "common.DimensionComponent") -> None:
-        self.name = _component_to_column_name(dim)
-        self.id = dim.id
-
-    def __call__(self, key: "common.Key") -> str:
-        v = key[self.id].value
+    def __call__(self, values: Mapping[str, "KeyOrAttributeValue"]) -> str:
+        v = values[self.id].value
         return str(v.name) if isinstance(v, common.Code) else v
 
 
@@ -195,7 +182,7 @@ class ColumnSpec:
     #: Columns related to observation keys.
     key: list[Column]
     #: Name(s) of column(s) related to observation measure(s).
-    measure: list[str]
+    measure: list[Column]
     #: Columns related to observation-attached attributes.
     obs_attrib: list[Column]
     #: Final columns.
@@ -225,11 +212,6 @@ class ColumnSpec:
             ds.obs[0] if len(ds.obs) else common.BaseObservation(),
         )
 
-        # Unpack some other attributes
-        fmt, labels = pc.format_options.format, pc.format_options.labels
-        # Shorthand
-        no_format, csv_v1, csv_v2 = csv.common.CSVFormat, csv.v1.FORMAT, csv.v2.FORMAT
-
         # Fixed columns
         self.start = {
             csv.common.CSVFormat: [],  # No specific SDMX-CSV format
@@ -239,45 +221,35 @@ class ColumnSpec:
                 Fixed("STRUCTURE_ID", dfd_urn),
                 Fixed("ACTION", "I"),
             ],
-        }[fmt]
+        }[pc.format_options.format]
 
-        # For keys/dimensions and attributes, use the SDMX-CSV v2 style if no specific
-        # format was gievn
-        fmt = csv_v2 if fmt is no_format else fmt
-
-        # Identify classes for key columns
-        classes_d = cast(
+        # Identify classes for key and attribute columns
+        classes = cast(
             list,
             {
-                (csv_v1, Labels.id): [KeyValueID],
-                (csv_v1, Labels.both): [KeyValueBoth],
-                (csv_v2, Labels.id): [KeyValueID],
-                (csv_v2, Labels.both): [KeyValueID, KeyValueName],
-            }[(fmt, labels)],
+                Labels.id: [ComponentID],
+                Labels.both: [ComponentBoth],
+                Labels.name: [ComponentID, ComponentName],
+            }[pc.format_options.labels],
         )
 
         # Construct key columns: 1 or 2 columns for each dimension
-        self.key = [
-            cls_d(d) for d, cls_d in product(dsd.dimensions.components, classes_d)
-        ]
+        self.key = [cls(d) for d, cls in product(dsd.dimensions.components, classes)]
 
         # Measure columns
-        if fmt is csv_v1 or not (len(dsd.measures)):
-            self.measure = ["OBS_VALUE"]
-        else:
-            self.measure = [dsd.measures[0].id]
+        _measures = dsd.measures.components
+        if not _measures or pc.format_options.format is csv.v1.FORMAT:
+            _measures = [
+                v21.PrimaryMeasure(
+                    id="OBS_VALUE",
+                    concept_identity=common.Concept(
+                        id="OBS_VALUE", name="Observation value"
+                    ),
+                )
+            ]
+        self.measure = [cls(m) for m, cls in product(_measures, classes)]
 
-        # Identify classes for attribute columns
-        classes_a = cast(
-            list,
-            {
-                (csv_v1, Labels.id): [AttributeValueID],
-                (csv_v1, Labels.both): [AttributeValueBoth],
-                (csv_v2, Labels.id): [AttributeValueID],
-                (csv_v2, Labels.both): [AttributeValueID, AttributeValueName],
-            }[(fmt, labels)],
-        )
-
+        # Attribute columns
         _attributes = dsd.attributes.components
         if pc.attributes is Attributes.none:
             # Omit attribute columns if so configured
@@ -286,9 +258,9 @@ class ColumnSpec:
             setattr(self, "add_obs_attrib", lambda v: None)
 
         # Construct attribute columns: 1 or 2 columns for each attribute
-        self.obs_attrib = [cls_a(a) for a, cls_a in product(_attributes, classes_a)]
+        self.obs_attrib = [cls(a) for a, cls in product(_attributes, classes)]
 
-        # Add the attributes of the data set (SDMX 2.1 only)
+        # Columns for attributes attached to the data set (SDMX 2.1 only)
         self.end = []
         if (pc.attributes & Attributes.dataset) and isinstance(ds, v21.DataSet):
             self.end.extend(Fixed(id, value) for id, value in ds.attrib.items())
@@ -324,18 +296,14 @@ class ColumnSpec:
     @property
     def obs(self) -> list[str]:
         """List of column names for observation data."""
-        return (
-            [c.name for c in self.key]
-            + self.measure
-            + [c.name for c in self.obs_attrib]
-        )
+        return [c.name for c in chain(self.key, self.measure, self.obs_attrib)]
 
     def add_obs_attrib(self, values: Iterable[str]) -> None:
         """Extend :attr:`obs_attrib` using `values`."""
         if missing := set(values) - set(c.id for c in self.obs_attrib):
             # Convert missing attributes to DataAttribute → Columns
             self.obs_attrib.extend(
-                AttributeValueID(common.DataAttribute(id=id))
+                ComponentID(common.DataAttribute(id=id))
                 for id in filter(missing.__contains__, values)
             )
 
@@ -349,16 +317,22 @@ class ColumnSpec:
             # Emit an empty row to be dropped
             result: Iterable[Union[str, None]] = repeat(None, len(self.obs))
         else:
+            # Observation values
+            # FIXME Handled CodedObservationValue, similar to AttributeValue
+            ov = None if obs.value is None else str(obs.value)
+
             # Combined attributes from observation, series-, and group keys
             avs = obs.attrib
+
+            # Maybe update list of observation attributes
             self.add_obs_attrib(avs)
 
             # - Convert the observation Key using key Columns.
             # - Convert the value to Optional[str].
             # - Convert the attribute values using attribute Columns.
             result = chain(
-                [c(key) for c in self.key],
-                [None if obs.value is None else str(obs.value)],
+                [c(key.values) for c in self.key],
+                [ov] * len(self.measure),
                 [c(avs) for c in self.obs_attrib],
             )
         return list(result)
@@ -517,12 +491,9 @@ class PandasConverter(DispatchConverter):
     def __post_init__(self, datetime: Any, rtype: Optional[str]) -> None:
         """Transform and validate arguments."""
         # Raise on unsupported arguments
-        fo = self.format_options
-        if fo.labels not in {Labels.id, Labels.both}:
-            raise NotImplementedError(f"convert to SDMX-CSV with labels={fo.labels}")
-        elif fo.time_format not in {TimeFormat.original}:
+        if self.format_options.time_format not in {TimeFormat.original}:
             raise NotImplementedError(
-                f"convert to SDMX-CSV with time_format={fo.time_format}"
+                f"convert to SDMX-CSV with time_format={self.format_options.time_format}"
             )
 
         # Handle deprecated arguments
@@ -782,7 +753,7 @@ def _apply_dtype(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
         return df
 
     # Create a mapping to apply `dtype` to multiple columns
-    measure_cols = c._columns.measure
+    measure_cols = {c.name for c in c._columns.measure}
     dtypes = {col: c.dtype for col in measure_cols}
 
     try:
@@ -839,7 +810,7 @@ def _reshape(
     result = (
         df.set_index([col.name for col in c._columns.key])
         .pipe(_ensure_multiindex)
-        .rename(columns={c: "value" for c in c._columns.measure})
+        .rename(columns={c.name: "value" for c in c._columns.measure})
     )
 
     # Single column for measure(s) + attribute(s) → return pd.Series
