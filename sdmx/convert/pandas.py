@@ -1,11 +1,8 @@
 """Convert :mod:`sdmx.message` and :mod:`.model` objects to :mod:`pandas` objects."""
 
-import operator
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import InitVar, dataclass, field
-from enum import Flag, auto
-from functools import reduce
 from itertools import chain, product, repeat
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Optional, Union, cast
@@ -17,7 +14,7 @@ import pandas as pd
 from sdmx import message, urn
 from sdmx.dictlike import DictLike
 from sdmx.format import csv
-from sdmx.format.csv.common import CSVFormatOptions, Labels, TimeFormat
+from sdmx.format.csv.common import Attributes, CSVFormatOptions, Labels, TimeFormat
 from sdmx.model import common, v21, v30
 from sdmx.model.internationalstring import DEFAULT_LOCALE
 
@@ -54,44 +51,6 @@ ALL_CONTENTS = {
 
 
 NO_VALUE = SimpleNamespace(value="")
-
-
-class Attributes(Flag):
-    """Attributes to include.
-
-    .. todo:: Migrate to :mod:`.format.csv.common` or similar.
-    """
-
-    #: No attributes.
-    none = 0
-
-    #: Attributes attached to each :class:`Observation <.BaseObservation>`.
-    observation = auto()
-    o = observation
-
-    #: Attributes attached to any (0 or 1) :class:`~.SeriesKey` associated with each
-    #: Observation.
-    series_key = auto()
-    s = series_key
-
-    #: Attributes attached to any (0 or more) :class:`~.GroupKey` associated with each
-    #: Observation.
-    group_key = auto()
-    g = group_key
-
-    #: Attributes attached to the :class:`~.DataSet` containing the Observations.
-    dataset = auto()
-    d = dataset
-
-    all = observation | series_key | group_key | dataset
-
-    @classmethod
-    def parse(cls, value: str) -> "Attributes":
-        try:
-            values = [Attributes.none] + [cls[v] for v in value.lower()]
-        except KeyError as e:
-            raise ValueError(f"{e.args[0]!r} is not a member of {cls}")
-        return reduce(operator.or_, values)
 
 
 class Column(ABC):
@@ -181,7 +140,7 @@ class ColumnSpec:
     start: list[Fixed]
     #: Columns related to observation keys.
     key: list[Column]
-    #: Name(s) of column(s) related to observation measure(s).
+    #: Column(s) related to observation measure(s).
     measure: list[Column]
     #: Columns related to observation-attached attributes.
     obs_attrib: list[Column]

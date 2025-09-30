@@ -1,9 +1,46 @@
 """Information about SDMX-CSV file formats."""
 
+import operator
 from dataclasses import dataclass, replace
-from enum import Enum, auto
+from enum import Enum, Flag, auto
+from functools import reduce
 
 from sdmx.format.common import Format, FormatOptions
+
+
+class Attributes(Flag):
+    """Attributes to include."""
+
+    #: No attributes.
+    none = 0
+
+    #: Attributes attached to each :class:`Observation <.BaseObservation>`.
+    observation = auto()
+    o = observation
+
+    #: Attributes attached to any (0 or 1) :class:`~.SeriesKey` associated with each
+    #: Observation.
+    series_key = auto()
+    s = series_key
+
+    #: Attributes attached to any (0 or more) :class:`~.GroupKey` associated with each
+    #: Observation.
+    group_key = auto()
+    g = group_key
+
+    #: Attributes attached to the :class:`~.DataSet` containing the Observations.
+    dataset = auto()
+    d = dataset
+
+    all = observation | series_key | group_key | dataset
+
+    @classmethod
+    def parse(cls, value: str) -> "Attributes":
+        try:
+            values = [Attributes.none] + [cls[v] for v in value.lower()]
+        except KeyError as e:
+            raise ValueError(f"{e.args[0]!r} is not a member of {cls}")
+        return reduce(operator.or_, values)
 
 
 class Labels(Enum):
