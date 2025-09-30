@@ -1,7 +1,7 @@
 """Information about SDMX-CSV file formats."""
 
 import operator
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, replace
 from enum import Enum, Flag, auto
 from functools import reduce
 
@@ -103,7 +103,13 @@ class CSVFormatOptions(FormatOptions):
 def kwargs_to_format_options(kwargs: dict, cls: type["CSVFormatOptions"]) -> None:
     """Separate from `kwargs` any attributes of :class:`CSVFormatOptions`."""
     _fo = "format_options"
-    default = cls()
-    kwargs.setdefault(_fo, default)
-    replacements = {k: kwargs.pop(k) for k in {"labels", "time_format"} & set(kwargs)}
-    kwargs[_fo] = replace(kwargs.pop(_fo) or default, **replacements)
+    # Either an existing instance of CSVFormatOptions or a subclass, or a new/default
+    # instance
+    existing = kwargs.pop(_fo, cls()) or cls()
+
+    # Keys in `kwargs` that should be assigned to a FormatOptions instance
+    keys = set(f.name for f in fields(existing)) & set(kwargs)
+    replacements = {k: kwargs.pop(k) for k in keys}
+
+    # Replace or set existing instance with `existing` + `replacements`
+    kwargs[_fo] = replace(existing, **replacements)

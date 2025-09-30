@@ -13,6 +13,7 @@ from sdmx.format import csv
 from sdmx.format.csv.common import CSVFormatOptions, Labels
 from sdmx.format.csv.v1 import FormatOptions as V1FormatOptions
 from sdmx.format.csv.v2 import FormatOptions as V2FormatOptions
+from sdmx.format.csv.v2 import Keys
 from sdmx.model import common, v21
 
 if TYPE_CHECKING:
@@ -166,6 +167,31 @@ EXP_COLS = {
         "Qux",
     ],
 }
+
+
+@pytest.mark.parametrize(
+    "keys",
+    (
+        Keys.none,
+        pytest.param(Keys.both, marks=pytest.mark.xfail(raises=NotImplementedError)),
+        pytest.param(Keys.obs, marks=pytest.mark.xfail(raises=NotImplementedError)),
+        pytest.param(Keys.both, marks=pytest.mark.xfail(raises=NotImplementedError)),
+    ),
+)
+def test_write_keys(
+    messages: tuple[message.StructureMessage, message.DataMessage], keys: Keys
+) -> None:
+    """SDMX-CSV can be produced with :attr:`Labels.both` and :attr:`Labels.name`."""
+    sm, dm = messages
+
+    fo = csv.v2.FormatOptions()
+    result = sdmx.to_csv(
+        dm, rtype=pd.DataFrame, format_options=fo, keys=keys, attributes=Attributes.all
+    )
+    assert isinstance(result, pd.DataFrame)
+
+    assert EXP_COLS_START[type(fo)] + EXP_COLS[Labels.id] == result.columns.to_list()
+    assert len(dm.data[0]) == len(result)
 
 
 @pytest.mark.parametrize("fo", [None, csv.v1.FormatOptions(), csv.v2.FormatOptions()])

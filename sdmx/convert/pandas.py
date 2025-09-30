@@ -15,6 +15,7 @@ from sdmx import message, urn
 from sdmx.dictlike import DictLike
 from sdmx.format import csv
 from sdmx.format.csv.common import Attributes, CSVFormatOptions, Labels, TimeFormat
+from sdmx.format.csv.v2 import Keys
 from sdmx.model import common, v21, v30
 from sdmx.model.internationalstring import DEFAULT_LOCALE
 
@@ -450,7 +451,13 @@ class PandasConverter(DispatchConverter):
     def __post_init__(self, datetime: Any, rtype: Optional[str]) -> None:
         """Transform and validate arguments."""
         # Raise on unsupported arguments
-        if self.format_options.time_format not in {TimeFormat.original}:
+        if isinstance(
+            self.format_options, csv.v2.FormatOptions
+        ) and self.format_options.keys not in {Keys.none}:
+            raise NotImplementedError(
+                f"convert to SDMX-CSV with keys={self.format_options.keys}"
+            )
+        elif self.format_options.time_format not in {TimeFormat.original}:
             raise NotImplementedError(
                 f"convert to SDMX-CSV with time_format={self.format_options.time_format}"
             )
