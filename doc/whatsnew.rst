@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.23.1 (2025-10-01)
+====================
 
 - Bug fix for :mod:`.convert.pandas`/:mod:`.writer.csv` (:pull:`247`):
   in v2.23.0 only, :class:`.PandasConverter` raised :class:`AttributeError` when created.
