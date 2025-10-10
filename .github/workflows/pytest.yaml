@@ -22,13 +22,13 @@ jobs:
         - ubuntu-latest
         - windows-latest
         python-version:
-        - "3.9"          # Earliest supported version
-        - "3.10"
+        - "3.10"  # Earliest supported version
         - "3.11"
         - "3.12"
-        - "3.13"  # Latest supported version
+        - "3.13"
+        - "3.14"  # Latest supported version
         # commented: only enable once next Python version enters RC
-        # - "3.14.0-rc.1"  # Development version
+        # - "3.15.0-rc.1"  # Development version
 
       fail-fast: false
 
