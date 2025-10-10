@@ -3,8 +3,12 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Python 3.14 (`released 2025-10-07 <https://www.python.org/downloads/release/python-3140/>`_) is fully supported (:pull:`249`).
+- Python 3.9 support is dropped, as `it has reached end-of-life <https://peps.python.org/pep-0569/#lifespan>`__ (:pull:`249`).
+  :mod:`sdmx` requires Python 3.10 or later.
 
 v2.23.1 (2025-10-01)
 ====================
