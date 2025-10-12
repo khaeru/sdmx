@@ -1157,19 +1157,19 @@ def _obs(reader, elem):
     args = dict()
 
     for e in elem.iterchildren():
-        localname = QName(e).localname
-        if localname == "Attributes":
-            args["attached_attribute"] = reader.pop_single("Attributes")
-        elif localname == "ObsDimension":
-            # Mutually exclusive with ObsKey
-            args["dimension"] = dsd.make_key(
-                common.Key, {dim_at_obs.id: e.attrib["value"]}
-            )
-        elif localname == "ObsKey":
-            # Mutually exclusive with ObsDimension
-            args["dimension"] = reader.pop_single(common.Key)
-        elif localname == "ObsValue":
-            args["value"] = e.attrib["value"]
+        match QName(e).localname:
+            case "Attributes":
+                args["attached_attribute"] = reader.pop_single("Attributes")
+            case "ObsDimension":
+                # Mutually exclusive with ObsKey
+                args["dimension"] = dsd.make_key(
+                    common.Key, {dim_at_obs.id: e.attrib["value"]}
+                )
+            case "ObsKey":
+                # Mutually exclusive with ObsDimension
+                args["dimension"] = reader.pop_single(common.Key)
+            case "ObsValue":
+                args["value"] = e.attrib["value"]
 
     return reader.model.Observation(**args)
 

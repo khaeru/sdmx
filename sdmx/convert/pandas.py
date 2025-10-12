@@ -432,19 +432,20 @@ class PandasConverter(DispatchConverter):
             stacklevel=2,
         )
 
-        if isinstance(value, (str, common.DimensionComponent)):
-            self.datetime_dimension = value  # type: ignore [assignment]
-        elif isinstance(value, dict):
-            # Unpack a dict of 'advanced' arguments
-            self.datetime_axis = value.pop("axis", self.datetime_axis)
-            self.datetime_dimension = value.pop("dim", self.datetime_dimension)
-            self.datetime_freq = value.pop("freq", self.datetime_freq)
-            if len(value):
-                raise ValueError(f"Unexpected datetime={tuple(sorted(value))!r}")
-        elif isinstance(value, bool):
-            self.datetime_axis = 0 if value else -1
-        else:
-            raise TypeError(f"PandasConverter(…, datetime={type(value)})")
+        match value:
+            case str() | common.DimensionComponent():
+                self.datetime_dimension = value  # type: ignore [assignment]
+            case dict():
+                # Unpack a dict of 'advanced' arguments
+                self.datetime_axis = value.pop("axis", self.datetime_axis)
+                self.datetime_dimension = value.pop("dim", self.datetime_dimension)
+                self.datetime_freq = value.pop("freq", self.datetime_freq)
+                if len(value):
+                    raise ValueError(f"Unexpected datetime={tuple(sorted(value))!r}")
+            case bool():
+                self.datetime_axis = 0 if value else -1
+            case _:
+                raise TypeError(f"PandasConverter(…, datetime={type(value)})")
 
     def __post_init__(self, datetime: Any, rtype: str | None) -> None:
         """Transform and validate arguments."""
