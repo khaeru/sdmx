@@ -3,14 +3,15 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import MutableSequence, Sequence
 from itertools import zip_longest
-from typing import TYPE_CHECKING, MutableSequence, Optional, Sequence, Union
+from typing import TYPE_CHECKING
 
 import sdmx.message
 from sdmx.convert import Converter
 from sdmx.format import list_media_types
 from sdmx.format.csv.v2 import FormatOptions
-from sdmx.model import common, v30
+from sdmx.model import common, v21, v30
 from sdmx.reader.base import BaseReader
 
 if TYPE_CHECKING:
@@ -18,10 +19,8 @@ if TYPE_CHECKING:
 
     import pandas
 
-    from sdmx.model import v21
-
     class DataSetKwargs(TypedDict):
-        described_by: Optional[common.BaseDataflow]
+        described_by: common.BaseDataflow | None
         structured_by: common.BaseDataStructureDefinition
 
 
@@ -39,8 +38,8 @@ class Reader(BaseReader):
     #: same number of handlers as columns in the `data` passed to :meth:`convert`.
     handlers: Sequence["Handler"]
 
-    _dataflow: Optional["common.BaseDataflow"]
-    _structure: Union["v21.DataStructureDefinition", "v30.DataStructure"]
+    _dataflow: "common.BaseDataflow | None"
+    _structure: v21.DataStructureDefinition | v30.DataStructureDefinition
     _observations: dict[tuple[str, str, str], list["common.BaseObservation"]]
 
     def __init__(self):
@@ -54,7 +53,7 @@ class Reader(BaseReader):
         """Read a message from `data`."""
         self.options.delimiter = delimiter
 
-        if isinstance(structure, common.BaseDataflow):
+        if isinstance(structure, (v21.DataflowDefinition, v30.Dataflow)):
             self._dataflow = structure
             self._structure = structure.structure
         else:
@@ -114,7 +113,7 @@ class Reader(BaseReader):
         ValueError
             if the data contain malformed SDMX-CSV 2.0.0.
         """
-        handlers: MutableSequence[Optional["Handler"]] = [
+        handlers: MutableSequence["Handler" | None] = [
             StoreTarget(allowable={"dataflow", "dataprovision", "datastructure"}),
             StoreTarget(),
         ] + ([None] * (len(header) - 2))
@@ -273,7 +272,7 @@ class StoreTarget(Handler):
     Used for the STRUCTURE, STRUCTURE_ID, and ACTION columns.
     """
 
-    def __init__(self, allowable: Optional[set[str]] = None):
+    def __init__(self, allowable: set[str] | None = None):
         self.allowable = allowable
 
     def __call__(self, obs, value):

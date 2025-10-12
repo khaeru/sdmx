@@ -2,21 +2,10 @@ import logging
 import re
 from abc import abstractmethod
 from collections import ChainMap, defaultdict
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from importlib import import_module
 from itertools import chain, count
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Iterable,
-    Iterator,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from lxml import etree
 from lxml.etree import QName
@@ -159,9 +148,7 @@ class XMLEventReader(BaseReader):
         **kwargs,
     ) -> message.Message:
         # Initialize stacks
-        self.stack: dict[Union[type, str], dict[Union[str, int], Any]] = defaultdict(
-            dict
-        )
+        self.stack: dict[type | str, dict[str | int, Any]] = defaultdict(dict)
 
         # Elements to ignore when parsing finishes
         self.ignore = set()
@@ -258,7 +245,7 @@ class XMLEventReader(BaseReader):
         return decorator
 
     @classmethod
-    def possible_reference(cls, cls_hint: Optional[type] = None, unstash: bool = False):
+    def possible_reference(cls, cls_hint: type | None = None, unstash: bool = False):
         """Decorator for a function where the `elem` parsed may be a Reference.
 
         Before calling the decorated function, attempt to parse the `elem` as a
@@ -372,11 +359,11 @@ class XMLEventReader(BaseReader):
 
     def get_single(
         self,
-        cls_or_name: Union[type, str],
-        id: Optional[str] = None,
-        version: Optional[str] = None,
+        cls_or_name: type | str,
+        id: str | None = None,
+        version: str | None = None,
         subclass: bool = False,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Return a reference to an object while leaving it in its stack.
 
         Always returns 1 object. Returns :obj:`None` if no matching object exists, or if
@@ -389,7 +376,7 @@ class XMLEventReader(BaseReader):
         the stack `cls_or_name` *or any stack for a subclass of this class*.
         """
         if subclass:
-            keys: Iterable[Union[type, str]] = filter(
+            keys: Iterable[type | str] = filter(
                 matching_class(cls_or_name), self.stack.keys()
             )
             results: Mapping = ChainMap(*[self.stack[k] for k in keys])
@@ -409,14 +396,14 @@ class XMLEventReader(BaseReader):
         else:
             return next(iter(results.values()))
 
-    def pop_all(self, cls_or_name: Union[type, str], subclass=False) -> Sequence:
+    def pop_all(self, cls_or_name: type | str, subclass=False) -> Sequence:
         """Pop all objects from stack *cls_or_name* and return.
 
         If `cls_or_name` is a class and `subclass` is :obj:`True`; return all objects in
         the stack `cls_or_name` *or any stack for a subclass of this class*.
         """
         if subclass:
-            keys: Iterable[Union[type, str]] = list(
+            keys: Iterable[type | str] = list(
                 filter(matching_class(cls_or_name), self.stack.keys())
             )
             result: Iterable = chain(*[self.stack.pop(k).values() for k in keys])
@@ -425,14 +412,14 @@ class XMLEventReader(BaseReader):
 
         return list(result)
 
-    def pop_single(self, cls_or_name: Union[type, str]):
+    def pop_single(self, cls_or_name: type | str):
         """Pop a single object from the stack for `cls_or_name` and return."""
         try:
             return self.stack[cls_or_name].popitem()[1]
         except KeyError:
             return None
 
-    def peek(self, cls_or_name: Union[type, str]):
+    def peek(self, cls_or_name: type | str):
         """Get the object at the top of stack `cls_or_name` without removing it."""
         try:
             key, value = self.stack[cls_or_name].popitem()
@@ -441,7 +428,7 @@ class XMLEventReader(BaseReader):
         except KeyError:  # pragma: no cover
             return None
 
-    def pop_resolved_ref(self, cls_or_name: Union[type, str]):
+    def pop_resolved_ref(self, cls_or_name: type | str):
         """Pop a reference to `cls_or_name` and resolve it."""
         return self.resolve(self.pop_single(cls_or_name))
 

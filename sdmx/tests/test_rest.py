@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -7,7 +7,7 @@ from sdmx import Resource
 from sdmx.rest.common import PathParameter, PositiveIntParam, QueryParameter
 
 if TYPE_CHECKING:
-    import _pytest
+    from _pytest.mark import ParameterSet
 
 
 class TestResource:
@@ -78,11 +78,7 @@ _S = "?startPeriod=2024-02-12"
 
 R = Resource
 PARAMS: tuple[
-    Union[
-        tuple[Resource, dict[str, Any], Optional[str], Optional[str]],
-        "_pytest.mark.ParameterSet",
-    ],
-    ...,
+    "tuple[Resource, dict[str, Any], str | None, str | None] | ParameterSet", ...
 ] = (
     # (R.actualconstraint, {}, "actualconstraint/ID0", "actualconstraint/ID0"),
     (

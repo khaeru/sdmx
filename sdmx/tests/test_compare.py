@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import pytest
 from lxml.etree import Element
@@ -18,7 +17,7 @@ def test_allow_implied_urn() -> None:
 
     @dataclass
     class Bar:
-        urn: Optional[str] = None
+        urn: str | None = None
 
     b1 = Bar(urn="")
     b2 = Bar()

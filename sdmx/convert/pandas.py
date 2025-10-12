@@ -5,7 +5,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import InitVar, dataclass, field
 from itertools import chain, product, repeat
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 from warnings import warn
 
 import numpy as np
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     class ToDatetimeKeywords(TypedDict, total=False):
         format: str
 
-    KeyOrAttributeValue = Union["common.KeyValue", "common.AttributeValue"]
+    KeyOrAttributeValue = common.KeyValue | common.AttributeValue
 
 
 _HAS_PANDAS_2 = pd.__version__.split(".")[0] >= "2"
@@ -150,8 +150,8 @@ class ColumnSpec:
 
     def __init__(
         self,
-        pc: Optional["PandasConverter"] = None,
-        ds: Optional["common.BaseDataSet"] = None,
+        pc: "PandasConverter | None" = None,
+        ds: "common.BaseDataSet | None" = None,
     ) -> None:
         if pc is None or ds is None:
             return  # Empty/placeholder
@@ -227,9 +227,9 @@ class ColumnSpec:
 
     @staticmethod
     def _maybe_construct_dsd(
-        dsd: Optional["common.BaseDataStructureDefinition"],
+        dsd: v21.DataStructureDefinition | v30.DataStructureDefinition | None,
         obs: "common.BaseObservation",
-    ) -> Union["v21.DataStructureDefinition", "v30.DataStructure"]:
+    ) -> v21.DataStructureDefinition | v30.DataStructureDefinition:
         """If `dsd` is None, construct a DSD by inspection of `obs`."""
         if dsd is not None:
             return dsd
@@ -275,7 +275,7 @@ class ColumnSpec:
         key = obs.key
         if self.constraint and key not in self.constraint:
             # Emit an empty row to be dropped
-            result: Iterable[Union[str, None]] = repeat(None, len(self.obs))
+            result: Iterable[str | None] = repeat(None, len(self.obs))
         else:
             # Observation values
             # FIXME Handled CodedObservationValue, similar to AttributeValue
@@ -288,7 +288,7 @@ class ColumnSpec:
             self.add_obs_attrib(avs)
 
             # - Convert the observation Key using key Columns.
-            # - Convert the value to Optional[str].
+            # - Convert the value to str | None.
             # - Convert the attribute values using attribute Columns.
             result = chain(
                 [c(key.values) for c in self.key],
@@ -314,26 +314,26 @@ class PandasConverter(DispatchConverter):
     attributes: Attributes = Attributes.none
 
     #: If given, only Observations included by the *constraint* are returned.
-    constraint: Optional["ContentConstraint"] = None
+    constraint: "ContentConstraint | None" = None
 
     #: Datatype for observation values. If :any:`None`, data values remain
     #: :class:`object`/:class:`str`.
-    dtype: Union[type["np.generic"], type["ExtensionDtype"], str, None] = np.float64
+    dtype: type["np.generic"] | type["ExtensionDtype"] | str | None = np.float64
 
     #: Axis on which to place a time dimension. One of:
     #:
     #: - :py:`-1`: disabled.
     #: - :py:`0, "index"`: first/index axis.
     #: - :py:`1, "columns"`: second/columns axis.
-    datetime_axis: Union[int, str] = -1
+    datetime_axis: int | str = -1
 
     #: Dimension to convert to :class:`pandas.DatetimeIndex`. A :class:`str` value is
     #: interpreted as a dimension ID.
-    datetime_dimension: Optional["common.DimensionComponent"] = None
+    datetime_dimension: "common.DimensionComponent | None" = None
 
     #: Frequency for conversion to :class:`pandas.PeriodIndex`. A :class:`str` value is
     #: interpreted as one of the :ref:`pd:timeseries.period_aliases`.
-    datetime_freq: Optional["DateOffset"] = None
+    datetime_freq: "DateOffset | None" = None
 
     #: include : iterable of str or str, optional
     #:     One or more of the attributes of the StructureMessage ('category_scheme',
@@ -367,9 +367,7 @@ class PandasConverter(DispatchConverter):
     # Columns to be set as index levels, then unstacked.
     _unstack: list[str] = field(default_factory=list)
 
-    _context: dict[Union[str, type], Any] = field(
-        default_factory=lambda: dict(compat=False)
-    )
+    _context: dict[str | type, Any] = field(default_factory=lambda: dict(compat=False))
 
     def get_components(self, kind) -> list["common.Component"]:
         """Return an appropriate list of dimensions or attributes."""
@@ -448,7 +446,7 @@ class PandasConverter(DispatchConverter):
         else:
             raise TypeError(f"PandasConverter(…, datetime={type(value)})")
 
-    def __post_init__(self, datetime: Any, rtype: Optional[str]) -> None:
+    def __post_init__(self, datetime: Any, rtype: str | None) -> None:
         """Transform and validate arguments."""
         # Raise on unsupported arguments
         if isinstance(
@@ -626,7 +624,7 @@ def convert_structuremessage(c: "PandasConverter", obj: message.StructureMessage
         Keys are StructureMessage attributes; values are pandas objects.
     """
     attrs = sorted(c.include)
-    result: DictLike[str, Union[pd.Series, pd.DataFrame]] = DictLike()
+    result: DictLike[str, pd.Series | pd.DataFrame] = DictLike()
     for a in attrs:
         dl = c.convert(getattr(obj, a))
         if len(dl):
@@ -755,7 +753,7 @@ def _convert_datetime(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame
     return df.assign(**{dim.id: pd.to_datetime(df[dim.id], **dt_kw)})
 
 
-def _ensure_multiindex(obj: Union[pd.Series, pd.DataFrame]):
+def _ensure_multiindex(obj: pd.Series | pd.DataFrame):
     if not isinstance(obj.index, pd.MultiIndex):
         obj.index = pd.MultiIndex.from_product(
             [obj.index.to_list()], names=[obj.index.name]
@@ -763,9 +761,7 @@ def _ensure_multiindex(obj: Union[pd.Series, pd.DataFrame]):
     return obj
 
 
-def _reshape(
-    df: "pd.DataFrame", c: "PandasConverter"
-) -> Union[pd.Series, pd.DataFrame]:
+def _reshape(df: "pd.DataFrame", c: "PandasConverter") -> pd.Series | pd.DataFrame:
     """Reshape `df` to provide expected return types."""
 
     if c._strict:
@@ -790,7 +786,7 @@ def _reshape(
     return result
 
 
-def _to_periodindex(obj: Union["pd.Series", "pd.DataFrame"], c: "PandasConverter"):
+def _to_periodindex(obj: "pd.Series | pd.DataFrame", c: "PandasConverter"):
     """Convert a 1-D datetime index on `obj` to a PeriodIndex."""
     result = obj
 
@@ -887,7 +883,7 @@ def convert_itemscheme(c: "PandasConverter", obj: common.ItemScheme):
         add_item(item)
 
     # Convert to DataFrame
-    result: Union[pd.DataFrame, pd.Series] = pd.DataFrame.from_dict(
+    result: pd.DataFrame | pd.Series = pd.DataFrame.from_dict(
         items,
         orient="index",
         dtype=object,  # type: ignore [arg-type]

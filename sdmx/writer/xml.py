@@ -8,7 +8,7 @@
 import logging
 from collections.abc import Iterable, MutableMapping
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 import lxml
 from lxml import etree
@@ -458,7 +458,7 @@ def _contact(obj: model.Contact):
 
 
 @writer
-def _component(obj: model.Component, dsd=None, *, attrib: Optional[dict] = None):
+def _component(obj: model.Component, dsd=None, *, attrib: dict | None = None):
     child = []
     attrib = attrib or dict()
 

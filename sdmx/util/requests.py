@@ -1,7 +1,7 @@
 """Utilities for working with :mod:`requests` and related packages."""
 
 from importlib.util import find_spec
-from typing import TYPE_CHECKING, Optional, TypedDict, Union
+from typing import TYPE_CHECKING, TypedDict
 
 import urllib3
 from requests import PreparedRequest, Response
@@ -53,8 +53,8 @@ class SessionAttrs(TypedDict):
     """
 
     adapters: dict
-    auth: Optional[object]
-    cert: Union[str, tuple[str, str]]
+    auth: object | None
+    cert: str | tuple[str, str]
     cookies: "http.cookiejar.CookieJar"
     headers: dict
     hooks: dict

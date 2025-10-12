@@ -1,5 +1,16 @@
+from collections.abc import Mapping, Sequence
 from copy import copy
-from typing import Iterable, Mapping, Optional, Sequence, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import TypeAlias
+
+    # Types that can be converted into InternationalString
+    Convertible = str | Sequence | Mapping | Iterable[tuple[str, str]]
+
+    TInternationalString: TypeAlias = "InternationalString" | "Convertible"
+    TInternationalStringInit = TInternationalString | None
 
 # TODO read this from the environment, or use any value set in the SDMX-ML spec.
 #      Currently set to 'en' because test_dsd.py expects it.
@@ -49,12 +60,9 @@ class InternationalString:
 
     __slots__ = ("localizations",)
 
-    # Types that can be converted into InternationalString
-    _CONVERTIBLE = Union[str, Sequence, Mapping, Iterable[tuple[str, str]]]
-
     localizations: dict[str, str]
 
-    def __init__(self, value: Optional[_CONVERTIBLE] = None, **kwargs):
+    def __init__(self, value: "Convertible | None" = None, **kwargs) -> None:
         # Handle initial values according to type
         if value is None:
             # Keyword arguments → dict, possibly empty
@@ -131,10 +139,6 @@ class InternationalString:
             return NotImplemented
 
 
-_TInternationalString = Union[InternationalString, InternationalString._CONVERTIBLE]
-_TInternationalStringInit = Union[_TInternationalString, None]
-
-
 class InternationalStringDescriptor:
     def __set_name__(self, owner, name):
         self._name = "_" + name
@@ -145,7 +149,7 @@ class InternationalStringDescriptor:
 
         return obj.__dict__[self._name]
 
-    def __set__(self, obj, value: _TInternationalStringInit):
+    def __set__(self, obj, value: "TInternationalString | None") -> None:
         if not isinstance(value, InternationalString):
             value = InternationalString(value)
         setattr(obj, self._name, value)

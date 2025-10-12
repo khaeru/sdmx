@@ -2,7 +2,7 @@ import logging
 from dataclasses import InitVar, dataclass, field
 from enum import Enum, IntFlag
 from functools import lru_cache
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from sdmx.util import parse_content_type
 
@@ -48,12 +48,12 @@ class MediaType:
 
     #: Format version.
     version: Version = field(init=False)
-    _version: InitVar[Union[str, Version]]
+    _version: InitVar[str | Version]
 
     flags: Flag = Flag(0)
 
     #: Specify the full media type string.
-    full: Optional[str] = None
+    full: str | None = None
 
     def __post_init__(self, _version):
         self.__dict__["version"] = Version[_version]

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 from warnings import warn
 
 from . import csv, json, xml
@@ -36,7 +36,7 @@ def detect_content_reader(content) -> type["sdmx.reader.base.BaseReader"]:
     return get_reader(content)
 
 
-def _get(data: Any, kwargs: Optional[dict], _classes: list[type["T"]]) -> type["T"]:
+def _get(data: Any, kwargs: dict | None, _classes: list[type["T"]]) -> type["T"]:
     for c in _classes:
         if c.handles(data, kwargs or {}):
             return c
@@ -48,7 +48,7 @@ def _get(data: Any, kwargs: Optional[dict], _classes: list[type["T"]]) -> type["
 
 
 def get_converter(
-    data: Any, kwargs: Optional[dict] = None
+    data: Any, kwargs: dict | None = None
 ) -> type["sdmx.reader.base.Converter"]:
     """Identify a :class:`Converter` or :class:`.Reader` for `data`.
 
@@ -74,7 +74,7 @@ def get_converter(
 
 def get_reader(
     data: Any,
-    kwargs: Optional[dict] = None,
+    kwargs: dict | None = None,
     _classes: list[type["sdmx.reader.base.BaseReader"]] = READERS,
 ) -> type["sdmx.reader.base.BaseReader"]:
     """Identify a :class:`.Reader` for `data`.
@@ -131,8 +131,8 @@ def get_reader_for_path(path) -> type["sdmx.reader.base.BaseReader"]:
 
 
 def read_sdmx(
-    filename_or_obj: Union[bytes, str, Path, "io.IOBase", "io.BufferedReader"],
-    format: Optional[str] = None,
+    filename_or_obj: "bytes | str | Path | io.IOBase | io.BufferedReader",
+    format: str | None = None,
     **kwargs,
 ) -> "sdmx.message.Message":
     """Read a :class:`.Message` from a path, file, or stream in an SDMX standard format.
@@ -163,7 +163,7 @@ def read_sdmx(
     """
     if isinstance(filename_or_obj, (str, Path)):
         path = Path(filename_or_obj)  # Ensure Path type
-        obj: Union[bytes, "io.IOBase"] = open(path, "rb")  # Open the file
+        obj: bytes | "io.IOBase" = open(path, "rb")  # Open the file
     else:
         path, obj = None, filename_or_obj
 

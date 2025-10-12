@@ -2,10 +2,11 @@
 
 import abc
 import re
+from collections.abc import Mapping
 from copy import copy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Mapping, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlsplit, urlunsplit
 
 if TYPE_CHECKING:
@@ -152,7 +153,7 @@ class Parameter(abc.ABC):
     values: set = field(default_factory=set)
 
     #: Default value.
-    default: Optional[str] = None
+    default: str | None = None
 
     @abc.abstractmethod
     def handle(self, parameters: dict[str, Any]) -> dict[str, str]:
@@ -321,7 +322,7 @@ class URL(abc.ABC):
     resource_type: Resource
 
     #: Pieces for the hierarchical path component of the URL. If
-    _path: dict[str, Optional[str]]
+    _path: dict[str, str | None]
 
     #: Pieces for the query component of the URL.
     query: dict[str, str]

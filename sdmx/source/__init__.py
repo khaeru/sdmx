@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
 from io import IOBase
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from requests import Response
 
@@ -91,7 +91,7 @@ class Source:
     #:   See :meth:`.preview_data`.
     #: - ``"structure-specific data"=True`` if the source can return structure-
     #:   specific data messages.
-    supports: dict[Union[str, Resource], bool] = field(default_factory=dict)
+    supports: dict[str | Resource, bool] = field(default_factory=dict)
 
     def __post_init__(self):
         # Sanity check: _id attribute of a subclass matches the loaded ID.
@@ -202,7 +202,7 @@ NoSource = _NoSource(id="", url="", name="")
 
 
 def add_source(
-    info: Union[dict, str], id: Optional[str] = None, override: bool = False, **kwargs
+    info: dict | str, id: str | None = None, override: bool = False, **kwargs
 ) -> None:
     """Add a new data source.
 

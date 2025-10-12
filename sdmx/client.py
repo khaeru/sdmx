@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import IO, TYPE_CHECKING, Any, Optional, Union
+from typing import IO, TYPE_CHECKING, Any
 from warnings import warn
 
 import requests
@@ -74,7 +74,7 @@ class Client:
         self,
         source=None,
         *,
-        session: Optional["requests.Session"] = None,
+        session: "requests.Session | None" = None,
         log_level=None,
         **session_opts,
     ):
@@ -333,9 +333,9 @@ class Client:
 
     def get(
         self,
-        resource_type: Union[str, Resource, None] = None,
-        resource_id: Optional[str] = None,
-        tofile: Union["os.PathLike", IO, None] = None,
+        resource_type: str | Resource | None = None,
+        resource_id: str | None = None,
+        tofile: "os.PathLike | IO | None" = None,
         use_cache: bool = False,
         dry_run: bool = False,
         **kwargs,

@@ -2,7 +2,7 @@ import io
 import logging
 import pathlib
 from functools import lru_cache
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 from warnings import warn
 
 import requests
@@ -12,7 +12,7 @@ from sdmx.format import MediaType
 
 if TYPE_CHECKING:
     import sdmx.message
-    import sdmx.model.common
+    from sdmx.model.common import Structure
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class BaseReader(Converter):
 
     #: First byte(s) of file or response body content, used by
     #: :meth:`~.BaseReader.handles`.
-    binary_content_startswith: ClassVar[Optional[bytes]] = None
+    binary_content_startswith: ClassVar[bytes | None] = None
 
     #: List of media types, used by :meth:`.handles`.
     media_types: ClassVar[list[MediaType]] = []
@@ -126,7 +126,7 @@ class BaseReader(Converter):
         return False
 
     def convert(
-        self, data, structure: Optional["sdmx.model.common.Structure"] = None, **kwargs
+        self, data, structure: "Structure | None" = None, **kwargs
     ) -> "sdmx.message.Message":
         """Convert `data` to an instance of an SDMX Message subclass.
 
@@ -157,8 +157,8 @@ class BaseReader(Converter):
 
     @classmethod
     def _handle_deprecated_kwarg(
-        cls, structure: Optional["sdmx.model.common.Structure"], kwargs
-    ) -> Optional["sdmx.model.common.Structure"]:
+        cls, structure: "Structure | None", kwargs
+    ) -> "Structure | None":
         try:
             dsd = kwargs.pop("dsd")
         except KeyError:

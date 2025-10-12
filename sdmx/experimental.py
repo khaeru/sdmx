@@ -13,7 +13,7 @@ this implementation exposes the same API as the default DataSet.
 
 """
 
-from typing import Optional, Text
+from typing import Text
 
 import pandas as pd
 
@@ -31,10 +31,10 @@ from sdmx.model.v21 import (
 
 class DataSet(AnnotableArtefact):
     # SDMX-IM features
-    action: Optional[ActionType] = None
+    action: ActionType | None = None
     attrib: DictLike[str, AttributeValue] = DictLike()
-    valid_from: Optional[Text] = None
-    structured_by: Optional[DataStructureDefinition] = None
+    valid_from: Text | None = None
+    structured_by: DataStructureDefinition | None = None
 
     # Internal storage: a pd.DataFrame with columns:
     # - 'value': the Observation value.

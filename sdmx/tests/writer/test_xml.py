@@ -3,7 +3,7 @@ import logging
 from abc import ABC
 from datetime import datetime
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from lxml import etree
@@ -356,7 +356,7 @@ class RoundTripTests(ABC):
         self,
         request,
         specimen_id: str,
-        structure_id: Optional[str],
+        structure_id: str | None,
         *,
         strict: bool,
         validate: bool,

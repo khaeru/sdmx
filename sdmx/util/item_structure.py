@@ -3,7 +3,7 @@
 import logging
 import operator
 import re
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 from sdmx.model.common import DEFAULT_LOCALE, Item, ItemScheme
 
@@ -15,7 +15,7 @@ OPS = {"+": operator.add, "-": operator.sub, "=": operator.eq}
 
 
 def parse_item_description(
-    item: Item, locale: Optional[str] = None
+    item: Item, locale: str | None = None
 ) -> list[tuple[Callable, str]]:
     """Parse the :attr:`.description` of `item` for a structure expression.
 
@@ -119,7 +119,7 @@ def parse_item_description(
 
 def parse_item(
     itemscheme: ItemScheme, id=str, **kwargs
-) -> list[tuple[Callable, Union[Item, str]]]:
+) -> list[tuple[Callable, Item | str]]:
     """Parse a structure expression for the item in `itemscheme` with the given `id`.
 
     In addition to the behaviour of :func:`parse_item_description`, :func:`parse_item`
@@ -175,7 +175,7 @@ def parse_item(
 
 def parse_all(
     itemscheme: ItemScheme, **kwargs
-) -> dict[str, list[tuple[Callable, Union[Item, str]]]]:
+) -> dict[str, list[tuple[Callable, Item | str]]]:
     """Parse structure expressions for every item in `itemscheme`.
 
     Parameters

@@ -5,7 +5,7 @@
 import logging
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar, Generic, Optional, TypeVar, Union, cast
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias, TypeVar, cast
 
 from sdmx.dictlike import DictLikeDescriptor
 
@@ -27,12 +27,12 @@ from .common import (
 if TYPE_CHECKING:
     from .internationalstring import InternationalString
 
-    TReportedAttribute = Union[
-        "EnumeratedAttributeValue",
-        "OtherNonEnumeratedAttributeValue",
-        "TextAttributeValue",
-        "XHTMLAttributeValue",
-    ]
+    TReportedAttribute: TypeAlias = (
+        "EnumeratedAttributeValue"
+        | "OtherNonEnumeratedAttributeValue"
+        | "TextAttributeValue"
+        | "XHTMLAttributeValue"
+    )
 
 # Classes defined directly in the current file, in the order they appear
 __all__ = [
@@ -161,9 +161,9 @@ class Constraint(common.BaseConstraint):
     """
 
     # NB the spec gives 1..* for this attribute, but this implementation allows only 1
-    role: Optional[ConstraintRole] = None
+    role: ConstraintRole | None = None
     #: :class:`.DataKeySet` included in the Constraint.
-    data_content_keys: Optional[DataKeySet] = None
+    data_content_keys: DataKeySet | None = None
     # metadata_content_keys: MetadataKeySet = None
 
     def __contains__(self, value):
@@ -184,7 +184,7 @@ class ContentConstraint(Constraint, common.BaseContentConstraint):
     data_content_region: list[common.CubeRegion] = field(default_factory=list)
     #:
     content: set[ConstrainableArtefact] = field(default_factory=set)
-    metadata_content_region: Optional[common.MetadataTargetRegion] = None
+    metadata_content_region: common.MetadataTargetRegion | None = None
 
     def __contains__(self, value):
         if self.data_content_region:
@@ -204,7 +204,7 @@ class ContentConstraint(Constraint, common.BaseContentConstraint):
 
     def iter_keys(
         self,
-        obj: Union["DataStructureDefinition", "DataflowDefinition"],
+        obj: "DataStructureDefinition | DataflowDefinition",
         dims: list[str] = [],
     ) -> Generator[Key, None, None]:
         """Iterate over keys.
@@ -233,7 +233,7 @@ class MeasureDimension(DimensionComponent):
     """
 
     #:
-    concept_role: Optional[common.Concept] = None
+    concept_role: common.Concept | None = None
 
 
 class PrimaryMeasure(Component):
@@ -293,7 +293,7 @@ class DataflowDefinition(common.BaseDataflow):
 @dataclass
 class Observation(common.BaseObservation):
     #:
-    value_for: Optional[PrimaryMeasure] = None
+    value_for: PrimaryMeasure | None = None
 
 
 @dataclass
@@ -360,7 +360,7 @@ class IdentifiableObjectTarget(TargetObject):
     """SDMX 2.1 IdentifiableObjectTarget."""
 
     #: Type of :class:`.IdentifiableArtefact` that is targeted.
-    object_type: Optional[type[IdentifiableArtefact]] = None
+    object_type: type[IdentifiableArtefact] | None = None
 
 
 class ReportPeriodTarget(TargetObject):
@@ -398,7 +398,7 @@ class MetadataflowDefinition(common.BaseMetadataflow):
     """SDMX 2.1 MetadataflowDefinition."""
 
     # NB narrows the type of common.StructureUsage.structure
-    structure: Optional[MetadataStructureDefinition] = None
+    structure: MetadataStructureDefinition | None = None
 
 
 # §7.4: Metadata Set
@@ -448,7 +448,7 @@ class ReportedAttribute:
     """
 
     value_for: common.MetadataAttribute
-    parent: Optional["ReportedAttribute"] = None
+    parent: "ReportedAttribute | None" = None
     child: list["ReportedAttribute"] = field(default_factory=list)
 
     def __bool__(self) -> bool:
@@ -461,8 +461,8 @@ class ReportedAttribute:
         return len(self.child)
 
     def get_child(
-        self, mda_or_id: Union[common.MetadataAttribute, str]
-    ) -> Optional["TReportedAttribute"]:
+        self, mda_or_id: common.MetadataAttribute | str
+    ) -> "TReportedAttribute | None":
         """Retrieve the child :class:`ReportedAttribute` for the given `mda_or_id`."""
         mda_id = (
             mda_or_id.id
@@ -499,7 +499,7 @@ class NonEnumeratedAttributeValue(ReportedAttribute):
 class OtherNonEnumeratedAttributeValue(NonEnumeratedAttributeValue):
     """SDMX 2.1 OtherNonEnumeratedAttributeValue."""
 
-    value: Optional[str] = None
+    value: str | None = None
 
 
 @dataclass
@@ -534,12 +534,10 @@ class MetadataReport(common.AnnotableArtefact):
     """
 
     metadata: list["TReportedAttribute"] = field(default_factory=list)
-    target: Optional[MetadataTarget] = None
-    attaches_to: Optional[TargetObjectKey] = None
+    target: MetadataTarget | None = None
+    attaches_to: TargetObjectKey | None = None
 
-    def get(
-        self, mda_or_id: Union[common.MetadataAttribute, str]
-    ) -> "TReportedAttribute":
+    def get(self, mda_or_id: common.MetadataAttribute | str) -> "TReportedAttribute":
         """Retrieve the :class:`ReportedAttribute` for the given `mda_or_id`."""
         mda_id = (
             mda_or_id.id
@@ -554,8 +552,8 @@ class MetadataReport(common.AnnotableArtefact):
         raise KeyError(mda_id)
 
     def get_value(
-        self, mda_or_id: Union[common.MetadataAttribute, str]
-    ) -> Union["InternationalString", str, None]:
+        self, mda_or_id: common.MetadataAttribute | str
+    ) -> "InternationalString | str | None":
         """Retrieve the value of a ReportedAttribute for the given `mda_or_id`."""
         ra = self.get(mda_or_id)
         if isinstance(ra, TextAttributeValue):
@@ -597,19 +595,19 @@ class MetadataSet(common.BaseMetadataSet, NameableArtefact):
     """
 
     #: See note above.
-    described_by: Optional[MetadataflowDefinition] = None
+    described_by: MetadataflowDefinition | None = None
 
     #: .. seealso::
     #:    :attr:`.v30.MetadataSet.structured_by`, which has different semantics.
-    structured_by: Optional[MetadataStructureDefinition] = None
+    structured_by: MetadataStructureDefinition | None = None
 
     #: Analogous to :attr:`.v30.MetadataSet.provided_by`.
-    published_by: Optional[common.DataProvider] = None
+    published_by: common.DataProvider | None = None
 
     report: list[MetadataReport] = field(default_factory=list)
 
     #: See note above.
-    report_structure: Optional[ReportStructure] = None
+    report_structure: ReportStructure | None = None
 
 
 # §8 Hierarchical Code List
@@ -624,7 +622,7 @@ class Hierarchy(NameableArtefact):
     #: Hierarchical codes in the hierarchy.
     codes: dict[str, common.HierarchicalCode] = field(default_factory=dict)
 
-    level: Optional[common.Level] = None
+    level: common.Level | None = None
 
 
 @dataclass
@@ -647,8 +645,8 @@ class ItemAssociation(common.AnnotableArtefact, Generic[IT]):
 
     _Item: ClassVar[type[common.Item]] = common.Item
 
-    source: Optional[IT] = None
-    target: Optional[IT] = None
+    source: IT | None = None
+    target: IT | None = None
 
 
 class CodeMap(ItemAssociation[common.Code]):
@@ -667,8 +665,8 @@ class ItemSchemeMap(NameableArtefact, Generic[IST, IAT]):
 
     _ItemAssociation: ClassVar[type[ItemAssociation]] = ItemAssociation
 
-    source: Optional[IST] = None
-    target: Optional[IST] = None
+    source: IST | None = None
+    target: IST | None = None
 
     item_association: list[IAT] = field(default_factory=list)
 

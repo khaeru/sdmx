@@ -5,7 +5,7 @@ from collections import ChainMap
 from collections.abc import Generator, Iterator
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -244,7 +244,7 @@ class CompareTests:
 class MessageTest:
     """Base class for tests of specific specimen files."""
 
-    directory: Union[str, Path] = Path(".")
+    directory: str | Path = Path(".")
     filename: str
 
     @pytest.fixture(scope="class")

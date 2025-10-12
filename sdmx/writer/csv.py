@@ -1,7 +1,7 @@
 """:ref:`sdmx-csv` writer."""
 
 from os import PathLike
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -14,12 +14,12 @@ if TYPE_CHECKING:
 
 
 def to_csv(
-    obj: Union["DataMessage", "BaseDataSet"],
+    obj: "DataMessage | BaseDataSet",
     *,
-    path: Optional[PathLike] = None,
-    rtype: type[Union[str, pd.DataFrame]] = str,
+    path: PathLike | None = None,
+    rtype: type[str | pd.DataFrame] = str,
     **kwargs,
-) -> Union[None, str, pd.DataFrame]:
+) -> None | str | pd.DataFrame:
     """Convert an SDMX *obj* to SDMX-CSV.
 
     With :py:`rtype=pandas.DataFrame`, the returned object is **not necessarily** valid

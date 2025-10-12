@@ -2,7 +2,6 @@ import json
 import os
 from itertools import chain
 from pathlib import Path
-from typing import Optional
 
 from jinja2 import Template
 
@@ -202,7 +201,7 @@ class ServiceReporter:
                 json.dump({source_id: data}, f)
 
 
-def main(base_path: Optional[Path] = None):
+def main(base_path: Path | None = None):
     """Collate results from multiple JSON files."""
     base_path = base_path or Path.cwd().joinpath("source-tests")
 
