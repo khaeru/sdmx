@@ -1,5 +1,4 @@
 import importlib
-from typing import Optional
 
 import pytest
 from packaging.version import Version
@@ -7,7 +6,7 @@ from packaging.version import Version
 
 # thanks to xarray
 def _importorskip(
-    modname: str, minversion: Optional[str] = None
+    modname: str, minversion: str | None = None
 ) -> tuple[bool, pytest.MarkDecorator]:
     try:
         mod = importlib.import_module(modname)

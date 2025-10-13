@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from . import common
 from .common import (
@@ -85,7 +85,7 @@ class Annotation(common.BaseAnnotation):
     """SDMX 3.0 Annotation."""
 
     #: A non-localised version of the Annotation content.
-    value: Optional[str] = None
+    value: str | None = None
 
 
 # §4.3: Codelist
@@ -107,10 +107,10 @@ class InclusiveCodeSelection(CodeSelection):
 @dataclass
 class CodelistExtension:
     extends: Codelist
-    prefix: Optional[str] = None
-    sequence: Optional[int] = None
+    prefix: str | None = None
+    sequence: int | None = None
 
-    selection: Optional[CodeSelection] = None
+    selection: CodeSelection | None = None
 
 
 class GeoRefCode(Code):
@@ -231,9 +231,9 @@ class MetadataProviderScheme(OrganisationScheme[MetadataProvider]):
 @dataclass
 class SelectionValue(common.BaseSelectionValue):
     #: Date from which the DataKey is valid.
-    valid_from: Optional[str] = None
+    valid_from: str | None = None
     #: Date from which the DataKey is superseded.
-    valid_to: Optional[str] = None
+    valid_to: str | None = None
 
 
 @dataclass
@@ -257,16 +257,16 @@ class AfterPeriod(TimeRangeValue, common.Period):
 
 @dataclass
 class RangePeriod(TimeRangeValue):
-    start: Optional[common.StartPeriod] = None
-    end: Optional[common.EndPeriod] = None
+    start: common.StartPeriod | None = None
+    end: common.EndPeriod | None = None
 
 
 @dataclass
 class DataKey(common.BaseDataKey):
     #: Date from which the DataKey is valid.
-    valid_from: Optional[str] = None
+    valid_from: str | None = None
     #: Date from which the DataKey is superseded.
-    valid_to: Optional[str] = None
+    valid_to: str | None = None
 
 
 @dataclass
@@ -284,7 +284,7 @@ class Constraint(common.BaseConstraint):
     For SDMX 2.1, see :class:`.v21.Constraint`.
     """
 
-    role: Optional[ConstraintRole] = None
+    role: ConstraintRole | None = None
 
     def __post_init__(self):
         if isinstance(self.role, str):
@@ -305,15 +305,15 @@ class DataConstraint(Constraint):
     #:
     content: set[ConstrainableArtefact] = field(default_factory=set)
 
-    data_content_keys: Optional[DataKeySet] = None
-    data_content_region: Optional[common.CubeRegion] = None
+    data_content_keys: DataKeySet | None = None
+    data_content_region: common.CubeRegion | None = None
 
     def __contains__(self, name):
         raise NotImplementedError  # pragma: no cover
 
 
 class MetadataConstraint(Constraint):
-    metadata_content_region: Optional[common.MetadataTargetRegion] = None
+    metadata_content_region: common.MetadataTargetRegion | None = None
 
     def __contains__(self, name):
         raise NotImplementedError  # pragma: no cover
@@ -330,7 +330,7 @@ class Measure(Component):
     """
 
     #:
-    concept_role: Optional[common.Concept] = None
+    concept_role: common.Concept | None = None
 
 
 class MeasureDescriptor(ComponentList[Measure]):
@@ -388,7 +388,7 @@ class Dataflow(common.BaseDataflow):
 @dataclass
 class Observation(common.BaseObservation):
     #:
-    value_for: Optional[Measure] = None
+    value_for: Measure | None = None
 
 
 class DataSet(common.BaseDataSet):
@@ -450,7 +450,7 @@ class MetadataAttributeValue:
     #    implementation in .common has both Coded- and UncodedAttributeValue, which
     #    offends mypy.
 
-    parent: Optional["MetadataAttributeValue"] = None
+    parent: "MetadataAttributeValue | None" = None
     child: list["MetadataAttributeValue"] = field(default_factory=list)
 
 
@@ -499,30 +499,30 @@ class MetadataSet(common.BaseMetadataSet, MaintainableArtefact):
 
     # NB Would prefer to type as datetime.date, but VersionableArtefact currently uses
     #    str
-    valid_from: Optional[str] = None
+    valid_from: str | None = None
     # NB Would prefer to type as datetime.date, but VersionableArtefact currently uses
     #    str
-    valid_to: Optional[str] = None
-    set_id: Optional[str] = None
+    valid_to: str | None = None
+    set_id: str | None = None
 
     #: .. note::
     #:    According to the standard, MetadataSet has **two** associations, both named
     #:    :py:`.described_by`: one to a :class:`.Metadataflow`, and the other to a
     #:    :class:`.MetadataProvisionAgreement`. :mod:`sdmx` implements the first,
     #:    because it is consistent with SDMX 2.1.
-    described_by: Optional[Metadataflow] = None
+    described_by: Metadataflow | None = None
 
-    # described_by: Optional[MetadataProvisionAgreement] = None
+    # described_by: MetadataProvisionAgreement | None = None
 
     #: .. note::
     #:    According to the standard, this differs from
     #:    :attr:`v21.MetadataSet.structured_by` in that it points directly to
     #:    :attr:`.MetadataStructureDefinition.attributes`, rather than to the
     #:    MetadataStructureDefinition that contains the attribute descriptor.
-    structured_by: Optional[MetadataAttributeDescriptor] = None
+    structured_by: MetadataAttributeDescriptor | None = None
 
     #: Analogous to :attr:`.v21.MetadataSet.published_by`.
-    provided_by: Optional[MetadataProvider] = None
+    provided_by: MetadataProvider | None = None
 
     attaches_to: list[TargetIdentifiableObject] = field(default_factory=list)
 
@@ -539,7 +539,7 @@ class Hierarchy(MaintainableArtefact):
     has_formal_levels: bool = False
 
     #: The top :class:`Level` in the hierarchy.
-    level: Optional[common.Level] = None
+    level: common.Level | None = None
 
     #: The top-level :class:`HierarchicalCodes <HierarchicalCode>` in the hierarchy.
     codes: dict[str, common.HierarchicalCode] = field(default_factory=dict)
@@ -550,11 +550,11 @@ class HierarchyAssociation(MaintainableArtefact):
     """SDMX 3.0 HierarchyAssociation."""
 
     #: The context within which the association is performed.
-    context_object: Optional[IdentifiableArtefact] = None
+    context_object: IdentifiableArtefact | None = None
     #: The IdentifiableArtefact that needs the Hierarchy.
-    linked_object: Optional[IdentifiableArtefact] = None
+    linked_object: IdentifiableArtefact | None = None
     #: The Hierarchy that is associated.
-    linked_hierarchy: Optional[Hierarchy] = None
+    linked_hierarchy: Hierarchy | None = None
 
 
 CF = common.ClassFinder(

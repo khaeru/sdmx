@@ -1,5 +1,15 @@
+from collections.abc import Mapping, Sequence
 from copy import copy
-from typing import Iterable, Mapping, Optional, Sequence, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import TypeAlias
+
+    # Types that can be converted into InternationalString
+    Convertible = str | Sequence | Mapping | Iterable[tuple[str, str]]
+
+    TInternationalString: TypeAlias = "InternationalString" | Convertible
 
 # TODO read this from the environment, or use any value set in the SDMX-ML spec.
 #      Currently set to 'en' because test_dsd.py expects it.
@@ -12,14 +22,14 @@ DEFAULT_LOCALE = "en"
 class InternationalString:
     """SDMX-IM InternationalString.
 
-    SDMX-IM LocalisedString is not implemented. Instead, the 'localizations' is a
-    mapping where:
+    SDMX-IM LocalisedString is not implemented. Instead, :attr:`localizations` is a
+    mapping in which:
 
     - keys correspond to the 'locale' property of LocalisedString.
     - values correspond to the 'label' property of LocalisedString.
 
-    When used as a type hint with pydantic, InternationalString fields can be assigned
-    to in one of four ways::
+    When :class:`InternationalStringDescriptor` is used as a dataclass field type, the
+    field can be assigned in one of four ways::
 
         @dataclass
         class Foo:
@@ -44,42 +54,32 @@ class InternationalString:
 
     Only the first method preserves existing localizations; the latter three replace
     them.
-
     """
 
     __slots__ = ("localizations",)
 
-    # Types that can be converted into InternationalString
-    _CONVERTIBLE = Union[str, Sequence, Mapping, Iterable[tuple[str, str]]]
-
     localizations: dict[str, str]
 
-    def __init__(self, value: Optional[_CONVERTIBLE] = None, **kwargs):
+    def __init__(self, value: "Convertible | None" = None, **kwargs) -> None:
         # Handle initial values according to type
-        if value is None:
-            # Keyword arguments → dict, possibly empty
-            value = dict(kwargs)
-        elif isinstance(value, str):
-            # Bare string
-            value = {DEFAULT_LOCALE: value}
-        elif (
-            isinstance(value, Sequence)
-            and len(value) == 2
-            and isinstance(value[0], str)
-        ):
-            # 2-tuple of str is (locale, label)
-            value = {value[0]: value[1]}
-        elif isinstance(value, Mapping):
-            # dict; use directly
-            value = dict(value)
-        else:
-            try:
-                # Iterable of 2-tuples
-                value = {  # type: ignore [misc]
-                    locale: label for (locale, label) in value
-                }
-            except Exception:
-                raise ValueError(value, kwargs)
+        match value:
+            case None:  # Keyword arguments → dict, possibly empty
+                value = dict(kwargs)
+            case str():  # Bare string
+                value = {DEFAULT_LOCALE: value}
+            case Sequence() if len(value) == 2 and isinstance(value[0], str):
+                # 2-tuple of str is (locale, label)
+                value = {value[0]: value[1]}
+            case Mapping():  # dict or similar; use directly
+                value = dict(value)
+            case _:
+                try:
+                    # Iterable of 2-tuples
+                    value = {  # type: ignore [misc]
+                        locale: label for (locale, label) in value
+                    }
+                except Exception:
+                    raise ValueError(value, kwargs)
 
         self.localizations = value
 
@@ -131,10 +131,6 @@ class InternationalString:
             return NotImplemented
 
 
-_TInternationalString = Union[InternationalString, InternationalString._CONVERTIBLE]
-_TInternationalStringInit = Union[_TInternationalString, None]
-
-
 class InternationalStringDescriptor:
     def __set_name__(self, owner, name):
         self._name = "_" + name
@@ -145,7 +141,7 @@ class InternationalStringDescriptor:
 
         return obj.__dict__[self._name]
 
-    def __set__(self, obj, value: _TInternationalStringInit):
+    def __set__(self, obj, value: "TInternationalString | None") -> None:
         if not isinstance(value, InternationalString):
             value = InternationalString(value)
         setattr(obj, self._name, value)

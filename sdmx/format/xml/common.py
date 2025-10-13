@@ -1,12 +1,13 @@
 import logging
 import re
 import zipfile
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
 from shutil import copytree
-from typing import IO, Iterable, Mapping, Optional, Union, cast
+from typing import IO, cast
 
 from lxml import etree
 from lxml.etree import QName
@@ -98,9 +99,9 @@ NS = {
 
 
 def validate_xml(
-    msg: Union[Path, IO],
-    schema_dir: Optional[Path] = None,
-    version: Union[str, Version] = Version["2.1"],
+    msg: Path | IO,
+    schema_dir: Path | None = None,
+    version: str | Version = Version["2.1"],
     max_errors: int = -1,
 ) -> bool:
     """Validate SDMX-ML in `msg` against the XML Schema (XSD) documents.
@@ -160,8 +161,8 @@ def validate_xml(
 
 
 def construct_schema(
-    schema_dir: Optional[Path] = None,
-    version: Union[str, Version] = Version["2.1"],
+    schema_dir: Path | None = None,
+    version: str | Version = Version["2.1"],
 ) -> "etree.XMLSchema":
     """Construct a :class:`lxml.etree.XMLSchema` for SDMX-ML of the given `version`.
 
@@ -279,7 +280,7 @@ def _extracted_zipball(version: Version, force: bool = False) -> Path:
 
 
 def _handle_validate_args(
-    schema_dir: Optional[Path], version: Union[str, Version]
+    schema_dir: Path | None, version: str | Version
 ) -> tuple[Path, Version]:
     """Handle arguments for :func:`.install_schemas` and :func:`.validate_xml`."""
     import platformdirs
@@ -294,7 +295,7 @@ def _handle_validate_args(
         ) from None
 
     # If the user has no preference, download the schemas to the local cache directory
-    if not schema_dir:
+    if schema_dir is None:
         schema_dir = platformdirs.user_cache_path("sdmx") / version.name
     schema_dir.mkdir(exist_ok=True, parents=True)
 
@@ -302,8 +303,8 @@ def _handle_validate_args(
 
 
 def install_schemas(
-    schema_dir: Optional[Path] = None,
-    version: Union[str, Version] = Version["2.1"],
+    schema_dir: Path | None = None,
+    version: str | Version = Version["2.1"],
 ) -> Path:
     """Install SDMX-ML XML Schema documents for use with :func:`.validate_xml`.
 
@@ -334,7 +335,7 @@ def install_schemas(
 class XMLFormat(Format):
     """Information about an SDMX-ML format."""
 
-    NS: Mapping[str, Optional[str]]
+    NS: Mapping[str, str | None]
     _class_tag: list
 
     def __init__(self, model, base_ns: str, class_tag: Iterable[tuple[str, str]]):
@@ -370,7 +371,7 @@ class XMLFormat(Format):
     _NS_PATTERN = re.compile(r"(\{(?P<ns>.*)\}|(?P<ns_prefix>.*):)?(?P<localname>.*)")
 
     @lru_cache()
-    def qname(self, ns_or_name: str, name: Optional[str] = None) -> QName:
+    def qname(self, ns_or_name: str, name: str | None = None) -> QName:
         """Return a fully-qualified tag `name` in namespace `ns`."""
         if isinstance(ns_or_name, QName):
             # Already a QName; do nothing
@@ -395,7 +396,7 @@ class XMLFormat(Format):
         return QName(ns, name)
 
     @lru_cache()
-    def class_for_tag(self, tag) -> Optional[type]:
+    def class_for_tag(self, tag) -> type | None:
         """Return a message or model class for an XML tag."""
         qname = self.qname(tag)
         results = map(itemgetter(0), filter(lambda ct: ct[1] == qname, self._class_tag))

@@ -5,7 +5,7 @@ from collections import ChainMap
 from collections.abc import Generator, Iterator
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -26,6 +26,7 @@ from . import data
 
 if TYPE_CHECKING:
     import pytest
+    from requests import PreparedRequest
 
 log = logging.getLogger(__name__)
 
@@ -243,7 +244,7 @@ class CompareTests:
 class MessageTest:
     """Base class for tests of specific specimen files."""
 
-    directory: Union[str, Path] = Path(".")
+    directory: str | Path = Path(".")
     filename: str
 
     @pytest.fixture(scope="class")
@@ -323,7 +324,25 @@ def session_with_stored_responses(pytestconfig):
     3. is treated with :func:`.offline`, so that *only* stored responses can be
        returned.
     """
-    session = Session(backend="memory")
+    from requests_cache import create_key
+
+    def _key_fn(request: "PreparedRequest", **kwargs) -> str:
+        """Match existing stored responses with different `Accept-Encoding` headers.
+
+        Stored responses in sdmx-test-data have "Accept-Encoding: gzip, deflate"; with
+        Python 3.14, the prepared request has "gzip, deflate, zstd`. Simplify so the
+        existing keys match.
+        """
+        exp = "gzip, deflate"
+        if exp in request.headers.get("Accept-Encoding", ""):
+            # Don't modify the original request that's about to be sent
+            request = request.copy()
+            request.headers["Accept-Encoding"] = exp
+
+        # Use the default key function to do the rest of the work
+        return create_key(request, **kwargs)
+
+    session = Session(backend="memory", key_fn=_key_fn)
 
     data.add_responses(
         session,

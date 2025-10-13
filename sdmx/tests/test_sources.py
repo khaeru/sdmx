@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar
 
 import pytest
 
@@ -37,7 +37,7 @@ class DataSourceTest:
 
     #: Mapping of endpoint → Exception subclass. Tests of these endpoints are expected
     #: to fail with the given kind of exception.
-    xfail: ClassVar[dict[str, Union[type[Exception], tuple[type[Exception], str]]]] = {}
+    xfail: ClassVar[dict[str, type[Exception] | tuple[type[Exception], str]]] = {}
 
     #: Failures affecting **all** data sources, internal to :mod:`sdmx`.
     xfail_common: ClassVar[dict[str, Any]] = {}

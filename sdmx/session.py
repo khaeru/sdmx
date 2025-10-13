@@ -1,5 +1,5 @@
 from io import BufferedIOBase, BufferedRandom, BytesIO
-from typing import IO, TYPE_CHECKING, Union
+from typing import IO, TYPE_CHECKING
 
 import requests
 
@@ -89,7 +89,7 @@ class ResponseIO(BufferedIOBase):
 
     tee: IO
 
-    def __init__(self, response, tee: Union[IO, "os.PathLike", None] = None):
+    def __init__(self, response, tee: "IO | os.PathLike | None" = None):
         self.response = response
 
         if tee is None:

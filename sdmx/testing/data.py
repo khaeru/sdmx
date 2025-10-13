@@ -3,7 +3,7 @@
 import logging
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import platformdirs
 import pytest
@@ -67,7 +67,7 @@ class SpecimenCollection:
     #: 1. Path to specimen file.
     #: 2. Format: one of "csv", "json", "xml".
     #: 3. Message type: either "data", "structure", or None.
-    specimens: list[tuple[Path, str, Optional[str]]]
+    specimens: list[tuple[Path, str, str | None]]
 
     def __init__(self, path: Path, fetch: bool):
         self.base_path = path
@@ -98,9 +98,9 @@ class SpecimenCollection:
 
     def as_params(
         self,
-        format: Optional[str] = None,
-        kind: Optional[str] = None,
-        marks: Optional[dict] = None,
+        format: str | None = None,
+        kind: str | None = None,
+        marks: dict | None = None,
     ):
         """Generate :func:`pytest.param` from specimens.
 
@@ -273,7 +273,7 @@ def add_responses(session: "Session", file_cache_path: Path, source: "Source") -
         save_response(session, method="GET", url=url, content=content, headers=headers)
 
 
-def add_specimens(target: list[tuple[Path, str, Optional[str]]], base: Path) -> None:
+def add_specimens(target: list[tuple[Path, str, str | None]], base: Path) -> None:
     """Populate the `target` collection with specimens from :file:`sdmx-test-data`."""
     # XML data files for the ECB exchange rate data flow
     for source_id in ("ECB_EXR",):

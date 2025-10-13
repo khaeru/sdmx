@@ -9,18 +9,12 @@ data sources.
 
 import logging
 import re
+from collections.abc import Generator
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from itertools import chain
 from operator import attrgetter
-from typing import (
-    TYPE_CHECKING,
-    Generator,
-    Optional,
-    Text,
-    Union,
-    get_args,
-)
+from typing import TYPE_CHECKING, Text, get_args
 
 import sdmx.urn
 from sdmx import model
@@ -41,7 +35,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def _summarize(obj, include: Optional[list[str]] = None):
+def _summarize(obj, include: list[str] | None = None):
     """Helper method for __repr__ on Header and Message (sub)classes."""
     import requests
 
@@ -69,22 +63,22 @@ class Header:
     """
 
     #: (optional) Error code for the message.
-    error: Optional[Text] = None
+    error: Text | None = None
     #: Date and time at which the data was extracted.
-    extracted: Optional[datetime] = None
+    extracted: datetime | None = None
     #: Identifier for the message.
-    id: Optional[Text] = None
+    id: Text | None = None
     #: Date and time at which the message was generated.
-    prepared: Optional[datetime] = None
+    prepared: datetime | None = None
     #: Start of the time period covered by a :class:`.DataMessage`.
-    reporting_begin: Optional[datetime] = None
+    reporting_begin: datetime | None = None
     #: End of the time period covered by a :class:`.DataMessage`.
-    reporting_end: Optional[datetime] = None
+    reporting_end: datetime | None = None
     #: Intended recipient of the message, e.g. the user's name for an
     #: authenticated service.
-    receiver: Optional[model.Agency] = None
+    receiver: model.Agency | None = None
     #: The :class:`.Agency` associated with the data :class:`~.source.Source`.
-    sender: Optional[model.Agency] = None
+    sender: model.Agency | None = None
     #:
     source: InternationalStringDescriptor = InternationalStringDescriptor()
     #:
@@ -105,11 +99,11 @@ class Footer(Comparable):
     """
 
     #:
-    severity: Optional[str] = None
+    severity: str | None = None
     #: The body text of the Footer contains zero or more blocks of text.
     text: list[model.InternationalString] = field(default_factory=list)
     #:
-    code: Optional[int] = None
+    code: int | None = None
 
     def __post_init__(self):
         # Convert non-IS members to IS
@@ -127,10 +121,10 @@ class Message(Comparable):
     #: :class:`Header` instance.
     header: Header = field(default_factory=Header)
     #: (optional) :class:`Footer` instance.
-    footer: Optional[Footer] = None
+    footer: Footer | None = None
     #: :class:`requests.Response` instance for the response to the HTTP request that
     #: returned the Message. This is not part of the SDMX standard.
-    response: Optional["requests.Response"] = None
+    response: "requests.Response | None" = None
 
     def __str__(self):
         return repr(self)
@@ -213,8 +207,8 @@ class StructureMessage(Message):
         raise TypeError(type(obj))
 
     def get(
-        self, obj_or_id: Union[str, model.IdentifiableArtefact]
-    ) -> Optional[model.IdentifiableArtefact]:
+        self, obj_or_id: str | model.IdentifiableArtefact
+    ) -> model.IdentifiableArtefact | None:
         """Retrieve `obj_or_id` from the StructureMessage.
 
         Parameters
@@ -335,15 +329,14 @@ class DataMessage(Message):
     #: :class:`list` of :class:`.DataSet`.
     data: list[model.BaseDataSet] = field(default_factory=list)
     #: :class:`.DataflowDefinition` that contains the data.
-    dataflow: Optional[model.BaseDataflow] = None
+    dataflow: model.BaseDataflow | None = None
     #: The "dimension at observation level".
-    observation_dimension: Optional[
-        Union[
-            model._AllDimensions,
-            model.DimensionComponent,
-            list[model.DimensionComponent],
-        ]
-    ] = None
+    observation_dimension: (
+        model._AllDimensions
+        | model.DimensionComponent
+        | list[model.DimensionComponent]
+        | None
+    ) = None
 
     def __post_init__(self):
         if self.dataflow is None:

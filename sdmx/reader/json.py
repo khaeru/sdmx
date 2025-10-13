@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping
 from warnings import warn
 
 from dateutil.parser import isoparse

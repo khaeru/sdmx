@@ -1,6 +1,6 @@
 import operator
 import re
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import packaging.version
 
@@ -130,7 +130,7 @@ class Version(packaging.version.Version):
         return self.micro
 
     @property
-    def ext(self) -> Optional[str]:
+    def ext(self) -> str | None:
         """SDMX 3.0 version 'extension'.
 
         For :py:`kind="py"`, this is equivalent to :attr:`Version.local
@@ -141,7 +141,7 @@ class Version(packaging.version.Version):
         else:
             return "".join(map(str, self._version.local))
 
-    def increment(self, **kwargs: Union[bool, int]) -> "Version":
+    def increment(self, **kwargs: bool | int) -> "Version":
         """Return a Version that is incrementally greater than the current Version.
 
         If no arguments are given, then by default :py:`minor=True` and :py:`ext=1`.
@@ -219,7 +219,7 @@ class Version(packaging.version.Version):
         return result
 
 
-def increment(value: Union[packaging.version.Version, str], **kwargs) -> Version:
+def increment(value: packaging.version.Version | str, **kwargs) -> Version:
     """Increment the version `existing`.
 
     Identical to :py:`Version(str(value)).increment(**kwargs)`.

@@ -1,8 +1,8 @@
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import sdmx.model.common
+    from sdmx.model.common import MaintainableArtefact
 
 #: Regular expression for URNs.
 _PATTERN = re.compile(
@@ -32,18 +32,18 @@ class URN:
     klass: str
 
     #: ID of the :class:`.Agency` that is the :attr:`.MaintainableArtefact.maintainer`.
-    agency: Optional[str] = None
+    agency: str | None = None
 
     #: ID of the :class:`.MaintainableArtefact`.
-    id: Optional[str] = None
+    id: str | None = None
 
     #: :attr:`.VersionableArtefact.version` of the maintainable artefact.parent.
-    version: Optional[str] = None
+    version: str | None = None
 
     #: ID of an item within a maintainable parent. Optional.
-    item_id: Optional[str] = None
+    item_id: str | None = None
 
-    def __init__(self, value: Optional[str], **kwargs) -> None:
+    def __init__(self, value: str | None, **kwargs) -> None:
         if kwargs:
             self.__dict__.update(kwargs)
 
@@ -109,9 +109,7 @@ def expand(value: str) -> str:
 
 
 def make(
-    obj,
-    maintainable_parent: Optional["sdmx.model.common.MaintainableArtefact"] = None,
-    strict: bool = False,
+    obj, maintainable_parent: "MaintainableArtefact | None" = None, strict: bool = False
 ) -> str:
     """Create an SDMX URN for `obj`.
 

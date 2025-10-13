@@ -1,7 +1,7 @@
 import logging
-import typing
+from collections.abc import MutableMapping
 from dataclasses import fields
-from typing import Generic, TypeVar, Union, get_args, get_origin
+from typing import Generic, TypeVar, get_args, get_origin
 
 from sdmx.compare import Comparable
 
@@ -11,7 +11,7 @@ KT = TypeVar("KT")
 VT = TypeVar("VT")
 
 
-class DictLike(dict, typing.MutableMapping[KT, VT], Comparable):
+class DictLike(dict, MutableMapping[KT, VT], Comparable):
     """Container with features of :class:`dict`, attribute access, and validation."""
 
     __slots__ = ("__dict__", "_types")
@@ -32,7 +32,7 @@ class DictLike(dict, typing.MutableMapping[KT, VT], Comparable):
         result._types = (key_type, value_type)
         return result
 
-    def __getitem__(self, key: Union[KT, int]) -> VT:
+    def __getitem__(self, key: KT | int) -> VT:
         """:meth:`dict.__getitem__` with integer access."""
         try:
             return super().__getitem__(key)
