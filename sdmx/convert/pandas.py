@@ -503,6 +503,15 @@ def to_pandas(obj, **kwargs):
 
     `kwargs` can include any of the attributes of :class:`.PandasConverter`.
 
+    .. versionchanged:: 1.0
+
+       :func:`.to_pandas` handles all types of objects,
+       replacing the earlier, separate ``data2pandas`` and ``structure2pd`` writers.
+
+    .. versionchanged:: 2.23.0
+
+       :func:`.to_pandas` is a thin wrapper for :class:`.PandasConverter`.
+
     Other parameters
     ----------------
     format_options :
@@ -513,15 +522,6 @@ def to_pandas(obj, **kwargs):
     time_format :
         if given, the :attr:`.CSVFormatOptions.time_format` attribute of the
         `format_options` keyword argument is replaced.
-
-    .. versionchanged:: 1.0
-
-       :func:`.to_pandas` handles all types of objects,
-       replacing the earlier, separate ``data2pandas`` and ``structure2pd`` writers.
-
-    .. versionchanged:: 2.23.0
-
-       :func:`.to_pandas` is a thin wrapper for :class:`.PandasConverter`.
     """
     csv.common.kwargs_to_format_options(kwargs, csv.common.CSVFormatOptions)
     return PandasConverter(**kwargs).convert(obj)
