@@ -184,7 +184,7 @@ class BaseAnnotation:
         return None
 
 
-@dataclass
+@dataclass(slots=True)
 class AnnotableArtefact(Comparable):
     #: :class:`Annotations <.Annotation>` of the object.
     #:
@@ -244,7 +244,7 @@ class AnnotableArtefact(Comparable):
             return value
 
 
-@dataclass
+@dataclass(slots=True)
 class IdentifiableArtefact(AnnotableArtefact):
     #: Unique identifier of the object.
     id: str = MissingID
