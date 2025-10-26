@@ -1,6 +1,9 @@
+from datetime import datetime
+
 import pytest
 
 from sdmx import message
+from sdmx.model import common
 from sdmx.model.common import Agency, Codelist
 from sdmx.model.v21 import Annotation
 
@@ -9,6 +12,21 @@ CL_ITEMS = [
     dict(id="B", name={"en": "Beginning of period"}),
     dict(id="B1", name={"en": "Child code of B"}, parent="B"),
 ]
+
+
+@pytest.fixture(scope="module")
+def agency() -> common.Agency:
+    return common.Agency(id="TEST")
+
+
+@pytest.fixture(scope="module")
+def header(agency) -> message.Header:
+    return message.Header(
+        id="N_A",
+        prepared=datetime.now(),
+        receiver=common.Agency(id="N_A"),
+        sender=agency,
+    )
 
 
 @pytest.fixture
