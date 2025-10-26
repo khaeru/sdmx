@@ -698,7 +698,11 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
     # - (Possibly) convert certain columns to datetime.
     # - (Possibly) reshape.
     result = (
-        pd.DataFrame(map(c._columns.convert_obs, obj.obs))
+        pd.DataFrame(
+            map(c._columns.convert_obs, obj.obs)
+            if obj.obs
+            else [[None] * len(c._columns.obs)]
+        )
         .dropna(how="all")
         .set_axis(c._columns.obs, axis=1)  # NB This must come after DataFrame(map(…))
         .assign(**c._columns.assign)
