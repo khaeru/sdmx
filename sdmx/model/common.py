@@ -349,8 +349,8 @@ class VersionableArtefact(NameableArtefact):
         super().__post_init__()
 
         if not self.version:
-            self.version = self._urn.version
-        elif isinstance(self.version, str) and self.version == "None":
+            self.version = self._urn.version or None
+        elif isinstance(self.version, str) and self.version in ("", "None"):
             self.version = None
         elif self.urn and self.version != self._urn.version:
             raise ValueError(
