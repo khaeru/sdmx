@@ -222,6 +222,13 @@ class TestVersionableArtefact(CompareTests):
     def test_compare(self, obj: common.VersionableArtefact, callback) -> None:
         super().test_compare(obj, callback)
 
+    def test_init_gh_230(self) -> None:
+        """Test of https://github.com/khaeru/sdmx/issues/230."""
+        urn = "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=M:VA_FOO(0.1.dev1)"
+
+        # No conflict between identical str version= kwarg and in URN
+        common.VersionableArtefact(id="VA_FOO", version="0.1.dev1", urn=urn)
+
     def test_urn(self) -> None:
         va = common.VersionableArtefact(id="VARIAB_ALL", urn=URN)
 
