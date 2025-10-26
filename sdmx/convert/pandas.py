@@ -685,6 +685,7 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
         Otherwise.
     """
     c._context[common.BaseDataSet] = obj
+    c._context.setdefault(common.BaseDataStructureDefinition, obj.structured_by)
     c._columns = ColumnSpec(pc=c, ds=obj)
 
     # - Apply convert_obs() to every obs → iterable of list.
