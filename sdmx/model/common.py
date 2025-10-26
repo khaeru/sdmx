@@ -1756,7 +1756,7 @@ class Key:
         if not isinstance(other, Key) and other is not None:
             raise NotImplementedError
         else:
-            result.values.update_fast(other.values)
+            result.values.update_fast(getattr(other, "values", []))
         return result
 
     def __radd__(self, other):
