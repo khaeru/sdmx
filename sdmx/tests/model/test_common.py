@@ -590,6 +590,14 @@ class TestKey:
         # KeyValue is associated with Dimension
         assert k["FOO"].value_for is d
 
+    def test_add(self, k1) -> None:
+        """:any:`None` can be added to Key.
+
+        https://github.com/khaeru/sdmx/issues/251.
+        """
+        result = k1 + None
+        assert result == k1
+
     def test_eq(self, k1) -> None:
         # Invalid comparison
         with pytest.raises(ValueError):
