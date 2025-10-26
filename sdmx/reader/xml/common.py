@@ -5,7 +5,7 @@ from collections import ChainMap, defaultdict
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from importlib import import_module
 from itertools import chain, count
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 from lxml import etree
 from lxml.etree import QName
@@ -13,12 +13,19 @@ from lxml.etree import QName
 import sdmx.urn
 from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
-from sdmx.format import Version, list_media_types
+from sdmx.format import Version as FormatVersion
+from sdmx.format import list_media_types
 from sdmx.model import common
+from sdmx.model.version import Version
 from sdmx.reader.base import BaseReader
 
 if TYPE_CHECKING:
     import types
+
+    AA = TypeVar("AA", bound=common.AnnotableArtefact)
+    IA = TypeVar("IA", bound=common.IdentifiableArtefact)
+    NA = TypeVar("NA", bound=common.NameableArtefact)
+    MA = TypeVar("MA", bound=common.MaintainableArtefact)
 
 # Sentinel value for a missing Agency
 _NO_AGENCY = common.Agency()
@@ -50,7 +57,9 @@ class BaseReference:
         "version",
     )
 
-    def __init__(self, reader, elem, cls_hint=None):
+    def __init__(
+        self, reader: "XMLEventReader", elem, cls_hint: type | None = None
+    ) -> None:
         parent_tag = elem.tag
 
         info = self.info_from_element(elem)
@@ -93,7 +102,7 @@ class BaseReference:
     @abstractmethod
     def info_from_element(cls, elem) -> dict[str, Any]: ...
 
-    def __str__(self):
+    def __str__(self) -> str:
         # NB for debugging only
         return (  # pragma: no cover
             f"{self.cls.__name__}={self.agency.id}:{self.id}({self.version}) → "
@@ -108,7 +117,7 @@ class XMLEventReader(BaseReader):
     suffixes = [".xml"]
 
     #: SDMX-ML version handled by this reader.
-    xml_version: ClassVar[Version]
+    xml_version: ClassVar[FormatVersion]
 
     #: Reference to the module defining the format read.
     format: ClassVar["types.ModuleType"]
@@ -129,7 +138,9 @@ class XMLEventReader(BaseReader):
         # Empty dictionary
         cls.parser = {}
 
-        name = {Version["2.1"]: "v21", Version["3.0.0"]: "v30"}[cls.xml_version]
+        name = {FormatVersion["2.1"]: "v21", FormatVersion["3.0.0"]: "v30"}[
+            cls.xml_version
+        ]
         cls.format = import_module(f"sdmx.format.xml.{name}")
         cls.model = import_module(f"sdmx.model.{name}")
         cls.media_types = list_media_types(base="xml", version=cls.xml_version)
@@ -306,7 +317,7 @@ class XMLEventReader(BaseReader):
                 )
         print("\nIgnore:\n", self.ignore)
 
-    def push(self, stack_or_obj, obj=None):
+    def push(self, stack_or_obj, obj=None) -> None:
         """Push an object onto a stack."""
         if stack_or_obj is None:
             return
@@ -335,11 +346,11 @@ class XMLEventReader(BaseReader):
 
         self.stack[s][id] = obj
 
-    def stash(self, *stacks, name: str = "_stash"):
+    def stash(self, *stacks, name: str = "_stash") -> None:
         """Temporarily hide all objects in the given `stacks`."""
         self.push(name, {s: self.stack.pop(s, dict()) for s in stacks})
 
-    def unstash(self, name: str = "_stash"):
+    def unstash(self, name: str = "_stash") -> None:
         """Restore the objects hidden by the last :meth:`stash` call to their stacks.
 
         Calls to :meth:`.stash` and :meth:`.unstash` should be matched 1-to-1; if the
@@ -361,7 +372,7 @@ class XMLEventReader(BaseReader):
         self,
         cls_or_name: type | str,
         id: str | None = None,
-        version: str | None = None,
+        version: str | Version | None = None,
         subclass: bool = False,
     ) -> Any | None:
         """Return a reference to an object while leaving it in its stack.
@@ -475,7 +486,9 @@ class XMLEventReader(BaseReader):
                     return parent.get_hierarchical(ref.target_id)
                 raise  # pragma: no cover
 
-    def annotable(self, cls, elem, **kwargs):
+    AA = TypeVar("AA", bound=common.AnnotableArtefact)
+
+    def annotable(self, cls: type["AA"], elem, **kwargs) -> "AA":
         """Create a AnnotableArtefact of `cls` from `elem` and `kwargs`.
 
         Collects all parsed <com:Annotation>.
@@ -485,12 +498,12 @@ class XMLEventReader(BaseReader):
             kwargs["annotations"].extend(self.pop_all(self.model.Annotation))
         return cls(**kwargs)
 
-    def identifiable(self, cls, elem, **kwargs):
+    def identifiable(self, cls: type["IA"], elem, **kwargs) -> "IA":
         """Create a IdentifiableArtefact of `cls` from `elem` and `kwargs`."""
         setdefault_attrib(kwargs, elem, "id", "urn", "uri")
         return self.annotable(cls, elem, **kwargs)
 
-    def nameable(self, cls, elem, **kwargs):
+    def nameable(self, cls: type["NA"], elem, **kwargs) -> "NA":
         """Create a NameableArtefact of `cls` from `elem` and `kwargs`.
 
         Collects all parsed :class:`.InternationalString` localizations of <com:Name>
@@ -502,7 +515,7 @@ class XMLEventReader(BaseReader):
             add_localizations(obj.description, self.pop_all("Description"))
         return obj
 
-    def maintainable(self, cls, elem, **kwargs):
+    def maintainable(self, cls: type["MA"], elem, **kwargs) -> "MA":
         """Create or retrieve a MaintainableArtefact of `cls` from `elem` and `kwargs`.
 
         Following the SDMX-IM class hierarchy, :meth:`maintainable` calls
@@ -578,7 +591,7 @@ class XMLEventReader(BaseReader):
         return obj
 
 
-def add_localizations(target: common.InternationalString, values: list) -> None:
+def add_localizations(target: common.InternationalString, values: Sequence) -> None:
     """Add localized strings from *values* to *target*."""
     target.localizations.update({locale: label for locale, label in values})
 

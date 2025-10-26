@@ -499,7 +499,7 @@ def _item_start(reader, elem):
 @possible_reference(unstash=True)
 def _item_end(reader: Reader, elem):
     cls = reader.class_for_tag(elem.tag)
-    item = reader.nameable(cls, elem)
+    item: "common.Item" = reader.nameable(cls, elem)
 
     # Hierarchy is stored in two ways
 
@@ -718,7 +718,7 @@ def _cl(reader: Reader, elem):
     assert dsd is not None
 
     # Determine the class
-    cls = reader.class_for_tag(elem.tag)
+    cls: type[common.ComponentList] = reader.class_for_tag(elem.tag)
 
     args = dict(
         # Retrieve the components
@@ -746,11 +746,8 @@ def _cl(reader: Reader, elem):
 
     cl = reader.identifiable(cls, elem, **args)
 
-    try:
-        # DimensionDescriptor only
+    if isinstance(cl, common.DimensionDescriptor):
         cl.assign_order()
-    except AttributeError:
-        pass
 
     # Assign to the DSD eagerly (instead of in _dsd_end()) for reference by next
     # ComponentList e.g. so that AttributeRelationship can reference the
@@ -1040,7 +1037,7 @@ def _ar(reader, elem):
 def _structure_start(reader: Reader, elem):
     # Get any external reference created earlier, or instantiate a new object
     cls = reader.class_for_tag(elem.tag)
-    obj = reader.maintainable(cls, elem)
+    obj: "common.Structure" = reader.maintainable(cls, elem)
 
     if obj not in reader.stack[cls]:
         # A new object was created
@@ -1541,9 +1538,7 @@ def _hc_end(reader: Reader, elem):
             level = common.Level(id=level_ref.id)
 
     # Create the HierarchicalCode
-    obj = reader.identifiable(
-        reader.class_for_tag(elem.tag), elem, code=code, level=level
-    )
+    obj = reader.identifiable(common.HierarchicalCode, elem, code=code, level=level)
 
     # Count children represented as XML sub-elements of the parent
     n_child = sum(e.tag == elem.tag for e in elem)
@@ -1573,7 +1568,7 @@ def _h_start(reader: Reader, elem):
 
 @end("str:Hierarchy", only=False)
 def _h_end(reader: Reader, elem):
-    result = reader.nameable(
+    result: "v21.Hierarchy" = reader.nameable(
         reader.class_for_tag(elem.tag),
         elem,
         has_formal_levels=eval(elem.attrib.get("leveled", "false").title()),
