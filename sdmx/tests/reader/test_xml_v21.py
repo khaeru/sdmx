@@ -422,14 +422,17 @@ def test_parse_elem(elem, expected):
         # The element is parsed successfully
         result = reader.convert(tmp)
 
-        if not result:
-            stack = list(chain(*[s.values() for s in reader.stack.values()]))
-            assert len(stack) == 1
-            result = stack[0]
+        # For non-top-level XML, reader.convert() does not return anything
+        assert result is None
+
+        # Retrieve a single object stored on one or another of the reader stacks
+        objects = list(chain(*[s.values() for s in reader.stack.values()]))
+        assert len(objects) == 1
+        obj = objects[0]
 
         if expected:
             # Expected value supplied
-            assert expected == result
+            assert expected == obj
 
 
 def test_availableconstraint_xml_response(specimen):
