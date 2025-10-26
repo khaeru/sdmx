@@ -9,6 +9,11 @@ Next release
 - Python 3.14 (`released 2025-10-07 <https://www.python.org/downloads/release/python-3140/>`_) is fully supported (:pull:`249`).
 - Python 3.9 support is dropped, as `it has reached end-of-life <https://peps.python.org/pep-0569/#lifespan>`__ (:pull:`249`).
   :mod:`sdmx` requires Python 3.10 or later.
+- :class:`.URN` parses letters in the version part of a URN (:issue:`230`, :pull:`252`).
+  This fixes a bug in v2.16.0–v2.23.1 where creating :class:`.VersionableArtefact`
+  with both :py:`version=...` and :py:`urn=...` would raise :class:`ValueError`
+  even if the two were in agreement.
+- Fix two regressions in :func:`.to_pandas` introduced in v2.23.0 (:issue:`251`, :pull:`252`).
 
 v2.23.1 (2025-10-01)
 ====================

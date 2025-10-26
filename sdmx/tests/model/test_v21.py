@@ -7,11 +7,17 @@ import sdmx
 import sdmx.message
 from sdmx.model import common, v21
 from sdmx.model import v21 as model
+from sdmx.model.common import (
+    AttributeValue,
+    Code,
+    Dimension,
+    DimensionDescriptor,
+    Key,
+    KeyValue,
+)
 from sdmx.model.v21 import (
     Annotation,
     AttributeDescriptor,
-    AttributeValue,
-    Code,
     Codelist,
     Component,
     ComponentList,
@@ -27,11 +33,7 @@ from sdmx.model.v21 import (
     DataKeySet,
     DataSet,
     DataStructureDefinition,
-    Dimension,
-    DimensionDescriptor,
     GroupKey,
-    Key,
-    KeyValue,
     MemberSelection,
     MemberValue,
     Observation,
@@ -448,107 +450,6 @@ class TestDataStructureDefinition:
 
         _, result_kw = value_for_dsd_ref("dimension", tuple(), kwargs)
         assert kwargs == result_kw
-
-
-class TestKeyValue:
-    @pytest.fixture
-    def kv(self) -> KeyValue:
-        return KeyValue(id="DIM", value="3")
-
-    def test_init(self) -> None:
-        dsd = DataStructureDefinition.from_keys(
-            [Key(foo=1, bar=2, baz=3), Key(foo=4, bar=5, baz=6)]
-        )
-
-        kv = KeyValue(id="qux", value_for="baz", value="3", dsd=dsd)  # type: ignore
-        assert kv.value_for is dsd.dimensions.get("baz")
-
-    def test_repr(self, kv) -> None:
-        assert "<KeyValue: DIM=3>" == repr(kv)
-
-    def test_sort(self, kv) -> None:
-        assert kv < KeyValue(id="DIM", value="foo")
-        assert kv < "foo"
-
-
-class TestAttributeValue:
-    def test_str(self):
-        assert "FOO" == str(AttributeValue(value="FOO"))
-        assert "FOO" == str(AttributeValue(value=Code(id="FOO", name="Foo")))
-
-
-class TestKey:
-    @pytest.fixture
-    def k1(self):
-        # Construct with a dict
-        yield Key({"foo": 1, "bar": 2})
-
-    @pytest.fixture
-    def k2(self):
-        # Construct with kwargs
-        yield Key(foo=1, bar=2)
-
-    def test_init(self):
-        # Construct with a dict and kwargs is an error
-        with pytest.raises(ValueError):
-            Key({"foo": 1}, bar=2)
-
-        # Construct with a DimensionDescriptor
-        d = Dimension(id="FOO")
-        dd = DimensionDescriptor(components=[d])
-
-        k = Key(FOO=1, described_by=dd)
-
-        # KeyValue is associated with Dimension
-        assert k["FOO"].value_for is d
-
-    def test_eq(self, k1) -> None:
-        # Invalid comparison
-        with pytest.raises(ValueError):
-            k1 == (("foo", 1), ("bar", 2))
-
-    def test_others(self, k1, k2) -> None:
-        # Results are __eq__ each other
-        assert k1 == k2
-
-        # __len__
-        assert len(k1) == 2
-
-        # __contains__: symmetrical if keys are identical
-        assert k1 in k2
-        assert k2 in k1
-        assert Key(foo=1) in k1
-        assert k1 not in Key(foo=1)
-
-        # Set and get using item convenience
-        k1["baz"] = 3  # bare value is converted to a KeyValue
-        assert k1["foo"] == 1
-
-        # __str__
-        assert str(k1) == "(foo=1, bar=2, baz=3)"
-
-        # copying: returns a new object equal to the old one
-        k2 = k1.copy()
-        assert id(k1) != id(k2) and k1 == k2
-        # copy with changes
-        k2 = Key(foo=1, bar=2).copy(baz=3)
-        assert id(k1) != id(k2) and k1 == k2
-
-        # __add__: Key with something else
-        with pytest.raises(NotImplementedError):
-            k1 + 4
-        # Two Keys
-        k2 = Key(foo=1) + Key(bar=2)
-        assert k2 == k1
-
-        # __radd__: adding a Key to None produces a Key
-        assert None + k1 == k1
-        # anything else is an error
-        with pytest.raises(NotImplementedError):
-            4 + k1
-
-        # get_values(): preserve ordering
-        assert k1.get_values() == (1, 2, 3)
 
 
 class TestObservation(CompareTests):

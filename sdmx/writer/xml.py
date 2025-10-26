@@ -895,7 +895,10 @@ def _tov(obj: model.TargetObjectValue):
         elem.append(Element("md:ReportPeriod", obj.report_period))
     elif isinstance(obj, model.TargetIdentifiableObject):
         elem.append(
-            Element("md:ObjectReference", Element("URN", sdmx.urn.make(obj.obj)))
+            Element(
+                "md:ObjectReference",
+                Element("URN", sdmx.urn.make(obj.obj, strict=True)),
+            )
         )
     else:  # pragma: no cover
         raise NotImplementedError(type(obj))

@@ -503,6 +503,15 @@ def to_pandas(obj, **kwargs):
 
     `kwargs` can include any of the attributes of :class:`.PandasConverter`.
 
+    .. versionchanged:: 1.0
+
+       :func:`.to_pandas` handles all types of objects,
+       replacing the earlier, separate ``data2pandas`` and ``structure2pd`` writers.
+
+    .. versionchanged:: 2.23.0
+
+       :func:`.to_pandas` is a thin wrapper for :class:`.PandasConverter`.
+
     Other parameters
     ----------------
     format_options :
@@ -513,15 +522,6 @@ def to_pandas(obj, **kwargs):
     time_format :
         if given, the :attr:`.CSVFormatOptions.time_format` attribute of the
         `format_options` keyword argument is replaced.
-
-    .. versionchanged:: 1.0
-
-       :func:`.to_pandas` handles all types of objects,
-       replacing the earlier, separate ``data2pandas`` and ``structure2pd`` writers.
-
-    .. versionchanged:: 2.23.0
-
-       :func:`.to_pandas` is a thin wrapper for :class:`.PandasConverter`.
     """
     csv.common.kwargs_to_format_options(kwargs, csv.common.CSVFormatOptions)
     return PandasConverter(**kwargs).convert(obj)
@@ -685,6 +685,7 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
         Otherwise.
     """
     c._context[common.BaseDataSet] = obj
+    c._context.setdefault(common.BaseDataStructureDefinition, obj.structured_by)
     c._columns = ColumnSpec(pc=c, ds=obj)
 
     # - Apply convert_obs() to every obs → iterable of list.
@@ -697,7 +698,11 @@ def convert_dataset(c: "PandasConverter", obj: common.BaseDataSet):
     # - (Possibly) convert certain columns to datetime.
     # - (Possibly) reshape.
     result = (
-        pd.DataFrame(map(c._columns.convert_obs, obj.obs))
+        pd.DataFrame(
+            map(c._columns.convert_obs, obj.obs)
+            if obj.obs
+            else [[None] * len(c._columns.obs)]
+        )
         .dropna(how="all")
         .set_axis(c._columns.obs, axis=1)  # NB This must come after DataFrame(map(…))
         .assign(**c._columns.assign)

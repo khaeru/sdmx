@@ -19,6 +19,7 @@ from sdmx.writer.xml import writer as XMLWriter
 
 if TYPE_CHECKING:
     from sdmx.model.common import Structure
+    from sdmx.types import MaintainableArtefactArgs as MAArgs
 
 log = logging.getLogger(__name__)
 
@@ -43,12 +44,12 @@ def header(agency) -> message.Header:
 @pytest.fixture
 def metadata_message(header) -> message.MetadataMessage:
     """A metadata message with the minimum content to write valid SDMX-ML 2.1."""
-    a = common.Agency(id="TEST")
-    dfd = v21.DataflowDefinition(id="DFD", maintainer=a)
+    ma_kw: "MAArgs" = dict(version="1.0", maintainer=common.Agency(id="TEST"))
+    dfd = v21.DataflowDefinition(id="DFD", **ma_kw)
     ma = v21.MetadataAttribute(id="MA")
     rs = v21.ReportStructure(id="RS", components=[ma])
     mdsd = v21.MetadataStructureDefinition(
-        id="MDS", maintainer=a, report_structure={rs.id: rs}
+        id="MDS", **ma_kw, report_structure={rs.id: rs}
     )
     iot = v21.IdentifiableObjectTarget(id="IOT")
     mdt = v21.MetadataTarget(id="MDT", components=[iot])
@@ -323,7 +324,7 @@ def test_DataMessage(datamessage):
     sdmx.to_xml(datamessage)
 
 
-def test_MetadataMessage(metadata_message, *, debug: bool = False) -> None:
+def test_MetadataMessage(metadata_message, *, debug: bool = True) -> None:
     """:class:`.MetadataMessage` can be written."""
     # Write to SDMX-ML
     buf = io.BytesIO(sdmx.to_xml(metadata_message, pretty_print=debug))

@@ -300,6 +300,8 @@ class Observation(common.BaseObservation):
 class DataSet(common.BaseDataSet):
     """SDMX 2.1 DataSet."""
 
+    structured_by: DataStructureDefinition | None = None
+
     #: Named ``attachedAttribute`` in the IM.
     attrib: DictLikeDescriptor[str, common.AttributeValue] = DictLikeDescriptor()
 

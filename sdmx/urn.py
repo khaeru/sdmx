@@ -1,4 +1,5 @@
 import re
+from dataclasses import InitVar, dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -9,46 +10,43 @@ _PATTERN = re.compile(
     r"urn:sdmx:org\.sdmx\.infomodel"
     r"\.(?P<package>[^\.]*)"
     r"\.(?P<class>[^=]*)=((?P<agency>[^:]*):)?"
-    r"(?P<id>[^\(]*)(\((?P<version>[\d\.]*)\))?"
+    r"(?P<id>[^\(]*)(\((?P<version>[\w\.-]*)\))?"
     r"(\.(?P<item_id>.*))?"
 )
 
 
+@dataclass(slots=True)
 class URN:
-    """SDMX Uniform Resource Name (URN).
+    """SDMX Uniform Resource Name (URN)."""
 
-    For example: "urn:sdmx:org.sdmx.infomodel.codelist.Code=BAZ:FOO(1.2.3).BAR". The
-    maintainer ID ("BAZ") and version ("1.2.3") must refer to a
-    :class:`.MaintainableArtefact`. If (as in this example) the URN is for a
-    non-maintainable child (for example, a :class:`.Item` in a :class:`.ItemScheme`),
-    these are the maintainer ID and version of the containing scheme/other maintainable
-    parent object.
-    """
+    #: Existing URN to parse, for example
+    #: "urn:sdmx:org.sdmx.infomodel.codelist.Code=BAZ:FOO(1.2.3).BAR". The maintainer ID
+    #: ("BAZ") and version ("1.2.3") must refer to a :class:`.MaintainableArtefact`. If
+    #: (as in this example) the URN is for a non-maintainable child (for example, a
+    #: :class:`.Item` in a :class:`.ItemScheme`), these are the maintainer ID and
+    #: version of the containing scheme/other maintainable parent object.
+    value: InitVar[str | None] = None
 
     #: SDMX :data:`.PACKAGE` corresponding to :attr:`klass`.
-    package: str
+    package: str = ""
 
     #: SDMX object class.
-    klass: str
+    klass: str = ""
 
     #: ID of the :class:`.Agency` that is the :attr:`.MaintainableArtefact.maintainer`.
-    agency: str | None = None
+    agency: str = ""
 
     #: ID of the :class:`.MaintainableArtefact`.
-    id: str | None = None
+    id: str = ""
 
     #: :attr:`.VersionableArtefact.version` of the maintainable artefact.parent.
-    version: str | None = None
+    version: str = ""
 
     #: ID of an item within a maintainable parent. Optional.
-    item_id: str | None = None
+    item_id: str = ""
 
-    def __init__(self, value: str | None, **kwargs) -> None:
-        if kwargs:
-            self.__dict__.update(kwargs)
-
+    def __post_init__(self, value: str | None) -> None:
         if value is None:
-            self.groupdict = {}  # Needed by match()
             return
 
         try:
@@ -57,20 +55,22 @@ class URN:
         except (AssertionError, TypeError):
             raise ValueError(f"not a valid SDMX URN: {value}")
 
-        g = self.groupdict = match.groupdict()
-
-        if g["package"] == "package":
-            from sdmx.model.v21 import PACKAGE
-
-            self.package = PACKAGE[g["class"]]
-        else:
-            self.package = g["package"]
-
+        # Update attributes from the match
+        g = match.groupdict()
         self.klass = g["class"]
         self.agency = g["agency"]
         self.id = g["id"]
         self.version = g["version"]
         self.item_id = g["item_id"]
+
+        if g["package"] == "package":
+            # Replace the placeholder value "package" with the actual package associated
+            # with class
+            from sdmx.model.v21 import PACKAGE
+
+            self.package = PACKAGE[g["class"]]
+        else:
+            self.package = g["package"]
 
     def __str__(self) -> str:
         return (
@@ -141,7 +141,7 @@ def make(
             klass=obj.__class__.__name__,
             agency=ma.maintainer.id,
             id=ma.id,
-            version=ma.version,
+            version=str(ma.version) if ma.version else "",
             item_id=item_id,
         )
     )
@@ -167,7 +167,16 @@ def match(value: str) -> dict[str, str]:
     ValueError
         If `value` is not a well-formed SDMX URN.
     """
-    return URN(value).groupdict
+    urn = URN(value)
+
+    return {
+        "package": urn.package,
+        "class": urn.klass,
+        "agency": urn.agency,
+        "id": urn.id,
+        "version": urn.version,
+        "item_id": urn.item_id,
+    }
 
 
 def normalize(value: str) -> str:

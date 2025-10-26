@@ -184,7 +184,7 @@ class BaseAnnotation:
         return None
 
 
-@dataclass
+@dataclass(slots=True)
 class AnnotableArtefact(Comparable):
     #: :class:`Annotations <.Annotation>` of the object.
     #:
@@ -244,7 +244,7 @@ class AnnotableArtefact(Comparable):
             return value
 
 
-@dataclass
+@dataclass(slots=True)
 class IdentifiableArtefact(AnnotableArtefact):
     #: Unique identifier of the object.
     id: str = MissingID
@@ -349,8 +349,8 @@ class VersionableArtefact(NameableArtefact):
         super().__post_init__()
 
         if not self.version:
-            self.version = self._urn.version
-        elif isinstance(self.version, str) and self.version == "None":
+            self.version = self._urn.version or None
+        elif isinstance(self.version, str) and self.version in ("", "None"):
             self.version = None
         elif self.urn and self.version != self._urn.version:
             raise ValueError(
@@ -1756,7 +1756,7 @@ class Key:
         if not isinstance(other, Key) and other is not None:
             raise NotImplementedError
         else:
-            result.values.update_fast(other.values)
+            result.values.update_fast(getattr(other, "values", []))
         return result
 
     def __radd__(self, other):

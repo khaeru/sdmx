@@ -505,6 +505,18 @@ def test_dataset_datetime_deprecated(specimen) -> None:
         sdmx.to_pandas(ds, datetime=43)
 
 
+def test_dataset_empty() -> None:
+    """Dataset with 0 observations can be converted.
+
+    https://github.com/khaeru/sdmx/issues/251.
+    """
+    dsd = v21.DataStructureDefinition()
+    dsd.dimensions.getdefault(id="DIM_0")
+    ds = v21.DataSet(structured_by=dsd)
+
+    sdmx.to_pandas(ds)
+
+
 def test_list_of_obs(specimen) -> None:
     """Bare list of observations can be written."""
     with specimen("ng-ts.xml") as f:

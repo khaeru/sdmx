@@ -394,6 +394,8 @@ class Observation(common.BaseObservation):
 class DataSet(common.BaseDataSet):
     """SDMX 3.0 Data Set."""
 
+    structured_by: DataStructureDefinition | None = None
+
 
 class StructureSpecificDataSet(DataSet):
     """SDMX 3.0 StructureSpecificDataSet.
