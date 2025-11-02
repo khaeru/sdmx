@@ -265,7 +265,7 @@ class TestClient:
 def test_read_url0() -> None:
     """URL can be queried without instantiating Client."""
     sdmx.read_url(
-        "https://sdw-wsrest.ecb.europa.eu/service/datastructure/ECB/ECB_EXR1/latest?"
+        "https://data-api.ecb.europa.eu/service/datastructure/ECB/ECB_EXR1/latest?"
         "references=all"
     )
 
