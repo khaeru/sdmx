@@ -518,7 +518,7 @@ class Client:
 
         # store in memory cache if needed
         if use_cache:
-            self.cache[req.url] = msg
+            self.cache[req_prepared.url] = msg
 
         return msg
 
