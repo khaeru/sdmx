@@ -517,7 +517,7 @@ class Client:
         msg = self.source.finish_message(msg, self, **kwargs)
 
         # store in memory cache if needed
-        if use_cache:
+        if use_cache and req_prepared.url:
             self.cache[req_prepared.url] = msg
 
         return msg
