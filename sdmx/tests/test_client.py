@@ -71,33 +71,21 @@ class TestClient:
 
     # Regular methods
     def test_cache(self, client: "Client") -> None:
+        # Cache starts empty
         assert not client.cache
 
         # Response gets cached by the correct URL on cache miss
-        req = client.get(
-            "dataflow",
-            references="children",
-            dry_run=True,
-        )
+        req = client.get("dataflow", references="children", dry_run=True)
         assert isinstance(req, PreparedRequest)
-        client.get(
-            "dataflow",
-            references="children",
-            use_cache=True,
-        )
+        msg0 = client.get("dataflow", references="children", use_cache=True)
         assert len(client.cache) == 1
-        assert req.url in client.cache
+        assert client.cache[req.url] is msg0
 
         # Cached response gets returned on cache hit
-        cached_msg = client.cache[req.url]
-        msg = client.get(
-            "dataflow",
-            references="children",
-            use_cache=True,
-        )
-        assert msg is cached_msg
-        assert client.cache[req.url] is cached_msg
+        msg1 = client.get("dataflow", references="children", use_cache=True)
+        assert msg1 is msg0
         assert len(client.cache) == 1
+        assert client.cache[req.url] is msg0
 
         # Clearing the cache works
         client.clear_cache()
