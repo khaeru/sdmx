@@ -70,8 +70,37 @@ class TestClient:
             sdmx.Client("noagency")
 
     # Regular methods
-    def test_clear_cache(self, client: "Client") -> None:
+    def test_cache(self, client: "Client") -> None:
+        assert not client.cache
+
+        # Response gets cached by the correct URL on cache miss
+        req = client.get(
+            "dataflow",
+            references="children",
+            dry_run=True,
+        )
+        client.get(
+            "dataflow",
+            references="children",
+            use_cache=True,
+        )
+        assert len(client.cache) == 1
+        assert req.url in client.cache
+
+        # Cached response gets returned on cache hit
+        client.cache[req.url] = 'from cache'
+        msg = client.get(
+            "dataflow",
+            references="children",
+            use_cache=True,
+        )
+        assert msg == 'from cache'
+        assert len(client.cache) == 1
+        assert client.cache[req.url] == 'from cache'
+
+        # Clearing the cache works
         client.clear_cache()
+        assert not client.cache
 
     def test_session_attrs0(
         self, caplog: "pytest.LogCaptureFixture", client: "Client"
