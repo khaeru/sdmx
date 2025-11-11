@@ -79,6 +79,7 @@ class TestClient:
             references="children",
             dry_run=True,
         )
+        assert isinstance(req, PreparedRequest)
         client.get(
             "dataflow",
             references="children",
@@ -88,15 +89,15 @@ class TestClient:
         assert req.url in client.cache
 
         # Cached response gets returned on cache hit
-        client.cache[req.url] = 'from cache'
+        cached_msg = client.cache[req.url]
         msg = client.get(
             "dataflow",
             references="children",
             use_cache=True,
         )
-        assert msg == 'from cache'
+        assert msg is cached_msg
+        assert client.cache[req.url] is cached_msg
         assert len(client.cache) == 1
-        assert client.cache[req.url] == 'from cache'
 
         # Clearing the cache works
         client.clear_cache()

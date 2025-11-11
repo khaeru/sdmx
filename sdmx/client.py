@@ -339,7 +339,7 @@ class Client:
         use_cache: bool = False,
         dry_run: bool = False,
         **kwargs,
-    ) -> "sdmx.message.Message":
+    ) -> "sdmx.message.Message | requests.Request":
         """Retrieve SDMX data or metadata.
 
         (Meta)data is retrieved from the :attr:`source` of the current Client. The
