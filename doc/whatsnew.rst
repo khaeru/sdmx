@@ -14,6 +14,7 @@ Next release
   with both :py:`version=...` and :py:`urn=...` would raise :class:`ValueError`
   even if the two were in agreement.
 - Fix two regressions in :func:`.to_pandas` introduced in v2.23.0 (:issue:`251`, :pull:`252`).
+- Fix false cache hits and misses (:issue:`256`, :pull:`257`).
 
 v2.23.1 (2025-10-01)
 ====================
