@@ -323,7 +323,7 @@ class TestEMPL(DataSourceTest):
 
     def test_gh_259(self, client):
         """Test of https://github.com/khaeru/sdmx/issues/259."""
-        client.datastructure("LMP_EXPME", references="children")
+        client.dataflow("LMP_EXPME", references="children")
 
 
 class TestGROW(DataSourceTest):
