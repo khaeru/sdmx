@@ -36,6 +36,7 @@ def handle_references_param(kwargs: dict) -> None:
         kwargs.get("resource", None), "id", None
     )
     params = kwargs.setdefault("params", {})
+    params["references"] = kwargs.pop("references", None)
 
     # Preempt default values that would be set by Client._request_from_args()
     if not params.get("references"):
