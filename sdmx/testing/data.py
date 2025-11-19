@@ -267,7 +267,13 @@ def add_responses(session: "Session", file_cache_path: Path, source: "Source") -
             f"{source.url}/{endpoint}/{source.id}/all/latest",
             f"{source.url}/{endpoint}/{source.id}/all/latest?references=children",
         ):
-            save_response(session, method="GET", url=url, content=content, headers=headers)
+            save_response(
+                session,
+                method="GET",
+                url=url,
+                content=content,
+                headers=headers,
+            )
 
     for url in (
         f"{source.url}/availableconstraint",
