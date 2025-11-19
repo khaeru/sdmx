@@ -321,6 +321,10 @@ class TestEMPL(DataSourceTest):
         "dataflow": dict(resource_id="LMP_IND_EXP"),
     }
 
+    def test_gh_259(self, client):
+        """Test of https://github.com/khaeru/sdmx/issues/259."""
+        client.dataflow("LMP_EXPME", references="children")
+
 
 class TestGROW(DataSourceTest):
     source_id = "GROW"
