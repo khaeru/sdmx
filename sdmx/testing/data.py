@@ -263,8 +263,11 @@ def add_responses(session: "Session", file_cache_path: Path, source: "Source") -
         "userdefinedoperatorscheme",
         "vtlmappingscheme",
     ):
-        url = f"{source.url}/{endpoint}/{source.id}/all/latest"
-        save_response(session, method="GET", url=url, content=content, headers=headers)
+        for url in (
+            f"{source.url}/{endpoint}/{source.id}/all/latest"
+            f"{source.url}/{endpoint}/{source.id}/all/latest?references=children"
+        ):
+            save_response(session, method="GET", url=url, content=content, headers=headers)
 
     for url in (
         f"{source.url}/availableconstraint",
