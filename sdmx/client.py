@@ -339,7 +339,7 @@ class Client:
         use_cache: bool = False,
         dry_run: bool = False,
         **kwargs,
-    ) -> "sdmx.message.Message":
+    ) -> "sdmx.message.Message | requests.Request":
         """Retrieve SDMX data or metadata.
 
         (Meta)data is retrieved from the :attr:`source` of the current Client. The
@@ -517,8 +517,8 @@ class Client:
         msg = self.source.finish_message(msg, self, **kwargs)
 
         # store in memory cache if needed
-        if use_cache:
-            self.cache[req.url] = msg
+        if use_cache and req_prepared.url:
+            self.cache[req_prepared.url] = msg
 
         return msg
 
