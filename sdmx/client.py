@@ -456,6 +456,8 @@ class Client:
             req = self._request_from_args(kwargs)
 
         req_prepared = self.session.prepare_request(req)
+        if dry_run:
+            return req_prepared  # type: ignore [return-value]
 
         # Now get the SDMX message via HTTP
         log.info(f"Request {req_prepared.url}")
@@ -468,9 +470,6 @@ class Client:
             except KeyError:
                 log.info("Not found in cache")
                 pass
-
-        if dry_run:
-            return req_prepared  # type: ignore [return-value]
 
         try:
             # Send the request
