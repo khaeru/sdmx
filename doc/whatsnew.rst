@@ -16,6 +16,7 @@ Next release
 - Fix two regressions in :func:`.to_pandas` introduced in v2.23.0 (:issue:`251`, :pull:`252`).
 - Fix false cache hits and misses (thanks :gh-user:`benfrankel` for :issue:`256`, :pull:`257`).
 - Fix a bug where supplying `references=...` to ESTAT or EMPL would raise :class:`ValueError` (thanks :gh-user:`benfrankel` for :issue:`259`, :pull:`260`).
+- Adjust :meth:`.Client.get` to avoid logging or returning a message from cache when `dry_run=True` (thanks :gh-user:`benfrankel` for :pull:`261`).
 
 v2.23.1 (2025-10-01)
 ====================
