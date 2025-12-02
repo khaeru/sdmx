@@ -25,11 +25,11 @@ if TYPE_CHECKING:
     from typing import TypedDict
 
     from pandas.core.dtypes.base import ExtensionDtype
-    from pandas.tseries.offsets import DateOffset
 
     from sdmx.format.csv.common import CSVFormatOptions
     from sdmx.model.common import Item
     from sdmx.model.v21 import ContentConstraint
+    from sdmx.types import PeriodFrequency
 
     class ToDatetimeKeywords(TypedDict, total=False):
         format: str
@@ -333,7 +333,7 @@ class PandasConverter(DispatchConverter):
 
     #: Frequency for conversion to :class:`pandas.PeriodIndex`. A :class:`str` value is
     #: interpreted as one of the :ref:`pd:timeseries.period_aliases`.
-    datetime_freq: "DateOffset | None" = None
+    datetime_freq: "PeriodFrequency | None" = None
 
     #: include : iterable of str or str, optional
     #:     One or more of the attributes of the StructureMessage ('category_scheme',
