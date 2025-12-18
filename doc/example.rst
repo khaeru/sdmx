@@ -31,7 +31,7 @@ and :func:`.to_pandas` to convert to :class:`.pandas.Series`:
 
 .. ipython:: python
 
-    for cl in "ESTAT:AGE(12.0)", "ESTAT:SEX(1.13)", "ESTAT:UNIT(64.0)":
+    for cl in "ESTAT:AGE(13.0)", "ESTAT:SEX(1.13)", "ESTAT:UNIT(69.0)":
         print(sdmx.to_pandas(sm.get(cl)))
 
 Next, we download a **data set** containing a portion of the data in this data flow, structured by this DSD.
