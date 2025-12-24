@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.25.0 (2025-12-24)
+====================
 
 - Improve semantics and behaviour of :meth:`.Version.increment` (:pull:`264`).
   Previously, :py:`Version("1.2.3-dev4").increment(minor=1)` would give "1.3.3-dev1";
