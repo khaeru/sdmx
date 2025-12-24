@@ -3,8 +3,12 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Improve semantics and behaviour of :meth:`.Version.increment` (:pull:`264`).
+  Previously, :py:`Version("1.2.3-dev4").increment(minor=1)` would give "1.3.3-dev1";
+  now, the parts ‘inferior’ to the incremented part(s) are zeroed by default: "1.3.0".
 
 v2.24.0 (2025-12-18)
 ====================
