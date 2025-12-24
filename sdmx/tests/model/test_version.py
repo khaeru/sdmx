@@ -6,10 +6,12 @@ from packaging.version import Version as PVVersion
 
 from sdmx.model.version import Version, increment, parse
 
+_NIE = pytest.mark.xfail(raises=NotImplementedError)
+
 
 class TestVersion:
     @pytest.mark.parametrize("value, exp_kind", (("1.2.0+dev1", "py"),))
-    def test_init(self, value, exp_kind) -> None:
+    def test_init(self, value: str, exp_kind: str) -> None:
         assert exp_kind == Version(value).kind
 
     @pytest.mark.parametrize(
@@ -27,8 +29,54 @@ class TestVersion:
             ),
         ),
     )
-    def test_binop_str(self, op, value, exp) -> None:
+    def test_binop_str(self, op, value: str, exp: bool) -> None:
         assert exp is op(Version("1.0.0"), value)
+
+    @pytest.mark.parametrize(
+        "base, kwargs, expected",
+        (
+            ("1.0.0", dict(), PVVersion("1.1.0+dev1")),
+            ("1.0.0", dict(), "1.1.0+dev1"),
+            ("1.0.0", dict(), "1.1.0-dev1"),
+            ("1.0.0", dict(major=True), "2.0.0"),
+            ("1.0.0", dict(major=1), "2.0.0"),
+            ("1.0.0", dict(minor=True), "1.1.0"),
+            ("1.0.0", dict(minor=1), "1.1.0"),
+            ("1.0.0", dict(patch=True), "1.0.1"),
+            ("1.0.0", dict(patch=1), "1.0.1"),
+            ("1.0.0", dict(ext=1), "1.0.0+dev1"),
+            # Aliases, boolean arguments
+            ("1.0.0", dict(micro=True), "1.0.1"),
+            ("1.0.0", dict(local=True), "1.0.0+dev1"),
+            # Invalid kwargs
+            pytest.param(
+                "1.0.0", dict(foo=True), None, marks=pytest.mark.xfail(raises=TypeError)
+            ),
+            # Increment the 'extension' version part
+            ("1.0.0", dict(ext=1), "1.0.0+dev1"),
+            ("1.0.0-dev1", dict(ext=1), "1.0.0+dev2"),
+            ("1.0.0-dev1", dict(ext=2), "1.0.0+dev3"),
+            ("1.0.0-foodev1", dict(ext=1), "1.0.0+foodev2"),
+            pytest.param("1.0.0-draft", dict(ext=1), "", marks=_NIE),
+            # Increment of any release component resets the inferior components and
+            # the ext/local segment
+            ("1.2.3-dev1", dict(patch=1), "1.2.4"),
+            ("1.2.3-dev1", dict(minor=1), "1.3.0"),
+            ("1.2.3-dev1", dict(major=1), "2.0.0"),
+            # Same as above, but preserving the smaller parts
+            ("1.2.3-dev1", dict(patch=1, ext=0), "1.2.4-dev1"),
+            ("1.2.3-dev1", dict(minor=1, patch=0, ext=0), "1.3.3-dev1"),
+            ("1.2.3-dev1", dict(major=1, minor=0, patch=0, ext=0), "2.2.3-dev1"),
+        ),
+    )
+    def test_increment(
+        self, base: str, kwargs: dict, expected: str | PVVersion
+    ) -> None:
+        # Version.increment() method
+        assert expected == Version(base).increment(**kwargs)
+
+        # increment() function
+        assert expected == increment(base, **kwargs)
 
 
 @pytest.mark.parametrize(
@@ -41,12 +89,15 @@ class TestVersion:
         ("0.0.0-dev1", PVVersion("0.0.0+dev1")),
         ("1.0.0-dev1", PVVersion("1.0.0+dev1")),
         # Python
-        ("1!1.2.3+abc.dev1", PVVersion("1!1.2.3+abc.dev1")),
+        (
+            "1!2.3.4rc5.post6.dev7+abc8.xyz.9",
+            PVVersion("1!2.3.4rc5.post6.dev7+abc8.xyz.9"),
+        ),
         # Invalid
         pytest.param("foo", None, marks=pytest.mark.xfail(raises=InvalidVersion)),
     ),
 )
-def test_parse(value, expected) -> None:
+def test_parse(value: str, expected: PVVersion) -> None:
     v = parse(value)
 
     assert expected == v
@@ -54,53 +105,12 @@ def test_parse(value, expected) -> None:
     # Value round-trips
     assert value == str(v)
 
-    # Attributes can be accessed
-    v.major
-    v.minor
-    v.patch
-    v.local
-    v.ext
+    # Attributes can be accessed and have the expected types
+    assert isinstance(v.major, int)
+    assert isinstance(v.minor, int)
+    assert isinstance(v.patch, int)
+    assert isinstance(v.local, tuple)
+    assert isinstance(v.ext, (type(None), str))
 
     # Object's increment() method can be called
     assert v < v.increment(patch=1) < v.increment(minor=1) < v.increment(major=1)
-
-
-@pytest.mark.parametrize(
-    "kwargs, expected",
-    (
-        (dict(), PVVersion("1.1.0+dev1")),
-        (dict(major=True), PVVersion("2.0.0")),
-        (dict(major=1), PVVersion("2.0.0")),
-        (dict(minor=True), PVVersion("1.1.0")),
-        (dict(minor=1), PVVersion("1.1.0")),
-        (dict(patch=True), PVVersion("1.0.1")),
-        (dict(patch=1), PVVersion("1.0.1")),
-        (dict(micro=True), PVVersion("1.0.1")),
-        (dict(ext=1), PVVersion("1.0.0+dev1")),
-        pytest.param(dict(foo=True), None, marks=pytest.mark.xfail(raises=ValueError)),
-    ),
-)
-def test_increment0(kwargs, expected):
-    # PVVersion.increment() method
-    assert expected == parse("1.0.0").increment(**kwargs)
-
-    # increment() function
-    assert expected == increment("1.0.0", **kwargs)
-
-
-_NIE = pytest.mark.xfail(raises=NotImplementedError)
-
-
-@pytest.mark.parametrize(
-    "base, kwarg, expected",
-    (
-        ("1.0.0", dict(ext=1), PVVersion("1.0.0+dev1")),
-        ("1.0.0-dev1", dict(ext=1), PVVersion("1.0.0+dev2")),
-        ("1.0.0-dev1", dict(ext=2), PVVersion("1.0.0+dev3")),
-        ("1.0.0-foodev1", dict(ext=1), PVVersion("1.0.0+foodev2")),
-        pytest.param("1.0.0-draft", dict(ext=1), None, marks=_NIE),
-    ),
-)
-def test_increment1(base, kwarg, expected):
-    """Test incrementing the 'extension' version part."""
-    assert expected == parse(base).increment(**kwarg)
