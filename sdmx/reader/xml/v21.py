@@ -1270,9 +1270,8 @@ def _ds_start(reader, elem):
         # dataset level attributes are unqualified
         if QName(name).namespace:
             continue
-        
-        #skip action
-        if name in ('action', 'structureRef'):
+
+        if name in ("action", "structureRef"):
             continue
 
         ds.attrib[name] = common.AttributeValue(value)
