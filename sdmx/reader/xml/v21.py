@@ -1253,6 +1253,17 @@ def _ds_start(reader, elem):
 
     ds.structured_by = dsd
 
+    # add support for dataset level attributes
+    for name, value in elem.attrib.items():
+        # dataset level attributes are unqualified
+        if QName(name).namespace:
+            continue
+
+        if name in ("action", "structureRef"):
+            continue
+
+        ds.attrib[name] = common.AttributeValue(value)
+
     reader.push("DataSet", ds)
 
 
