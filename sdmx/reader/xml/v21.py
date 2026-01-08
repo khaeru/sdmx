@@ -1259,7 +1259,7 @@ def _ds_start(reader, elem):
         if QName(name).namespace:
             continue
 
-        if name in ('action', 'structureRef'):
+        if name in ("action", "structureRef"):
             continue
 
         ds.attrib[name] = common.AttributeValue(value)
