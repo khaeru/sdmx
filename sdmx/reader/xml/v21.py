@@ -1272,7 +1272,7 @@ def _ds_start(reader, elem):
             continue
         
         #skip action
-        if name == 'action':
+        if name in ('action', 'structureRef'):
             continue
 
         ds.attrib[name] = common.AttributeValue(value)
