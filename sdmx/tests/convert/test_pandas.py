@@ -2,10 +2,10 @@
 
 from typing import TYPE_CHECKING, cast
 
-import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+from pandas.api.types import is_string_dtype
 from pytest import raises
 
 import sdmx
@@ -199,7 +199,8 @@ def test_data_arguments(specimen) -> None:
 
     # 'dtype=None' prevents conversion of obs_value to numeric type; remains str/object
     result = sdmx.to_pandas(msg, dtype=None)
-    assert np.dtype("O") == result.dtype
+
+    assert is_string_dtype(result)
 
 
 def test_data_decimal() -> None:

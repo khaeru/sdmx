@@ -890,9 +890,7 @@ def convert_itemscheme(c: "PandasConverter", obj: common.ItemScheme):
 
     # Convert to DataFrame
     result: pd.DataFrame | pd.Series = pd.DataFrame.from_dict(
-        items,
-        orient="index",
-        dtype=object,  # type: ignore [arg-type]
+        items, orient="index", dtype=str
     ).rename_axis(obj.id, axis="index")
 
     if len(result) and not result["parent"].str.len().any():

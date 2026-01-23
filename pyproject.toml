@@ -31,6 +31,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "lxml >= 3.6",
+  "packaging >= 26",
   "pandas >= 1.0",
   "platformdirs >= 4.1",
   "python-dateutil",
@@ -44,7 +45,7 @@ tests = [
   "filelock",
   "GitPython",
   "Jinja2",
-  "pytest >= 5",
+  "pytest >= 9",
   "pytest-cov",
   "pytest-xdist",
   "pytest-rerunfailures",
@@ -91,17 +92,21 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.pytest.ini_options]
-addopts = """
-  sdmx
-  --cov sdmx --cov-report=
-  -m "not experimental and not source"
-"""
+[tool.pytest]
+addopts = [
+  "sdmx",
+  "--cov=sdmx",
+  "--cov-report=",
+  "-m not experimental and not source",
+]
 markers = [
   "experimental: test of experimental features",
   "network: tests requiring a network connection",
   "source: slower, network tests of individual SDMX web services",
 ]
+minversion = "9.0"
+strict_config = true
+strict_markers = true
 
 [tool.ruff.lint]
 select = ["C9", "E", "F", "I", "W"]

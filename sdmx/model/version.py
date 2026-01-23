@@ -4,8 +4,12 @@ from collections.abc import Callable
 from dataclasses import InitVar, dataclass, field, replace
 from functools import cache
 from itertools import zip_longest
+from typing import TYPE_CHECKING
 
 import packaging.version
+
+if TYPE_CHECKING:
+    from packaging.version import CmpKey
 
 #: Regular expressions (:class:`re.Pattern`) for version strings.
 #:
@@ -91,6 +95,9 @@ class Version(packaging.version._BaseVersion):
     #: Same as :attr:`packaging.version.Version.local`.
     local: tuple[str | int, ...] = field(default_factory=tuple)
 
+    # Placeholder for comparison key
+    _key: "CmpKey" = field(default_factory=tuple)  # type: ignore [assignment]
+
     def __post_init__(self, value: str | None) -> None:
         # Parse as a SDMX-compatible version
         for kind, pattern in VERSION_PATTERNS.items():
@@ -118,10 +125,10 @@ class Version(packaging.version._BaseVersion):
             # Update fields with the parsed segments and components
             self.epoch = v.epoch
             self.release = v.release
-            self.pre = v._version.pre
-            self.post = v._version.post
-            self.dev = v._version.dev
-            self.local = v._version.local or ()
+            self.pre = v._pre
+            self.post = v._post
+            self.dev = v._dev
+            self.local = v._local or ()
 
         # Set _BaseVersion._key for comparison
         self._key = packaging.version._cmpkey(
