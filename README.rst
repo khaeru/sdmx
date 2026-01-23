@@ -48,7 +48,7 @@ or https://sdmx1.readthedocs.io/en/stable/ for the most recent release.
 License
 -------
 
-Copyright 2014–2025, `sdmx1 developers <https://github.com/khaeru/sdmx/graphs/contributors>`_
+Copyright 2014–2026, `sdmx1 developers <https://github.com/khaeru/sdmx/graphs/contributors>`_
 
 Licensed under the Apache License, Version 2.0 (the “License”);
 you may not use these files except in compliance with the License.
