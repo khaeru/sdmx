@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       # On 'pull_request' and some 'push' events,
       # setuptools-scm or versioningit will give
       # '0.1.dev1'. To confirm that the build system
@@ -38,10 +38,8 @@ jobs:
       #   fetch-depth: 10
       #   fetch-tags: true
 
-    - uses: astral-sh/setup-uv@v5
-      with:
-        cache-dependency-glob: "**/pyproject.toml"
-        python-version: "3.13"
+    - uses: astral-sh/setup-uv@v7
+      with: { python-version: "3.14" }
 
     - name: Build
       run: uv build

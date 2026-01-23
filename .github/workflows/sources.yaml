@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  python-version: 3.13
+  python-version: 3.14
 
 jobs:
   source:
@@ -63,12 +63,12 @@ jobs:
     name: ${{ matrix.source }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up uv, Python
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
       with:
-        cache-dependency-glob: "**/pyproject.toml"
+        activate-enviroment: true
         python-version: ${{ env.python-version }}
 
     - name: Install the package and dependencies
@@ -85,7 +85,7 @@ jobs:
           --numprocesses=auto
 
     - name: Upload ${{ matrix.source }} results as a build artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: source-tests-${{ matrix.source }}
         path: source-tests/*.json
@@ -100,19 +100,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up uv, Python
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
       with:
-        cache-dependency-glob: "**/pyproject.toml"
+        activate-environment: true
         python-version: ${{ env.python-version }}
 
     - name: Install the package and dependencies
       run: uv pip install .[tests]
 
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         path: source-tests
         pattern: source-tests-*
@@ -122,7 +122,7 @@ jobs:
       run: uv run --no-sync python -m sdmx.testing.report
 
     - name: Upload report as a pages artifact
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v4
       with: { path: source-tests }
 
   # This job is as described at https://github.com/actions/deploy-pages
