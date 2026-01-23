@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from copy import deepcopy
 from typing import Any
 
 
@@ -46,6 +47,10 @@ class DispatchConverter(Converter):
 
     _registry: dict[type, Callable]
 
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        cls._registry = deepcopy(getattr(cls, "_registry", dict()))
+
     def convert(self, obj, **kwargs):
         # Use either type(obj) or a parent type to retrieve a conversion function
         for i, cls in enumerate(type(obj).mro()):
@@ -72,14 +77,7 @@ class DispatchConverter(Converter):
         `func` must have an argument named `obj` that is annotated with a particular
         type.
         """
-        try:
-            registry = getattr(cls, "_registry")
-        except AttributeError:
-            # First call → registry does not exist → create it
-            registry = dict()
-            setattr(cls, "_registry", registry)
-
         # Register `func` for the class of the `obj` argument
-        registry[getattr(func, "__annotations__")["obj"]] = func
+        cls._registry[getattr(func, "__annotations__")["obj"]] = func
 
         return func
