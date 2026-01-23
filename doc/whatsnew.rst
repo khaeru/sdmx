@@ -3,8 +3,13 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- :mod:`sdmx` is tested and compatible with `pandas version 3.0.0 <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v3.0.0.html>`_,
+  released 2026-01-21 (:pull:`268`).
+- :mod:`sdmx` is compatible with, and requires at minimum `packaging version 26.0 <https://packaging.pypa.io/en/stable/changelog.html>`_,
+  released 2026-01-20 (:pull:`268`).
 
 v2.25.0 (2025-12-24)
 ====================
