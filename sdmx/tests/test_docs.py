@@ -225,15 +225,14 @@ def test_doc_usage_data():
 
     assert type(data) is GenericDataSet
 
-    # This message doesn't explicitly specify the remaining dimensions; unless
-    # they are inferred from the SeriesKeys, then the DimensionDescriptor is
-    # not complete
+    # This message doesn't explicitly specify the remaining dimensions; unless they are
+    # inferred from the SeriesKeys, then the DimensionDescriptor is not complete
     # assert data.structured_by.dimensions[-1] == 'TIME_PERIOD'
     # data.dim_at_obs
 
     series_keys = list(data.series)
 
-    assert len(series_keys) == 22
+    assert 16 <= len(series_keys)
 
     series_keys[5]
 

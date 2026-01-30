@@ -68,7 +68,7 @@ jobs:
     - name: Set up uv, Python
       uses: astral-sh/setup-uv@v7
       with:
-        activate-enviroment: true
+        activate-environment: true
         python-version: ${{ env.python-version }}
 
     - name: Install the package and dependencies

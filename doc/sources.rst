@@ -364,7 +364,8 @@ API documentation `(main) <https://data.imf.org/en/Resource-Pages/IMF-API>`__, `
 ------------------------------------------------------------------
 
 SDMX-ML —
-`Website <https://sdmx.snieg.mx/infrastructure>`__.
+Website (es) `1 <https://sdmx.snieg.mx/infrastructure>`__,
+`2 <https://sdmx.snieg.mx/practice-guide>`__.
 
 - Spanish name: Instituto Nacional de Estadística y Geografía.
 

@@ -267,7 +267,7 @@
   },
   {
     "id": "INEGI",
-    "url": "http://sdmx.snieg.mx/service/rest",
+    "url": "https://sdmx.snieg.mx/servicev6/rest",
     "name": "Instituto Nacional de Estadística y Geografía (MX)",
     "supports": {
       "actualconstraint": false,
