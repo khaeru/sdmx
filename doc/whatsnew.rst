@@ -6,6 +6,8 @@ What's new?
 .. Next release
 .. ============
 
+- Update the base URL of the :ref:`INEGI <INEGI>` source (:pull:`270`).
+
 v2.25.1 (2026-01-23)
 ====================
 
