@@ -13,6 +13,27 @@ from .common import BaseReference, NotReference, XMLEventReader
 log = logging.getLogger(__name__)
 
 
+class MetadataAttributeRef(BaseReference):
+    """Reference class for :class:`.MetadataAttributeUsage` only."""
+
+    maintainable = False
+    cls = v30.MetadataStructureDefinition
+    target_cls = common.MetadataAttribute
+
+    def __init__(self, urn: str) -> None:
+        # Parse information about the target from the urn=… XML attribute
+        info = sdmx.urn.match(urn)
+
+        self.agency = common.Agency(id=info["agency"])
+        self.id = info["id"]
+        self.version = info["version"]
+        self.target_id = info["item_id"]
+
+    @classmethod
+    def info_from_element(cls, elem):  # pragma: no cover
+        raise NotImplementedError
+
+
 class Reference(BaseReference):
     """Parse SDMX-ML 3.0 references."""
 
