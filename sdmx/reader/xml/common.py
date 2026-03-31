@@ -568,21 +568,22 @@ class XMLEventReader(BaseReader):
             obj.maintainer = maint
 
         # Maybe retrieve an existing object of the same class, ID, and version (if any)
-        existing = self.get_single(cls, obj.id, version=obj.version)
+        for version in (obj.version, None):
+            existing = self.get_single(cls, obj.id, version=version)
+            if existing and (
+                existing.compare(obj, strict=True, log_level=logging.CRITICAL)
+                or match_maintainable_urn_or_version(existing, obj)
+            ):
+                if elem is not None:
+                    # Update `existing` from `obj` to preserve references
+                    # If `existing` was a forward reference <Ref/>, its URN was not stored.
+                    for attr in list(kwargs.keys()) + ["urn"]:
+                        setattr(existing, attr, getattr(obj, attr))
 
-        if existing and (
-            existing.compare(obj, strict=True, log_level=logging.CRITICAL)
-            or (existing.urn or sdmx.urn.make(existing)) == sdmx.urn.make(obj)
-        ):
-            if elem is not None:
-                # Update `existing` from `obj` to preserve references
-                # If `existing` was a forward reference <Ref/>, its URN was not stored.
-                for attr in list(kwargs.keys()) + ["urn"]:
-                    setattr(existing, attr, getattr(obj, attr))
+                # Discard candidate `obj`, return the existing
+                return existing
 
-            # Discard the candidate
-            obj = existing
-        elif obj.is_external_reference:
+        if obj.is_external_reference:
             # A new external reference. Ensure it has a URN.
             obj.urn = obj.urn or sdmx.urn.make(obj)
             # Push onto the stack to be located by next calls
@@ -594,6 +595,16 @@ class XMLEventReader(BaseReader):
 def add_localizations(target: common.InternationalString, values: Sequence) -> None:
     """Add localized strings from *values* to *target*."""
     target.localizations.update({locale: label for locale, label in values})
+
+
+def match_maintainable_urn_or_version(
+    a: common.MaintainableArtefact, b: common.MaintainableArtefact
+) -> bool:
+    """Filter condition for :meth:`XMLEventReader.maintainable`."""
+    urn_b = sdmx.urn.make(b)
+    return ((a.urn or sdmx.urn.make(a)) == urn_b) or (
+        a.version is None and sdmx.urn.make(a, version=b.version) == urn_b
+    )
 
 
 def matching_class(cls):
