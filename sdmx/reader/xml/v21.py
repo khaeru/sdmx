@@ -353,9 +353,9 @@ def _structures(reader, elem):
     com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN com:Value
     mes:DataSetAction :ReportPeriod md:ReportPeriod mes:DataSetID mes:Email mes:Fax
     mes:ID mes:Telephone mes:Test mes:Timezone mes:URI mes:X400 str:CodelistAliasRef
-    str:DataType str:Email str:Expression str:NullValue str:OperatorDefinition
-    str:PersonalisedName str:Result str:RulesetDefinition str:Telephone str:URI
-    str:VtlDefaultName str:VtlScalarType
+    str:DataType str:Email str:Expression str:MetadataAttributeReference str:NullValue
+    str:OperatorDefinition str:PersonalisedName str:Result str:RulesetDefinition
+    str:Telephone str:URI str:VtlDefaultName str:VtlScalarType
     """
 )
 def _text(reader, elem):
