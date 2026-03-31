@@ -1190,11 +1190,21 @@ class GroupRelationship(AttributeRelationship):
     group_key: "GroupDimensionDescriptor | None" = None
 
 
-@dataclass
+@dataclass(repr=False)
 @NameableArtefact._preserve("eq", "hash")
-class DataAttribute(Component):
+class AttributeComponent(Component):
+    """SDMX 3.0 AttributeComponent.
+
+    .. note:: This intermediate, abstract class is not present in the SDMX 2.1 IM.
+    """
+
     #:
     related_to: AttributeRelationship | None = None
+
+
+@dataclass
+@NameableArtefact._preserve("eq", "hash")
+class DataAttribute(AttributeComponent):
     #:
     usage_status: UsageStatus | None = None
     #:
@@ -1976,13 +1986,6 @@ class BaseDataSet(AnnotableArtefact):
 
 
 # §7.3: Metadata Structure Definition
-
-
-class AttributeComponent(Component):
-    """SDMX 3.0 AttributeComponent.
-
-    .. note:: This intermediate, abstract class is not present in the SDMX 2.1 IM.
-    """
 
 
 @dataclass
