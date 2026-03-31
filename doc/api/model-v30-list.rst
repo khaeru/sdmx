@@ -31,6 +31,7 @@
 :obj:`~.v30.MemberSelection`
 :obj:`~.v30.MemberValue`
 :obj:`~.v30.MetadataAttributeDescriptor`
+:obj:`~.v30.MetadataAttributeUsage`
 :obj:`~.v30.MetadataAttributeValue`
 :obj:`~.v30.MetadataConstraint`
 :obj:`~.v30.MetadataProvider`

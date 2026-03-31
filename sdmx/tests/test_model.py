@@ -183,6 +183,7 @@ V30_ONLY = [
     "Measure",
     "Dataflow",  # Instead of DataflowDefinition
     "HierarchyAssociation",
+    "MetadataAttributeUsage",
     "DataflowRelationship",
     "MeasureRelationship",
     "ObservationRelationship",

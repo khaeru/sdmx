@@ -41,6 +41,7 @@ __all__ = [
     "MetadataProviderScheme",
     "Measure",
     "MeasureDescriptor",
+    "MetadataAttributeUsage",
     "DataflowRelationship",
     "MeasureRelationship",
     "ObservationRelationship",
@@ -340,6 +341,24 @@ class MeasureDescriptor(ComponentList[Measure]):
     """
 
     _Component = Measure
+
+
+@dataclass(repr=False)
+@NameableArtefact._preserve("eq", "hash")
+class MetadataAttributeUsage(common.AttributeComponent):
+    """SDMX 3.x MetadataAttributeUsage.
+
+    The existence, name, and attributes of this class are ambiguous in the SDMX IM as
+    of version 3.1. See https://github.com/sdmx-twg/sdmx-im/issues/53 for details. This
+    implementation follows “Interpretation B” recorded there, wherein
+    MetadataAttributeUsage (referer) occurring within the AttributeDescriptor of a
+    DataStructureDefinition is distinct from the referent MetadataAttribute occuring
+    within the MetadataAttributeDescriptor of a MetadataStructureDefinition.
+    """
+
+    #: Association to a MetadataAttribute within a MetadataAttributeDescriptor and
+    #: MetadataStructureDefinition.
+    metadata_attribute: common.MetadataAttribute | None = None
 
 
 class DataflowRelationship(common.AttributeRelationship):
