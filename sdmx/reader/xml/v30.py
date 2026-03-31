@@ -202,6 +202,31 @@ def _ar(reader: Reader, elem):
         return common.DimensionRelationship(**args)
 
 
+@end("str:MetadataAttributeUsage")
+def _mau(reader: Reader, elem):
+    # Prepare arguments for constructing the MAU
+    # - Pop the ID of the MetadataAttribute in the MSD from the stack.
+    # - Add the URN of the MetadataAttributeUsage. NB This is distinct from the URN of
+    #   the referenced MA.
+    # - Construct a reference based on the element
+    args = dict(
+        id=reader.pop_single("MetadataAttributeReference"),
+        urn=elem.attrib["urn"],
+        metadata_attribute=MetadataAttributeRef(elem.attrib["urn"]),
+    )
+
+    # Collect Attributerelationship(s); same as .reader.xml.v21._component_end
+    if ar := reader.pop_all(common.AttributeRelationship, subclass=True):
+        assert len(ar) == 1, ar
+        args["related_to"] = ar[0]
+    else:
+        # log.debug(f"Invalid SDMX-ML 3.x: no AttributeRelationship for {elem}")
+        pass
+
+    # Construct an MAU object referencing the MA
+    return v30.MetadataAttributeUsage(**args)
+
+
 # §5.4: Data Set
 
 
