@@ -395,8 +395,8 @@ def _localization(reader, elem):
     """
     com:Structure com:StructureUsage :ObjectReference md:ObjectReference
     str:AttachmentGroup str:CodeID str:ConceptIdentity str:ConceptRole
-    str:DimensionReference str:Enumeration str:Parent str:Source str:Structure
-    str:StructureUsage str:Target
+    str:DimensionReference str:Enumeration str:Metadata str:Parent str:Source
+    str:Structure str:StructureUsage str:Target
     """
 )
 def _ref(reader: Reader, elem):
