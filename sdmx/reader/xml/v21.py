@@ -30,7 +30,7 @@ import sdmx.urn
 from sdmx import message
 from sdmx.exceptions import XMLParseError  # noqa: F401
 from sdmx.format import Version
-from sdmx.model import common, v21
+from sdmx.model import common, v21, v30
 from sdmx.tools import dimensions_to_attributes
 
 from .common import (
@@ -319,14 +319,20 @@ def _structures(reader, elem):
     msg = reader.get_single(message.StructureMessage)
 
     # Populate dictionaries by ID
-    for attr, name in msg.iter_collections():
+    for attr, cls in msg.iter_collections():
+        # Target StructureMessage attribute/collection
         target = getattr(msg, attr)
 
+        # Retrieve all objects of cls
+        objects = reader.pop_all(cls, subclass=True)
+
+        if len(objects) and isinstance(objects[0], v30.DataStructureDefinition):
+            # Resolve references to MetadataAttributes
+            for o in objects:
+                o._resolve_references()
+
         # Store using maintainer, ID, and version
-        tmp = {
-            (getattr(obj.maintainer, "id", None), obj.id, obj.version): obj
-            for obj in reader.pop_all(name, subclass=True)
-        }
+        tmp = {(getattr(o.maintainer, "id", None), o.id, o.version): o for o in objects}
 
         # TODO Move this to StructureMessage
         # Construct string IDs
@@ -353,9 +359,9 @@ def _structures(reader, elem):
     com:AnnotationTitle com:AnnotationType com:AnnotationURL com:None com:URN com:Value
     mes:DataSetAction :ReportPeriod md:ReportPeriod mes:DataSetID mes:Email mes:Fax
     mes:ID mes:Telephone mes:Test mes:Timezone mes:URI mes:X400 str:CodelistAliasRef
-    str:DataType str:Email str:Expression str:NullValue str:OperatorDefinition
-    str:PersonalisedName str:Result str:RulesetDefinition str:Telephone str:URI
-    str:VtlDefaultName str:VtlScalarType
+    str:DataType str:Email str:Expression str:MetadataAttributeReference str:NullValue
+    str:OperatorDefinition str:PersonalisedName str:Result str:RulesetDefinition
+    str:Telephone str:URI str:VtlDefaultName str:VtlScalarType
     """
 )
 def _text(reader, elem):
@@ -395,8 +401,8 @@ def _localization(reader, elem):
     """
     com:Structure com:StructureUsage :ObjectReference md:ObjectReference
     str:AttachmentGroup str:CodeID str:ConceptIdentity str:ConceptRole
-    str:DimensionReference str:Enumeration str:Parent str:Source str:Structure
-    str:StructureUsage str:Target
+    str:DimensionReference str:Enumeration str:Metadata str:Parent str:Source
+    str:Structure str:StructureUsage str:Target
     """
 )
 def _ref(reader: Reader, elem):
@@ -1051,11 +1057,17 @@ def _structure_start(reader: Reader, elem):
 def _structure_end(reader, elem):
     obj = reader.pop_single("current DSD")
 
-    if obj:
-        # Collect annotations, name, and description
-        obj.annotations = list(reader.pop_all(reader.model.Annotation))
-        add_localizations(obj.name, reader.pop_all("Name"))
-        add_localizations(obj.description, reader.pop_all("Description"))
+    if obj is None:
+        return
+
+    # Collect annotations, name, and description
+    obj.annotations = list(reader.pop_all(reader.model.Annotation))
+    add_localizations(obj.name, reader.pop_all("Name"))
+    add_localizations(obj.description, reader.pop_all("Description"))
+
+    if isinstance(obj, v30.DataStructureDefinition):
+        # Pop and resolve a reference to a MSD
+        obj.metadata = reader.pop_resolved_ref("Metadata")
 
 
 @end("str:Dataflow str:Metadataflow")

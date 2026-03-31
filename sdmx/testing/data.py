@@ -341,6 +341,7 @@ def add_specimens(target: list[tuple[Path, str, str | None]], base: Path) -> Non
             ("IMF", "hierarchicalcodelist-1.xml"),
             ("IMF", "structureset-0.xml"),
             ("IMF_STA", "availableconstraint_CPI.xml"),  # khaeru/sdmx#161
+            ("IMF_STA", "DSD_BOP.xml"),  # khaeru/sdmx#271
             ("IMF_STA", "DSD_GFS.xml"),  # khaeru/sdmx#164
             ("INSEE", "CNA-2010-CONSO-SI-A17-structure.xml"),
             ("INSEE", "dataflow.xml"),

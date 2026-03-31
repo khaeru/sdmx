@@ -14,6 +14,7 @@ FORMAT = XMLFormat(
         ("model.DataSet", "mes:DataSet"),
         ("model.StructureSpecificDataSet", "mes:DataSet"),
         ("model.MetadataAttributeDescriptor", "str:MetadataAttributeList"),
+        ("model.MetadataStructureDefinition", "str:Metadata"),
         ("model.Metadataflow", "str:Metadataflow"),
         ("model.MetadataSet", "mes:MetadataSet"),
     ]

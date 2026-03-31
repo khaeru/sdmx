@@ -41,6 +41,7 @@ __all__ = [
     "MetadataProviderScheme",
     "Measure",
     "MeasureDescriptor",
+    "MetadataAttributeUsage",
     "DataflowRelationship",
     "MeasureRelationship",
     "ObservationRelationship",
@@ -342,6 +343,24 @@ class MeasureDescriptor(ComponentList[Measure]):
     _Component = Measure
 
 
+@dataclass(repr=False)
+@NameableArtefact._preserve("eq", "hash")
+class MetadataAttributeUsage(common.AttributeComponent):
+    """SDMX 3.x MetadataAttributeUsage.
+
+    The existence, name, and attributes of this class are ambiguous in the SDMX IM as
+    of version 3.1. See https://github.com/sdmx-twg/sdmx-im/issues/53 for details. This
+    implementation follows “Interpretation B” recorded there, wherein
+    MetadataAttributeUsage (referer) occurring within the AttributeDescriptor of a
+    DataStructureDefinition is distinct from the referent MetadataAttribute occuring
+    within the MetadataAttributeDescriptor of a MetadataStructureDefinition.
+    """
+
+    #: Association to a MetadataAttribute within a MetadataAttributeDescriptor and
+    #: MetadataStructureDefinition.
+    metadata_attribute: common.MetadataAttribute | None = None
+
+
 class DataflowRelationship(common.AttributeRelationship):
     """SDMX 3.0 DataflowRelationship.
 
@@ -373,6 +392,28 @@ class DataStructureDefinition(common.BaseDataStructureDefinition):
 
     #: A :class:`.MeasureDescriptor`.
     measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)
+
+    #: Association to a :class:`.MetatadatStructureDefinition`.
+    metadata: "MetadataStructureDefinition | None" = None
+
+    def _resolve_references(self) -> None:
+        """Resolve references to :attr:`metadata`."""
+        from sdmx.reader.xml.v30 import MetadataAttributeRef
+
+        if self.metadata is None:
+            return
+
+        # Iterate over components in the AttributeDescriptor that are
+        # MetadataAttributeUsage
+        for component in filter(
+            lambda o: isinstance(o, MetadataAttributeUsage)
+            and isinstance(o.metadata_attribute, MetadataAttributeRef),
+            self.attributes,
+        ):
+            # Resolve a reference to a MetadataAttribute in the MSD
+            mda = self.metadata.attributes.get(component.metadata_attribute.target_id)
+            # Update the component to replace the reference
+            component.metadata_attribute = mda
 
 
 @dataclass(repr=False)
@@ -417,7 +458,7 @@ class IdentifiableObjectSelection:
     """SDMX 3.0 IdentifiableObjectSelection."""
 
 
-@dataclass
+@dataclass(repr=False)
 @MaintainableArtefact._preserve("hash")
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 3.0 MetadataStructureDefinition."""

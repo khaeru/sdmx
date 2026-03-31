@@ -109,12 +109,22 @@ def expand(value: str) -> str:
 
 
 def make(
-    obj, maintainable_parent: "MaintainableArtefact | None" = None, strict: bool = False
+    obj,
+    maintainable_parent: "MaintainableArtefact | None" = None,
+    strict: bool = False,
+    **kwargs,
 ) -> str:
     """Create an SDMX URN for `obj`.
 
     If `obj` is not :class:`.MaintainableArtefact`, then `maintainable_parent` must be
-    supplied in order to construct the URN.
+    supplied in order to construct the URN. If `kwargs` are supplied, they must be
+    fields/attributes of :class:`.URN`, and override values derived from `obj` and/or
+    `maintainable_parent`.
+
+    Returns
+    -------
+    str
+        String representation of the URN.
     """
     from sdmx.model.common import MaintainableArtefact
     from sdmx.model.v21 import PACKAGE
@@ -134,9 +144,10 @@ def make(
     elif strict and ma.version is None:
         raise ValueError(f"Cannot construct URN for {ma!r} without version")
 
-    return str(
-        URN(
-            None,
+    # Merge default values for each field with `kwargs`
+    kwargs = (
+        dict(
+            value=None,
             package=PACKAGE[obj.__class__.__name__],
             klass=obj.__class__.__name__,
             agency=ma.maintainer.id,
@@ -144,7 +155,9 @@ def make(
             version=str(ma.version) if ma.version else "",
             item_id=item_id,
         )
+        | kwargs
     )
+    return str(URN(**kwargs))
 
 
 def match(value: str) -> dict[str, str]:

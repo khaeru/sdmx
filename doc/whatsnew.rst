@@ -7,6 +7,11 @@ What's new?
 .. ============
 
 - Update the base URL of the :ref:`INEGI <INEGI>` source (:pull:`270`).
+- Read :xml:`<structure:MetadataAttributeUsage>` from SDMX-ML 3.1 (:issue:`271`, :pull:`275`).
+
+  - New class :class:`.MetadataAttributeUsage`;
+    see its docstring for implementation notes.
+- Add override keyword arguments to :func:`.urn.make` (:pull:`275`).
 
 v2.25.1 (2026-01-23)
 ====================

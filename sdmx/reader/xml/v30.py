@@ -13,6 +13,27 @@ from .common import BaseReference, NotReference, XMLEventReader
 log = logging.getLogger(__name__)
 
 
+class MetadataAttributeRef(BaseReference):
+    """Reference class for :class:`.MetadataAttributeUsage` only."""
+
+    maintainable = False
+    cls = v30.MetadataStructureDefinition
+    target_cls = common.MetadataAttribute
+
+    def __init__(self, urn: str) -> None:
+        # Parse information about the target from the urn=… XML attribute
+        info = sdmx.urn.match(urn)
+
+        self.agency = common.Agency(id=info["agency"])
+        self.id = info["id"]
+        self.version = info["version"]
+        self.target_id = info["item_id"]
+
+    @classmethod
+    def info_from_element(cls, elem):  # pragma: no cover
+        raise NotImplementedError
+
+
 class Reference(BaseReference):
     """Parse SDMX-ML 3.0 references."""
 
@@ -179,6 +200,31 @@ def _ar(reader: Reader, elem):
 
     if len(args["dimensions"]):
         return common.DimensionRelationship(**args)
+
+
+@end("str:MetadataAttributeUsage")
+def _mau(reader: Reader, elem):
+    # Prepare arguments for constructing the MAU
+    # - Pop the ID of the MetadataAttribute in the MSD from the stack.
+    # - Add the URN of the MetadataAttributeUsage. NB This is distinct from the URN of
+    #   the referenced MA.
+    # - Construct a reference based on the element
+    args = dict(
+        id=reader.pop_single("MetadataAttributeReference"),
+        urn=elem.attrib["urn"],
+        metadata_attribute=MetadataAttributeRef(elem.attrib["urn"]),
+    )
+
+    # Collect Attributerelationship(s); same as .reader.xml.v21._component_end
+    if ar := reader.pop_all(common.AttributeRelationship, subclass=True):
+        assert len(ar) == 1, ar
+        args["related_to"] = ar[0]
+    else:
+        # log.debug(f"Invalid SDMX-ML 3.x: no AttributeRelationship for {elem}")
+        pass
+
+    # Construct an MAU object referencing the MA
+    return v30.MetadataAttributeUsage(**args)
 
 
 # §5.4: Data Set
