@@ -393,6 +393,28 @@ class DataStructureDefinition(common.BaseDataStructureDefinition):
     #: A :class:`.MeasureDescriptor`.
     measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)
 
+    #: Association to a :class:`.MetatadatStructureDefinition`.
+    metadata: "MetadataStructureDefinition | None" = None
+
+    def _resolve_references(self) -> None:
+        """Resolve references to :attr:`metadata`."""
+        from sdmx.reader.xml.v30 import MetadataAttributeRef
+
+        if self.metadata is None:
+            return
+
+        # Iterate over components in the AttributeDescriptor that are
+        # MetadataAttributeUsage
+        for component in filter(
+            lambda o: isinstance(o, MetadataAttributeUsage)
+            and isinstance(o.metadata_attribute, MetadataAttributeRef),
+            self.attributes,
+        ):
+            # Resolve a reference to a MetadataAttribute in the MSD
+            mda = self.metadata.attributes.get(component.metadata_attribute.target_id)
+            # Update the component to replace the reference
+            component.metadata_attribute = mda
+
 
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
@@ -436,7 +458,7 @@ class IdentifiableObjectSelection:
     """SDMX 3.0 IdentifiableObjectSelection."""
 
 
-@dataclass
+@dataclass(repr=False)
 @MaintainableArtefact._preserve("hash")
 class MetadataStructureDefinition(common.BaseMetadataStructureDefinition):
     """SDMX 3.0 MetadataStructureDefinition."""
