@@ -1265,16 +1265,41 @@ def _ds_start(reader, elem):
 
     ds.structured_by = dsd
 
-    # add support for dataset level attributes
-    for name, value in elem.attrib.items():
-        # dataset level attributes are unqualified
-        if QName(name).namespace:
-            continue
+    # Iterate over XML attributes with unqualified names
+    for name in filter(lambda n: QName(n).namespace is None, elem.attrib):
+        try:
+            # Retrieve a DataAttribute from the DSD → AttributeDescriptor
+            da = dsd.attributes.get(name)
+        except KeyError:
+            continue  # No attribute with `name` in the DSD; skip this XML attribute
 
-        if name in ("action", "structureRef"):
-            continue
+        # NB Could also check/validate here that da.related_to indicates a relation to
+        #    the dataset, and log/warn/error if not.
 
-        ds.attrib[name] = common.AttributeValue(value)
+        value = elem.attrib[name]  # Attribute value
+
+        # Resolve an enumerated representation to an Item in an ItemScheme, if possible
+        # Identify an enumerated representation
+        if rep_enum := list(
+            filter(
+                None,
+                [
+                    getattr(da.local_representation, "enumerated", None),
+                    da.concept_identity.core_representation.enumerated,
+                ],
+            )
+        ):
+            try:
+                # Look up the item
+                value = rep_enum[0][value]
+            except KeyError:
+                log.debug(
+                    f"Attribute value {name}={value!r} not in enumeration "
+                    + repr(rep_enum[0])
+                )
+
+        # Add to attributes of `ds`
+        ds.attrib[name] = common.AttributeValue(value=value, value_for=da)
 
     reader.push("DataSet", ds)
 
