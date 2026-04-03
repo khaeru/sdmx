@@ -259,7 +259,11 @@ class MessageTest:
 
 
 @pytest.fixture(scope="session")
-def installed_schemas(worker_id, mock_gh_api, tmp_path_factory):
+def installed_schemas(
+    worker_id: str,
+    mock_gh_api: responses.RequestsMock,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[Path]:
     """Fixture that ensures schemas are installed locally in a temporary directory."""
     from sdmx.format.xml.common import install_schemas
 
@@ -278,7 +282,7 @@ def installed_schemas(worker_id, mock_gh_api, tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def mock_gh_api():
+def mock_gh_api() -> Iterator[responses.RequestsMock]:
     """Mock GitHub API responses to avoid hitting rate limits.
 
     For each API endpoint URL queried by :func:.`_gh_zipball`, return a pared-down JSON

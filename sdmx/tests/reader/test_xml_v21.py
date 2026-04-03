@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from itertools import chain
+from pathlib import Path
 from typing import cast
 
 import pandas
@@ -16,6 +17,7 @@ from sdmx.format.xml.v21 import qname
 from sdmx.model import common, v21
 from sdmx.model.v21 import ContentConstraint, Facet, FacetType, FacetValueType
 from sdmx.reader.xml.v21 import Reader, XMLParseError
+from sdmx.testing.data import SpecimenCollection
 from sdmx.writer.xml import Element as E
 
 
@@ -346,6 +348,51 @@ def test_gh_218(caplog, installed_schemas, specimen) -> None:
         == len(contact.uri)
         == len(contact.x400)
     )
+
+
+def test_gh_266(installed_schemas: Path, specimen: SpecimenCollection) -> None:
+    """Test of https://github.com/khaeru/sdmx/pull/266."""
+    with specimen("IMF_RES/WEO-structure.xml") as f:
+        # Specimen is XSD-valid
+        validate_xml(f, installed_schemas)
+        f.seek(0)
+        sm = cast(sdmx.message.StructureMessage, sdmx.read_sdmx(f))
+    with specimen("IMF_RES/WEO-data.xml") as f:
+        # Specimen is XSD-valid
+        validate_xml(f, installed_schemas)
+        f.seek(0)
+        # Data message can be read
+        dm = cast(sdmx.message.DataMessage, sdmx.read_sdmx(f, dsd=sm.structure[0]))
+
+    ds = dm.data[0]  # Retrieve 1 data set
+
+    # Expected number of attributes were read
+    assert 14 == len(ds.attrib)
+
+    # Non-enumerated attributes are available
+    assert ds.attrib["FULL_DESCRIPTION"].value.startswith("The World Economic Outlook ")
+    assert 885 == len(ds.attrib["FULL_DESCRIPTION"].value)
+    assert ds.attrib["FULL_DESCRIPTION"].value.endswith(" for certain years.")
+
+    # Enumerated attributes are Codes/Items (with .urn attribute) resolved to members of
+    # Codelists
+    assert (
+        "Code=IMF:CL_ACCESS_SHARING_LEVEL(1.0.2).PUBLIC_OPEN"
+        in ds.attrib["ACCESS_SHARING_LEVEL"].value.urn
+    )
+    assert "Code=IMF:CL_DEPARTMENT(1.0.2).RES" in ds.attrib["DEPARTMENT"].value.urn
+    assert "Code=IMF:CL_LANGUAGE(1.1.0).EN" in ds.attrib["LANGUAGE"].value.urn
+    assert "Code=IMF:CL_ORGANIZATION(2.4.0).IMF" in ds.attrib["PUBLISHER"].value.urn
+    assert (
+        "Code=IMF:CL_SEC_CLASSIFICATION(1.0.1).PUB"
+        in ds.attrib["SECURITY_CLASSIFICATION"].value.urn
+    )
+
+    # Special, comma-separated format for "TOPIC_DATASET" attribute is not parsed
+    topics = ds.attrib["TOPIC_DATASET"].value
+    assert isinstance(topics, str)
+    # …but individual values resolve within the respective codelist
+    assert all(id_ in sm.codelist["CL_TOPIC"] for id_ in topics.split(","))
 
 
 # Each entry is a tuple with 2 elements:
