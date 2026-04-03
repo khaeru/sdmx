@@ -3,10 +3,12 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
 
 - Update the base URL of the :ref:`INEGI <INEGI>` source (:pull:`270`).
+- Read dataset-related attributes from SDMX-ML 2.1
+  (:pull:`276`, thanks :gh-user:`aboddie`: for :issue:`266`, :pull:`267`).
 - Read :xml:`<structure:MetadataAttributeUsage>` from SDMX-ML 3.1 (:issue:`271`, :pull:`275`).
 
   - New class :class:`.MetadataAttributeUsage`;
