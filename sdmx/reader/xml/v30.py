@@ -35,12 +35,13 @@ class MetadataAttributeRef(BaseReference):
 
 
 class Reference(BaseReference):
-    """Parse SDMX-ML 3.0 references."""
+    """Parse SDMX-ML 3.x references."""
 
     @classmethod
     def info_from_element(cls, elem):
         try:
-            result = sdmx.urn.match(elem.text)
+            # Parse the element text as a URN. Elements with no text are not references.
+            result = sdmx.urn.match(elem.text or "")
             # If the URN doesn't specify an item ID, it is probably a reference to a
             # MaintainableArtefact, so target_id and id are the same
             result.update(target_id=result["item_id"] or result["id"])
