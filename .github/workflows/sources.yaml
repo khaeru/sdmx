@@ -47,6 +47,7 @@ jobs:
         - NB
         - NBB
         - OECD
+        - OECD3
         - OECD_JSON
         - SGR
         - SPC
