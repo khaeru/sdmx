@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.26.0 (2026-04-04)
+====================
 
 - Add :ref:`OECD3` source (:pull:`278`, thanks :gh-user:`dosse` for :issue:`272`),
   update documentation URLs.
