@@ -6,6 +6,8 @@ What's new?
 Next release
 ============
 
+- Add :ref:`OECD3` source (:pull:`278`, thanks :gh-user:`dosse` for :issue:`272`),
+  update documentation URLs.
 - Update the base URL of the :ref:`INEGI <INEGI>` source (:pull:`270`).
 - Read dataset-related attributes from SDMX-ML 2.1
   (:pull:`276`, thanks :gh-user:`aboddie`: for :issue:`266`, :pull:`267`).
@@ -13,7 +15,11 @@ Next release
 
   - New class :class:`.MetadataAttributeUsage`;
     see its docstring for implementation notes.
+- Use "*" as the default provider and resource ID in SDMX-REST 2.x (SDMX 3) URLs (:pull:`278`).
 - Add override keyword arguments to :func:`.urn.make` (:pull:`275`).
+- Bug fix for reading SDMX-ML 3.x where certain elements
+  (for instance, :xml:`<structure:Code>`)
+  had no internal whitespace whatsoever (:pull:`278`).
 
 v2.25.1 (2026-01-23)
 ====================
