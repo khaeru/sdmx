@@ -605,6 +605,19 @@ class TestOECD(DataSourceTest):
     }
 
 
+class TestOECD3(DataSourceTest):
+    source_id = "OECD3"
+    endpoint_args = {
+        "actualconstraint": dict(resource_id="CR_A_DSD_DEBT_TRANS_COLL@DF_MICRO"),
+        "data": dict(
+            context="dataflow",
+            resource_id="DSD_MSTI@DF_MSTI",
+            last_n_observations=100,
+            headers={"Accept-Encoding": "compress, gzip"},
+        ),
+    }
+
+
 class TestOECD_JSON(DataSourceTest):
     source_id = "OECD_JSON"
 

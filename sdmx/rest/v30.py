@@ -12,7 +12,7 @@ from collections import ChainMap
 from . import common
 from .common import PathParameter, QueryParameter, Resource
 
-#: v2.1.0-specific path and query parameters.
+#: SDMX-REST v2.1.0-specific path and query parameters.
 PARAM: dict[str, common.Parameter] = {
     # Path parameters
     "component_id": PathParameter("component_id"),
@@ -22,7 +22,8 @@ PARAM: dict[str, common.Parameter] = {
     "context_d": PathParameter(
         "context", {"datastructure", "dataflow", "provisionagreement", "*"}, "*"
     ),
-    "provider_id": PathParameter("provider_id"),
+    "provider_id": PathParameter("provider_id", default="*"),
+    "resource_id": PathParameter("resource_id", default="*"),
     "version": PathParameter("version", set(), "+"),
     #
     # Query parameters
@@ -42,7 +43,7 @@ PARAM: dict[str, common.Parameter] = {
 class URL(common.URL):
     """Utility class to build SDMX-REST API v2.1.0 URLs."""
 
-    _all_parameters = ChainMap(common.PARAM, PARAM)
+    _all_parameters = ChainMap(PARAM, common.PARAM)
 
     def handle_availability(self):
         """Handle URL parameters for availability endpoints."""

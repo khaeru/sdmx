@@ -276,8 +276,8 @@ International Monetary Fund
 As of 2025-01-10, there appear to be at least *three* systems operated by the IMF from which SDMX responses are available.
 Theses are listed here from oldest to newest, and identified by the domain used in the base URL for requests.
 
-(no ID): dataservices.smdx.org
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+(no ID): dataservices.imf.org
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SDMX-ML and SDMX-JSON —
 API documentation `1 <https://datahelp.imf.org/knowledgebase/articles/1952905-sdmx-2-0-and-sdmx-2-1-restful-web-service>`__,
@@ -449,36 +449,55 @@ API documentation `(en) <https://www.nbb.be/doc/dq/migratie_belgostat/en/nbb_sta
 - The web service returns a custom HTML error page rather than an SDMX error message for certain queries or an internal error.
   This appears as: ``ValueError: can't determine a SDMX reader for response content type 'text/html; charset=utf-8'``
 
+Organisation for Economic Cooperation and Development
+-----------------------------------------------------
 
 .. _OECD:
 
 .. currentmodule:: sdmx.source.oecd
 
-``OECD``: Organisation for Economic Cooperation and Development (SDMX-ML)
--------------------------------------------------------------------------
+``OECD`` (SDMX-ML)
+~~~~~~~~~~~~~~~~~~
 
 SDMX-ML —
-`Website <https://data-explorer.oecd.org/>`__,
-`documentation <https://gitlab.algobank.oecd.org/public-documentation/dotstat-migration/-/raw/main/OECD_Data_API_documentation.pdf>`__
+`Website <https://data-explorer.oecd.org/>`__ —
+Documentation `1 <https://gitlab.algobank.oecd.org/public-documentation/dotstat-migration/-/raw/main/OECD_Data_API_documentation.pdf>`__,
+`2 <https://www.oecd.org/en/data/insights/data-explainers/2024/09/api.html>`__,
+`3 <https://www.oecd.org/en/data/insights/data-explainers/2024/11/Api-best-practices-and-recommendations.html>`__
 
-- As of 2023-08-14, the site includes a disclaimer that “This is a public beta release. Not all data is available on this platform yet, as it is being progressively migrated from https://stats.oecd.org.”
-- The OECD website `describes an older SDMX-ML API <https://data.oecd.org/api/sdmx-ml-documentation/>`__, but this is an implementation of SDMX 2.0, which is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
+- This source implements the SDMX-REST 1.x API and serves SDMX-ML 2.1 and SDMX-JSON 1.0.0.
+- The OECD website `describes an older SDMX-ML API <https://data.oecd.org/api/sdmx-ml-documentation/>`__,
+  but this is an implementation of SDMX 2.0,
+  which is not supported by :mod:`sdmx` (see :ref:`sdmx-version-policy`).
 
 .. autoclass:: sdmx.source.oecd.Source
    :members:
 
 .. versionadded:: 2.12.0
 
+.. _OECD3:
+
+.. currentmodule:: sdmx.source.oecd3
+
+``OECD3``
+~~~~~~~~~
+
+- This source implements the SDMX-REST 2.x API and serves SDMX-ML 3.0.0 and SDMX-JSON 2.0.0.
+
+.. autoclass:: sdmx.source.oecd3.Source
+   :members:
+
 .. _OECD_JSON:
 
 .. currentmodule:: sdmx.source.oecd_json
 
-``OECD_JSON``: Organisation for Economic Cooperation and Development (SDMX-JSON)
---------------------------------------------------------------------------------
+``OECD_JSON``
+~~~~~~~~~~~~~
 
-SDMX-JSON —
-`Website <https://data.oecd.org/api/sdmx-json-documentation/>`__
+SDMX-JSON
 
+- As of 2026-04-04, the ``OECD`` source also returns SDMX-JSON 1.0.0,
+  when given the appropriate HTTP ``Accept:`` header.
 - Only :ref:`SDMX-JSON version 1.0 <sdmx-json>` is supported.
 
 .. versionchanged:: 2.12.0

@@ -467,6 +467,7 @@ class TestRoundTripMetadata(RoundTripTests):
             True,
             marks=[pytest.mark.skip(reason="Slow")],
         ),
+        ("ESTAT/CL_FREQ.xml", True),
         ("IMF/ECOFIN_DSD-structure.xml", True),
         ("IMF/datastructure-0.xml", True),
         ("IMF/hierarchicalcodelist-1.xml", True),

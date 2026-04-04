@@ -298,7 +298,7 @@ def i11lstring(obj, name) -> list[etree._Element]:
 
 
 @writer
-def _a(obj: model.Annotation):
+def _a(obj: common.BaseAnnotation):
     elem = Element("com:Annotation")
     if obj.id:
         elem.attrib["id"] = obj.id
