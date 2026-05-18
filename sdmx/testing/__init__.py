@@ -307,7 +307,7 @@ def mock_gh_api() -> Iterator[responses.RequestsMock]:
 
 
 @pytest.fixture(scope="session")
-def session_with_pytest_cache(pytestconfig):
+def session_with_pytest_cache(pytestconfig: pytest.Config) -> Iterator[Session]:
     """Fixture:  A :class:`.Session` that caches within :file:`.pytest_cache`.
 
     This subdirectory is ephemeral, and tests **must** pass whether or not it exists and
@@ -318,7 +318,7 @@ def session_with_pytest_cache(pytestconfig):
 
 
 @pytest.fixture(scope="session")
-def session_with_stored_responses(pytestconfig):
+def session_with_stored_responses(pytestconfig: pytest.Config) -> Iterator[Session]:
     """Fixture: A :class:`.Session` returns only stored responses from sdmx-test-data.
 
     This session…

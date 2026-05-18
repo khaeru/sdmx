@@ -1,6 +1,7 @@
 """Tests against the actual APIs for specific data sources."""
 
 import logging
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -9,6 +10,7 @@ import pytest
 import sdmx
 from sdmx import Client
 from sdmx.exceptions import HTTPError, XMLParseError
+from sdmx.session import Session
 
 log = logging.getLogger(__name__)
 
@@ -43,12 +45,14 @@ class DataSourceTest:
     xfail_common: ClassVar[dict[str, Any]] = {}
 
     @pytest.fixture(scope="class")
-    def client(self, session_with_pytest_cache):
+    def client(self, session_with_pytest_cache: Session) -> Iterator[Client]:
         """A Client that uses :func:`.session_with_pytest_cache`."""
         yield Client(self.source_id, session=session_with_pytest_cache)
 
     @pytest.fixture(scope="class")
-    def client_with_stored_responses(self, session_with_stored_responses):
+    def client_with_stored_responses(
+        self, session_with_stored_responses: Session
+    ) -> Iterator[Client]:
         """A Client that uses :func:`.session_with_stored_responses`."""
         yield Client(self.source_id, session=session_with_stored_responses)
 
@@ -476,7 +480,7 @@ class TestISTAT(DataSourceTest):
         "actualconstraint": dict(resource_id="CONS_92_143"),
     }
 
-    def test_gh_75(self, client_with_stored_responses):
+    def test_gh_75(self, client_with_stored_responses: Client) -> None:
         """Test of https://github.com/dr-leo/pandaSDMX/pull/75.
 
         - As of the original report on 2019-06-02, the 4th dimension was ``TIPO_DATO``,
