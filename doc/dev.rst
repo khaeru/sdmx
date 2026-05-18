@@ -80,7 +80,27 @@ Contents and layout
 .. _recorded-responses:
 
 The :file:`recorded/` directory contains **recorded HTTP responses** from certain SDMX-REST web services.
-These files are stored using the :mod:`requests_cache` :doc:`file system backend <requests-cache:user_guide/backends/filesystem>`; see those docs for the name and format of the files.
+These files are stored using the :mod:`requests_cache` :doc:`file system backend <requests-cache:user_guide/backends/filesystem>`;
+see those docs for the name and format of the files.
+To record a new response, use a temporary script similar to:
+
+.. code-block:: python
+
+   from requests_cache import CachedSession
+   from sdmx import Client
+
+   session = CachedSession(
+       "./recorded",  # or other path to sdmx-test-data/recorded/
+       backend="filesystem",
+       serializer="json",
+   )
+
+   # Exactly the client and request to be used in a test/cached
+   client = sdmx.Client("ISTAT", session=session)
+   client.dataflow("47_850", params={"references": "datastructure"})
+
+This should create a new .json file in the directory.
+Commit and push the file, using a pull request if appropriate.
 
 .. _sdmx-test-data:
 
