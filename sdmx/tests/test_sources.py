@@ -587,8 +587,10 @@ class TestLU1(DataSourceTest):
     }
 
     xfail = {
-        "metadata": NotImplementedError,  # /metadata not in SDMX-REST v2.1
-        "registration": ValueError,  # /registration not in SDMX-REST v2.1
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        "organisationscheme": HTTPError,  # 400 Bad Request
+        "registration": ValueError,  # Internal to sdmx1
+        "structure": NotImplementedError,  # 501 Not Implemented
     }
 
 

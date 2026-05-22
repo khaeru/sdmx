@@ -6,7 +6,7 @@ What's new?
 Next release
 ============
 
-- Add ``LU1`` data source: Luxembourg STATEC (LUSTAT).
+- Add :ref:`LU1` data source: Luxembourg STATEC (LUSTAT).
 
 v2.26.0 (2026-04-04)
 ====================

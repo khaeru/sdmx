@@ -421,6 +421,17 @@ SDMX-ML —
 - This web service returns the non-standard HTTP content-type "application/force-download"; :mod:`sdmx` replaces it with "application/xml".
 
 
+.. _LU1:
+
+``LU1``: STATEC (Luxembourg)
+----------------------------
+
+SDMX-ML —
+`Website <https://lustat.statec.lu/>`__
+
+- LUSTAT is the data dissemination platform of STATEC, the national statistical institute of Luxembourg.
+
+
 .. _NB:
 
 ``NB``: Norges Bank (Norway)

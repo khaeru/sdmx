@@ -351,8 +351,6 @@
       "dataconsumerscheme": false,
       "metadataflow": false,
       "metadatastructure": false,
-      "organisationscheme": false,
-      "structure": false,
       "structureset": false
     }
   },
