@@ -343,6 +343,18 @@
     }
   },
   {
+    "id": "LU1",
+    "name": "Luxembourg STATEC",
+    "url": "https://lustat.statec.lu/rest",
+    "supports": {
+      "agencyscheme": false,
+      "dataconsumerscheme": false,
+      "metadataflow": false,
+      "metadatastructure": false,
+      "structureset": false
+    }
+  },
+  {
     "id": "NB",
     "name": "Norges Bank (NO)",
     "url": "https://data.norges-bank.no/api",
