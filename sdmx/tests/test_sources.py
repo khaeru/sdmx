@@ -577,6 +577,21 @@ class TestLSD(DataSourceTest):
     }
 
 
+class TestLU1(DataSourceTest):
+    """Luxembourg STATEC (LUSTAT)."""
+
+    source_id = "LU1"
+
+    endpoint_args = {
+        "data": dict(resource_id="DF_A1100", params=dict(lastNObservations=1)),
+    }
+
+    xfail = {
+        "metadata": NotImplementedError,  # /metadata not in SDMX-REST v2.1
+        "registration": ValueError,  # /registration not in SDMX-REST v2.1
+    }
+
+
 class TestNB(DataSourceTest):
     """Norges Bank.
 
