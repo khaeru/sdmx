@@ -106,24 +106,20 @@ class TestABS(DataSourceTest):
 
     endpoint_args = {
         "actualconstraint": dict(resource_id="CR_A_LABOUR_ACCT_Q"),
-        "categoryscheme": dict(
-            resource_id="LABOUR", params={"references": "none"}
-        ),
+        "categoryscheme": dict(resource_id="LABOUR", params={"references": "none"}),
         "contentconstraint": dict(resource_id="CR_A_LABOUR_ACCT_Q"),
         "data": dict(
             resource_id="ABS,LABOUR_ACCT_Q,",
             key="M28...10.Q",
             params=dict(startPeriod="2026-Q1", endPeriod="2026-Q1"),
-        )
+        ),
     }
 
     @pytest.mark.network
     @pytest.mark.source
     def test_labour_account_model(self, client):
         """Follow the ABS dataflow → DSD → data model-object workflow."""
-        flow_message = client.dataflow(
-            "LABOUR_ACCT_Q", params={"references": "none"}
-        )
+        flow_message = client.dataflow("LABOUR_ACCT_Q", params={"references": "none"})
         dataflow = flow_message.dataflow["LABOUR_ACCT_Q"]
 
         assert dataflow.structure.id == "DS_LABOUR_ACCT_Q"
