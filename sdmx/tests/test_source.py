@@ -54,18 +54,32 @@ def test_abs_support():
     )
 
 
-def test_abs_metadata_accept_header():
+@pytest.mark.parametrize(
+    "resource_type, resource_id",
+    [
+        ("dataflow", "LABOUR_ACCT_Q"),
+        ("datastructure", "DS_LABOUR_ACCT_Q"),
+    ],
+)
+def test_abs_metadata_accept_header(resource_type, resource_id):
     client = Client("ABS")
 
-    request = client.datastructure(
-        "DS_LABOUR_ACCT_Q", params={"references": "none"}, dry_run=True
+    request = client.get(
+        resource_type,
+        resource_id,
+        params={"references": "none"},
+        dry_run=True,
     )
 
     assert request.url == (
-        "https://data.api.abs.gov.au/rest/datastructure/ABS/"
-        "DS_LABOUR_ACCT_Q/latest?references=none"
+        f"https://data.api.abs.gov.au/rest/{resource_type}/ABS/"
+        f"{resource_id}/latest?references=none"
     )
     assert request.headers["Accept"] == "application/xml"
+
+
+def test_abs_metadata_accept_header_precedence():
+    client = Client("ABS")
 
     request = client.datastructure(
         "DS_LABOUR_ACCT_Q",
@@ -78,8 +92,8 @@ def test_abs_metadata_accept_header():
     assert request.headers["X-Test"] == "value"
 
     # An explicit content type supplied by the caller takes precedence.
-    request = client.datastructure(
-        "DS_LABOUR_ACCT_Q",
+    request = client.dataflow(
+        "LABOUR_ACCT_Q",
         params={"references": "none"},
         headers={"accept": "application/vnd.sdmx.structure+json"},
         dry_run=True,

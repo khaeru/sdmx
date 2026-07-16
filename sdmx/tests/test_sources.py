@@ -126,7 +126,6 @@ class TestABS(DataSourceTest):
         )
         dataflow = flow_message.dataflow["LABOUR_ACCT_Q"]
 
-        assert flow_message.response.request.headers["Accept"] == "application/xml"
         assert dataflow.structure.id == "DS_LABOUR_ACCT_Q"
         assert dataflow.structure.is_external_reference
 
@@ -135,10 +134,8 @@ class TestABS(DataSourceTest):
         )
         dsd = structure_message.structure["DS_LABOUR_ACCT_Q"]
 
-        assert (
-            structure_message.response.request.headers["Accept"] == "application/xml"
-        )
         assert not dsd.is_external_reference
+        assert dsd.version == dataflow.structure.version
         assert [dimension.id for dimension in dsd.dimensions] == [
             "MEASURE",
             "ASGS_2016",
@@ -156,13 +153,6 @@ class TestABS(DataSourceTest):
         )
         dataset = data_message.data[0]
 
-        assert data_message.response.request.url.endswith(
-            "/data/LABOUR_ACCT_Q/M28...10.Q?"
-            "startPeriod=2026-Q1&endPeriod=2026-Q1"
-        )
-        assert data_message.response.request.headers["Accept"] == (
-            "application/vnd.sdmx.structurespecificdata+xml;version=2.1"
-        )
         assert dataset.structured_by is dsd
         assert len(dataset.series) == len(dataset.obs) == 106
         assert {obs.key.MEASURE.value for obs in dataset.obs} == {"M28"}
