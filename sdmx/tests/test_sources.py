@@ -117,7 +117,7 @@ class TestABS(DataSourceTest):
 
     @pytest.mark.network
     @pytest.mark.source
-    def test_labour_account_model(self, client):
+    def test_labour_account_model(self, client):  # pragma: no cover
         """Follow the ABS dataflow → DSD → data model-object workflow."""
         flow_message = client.dataflow("LABOUR_ACCT_Q", params={"references": "none"})
         dataflow = flow_message.dataflow["LABOUR_ACCT_Q"]
