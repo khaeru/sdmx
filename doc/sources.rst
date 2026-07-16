@@ -99,7 +99,13 @@ Then identify the key format and construct a key for the desired data request.
 --------------------------------------------------
 
 SDMX-ML —
-`Website <https://www.abs.gov.au/about/data-services/application-programming-interfaces-apis/data-api-user-guide>`__
+`Website <https://www.abs.gov.au/statistics/application-programming-interfaces-apis/data-api-user-guide>`__
+
+- Structural metadata is requested with the ABS-documented
+  ``Accept: application/xml`` header.
+- A dataflow ID is not necessarily the ID of its data structure definition (DSD).
+  Follow :attr:`.BaseDataflow.structure` and pass the retrieved DSD to
+  :meth:`.Client.data` for model-aware key validation and parsing.
 
 .. versionadded:: 2.10.0
 
@@ -110,7 +116,13 @@ SDMX-ML —
 ---------------------------------------------------------
 
 SDMX-JSON —
-`Website <https://www.abs.gov.au/about/data-services/application-programming-interfaces-apis/data-api-user-guide>`__
+`Website <https://www.abs.gov.au/statistics/application-programming-interfaces-apis/data-api-user-guide>`__
+
+.. warning::
+
+   The current ABS service returns SDMX-JSON 2.0, for which support in
+   :mod:`sdmx` is incomplete. Use the :ref:`ABS` SDMX-ML source for model-aware
+   queries.
 
 .. autoclass:: sdmx.source.abs_json.Source()
    :members:

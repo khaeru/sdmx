@@ -6,6 +6,10 @@ What's new?
 .. Next release
 .. ============
 
+- Update the :ref:`ABS` and :ref:`ABS_JSON` source URLs after the ABS API migration,
+  explicitly request XML structural metadata, and refresh supported endpoints
+  (:issue:`284`).
+
 v2.26.0 (2026-04-04)
 ====================
 
