@@ -105,12 +105,70 @@ class TestABS(DataSourceTest):
     source_id = "ABS"
 
     endpoint_args = {
+        "actualconstraint": dict(resource_id="CR_A_LABOUR_ACCT_Q"),
+        "categoryscheme": dict(
+            resource_id="LABOUR", params={"references": "none"}
+        ),
+        "contentconstraint": dict(resource_id="CR_A_LABOUR_ACCT_Q"),
         "data": dict(
-            resource_id="ABS,ANA_AGG,1.0.0",
-            key="....Q",
-            params=dict(startPeriod="2020-Q1", endPeriod="2022-Q4"),
+            resource_id="ABS,LABOUR_ACCT_Q,",
+            key="M28...10.Q",
+            params=dict(startPeriod="2026-Q1", endPeriod="2026-Q1"),
         )
     }
+
+    @pytest.mark.network
+    @pytest.mark.source
+    def test_labour_account_model(self, client):
+        """Follow the ABS dataflow → DSD → data model-object workflow."""
+        flow_message = client.dataflow(
+            "LABOUR_ACCT_Q", params={"references": "none"}
+        )
+        dataflow = flow_message.dataflow["LABOUR_ACCT_Q"]
+
+        assert flow_message.response.request.headers["Accept"] == "application/xml"
+        assert dataflow.structure.id == "DS_LABOUR_ACCT_Q"
+        assert dataflow.structure.is_external_reference
+
+        structure_message = client.get(
+            resource=dataflow.structure, params={"references": "all"}
+        )
+        dsd = structure_message.structure["DS_LABOUR_ACCT_Q"]
+
+        assert (
+            structure_message.response.request.headers["Accept"] == "application/xml"
+        )
+        assert not dsd.is_external_reference
+        assert [dimension.id for dimension in dsd.dimensions] == [
+            "MEASURE",
+            "ASGS_2016",
+            "LABOURACCT_IND",
+            "TSEST",
+            "FREQ",
+            "TIME_PERIOD",
+        ]
+
+        data_message = client.data(
+            dataflow.id,
+            key={"MEASURE": "M28", "TSEST": "10", "FREQ": "Q"},
+            params={"startPeriod": "2026-Q1", "endPeriod": "2026-Q1"},
+            dsd=dsd,
+        )
+        dataset = data_message.data[0]
+
+        assert data_message.response.request.url.endswith(
+            "/data/LABOUR_ACCT_Q/M28...10.Q?"
+            "startPeriod=2026-Q1&endPeriod=2026-Q1"
+        )
+        assert data_message.response.request.headers["Accept"] == (
+            "application/vnd.sdmx.structurespecificdata+xml;version=2.1"
+        )
+        assert dataset.structured_by is dsd
+        assert len(dataset.series) == len(dataset.obs) == 106
+        assert {obs.key.MEASURE.value for obs in dataset.obs} == {"M28"}
+        assert {obs.key.TSEST.value for obs in dataset.obs} == {"10"}
+        assert {obs.dimension.TIME_PERIOD.value for obs in dataset.obs} == {"2026-Q1"}
+        assert sdmx.to_pandas(data_message).shape == (106,)
 
 
 class TestABS_JSON(DataSourceTest):
