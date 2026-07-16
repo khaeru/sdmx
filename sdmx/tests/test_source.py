@@ -1,5 +1,6 @@
 import pytest
 
+from sdmx import Client, Resource
 from sdmx.model import v21 as model
 from sdmx.source import Source, add_source, get_source, list_sources, sources
 
@@ -33,6 +34,70 @@ def test_source_support():
 
     # Explicitly supported structure-specific data
     assert sources["INEGI"].supports["structure-specific data"] is True
+
+
+@pytest.mark.parametrize("source_id", ["ABS", "ABS_JSON"])
+def test_abs_url(source_id):
+    assert sources[source_id].url == "https://data.api.abs.gov.au/rest"
+
+
+def test_abs_support():
+    source = sources["ABS"]
+
+    assert all(
+        source.supports[resource]
+        for resource in (
+            Resource.actualconstraint,
+            Resource.categoryscheme,
+            Resource.contentconstraint,
+        )
+    )
+
+
+def test_abs_metadata_accept_header():
+    client = Client("ABS")
+
+    request = client.datastructure(
+        "DS_LABOUR_ACCT_Q", params={"references": "none"}, dry_run=True
+    )
+
+    assert request.url == (
+        "https://data.api.abs.gov.au/rest/datastructure/ABS/"
+        "DS_LABOUR_ACCT_Q/latest?references=none"
+    )
+    assert request.headers["Accept"] == "application/xml"
+
+    request = client.datastructure(
+        "DS_LABOUR_ACCT_Q",
+        params={"references": "none"},
+        headers={"X-Test": "value"},
+        dry_run=True,
+    )
+
+    assert request.headers["Accept"] == "application/xml"
+    assert request.headers["X-Test"] == "value"
+
+    # An explicit content type supplied by the caller takes precedence.
+    request = client.datastructure(
+        "DS_LABOUR_ACCT_Q",
+        params={"references": "none"},
+        headers={"accept": "application/vnd.sdmx.structure+json"},
+        dry_run=True,
+    )
+
+    assert request.headers["Accept"] == "application/vnd.sdmx.structure+json"
+
+    request = client.data(
+        "LABOUR_ACCT_Q",
+        key="M28...10.Q",
+        dsd=model.DataStructureDefinition(),
+        dry_run=True,
+    )
+
+    assert (
+        request.headers["Accept"]
+        == "application/vnd.sdmx.structurespecificdata+xml;version=2.1"
+    )
 
 
 def test_add_source():

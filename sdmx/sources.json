@@ -1,14 +1,11 @@
 [
   {
     "id": "ABS",
-    "url": "https://api.data.abs.gov.au",
+    "url": "https://data.api.abs.gov.au/rest",
     "name": "Australian Bureau of Statistics",
     "supports": {
-      "actualconstraint": false,
       "agencyscheme": false,
       "allowedconstraint": false,
-      "categoryscheme": false,
-      "contentconstraint": false,
       "dataconsumerscheme": false,
       "dataproviderscheme": false,
       "hierarchicalcodelist": false,
@@ -23,7 +20,7 @@
   {
     "id": "ABS_JSON",
     "data_content_type": "JSON",
-    "url": "https://api.data.abs.gov.au",
+    "url": "https://data.api.abs.gov.au/rest",
     "name": "Australian Bureau of Statistics"
   },
   {
