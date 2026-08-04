@@ -598,12 +598,15 @@ SDMX-ML or SDMX-JSON —
 `Web interface <https://sdmx.data.unicef.org/>`__ —
 `Data browser <https://sdmx.data.unicef.org/databrowser/index.html>`__
 
-- This source always returns structure-specific messages for SDMX-ML data queries; even when the HTTP header ``Accept: application/vnd.sdmx.genericdata+xml`` is given.
+- This source always returns structure-specific messages for SDMX-ML data queries;
+  even when the HTTP header ``Accept: application/vnd.sdmx.genericdata+xml`` is given.
 
 .. _CD2030:
 
-- UNICEF also serves data for the `Countdown to 2030 <https://www.countdown2030.org/about>`_ initiative under a data flow with the ID ``CONSOLIDATED``.
-  The structures can be obtained by giving the `provider` argument to a structure query, and then used to query the data:
+- UNICEF also serves data for the `Countdown to 2030 <https://www.countdown2030.org/about>`_ initiative
+  under a data flow with the ID ``CONSOLIDATED``.
+  The structures can be obtained by giving the `provider` argument to a structure query,
+  and then querying the data:
 
   .. code-block:: python
 
@@ -615,7 +618,9 @@ SDMX-ML or SDMX-JSON —
      dsd = UNICEF.dataflow("CONSOLIDATED", provider="CD2030").structure[0]
 
      # Use the DSD to construct a query for indicator D5 (“Births”)
-     client.data("CONSOLIDATED", key=dict(INDICATOR="D5"), dsd=dsd)
+     UNICEF.data("CONSOLIDATED", key=dict(INDICATOR="D5"), dsd=dsd)
+
+  .. note:: As of **2026-07-22**, these data flows appear to be no longer available.
 
 - The example query from the UNICEF API documentation (also used in the :mod:`sdmx` test suite) returns XML like:
 
