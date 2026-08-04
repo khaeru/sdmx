@@ -738,6 +738,7 @@ class TestUNICEF(DataSourceTest):
         assert "TRGT_CME" == c.parent.id
 
     @pytest.mark.network
+    @pytest.mark.xfail(reason="Data not available since 2026-07-22")
     def test_cd2030(self, client):
         """Test that :ref:`Countdown to 2030 <CD2030>` data can be queried."""
         dsd = client.dataflow("CONSOLIDATED", agency_id="CD2030").structure[0]
