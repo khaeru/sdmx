@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Update the base URL for the :ref:`SGR` source
+  and add a new source `SGR3` (:pull:`289`).
 
 v2.26.0 (2026-04-04)
 ====================
