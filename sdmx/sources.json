@@ -402,13 +402,16 @@
   },
   {
     "id": "SGR",
-    "url": "https://registry.sdmx.org/ws/rest",
+    "url": "https://registry.sdmx.org/ws/public/sdmxapi/rest",
     "name": "SDMX Global Registry",
     "supports": {
       "actualconstraint": false,
       "metadataflow": false,
       "structureset": false
-    }
+    },
+    "versions": [
+      "2.1"
+    ]
   },
   {
     "id": "SPC",
