@@ -414,6 +414,19 @@
     ]
   },
   {
+    "id": "SGR3",
+    "url": "https://registry.sdmx.org/sdmx/v2",
+    "name": "SDMX Global Registry",
+    "supports": {
+      "actualconstraint": false,
+      "metadataflow": false,
+      "structureset": false
+    },
+    "versions": [
+      "3.0.0"
+    ]
+  },
+  {
     "id": "SPC",
     "name": "Pacific Data Hub DotStat by The Pacific Community (SPC)",
     "url": "https://stats-nsi-stable.pacificdata.org/rest",

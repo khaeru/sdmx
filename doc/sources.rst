@@ -511,8 +511,8 @@ SDMX-JSON
 
 .. _SGR:
 
-``SGR``: SDMX Global Registry
------------------------------
+``SGR``, ``SGR3``: SDMX Global Registry
+---------------------------------------
 
 SDMX-ML —
 `Website <https://registry.sdmx.org/overview.html>`__
