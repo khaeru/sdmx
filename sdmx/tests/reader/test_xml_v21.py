@@ -402,6 +402,11 @@ def test_gh_266(installed_schemas: Path, specimen: SpecimenCollection) -> None:
 #   - A string, in which case parsing the element is expected to fail, raising an
 #     exception matching the string.
 ELEMENTS = [
+    # xml._a()
+    (  # Fails in v2.27.0 because .reader.xml.v21.NoText is wrongly stored as .title
+        E(qname("com:Annotation"), E(qname("com:AnnotationTitle")), id="foo"),
+        v21.Annotation("foo", title=None),
+    ),
     # xml._datetime()
     (  # with 5 decimal places
         E(qname("mes:Extracted"), "2020-08-18T00:14:31.59849+05:00"),
