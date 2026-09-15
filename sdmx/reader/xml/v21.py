@@ -46,10 +46,21 @@ log = logging.getLogger(__name__)
 
 
 class _NoText:
-    pass
+    """Sentinel value for XML elements with no text.
+
+    Use this to distinguish from empty :class:`str` and :any:`None`.
+
+    NoText evaluates to :any:`False`, so the following can be used to assign a default
+    when, for instance, :py:`obj.attr` is :py:`NoText`::
+
+      value = obj.attr or "default"
+    """
+
+    def __bool__(self) -> bool:
+        return False
 
 
-# Sentinel value for XML elements with no text; used to distinguish from "" and None
+# Singleton instance of NoText
 NoText = _NoText()
 
 
