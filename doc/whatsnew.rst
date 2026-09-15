@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Bug fix for reading :xml:`<com:Annotation>`
+  in which :xml:`<com:AnnotationTitle>` is present but with no XML text nodes (:pull:`291`).
 
 v2.27.0 (2026-08-06)
 ====================

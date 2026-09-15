@@ -46,10 +46,21 @@ log = logging.getLogger(__name__)
 
 
 class _NoText:
-    pass
+    """Sentinel value for XML elements with no text.
+
+    Use this to distinguish from empty :class:`str` and :any:`None`.
+
+    NoText evaluates to :any:`False`, so the following can be used to assign a default
+    when, for instance, :py:`obj.attr` is :py:`NoText`::
+
+      value = obj.attr or "default"
+    """
+
+    def __bool__(self) -> bool:
+        return False
 
 
-# Sentinel value for XML elements with no text; used to distinguish from "" and None
+# Singleton instance of NoText
 NoText = _NoText()
 
 
@@ -451,11 +462,10 @@ def _ref(reader: Reader, elem):
 
 @end("com:Annotation")
 def _a(reader, elem):
-    url = reader.pop_single("AnnotationURL")
     args = dict(
-        title=reader.pop_single("AnnotationTitle"),
+        title=reader.pop_single("AnnotationTitle") or None,
         type=reader.pop_single("AnnotationType"),
-        url=None if url is NoText else url,
+        url=reader.pop_single("AnnotationURL") or None,
     )
 
     # Annotation.value: SDMX 3.0.0 only
