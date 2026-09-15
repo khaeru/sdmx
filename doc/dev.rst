@@ -3,9 +3,16 @@ Development
 
 This page describes the development of :mod:`sdmx`.
 Contributions are welcome!
+Please read :file:`CONTRIBUTING.md` included in the source distribution or Git repository
+(`here <https://github.com/khaeru/sdmx/blob/main/CONTRIBUTING.md>`__),
+in particular the Code of Conduct.
 
-- For current development priorities, see the list of `GitHub milestones <https://github.com/khaeru/sdmx/milestones>`_ and issues/PRs targeted to each.
-- For wishlist features, see issues on GitHub tagged `‘enh’ <https://github.com/khaeru/sdmx/labels/enh>`_ or `‘wishlist’ <https://github.com/khaeru/sdmx/labels/wishlist>`_.
+- For current development priorities,
+  see the list of `GitHub milestones <https://github.com/khaeru/sdmx/milestones>`_
+  and issues/PRs targeted to each.
+- For wishlist features,
+  see issues on GitHub tagged `‘enh’ <https://github.com/khaeru/sdmx/labels/enh>`_
+  or `‘wishlist’ <https://github.com/khaeru/sdmx/labels/wishlist>`_.
 
 .. _code-style:
 

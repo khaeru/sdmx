@@ -49,15 +49,30 @@ To learn about SDMX in more detail, use the :doc:`list of resources and referenc
    whatsnew
    dev
 
+.. _help:
 
 Contributing and getting help
 =============================
 
-- Ask usage questions (“How do I?”) on `Stack Overflow <https://stackoverflow.com/questions/tagged/python-sdmx+or+sdmx>`_ using the tags ``[sdmx] [python]``.
-- Report bugs, suggest features, or view the source code on
+- Read :file:`CONTRIBUTING.md` in the source distribution
+  or in the Git repository
+  (`here <https://github.com/khaeru/sdmx/blob/main/CONTRIBUTING.md>`__)
+  and/or :doc:`dev` linked above.
+- Report issues, suggest features, or browse the source code on
   `GitHub <https://github.com/khaeru/sdmx>`_.
-- The older `sdmx-python <https://groups.google.com/forum/?hl=en#!forum/sdmx-python>`_ Google Group may have answers for some questions.
+- Join the ``#sdmx1`` `Internet Relay Chat (IRC) <https://en.wikipedia.org/wiki/IRC>`_ channel
+  on `irc.libera.chat <https://libera.chat>`_.
 
+  You can join in a web browser using `web.libera.chat <https://web.libera.chat>`_,
+  or using any IRC client;
+  see `this guide <https://libera.chat/guides/basics>`_ for more information.
+- Older fora may have answers to some questions:
+
+  - On `Stack Overflow <https://stackoverflow.com/questions/tagged/python-sdmx+or+sdmx>`_,
+    questions and answers with the tags ``[sdmx] [python]``.
+  - On Google Groups, the `sdmx-python <https://groups.google.com/forum/?hl=en#!forum/sdmx-python>`_ group.
+
+  Neither of these are actively monitored by :mod:`sdmx` developers.
 
 .. toctree::
 
