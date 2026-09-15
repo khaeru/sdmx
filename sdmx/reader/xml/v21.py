@@ -462,11 +462,10 @@ def _ref(reader: Reader, elem):
 
 @end("com:Annotation")
 def _a(reader, elem):
-    url = reader.pop_single("AnnotationURL")
     args = dict(
-        title=reader.pop_single("AnnotationTitle"),
+        title=reader.pop_single("AnnotationTitle") or None,
         type=reader.pop_single("AnnotationType"),
-        url=None if url is NoText else url,
+        url=reader.pop_single("AnnotationURL") or None,
     )
 
     # Annotation.value: SDMX 3.0.0 only
