@@ -6,6 +6,7 @@ What's new?
 Next release
 ============
 
+- Add :file:`CONTRIBUTING.md`, including a Code of Conduct for contributors (:pull:`292`).
 - Bug fix for reading :xml:`<com:Annotation>`
   in which :xml:`<com:AnnotationTitle>` is present but with no XML text nodes (:pull:`291`).
 
