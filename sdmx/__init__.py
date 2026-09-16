@@ -8,6 +8,7 @@ from sdmx.reader import read_sdmx, to_sdmx
 from sdmx.rest import Resource
 from sdmx.source import add_source, get_source, list_sources
 from sdmx.writer.csv import to_csv
+from sdmx.writer.json import to_json
 from sdmx.writer.xml import to_xml
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "read_sdmx",
     "read_url",
     "to_csv",
+    "to_json",
     "to_pandas",
     "to_xml",
     "to_sdmx",
