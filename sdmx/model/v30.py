@@ -406,8 +406,10 @@ class DataStructureDefinition(common.BaseDataStructureDefinition):
         # Iterate over components in the AttributeDescriptor that are
         # MetadataAttributeUsage
         for component in filter(
-            lambda o: isinstance(o, MetadataAttributeUsage)
-            and isinstance(o.metadata_attribute, MetadataAttributeRef),
+            lambda o: (
+                isinstance(o, MetadataAttributeUsage)
+                and isinstance(o.metadata_attribute, MetadataAttributeRef)
+            ),
             self.attributes,
         ):
             # Resolve a reference to a MetadataAttribute in the MSD
