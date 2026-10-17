@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import InitVar, dataclass, field, replace
 from functools import cache
 from itertools import zip_longest
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 import packaging.version
 
@@ -170,7 +170,7 @@ class Version(packaging.version._BaseVersion):
         *,
         micro: bool | int | None = None,
         local: bool | int | None = None,
-    ) -> "Version":
+    ) -> Self:
         """Return a Version that is incrementally greater than the current Version.
 
         Each argument may be one of:
