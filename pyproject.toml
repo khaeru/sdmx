@@ -89,16 +89,16 @@ files = [
 # check_untyped_defs = true           # 139
 # disallow_any_generics = true        # 128
 # disallow_incomplete_defs = true     # 378
-# disallow_subclassing_any = true     #   2
+disallow_subclassing_any = true
 # disallow_untyped_calls = true       # 323
 # disallow_untyped_decorators = true  # 100
 # disallow_untyped_defs = true        # 908
 extra_checks = true
 # no_implicit_reexport = true         #  28
-# strict_equality = true              #   1
-# warn_redundant_casts = true         #   2
+strict_equality = true
+warn_redundant_casts = true
 # warn_return_any = true              #  33
-# warn_unused_ignores = true          #   1
+warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available.

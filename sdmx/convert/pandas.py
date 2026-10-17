@@ -737,7 +737,11 @@ def _apply_dtype(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
 
 def _convert_datetime(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
     """Possibly convert a column to a pandas datetime dtype."""
-    if c.datetime_dimension is c.datetime_freq is None and c.datetime_axis == -1:
+    if (
+        c.datetime_dimension is None
+        and c.datetime_freq is None
+        and c.datetime_axis == -1
+    ):
         return df
 
     # Identify a time dimension

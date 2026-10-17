@@ -548,9 +548,9 @@ class MetadataReport(common.AnnotableArtefact):
         )
         for ra in self.metadata:
             if ra.value_for.id == mda_id:
-                return cast("TReportedAttribute", ra)
+                return ra
             elif child := ra.get_child(mda_id):
-                return cast("TReportedAttribute", child)
+                return child
         raise KeyError(mda_id)
 
     def get_value(

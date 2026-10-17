@@ -508,7 +508,7 @@ class TestStructure(CompareTests):
         assert 4 == len(obj.grouping)
 
     def test_replace_grouping(self, obj) -> None:
-        class Foo(model.ComponentList):
+        class Foo(common.ComponentList):
             pass
 
         # Cannot replace with an instance of Foo, because this does not correspond to
