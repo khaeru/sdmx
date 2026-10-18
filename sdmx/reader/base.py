@@ -79,7 +79,7 @@ class BaseReader(Converter):
         return cls.handles(pathlib.Path(f"_.{value.lower()}"), {})
 
     @classmethod
-    def handles(cls, data, kwargs):
+    def handles(cls, data, kwargs) -> bool:
         """Return :any:`True` if the Reader can convert `data` using `kwargs`.
 
         The default implementation checks for any of the following conditions:
@@ -146,7 +146,7 @@ class BaseReader(Converter):
         """
         raise NotImplementedError
 
-    def read_message(self, *args, **kwargs):
+    def read_message(self, *args, **kwargs) -> "sdmx.message.Message":
         """Deprecated. Use :meth:`.convert` instead."""
         warn(
             "Reader.read_message(); use Converter.convert() instead",

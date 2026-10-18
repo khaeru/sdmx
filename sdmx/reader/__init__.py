@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     import sdmx.message
     import sdmx.reader.base
 
-    T = TypeVar("T", bound=sdmx.reader.base.Converter)
+    T = TypeVar("T", bound=sdmx.convert.Converter)
 
 
 #: All converters. Application code **may** extend this collection with custom
@@ -49,7 +49,7 @@ def _get(data: Any, kwargs: dict | None, _classes: list[type["T"]]) -> type["T"]
 
 def get_converter(
     data: Any, kwargs: dict | None = None
-) -> type["sdmx.reader.base.Converter"]:
+) -> type["sdmx.convert.Converter"]:
     """Identify a :class:`Converter` or :class:`.Reader` for `data`.
 
     For each class in :data:`CONVERTER`, the :meth:`.Converter.handles` or

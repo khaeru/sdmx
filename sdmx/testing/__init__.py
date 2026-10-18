@@ -36,7 +36,7 @@ KEY_SPECIMENS = pytest.StashKey["data.SpecimenCollection"]()
 KEY_SOURCE = pytest.StashKey["Source"]()
 
 
-def assert_pd_equal(left, right, **kwargs):
+def assert_pd_equal(left, right, **kwargs) -> None:
     """Assert equality of two pandas objects."""
     if left is None:
         return
@@ -45,7 +45,7 @@ def assert_pd_equal(left, right, **kwargs):
         pd.DataFrame: pd.testing.assert_frame_equal,
         np.ndarray: np.testing.assert_array_equal,
     }[left.__class__]
-    method(left, right, **kwargs)
+    method(left, right, **kwargs)  # type: ignore [operator]
 
 
 def pytest_addoption(parser):

@@ -498,7 +498,7 @@ class PandasConverter(DispatchConverter):
         )
 
 
-def to_pandas(obj, **kwargs):
+def to_pandas(obj, **kwargs) -> pd.DataFrame | pd.Series:
     """Convert an SDMX `obj` to :mod:`pandas` object(s).
 
     `kwargs` can include any of the attributes of :class:`.PandasConverter`.
@@ -870,7 +870,7 @@ def convert_itemscheme(c: "PandasConverter", obj: common.ItemScheme):
     items = {}
     seen: set["Item"] = set()
 
-    def add_item(item):
+    def add_item(item) -> None:
         """Recursive helper for adding items."""
         # Track seen items
         if item in seen:

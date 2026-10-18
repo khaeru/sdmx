@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 import sdmx
 from sdmx.message import DataMessage, Header
 from sdmx.model import v21 as model
-from sdmx.model.v21 import AttributeValue, DataAttribute, DataSet, Key, Observation
+from sdmx.model.common import AttributeValue, DataAttribute, Key
+from sdmx.model.v21 import DataSet, Observation
 from sdmx.testing import assert_pd_equal
 
 if TYPE_CHECKING:

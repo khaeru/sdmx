@@ -16,7 +16,7 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
 
     __slots__ = ("__dict__", "_types")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # (key type, value type) for items
         self._types = (object, object)
 
@@ -26,7 +26,7 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
         self.__dict__ = self
 
     @classmethod
-    def with_types(cls, key_type, value_type):
+    def with_types(cls, key_type: type[KT], value_type: type[VT]) -> "DictLike[KT, VT]":
         """Construct a new DictLike with the given `key_type` and `value_type`."""
         result = cls()
         result._types = (key_type, value_type)
@@ -55,7 +55,7 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
         """Return a copy of the DictLike."""
         return self.__copy__()
 
-    def update(self, other):
+    def update(self, other) -> None:
         """Update the DictLike with elements from `other`, validating entries."""
         it = other.items() if hasattr(other, "items") else iter(other)
         super().update(map(self._validate_entry, it))

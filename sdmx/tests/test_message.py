@@ -187,7 +187,7 @@ class TestStructureMessage:
 
         with pytest.raises(TypeError):
             # TypeError is raised for classes not collected in this message
-            msg.objects(v21.DataSet)
+            msg.objects(v21.DataSet)  # type: ignore
 
 
 EXPECTED = [

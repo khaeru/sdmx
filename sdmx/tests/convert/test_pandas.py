@@ -9,7 +9,7 @@ from pandas.api.types import is_string_dtype
 from pytest import raises
 
 import sdmx
-from sdmx.convert.pandas import Attributes
+from sdmx.format.csv.common import Attributes
 from sdmx.message import DataMessage, StructureMessage
 from sdmx.model import common, v21
 from sdmx.model.v21 import TimeDimension
@@ -174,6 +174,7 @@ def test_data(
         # Treat these as equivalent.
         if expected is not None:
             assert isinstance(result.index, pd.MultiIndex)
+            assert isinstance(expected.index, pd.MultiIndex)
             expected.index = expected.index.reorder_levels(result.index.names)
         assert_pd_equal(expected, result)
     except Exception:  # pragma: no cover
@@ -224,6 +225,7 @@ def test_data_decimal() -> None:
     # Conversion occurs without error
     result = sdmx.to_pandas(ds)
     # Result is as expected
+    assert isinstance(result, pd.Series)
     pdt.assert_series_equal(exp, result)
 
 
@@ -308,7 +310,7 @@ def test_dataset_datetime(specimen) -> None:
         filter(lambda n: n != "TIME_PERIOD", [d.id for d in dsd.dimensions.components])
     )
 
-    def expected(df, axis=0, cls=pd.DatetimeIndex):
+    def expected(df, axis=0, cls=pd.DatetimeIndex) -> None:
         axes = ["index", "columns"] if axis else ["columns", "index"]
         try:
             assert getattr(df, axes[0]).names == other_dims
@@ -418,7 +420,7 @@ def test_dataset_datetime_deprecated(specimen) -> None:
         filter(lambda n: n != "TIME_PERIOD", [d.id for d in dsd.dimensions.components])
     )
 
-    def expected(df, axis=0, cls=pd.DatetimeIndex):
+    def expected(df, axis=0, cls=pd.DatetimeIndex) -> None:
         axes = ["index", "columns"] if axis else ["columns", "index"]
         try:
             assert getattr(df, axes[0]).names == other_dims

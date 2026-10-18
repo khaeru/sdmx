@@ -29,14 +29,14 @@ log = logging.getLogger(__name__)
 writer = BaseWriter("XML")
 
 
-def Element(name, *args, **kwargs):
+def Element(name, *args, **kwargs) -> "lxml.etree._Element":
     # Remove None
     kwargs = dict(filter(lambda kv: kv[1] is not None, kwargs.items()))
 
     return _element_maker(qname(name), *args, **kwargs)
 
 
-def to_xml(obj, **kwargs):
+def to_xml(obj, **kwargs) -> bytes:
     """Convert an SDMX *obj* to SDMX-ML.
 
     Parameters
@@ -154,7 +154,7 @@ def _dm(obj: message.DataMessage):
             style: RefStyle = "URN" if ds.structured_by.urn else "Ref"
             dsd_ref = reference(ds.structured_by, tag="com:Structure", style=style)
 
-            if isinstance(obj.observation_dimension, model.DimensionComponent):
+            if isinstance(obj.observation_dimension, common.DimensionComponent):
                 attrib["dimensionAtObservation"] = obj.observation_dimension.id
 
             header.append(Element("mes:Structure", **attrib))
@@ -458,7 +458,7 @@ def _contact(obj: model.Contact):
 
 
 @writer
-def _component(obj: model.Component, dsd=None, *, attrib: dict | None = None):
+def _component(obj: common.Component, dsd=None, *, attrib: dict | None = None):
     child = []
     attrib = attrib or dict()
 
@@ -470,7 +470,7 @@ def _component(obj: model.Component, dsd=None, *, attrib: dict | None = None):
         if value := getattr(obj, name, None):
             child.append(func(value, tag=tag, style="Ref"))
 
-    if isinstance(obj, model.DataAttribute) and obj.usage_status:
+    if isinstance(obj, common.DataAttribute) and obj.usage_status:
         child.append(writer.recurse(obj.related_to, dsd))
 
         # assignmentStatus attribute
@@ -484,7 +484,7 @@ def _component(obj: model.Component, dsd=None, *, attrib: dict | None = None):
 
 
 @writer
-def _cl(obj: model.ComponentList, *args):
+def _cl(obj: common.ComponentList, *args):
     return identifiable(obj, *[writer.recurse(c, *args) for c in obj.components])
 
 
@@ -549,7 +549,7 @@ def _period(obj: common.Period):
 def _ms(obj: model.MemberSelection):
     tag = {
         model.Dimension: "KeyValue",
-        model.DataAttribute: "Attribute",
+        common.DataAttribute: "Attribute",
     }[type(obj.values_for)]
 
     return Element(

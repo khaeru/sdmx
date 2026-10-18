@@ -3,12 +3,14 @@
 import logging
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import platformdirs
 import pytest
 
 if TYPE_CHECKING:
+    import pandas
+
     from sdmx.session import Session
     from sdmx.source import Source
 
@@ -24,7 +26,7 @@ DEFAULT_DIR = platformdirs.user_cache_path("sdmx").joinpath("test-data")
 #: - Data is stored in :file:`sdmx-test-data/expected/{KEY}.txt`.
 #: - Values are either argument to :func:`pandas.read_csv`; or a dict(use='other-key'),
 #:   in which case the info for other-key is used instead.
-EXPECTED = {
+EXPECTED: dict[str, dict[str, Any]] = {
     "ng-flat-xml": dict(index_col=[0, 1, 2, 3, 4, 5]),
     "ng-ts-gf-xml": dict(use="ng-flat-xml"),
     "ng-ts-xml": dict(use="ng-flat-xml"),
@@ -121,7 +123,7 @@ class SpecimenCollection:
                 marks=_marks.get(p_rel.parts, tuple()),  # Look up marks via path parts
             )
 
-    def expected_data(self, path):
+    def expected_data(self, path) -> "pandas.DataFrame | None":
         """Return the expected :func:`.to_pandas` result for the specimen `path`.
 
         Data is retrieved from :data:`.EXPECTED`.
@@ -138,7 +140,7 @@ class SpecimenCollection:
         except KeyError:
             return None
 
-        args = dict(sep=r"\s+", index_col=[0], header=[0])
+        args: dict[str, Any] = dict(sep=r"\s+", index_col=[0], header=[0])
         args.update(info)
 
         result = pd.read_csv(
@@ -213,7 +215,9 @@ def add_responses(session: "Session", file_cache_path: Path, source: "Source") -
        function. These are not stored in sdmx-test-data.
     """
 
-    from requests_cache import FileCache
+    # NB actually requests_cache.backend.filesystem.FileCache
+    # TODO Use the requests_cache API to access/construct this class
+    from requests_cache import FileCache  # type: ignore [attr-defined]
 
     import sdmx
     from sdmx.format import MediaType
@@ -225,7 +229,7 @@ def add_responses(session: "Session", file_cache_path: Path, source: "Source") -
 
     # Add to `session` cache
     session.cache.update(fc)
-    session.cache.recreate_keys()
+    session.cache.recreate_keys()  # type: ignore [no-untyped-call]
 
     content: bytes = sdmx.to_xml(StructureMessage())
     headers = {"Content-Type": repr(MediaType("generic", "xml", "2.1"))}

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 class HTTPSAdapter(requests.adapters.HTTPAdapter):
     """:class:`~requests.adapters.HTTPAdapter` with custom :class:`~.ssl.SSLContext`."""
 
-    def __init__(self, ssl_context=None, **kwargs):
+    def __init__(self, ssl_context=None, **kwargs) -> None:
         # Per https://stackoverflow.com/a/71646353/: create a context with the flag
         # OP_LEGACY_SERVER_CONNECT set
         self.ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)

@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from functools import singledispatch
+from typing import Any
 
 from sdmx.convert import Converter
 
@@ -34,7 +36,7 @@ class BaseWriter(Converter):
     >>>     return result
     """
 
-    def __init__(self, format_name):
+    def __init__(self, format_name) -> None:
         # Create the single-dispatch function
         @singledispatch
         def func(obj, *args, **kwargs):
@@ -42,7 +44,7 @@ class BaseWriter(Converter):
 
         self._dispatcher = func
 
-    def recurse(self, obj, *args, **kwargs):
+    def recurse(self, obj, *args, **kwargs) -> Any:
         """Recursively write *obj*.
 
         If there is no :meth:`register` 'ed function to write the class of `obj`, then
@@ -66,8 +68,8 @@ class BaseWriter(Converter):
 
             return func(obj, *args, **kwargs)
 
-    def __call__(self, func):
-        """Register *func* as a writer for a particular object type."""
+    def __call__(self, func) -> Callable:
+        """Decorate `func` as a writer for a particular object type."""
         dispatcher = getattr(self, "_dispatcher")
         dispatcher.register(func)
         return func

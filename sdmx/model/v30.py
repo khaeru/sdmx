@@ -139,7 +139,7 @@ GeoCodelistType = Enum("GeoCodelistType", "geographic geogrid")
 
 
 @dataclass
-class GeoCodelist(Codelist[GeoRefCode]):
+class GeoCodelist(common.ItemScheme[GeoRefCode]):
     """SDMX 3.0 GeoCodelist (abstract class)."""
 
     geo_type: ClassVar[GeoCodelistType]
@@ -293,7 +293,7 @@ class Constraint(common.BaseConstraint):
 
 
 @dataclass
-class MemberSelection(common.BaseMemberSelection):
+class MemberSelection(common.BaseMemberSelection[SelectionValue]):
     """SDMX 3.0 MemberSelection."""
 
     #: Whether Codes should retain the prefix specified in a code list extension.
@@ -307,7 +307,9 @@ class DataConstraint(Constraint):
     content: set[ConstrainableArtefact] = field(default_factory=set)
 
     data_content_keys: DataKeySet | None = None
-    data_content_region: common.CubeRegion | None = None
+
+    #: The standard indicates this list has maximum :func:`len` of 2.
+    data_content_region: list[common.CubeRegion] = field(default_factory=list)
 
     def __contains__(self, name):
         raise NotImplementedError  # pragma: no cover
@@ -383,12 +385,10 @@ class ObservationRelationship(common.AttributeRelationship):
 
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
-class DataStructureDefinition(common.BaseDataStructureDefinition):
+class DataStructureDefinition(
+    common.BaseDataStructureDefinition[DataConstraint, MemberSelection, MemberValue]
+):
     """SDMX 3.0 DataStructureDefinition (‘DSD’)."""
-
-    MemberValue = MemberValue
-    MemberSelection = MemberSelection
-    ConstraintType = DataConstraint
 
     #: A :class:`.MeasureDescriptor`.
     measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)

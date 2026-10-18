@@ -14,8 +14,7 @@ from pandas.tseries.offsets import (
     YearEnd,
 )
 
-from sdmx.convert.pandas import Attributes
-from sdmx.format.csv.common import CSVFormatOptions
+from sdmx.format.csv.common import Attributes, CSVFormatOptions
 from sdmx.model.common import Agency
 
 # See https://github.com/pandas-dev/pandas-stubs/pull/1394#issuecomment-3356958356

@@ -11,14 +11,13 @@ from sdmx.format import Version, list_media_types
 from sdmx.message import DataMessage, Header
 from sdmx.model import common
 from sdmx.model import v21 as model
-from sdmx.model.common import Concept
+from sdmx.model.common import Concept, Key
 from sdmx.model.internationalstring import InternationalString
 from sdmx.model.v21 import (
     ActionType,
     AllDimensions,
     AttributeValue,
     DataSet,
-    Key,
     KeyValue,
     Observation,
     SeriesKey,
@@ -36,7 +35,7 @@ class Reader(BaseReader):
     suffixes = [".json"]
 
     @classmethod
-    def detect(cls, content):
+    def detect(cls, content) -> bool:
         warn(
             "Reader.detect(bytes); use Converter.handles() instead",
             DeprecationWarning,
