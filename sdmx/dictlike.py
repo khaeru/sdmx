@@ -2,7 +2,7 @@ import logging
 from collections.abc import MutableMapping
 from dataclasses import fields
 from types import UnionType
-from typing import Generic, TypeVar, get_args, get_origin
+from typing import Any, Generic, TypeVar, get_args, get_origin
 
 from sdmx.compare import Comparable
 
@@ -25,6 +25,12 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
 
         # Ensures attribute access to dict items
         self.__dict__ = self
+
+    # Satisfy dataclass(), which otherwise complains when InternationalStringDescriptor
+    # is used
+    @classmethod
+    def __hash__(cls):
+        pass
 
     @classmethod
     def with_types(cls, key_type: type[KT], value_type: type[VT]) -> "DictLike[KT, VT]":
@@ -52,25 +58,7 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
         # Construct explicitly to avoid returning the parent class, dict()
         return DictLike(**self)
 
-    def copy(self):
-        """Return a copy of the DictLike."""
-        return self.__copy__()
-
-    def update(self, other) -> None:
-        """Update the DictLike with elements from `other`, validating entries."""
-        it = other.items() if hasattr(other, "items") else iter(other)
-        super().update(map(self._validate_entry, it))
-
-    def update_fast(self, other) -> None:
-        super().update(other.items() if hasattr(other, "items") else iter(other))
-
-    # Satisfy dataclass(), which otherwise complains when InternationalStringDescriptor
-    # is used
-    @classmethod
-    def __hash__(cls):
-        pass
-
-    def _validate_entry(self, kv: tuple):
+    def _validate_entry(self, kv: tuple) -> tuple[KT, VT]:
         """Validate one `key`/`value` pair."""
         key, value = kv
         try:
@@ -86,12 +74,45 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
                 raise TypeError(
                     f"Expected key type {kt.__name__}; got {type(key).__name__}"
                 )
-            elif not isinstance(value, vt):
+            elif not self.is_value_type(value):
                 raise TypeError(
                     f"Expected value type {vt.__name__}; got {type(value).__name__}"
                 )
 
         return key, value
+
+    def copy(self):
+        """Return a copy of the DictLike."""
+        return self.__copy__()
+
+    def is_value_type(self, value: Any) -> bool:
+        """Return :class:`True` if `value` is in :attr:`value_types`.
+
+        `value` may be an object instance, a class/type, or :class:`types.UnionType`
+        (for instance, from a :class:`typing.Union` annotation).
+        """
+        vt = self.value_types
+        match value:
+            case UnionType():
+                return set(get_args(value)) == set(vt)
+            case type():
+                return issubclass(value, vt)
+            case _:
+                return isinstance(value, vt)
+
+    def update(self, other) -> None:
+        """Update the DictLike with elements from `other`, validating entries."""
+        it = other.items() if hasattr(other, "items") else iter(other)
+        super().update(map(self._validate_entry, it))
+
+    def update_fast(self, other) -> None:
+        super().update(other.items() if hasattr(other, "items") else iter(other))
+
+    @property
+    def value_types(self) -> tuple[type]:
+        """A :class:`tuple` of value types for this DictLike."""
+        vt = self._types[1]
+        return get_args(vt) if isinstance(vt, UnionType) else (get_origin(vt) or vt,)
 
 
 # Utility methods for DictLike
