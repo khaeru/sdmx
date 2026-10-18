@@ -230,7 +230,7 @@ class XMLEventReader(BaseReader):
         return cast(message.Message, self.get_single(message.Message, subclass=True))
 
     @classmethod
-    def start(cls, names: str, only: bool = True):
+    def start(cls, names: str, only: bool = True) -> Callable:
         """Decorator for a function that parses "start" events for XML elements."""
 
         def decorator(func):
@@ -243,7 +243,7 @@ class XMLEventReader(BaseReader):
         return decorator
 
     @classmethod
-    def end(cls, names: str, only: bool = True):
+    def end(cls, names: str, only: bool = True) -> Callable:
         """Decorator for a function that parses "end" events for XML elements."""
 
         def decorator(func):
@@ -256,7 +256,9 @@ class XMLEventReader(BaseReader):
         return decorator
 
     @classmethod
-    def possible_reference(cls, cls_hint: type | None = None, unstash: bool = False):
+    def possible_reference(
+        cls, cls_hint: type | None = None, unstash: bool = False
+    ) -> Callable:
         """Decorator for a function where the `elem` parsed may be a Reference.
 
         Before calling the decorated function, attempt to parse the `elem` as a
@@ -297,13 +299,13 @@ class XMLEventReader(BaseReader):
 
     # Stack handling
 
-    def _clean(self):  # pragma: no cover
+    def _clean(self) -> None:  # pragma: no cover
         """Remove empty stacks."""
         for key in list(self.stack.keys()):
             if len(self.stack[key]) == 0:
                 self.stack.pop(key)
 
-    def _dump(self):  # pragma: no cover
+    def _dump(self) -> None:  # pragma: no cover
         """Print the stacks, for debugging."""
         self._clean()
         print("\n\n")
@@ -446,7 +448,7 @@ class XMLEventReader(BaseReader):
     def reference(self, elem, cls_hint=None) -> "BaseReference":
         return self.Reference(self, elem, cls_hint=cls_hint)
 
-    def resolve(self, ref):
+    def resolve(self, ref) -> Any:
         """Resolve the Reference instance `ref`, returning the referred object."""
         if not isinstance(ref, BaseReference):
             # None, already resolved, or not a Reference
@@ -607,12 +609,12 @@ def match_maintainable_urn_or_version(
     )
 
 
-def matching_class(cls):
+def matching_class(cls) -> Callable[[Any], bool]:
     """Filter condition; see :meth:`.get_single` and :meth:`.pop_all`."""
     return lambda item: isinstance(item, type) and issubclass(item, cls)
 
 
-def setdefault_attrib(target, elem, *names):
+def setdefault_attrib(target, elem, *names) -> None:
     """Update `target` from :py:`elem.attrib` for the given `names`."""
     try:
         for name in names:
@@ -627,6 +629,6 @@ def setdefault_attrib(target, elem, *names):
 TO_SNAKE_RE = re.compile("([A-Z]+)")
 
 
-def to_snake(value):
+def to_snake(value: str) -> str:
     """Convert *value* from lowerCamelCase to snake_case."""
     return TO_SNAKE_RE.sub(r"_\1", value).lower()

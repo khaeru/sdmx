@@ -9,7 +9,7 @@ data sources.
 
 import logging
 import re
-from collections.abc import Generator
+from collections.abc import Generator, Iterator
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from itertools import chain
@@ -30,7 +30,12 @@ from sdmx.model.internationalstring import (
 from sdmx.util import direct_fields
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
     import requests
+
+    MA = TypeVar("MA", bound=common.MaintainableArtefact)
+
 
 log = logging.getLogger(__name__)
 
@@ -152,7 +157,7 @@ class StructureMessage(Message):
     #: Collection of :class:`.CategoryScheme`.
     category_scheme: DLD[str, model.CategoryScheme] = DLD()
     #: Collection of :class:`.Codelist`.
-    codelist: DLD[str, model.Codelist] = DLD()
+    codelist: DLD[str, model.Codelist | v30.GeoCodelist] = DLD()
     #: Collection of :class:`.ConceptScheme`.
     concept_scheme: DLD[str, model.ConceptScheme] = DLD()
     #: Collection of :class:`.ContentConstraint`.
@@ -272,7 +277,7 @@ class StructureMessage(Message):
 
         return candidates[0] if len(candidates) == 1 else None
 
-    def iter_collections(self) -> Generator[tuple[str, type], None, None]:
+    def iter_collections(self) -> Iterator[tuple[str, type["MA"]]]:
         """Iterate over collections."""
         for f in direct_fields(self.__class__):
             yield f.name, get_args(f.type)[1]
@@ -281,21 +286,24 @@ class StructureMessage(Message):
         self, external_reference: bool = True
     ) -> Generator[common.MaintainableArtefact, None, None]:
         """Iterate over all objects in the message."""
+        cls: type | tuple[type, ...]
         for _, cls in self.iter_collections():
             for obj in self.objects(cls).values():
                 if not external_reference and obj.is_external_reference:
                     continue
                 yield obj
 
-    def objects(self, cls):
+    def objects(self, cls: type["MA"] | tuple[type["MA"], ...]) -> DictLike[str, "MA"]:
         """Get a reference to the attribute for objects of type `cls`.
 
         For example, if `cls` is the class :class:`DataStructureDefinition` (not an
         instance), return a reference to :attr:`structure`.
         """
         for f in direct_fields(self.__class__):
-            if issubclass(cls, get_args(f.type)[1]):
-                return getattr(self, f.name)
+            field = getattr(self, f.name)
+            if field.is_value_type(cls):
+                return field
+
         raise TypeError(cls)
 
     def __contains__(self, item):

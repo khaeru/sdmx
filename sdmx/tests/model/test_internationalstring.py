@@ -64,7 +64,7 @@ class TestInternationalString:
 
         # Using some other type is an error
         with pytest.raises(ValueError):
-            i.name = 123  # type: ignore [assignment]
+            i.name = 123
 
         # Same, but in the constructor
         i2: Item = Item(id="ECB", name="European Central Bank")

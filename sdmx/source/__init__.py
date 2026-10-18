@@ -15,7 +15,12 @@ from sdmx.model.v21 import DataStructureDefinition
 from sdmx.rest import Resource
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
+    import sdmx.message
     import sdmx.rest.common
+
+    TMessage = TypeVar("TMessage", bound=sdmx.message.Message)
 
 log = logging.getLogger(__name__)
 
@@ -157,7 +162,7 @@ class Source:
         """
         return response, content
 
-    def finish_message(self, message, request, **kwargs):
+    def finish_message(self, message: "TMessage", request, **kwargs) -> "TMessage":
         """Postprocess retrieved message.
 
         This hook is called by :meth:`.Client.get` after a :class:`.Message` object has
@@ -167,7 +172,7 @@ class Source:
         """
         return message
 
-    def modify_request_args(self, kwargs):
+    def modify_request_args(self, kwargs) -> None:
         """Modify arguments used to build query URL.
 
         This hook is called by :meth:`.Client.get` to modify the keyword arguments
@@ -272,7 +277,7 @@ def get_source(id: str) -> Source:
         raise
 
 
-def list_sources():
+def list_sources() -> list[str]:
     """Return a sorted list of valid source IDs.
 
     These can be used to create :class:`Client` instances.
@@ -280,7 +285,7 @@ def list_sources():
     return sorted(sources.keys())
 
 
-def load_package_sources():
+def load_package_sources() -> None:
     """Discover all sources listed in :file:`sources.json`."""
     with importlib.resources.files("sdmx").joinpath("sources.json").open("rb") as f:
         for info in json.load(f):

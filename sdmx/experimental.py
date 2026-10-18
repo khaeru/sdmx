@@ -18,13 +18,11 @@ from typing import Text
 import pandas as pd
 
 from sdmx.dictlike import DictLike
+from sdmx.model.common import AnnotableArtefact, DataAttribute, Key
 from sdmx.model.v21 import (
     ActionType,
-    AnnotableArtefact,
     AttributeValue,
-    DataAttribute,
     DataStructureDefinition,
-    Key,
     Observation,
 )
 

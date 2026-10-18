@@ -14,7 +14,8 @@ from sdmx import message
 from sdmx.format.xml import validate_xml
 from sdmx.model import common, v21
 from sdmx.model import v21 as m
-from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Key, Observation
+from sdmx.model.common import Key
+from sdmx.model.v21 import DataSet, DataStructureDefinition, Dimension, Observation
 from sdmx.writer.xml import writer as XMLWriter
 
 if TYPE_CHECKING:

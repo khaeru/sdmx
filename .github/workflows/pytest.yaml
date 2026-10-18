@@ -22,13 +22,13 @@ jobs:
         - ubuntu-latest
         - windows-latest
         python-version:
-        - "3.10"  # Earliest supported version
-        - "3.11"
+        - "3.11"  # Earliest supported version
         - "3.12"
         - "3.13"
-        - "3.14"  # Latest supported version
+        - "3.14"
+        - "3.15"  # Latest supported version
         # commented: only enable once next Python version enters RC
-        # - "3.15.0-rc.1"  # Development version
+        # - "3.16.0-rc.1"  # Development version
 
       fail-fast: false
 
@@ -68,7 +68,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - uses: astral-sh/setup-uv@v8.0.0
-      with: { python-version: "3.14" }
+      with: { python-version: "3.15" }
     - uses: actions/cache@v5
       with:
         path: ~/.cache/pre-commit

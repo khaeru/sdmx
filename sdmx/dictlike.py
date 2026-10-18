@@ -1,7 +1,8 @@
 import logging
 from collections.abc import MutableMapping
 from dataclasses import fields
-from typing import Generic, TypeVar, get_args, get_origin
+from types import UnionType
+from typing import Any, Generic, TypeVar, get_args, get_origin
 
 from sdmx.compare import Comparable
 
@@ -16,7 +17,7 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
 
     __slots__ = ("__dict__", "_types")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # (key type, value type) for items
         self._types = (object, object)
 
@@ -25,8 +26,14 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
         # Ensures attribute access to dict items
         self.__dict__ = self
 
+    # Satisfy dataclass(), which otherwise complains when InternationalStringDescriptor
+    # is used
     @classmethod
-    def with_types(cls, key_type, value_type):
+    def __hash__(cls):
+        pass
+
+    @classmethod
+    def with_types(cls, key_type: type[KT], value_type: type[VT]) -> "DictLike[KT, VT]":
         """Construct a new DictLike with the given `key_type` and `value_type`."""
         result = cls()
         result._types = (key_type, value_type)
@@ -51,25 +58,7 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
         # Construct explicitly to avoid returning the parent class, dict()
         return DictLike(**self)
 
-    def copy(self):
-        """Return a copy of the DictLike."""
-        return self.__copy__()
-
-    def update(self, other):
-        """Update the DictLike with elements from `other`, validating entries."""
-        it = other.items() if hasattr(other, "items") else iter(other)
-        super().update(map(self._validate_entry, it))
-
-    def update_fast(self, other) -> None:
-        super().update(other.items() if hasattr(other, "items") else iter(other))
-
-    # Satisfy dataclass(), which otherwise complains when InternationalStringDescriptor
-    # is used
-    @classmethod
-    def __hash__(cls):
-        pass
-
-    def _validate_entry(self, kv: tuple):
+    def _validate_entry(self, kv: tuple) -> tuple[KT, VT]:
         """Validate one `key`/`value` pair."""
         key, value = kv
         try:
@@ -77,16 +66,53 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
         except AttributeError:
             pass
         else:
+            if isinstance(vt, UnionType):
+                vt = get_args(vt)
+            else:
+                vt = get_origin(vt) or vt
             if not isinstance(key, kt):
                 raise TypeError(
                     f"Expected key type {kt.__name__}; got {type(key).__name__}"
                 )
-            elif not isinstance(value, vt):
+            elif not self.is_value_type(value):
                 raise TypeError(
                     f"Expected value type {vt.__name__}; got {type(value).__name__}"
                 )
 
         return key, value
+
+    def copy(self):
+        """Return a copy of the DictLike."""
+        return self.__copy__()
+
+    def is_value_type(self, value: Any) -> bool:
+        """Return :class:`True` if `value` is in :attr:`value_types`.
+
+        `value` may be an object instance, a class/type, or :class:`types.UnionType`
+        (for instance, from a :class:`typing.Union` annotation).
+        """
+        vt = self.value_types
+        match value:
+            case UnionType():
+                return set(get_args(value)) == set(vt)
+            case type():
+                return issubclass(value, vt)
+            case _:
+                return isinstance(value, vt)
+
+    def update(self, other) -> None:
+        """Update the DictLike with elements from `other`, validating entries."""
+        it = other.items() if hasattr(other, "items") else iter(other)
+        super().update(map(self._validate_entry, it))
+
+    def update_fast(self, other) -> None:
+        super().update(other.items() if hasattr(other, "items") else iter(other))
+
+    @property
+    def value_types(self) -> tuple[type]:
+        """A :class:`tuple` of value types for this DictLike."""
+        vt = self._types[1]
+        return get_args(vt) if isinstance(vt, UnionType) else (get_origin(vt) or vt,)
 
 
 # Utility methods for DictLike
@@ -125,10 +151,8 @@ class DictLikeDescriptor(Generic[KT, VT]):
 
         # Identify the field on `obj` that matches self._name
         self._field = next(filter(lambda f: f.name == self._name[1:], fields(obj)))
-        # The type is DictLike[KeyType, ValueType]; retrieve those arguments
-        kt, vt = get_args(self._field.type)
-        # Store. If ValueType is a generic, e.g. list[int], store only List.
-        self._types = (kt, get_origin(vt) or vt)
+        # The type is DictLike[KeyType, ValueType]; retrieve those arguments and store
+        self._types = get_args(self._field.type)
 
     def __get__(self, obj, type) -> DictLike[KT, VT]:
         if obj is None:

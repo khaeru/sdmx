@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 import sdmx.message
 from sdmx.convert import Converter
 from sdmx.format import list_media_types
-from sdmx.format.csv.v2 import FormatOptions
+from sdmx.format.csv.common import Labels
+from sdmx.format.csv.v2 import FormatOptions, Keys
 from sdmx.model import common, v21, v30
 from sdmx.reader.base import BaseReader
 
@@ -42,11 +43,10 @@ class Reader(BaseReader):
     _structure: v21.DataStructureDefinition | v30.DataStructureDefinition
     _observations: dict[tuple[str, str, str], list["common.BaseObservation"]]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.options = FormatOptions()
         self.handlers = []
         self._dataflow = None
-        self._structure = None
         self._observations = defaultdict(list)
 
     def convert(self, data, structure=None, *, delimiter: str = ",", **kwargs):
@@ -121,7 +121,9 @@ class Reader(BaseReader):
         # Columns in fixed order
 
         if match := re.fullmatch(r"STRUCTURE(\[(?P<delimiter_sub>.)\])?", header[0]):
-            self.options.delimiter_sub = match.groupdict().get("delimeter_sub", None)
+            self.options.delimiter_sub = (
+                match.groupdict().get("delimiter_sub", "") or ""
+            )
         else:
             raise ValueError(
                 f"Invalid SDMX-CSV 2.0.0: {header[0]!r} in line 1, field 1; "
@@ -136,7 +138,7 @@ class Reader(BaseReader):
 
         i = 2
         if header[i] == "STRUCTURE_NAME":
-            self.options.labels = "name"
+            self.options.labels = Labels.name
             handlers[i] = Name()
             i += 1
 
@@ -146,13 +148,15 @@ class Reader(BaseReader):
             i += 1
 
         if i < len(header) and header[i] == "SERIES_KEY":
-            self.options.key = "series"
+            self.options.keys = Keys.series
             handlers[i] = SeriesKeyHandler()
             i += 1
 
         if i < len(header) and header[i] == "OBS_KEY":
             handlers[i] = ObsKey()
-            self.options.key = {"none": "obs", "series": "both"}.get(self.options.key)
+            self.options.keys = {Keys.none: Keys.obs, Keys.series: Keys.both}[
+                self.options.keys
+            ]
             i += 1
 
         # From this point, columns may appear in any order
@@ -177,7 +181,7 @@ class Reader(BaseReader):
                 handlers[idx] = cls(c, multi="multi" in matches[0].groupdict())
                 inspected.add(idx)
 
-                if self.options.labels == "name":
+                if self.options.labels == Labels.name:
                     handlers[idx + 1] = Name()
                     inspected.add(idx + 1)
 

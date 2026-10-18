@@ -6,7 +6,14 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from collections import ChainMap
-from collections.abc import Generator, Iterable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from copy import copy
 from dataclasses import InitVar, dataclass, field, fields
 from datetime import date, datetime, timedelta
@@ -14,7 +21,19 @@ from enum import Enum
 from functools import lru_cache
 from itertools import product
 from operator import attrgetter, itemgetter
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    Self,
+    TypeVar,
+    get_args,
+    get_origin,
+)
+
+# TODO When dropping support for Python 3.11, import from types
+from typing_extensions import get_original_bases
 
 from sdmx.compare import Comparable
 from sdmx.dictlike import DictLikeDescriptor
@@ -31,7 +50,11 @@ from .version import Version
 
 if TYPE_CHECKING:
     from dataclasses import Field
-    from typing import Self
+
+    from sdmx.model import v21, v30
+
+    TKey = TypeVar("TKey", bound="Key")
+    MemberSelectionValues = list[v21.SelectionValue] | list[v30.SelectionValue]
 
 __all__ = [
     # Re-exported from other modules
@@ -192,7 +215,7 @@ class AnnotableArtefact(Comparable):
     #: feature.
     annotations: list[BaseAnnotation] = field(default_factory=list)
 
-    def get_annotation(self, **attrib):
+    def get_annotation(self, **attrib) -> BaseAnnotation:
         """Return a :class:`Annotation` with given `attrib`, e.g. 'id'.
 
         If more than one `attrib` is given, all must match a particular annotation.
@@ -299,10 +322,10 @@ class IdentifiableArtefact(AnnotableArtefact):
             return NotImplemented
         return self.id < other_id
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.id
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.id}>"
 
     @classmethod
@@ -405,6 +428,9 @@ class BaseConstraint(ABC, MaintainableArtefact):
     @abstractmethod
     def __contains__(self, name): ...
 
+
+#: Type variable: one concrete subclass of :class:`.BaseConstraint`.
+ConstraintT = TypeVar("ConstraintT", "v21.ContentConstraint", "v30.DataConstraint")
 
 # §3.4: Data Types
 
@@ -766,7 +792,7 @@ class Code(Item["Code"]):
 
 @dataclass
 @ItemScheme._preserve("repr")
-class Codelist(ItemScheme[IT]):
+class Codelist(ItemScheme[Code]):
     """SDMX Codelist."""
 
     _Item = Code
@@ -1113,7 +1139,7 @@ class DimensionDescriptor(ComponentList[DimensionComponent]):
         except TypeError:
             pass  # Some or all of the order attributes are None
 
-    def assign_order(self):
+    def assign_order(self) -> None:
         """Assign the :attr:`.DimensionComponent.order` attribute.
 
         The Dimensions in :attr:`components` are numbered, starting from 1.
@@ -1121,9 +1147,9 @@ class DimensionDescriptor(ComponentList[DimensionComponent]):
         for i, component in enumerate(self.components):
             component.order = i + 1
 
-    def order_key(self, key):
+    def order_key(self, key: "TKey") -> "TKey":
         """Return a key ordered according to the DSD."""
-        result = key.__class__()
+        result = type(key)()
         for dim in sorted(self.components, key=attrgetter("order")):
             try:
                 result.values[dim.id] = key[dim.id]
@@ -1132,7 +1158,7 @@ class DimensionDescriptor(ComponentList[DimensionComponent]):
         return result
 
     @classmethod
-    def from_key(cls, key):
+    def from_key(cls, key) -> Self:
         """Create a new DimensionDescriptor from a *key*.
 
         For each :class:`KeyValue` in the *key*:
@@ -1215,9 +1241,22 @@ class AttributeDescriptor(ComponentList[DataAttribute]):
     _Component = DataAttribute
 
 
+#: Type variable: one concrete subclass of :class:`.BaseMemberSelection`.
+MemberSelectionT = TypeVar(
+    "MemberSelectionT", "v21.MemberSelection", "v30.MemberSelection"
+)
+
+#: Type variable: one concrete subclass of :class:`.BaseMemberSelection`.
+MemberValueT = TypeVar("MemberValueT", "v21.MemberValue", "v30.MemberValue")
+
+
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
-class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
+class BaseDataStructureDefinition(
+    Structure,
+    ConstrainableArtefact,
+    Generic[ConstraintT, MemberSelectionT, MemberValueT],
+):
     """Common features of SDMX 2.1 and 3.0 DataStructureDefinition (**DSD**)."""
 
     #: A :class:`AttributeDescriptor` that describes the attributes of the data
@@ -1231,11 +1270,6 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
     group_dimensions: DictLikeDescriptor[str, GroupDimensionDescriptor] = (
         DictLikeDescriptor()
     )
-
-    # Specific types to be used in concrete subclasses
-    MemberValue: ClassVar[type["BaseMemberValue"]]
-    MemberSelection: ClassVar[type["BaseMemberSelection"]]
-    ConstraintType: ClassVar[type[BaseConstraint]]
 
     # Convenience methods
     def iter_keys(
@@ -1261,7 +1295,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         # Utility to return an immutable function that produces KeyValues. The
         # arguments are frozen so these can be set using loop variables and stored in a
         # map() object that isn't modified on future loops
-        def make_factory(id=None, value_for=None):
+        def make_factory(id=None, value_for=None) -> Callable[[str], KeyValue]:
             return lambda value: KeyValue(id=id, value=value, value_for=value_for)
 
         # List of iterables of (dim.id, KeyValues) along each dimension
@@ -1297,7 +1331,7 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         # TODO improve to work with DataKeySet
         yield from filter(_constraint.__contains__, map(Key, product(*all_kvs)))
 
-    def make_constraint(self, key):
+    def make_constraint(self, key) -> ConstraintT:
         """Return a constraint for `key`.
 
         `key` is a :class:`dict` wherein:
@@ -1326,24 +1360,33 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
         ValueError
             if `key` contains a dimension IDs not appearing in :attr:`dimensions`.
         """
+        # Retrieve the subclass' constraint type by type introspection
+        args = get_args(get_original_bases(type(self))[0])
+        ConstraintType: type[ConstraintT] = args[0]
+        # Same for the MemberSelection and MemberValue types
+        # TODO Retrieve this via ConstraintType
+        MemberSelection: type[MemberSelectionT] = args[1]
+        MemberValue: type[MemberValueT] = args[2]
+
         # Make a copy to avoid pop()'ing off the object in the calling scope
         key = key.copy()
 
         cr = CubeRegion()
         for dim in self.dimensions:
-            mvs = set()
-            try:
-                values = key.pop(dim.id)
-            except KeyError:
+            if dim.id not in key:
                 continue
 
-            values = values.split("+") if isinstance(values, str) else values
-            for value in values:
-                # TODO validate values
-                mvs.add(self.MemberValue(value=value))
+            mvs = set()
 
-            cr.member[dim] = self.MemberSelection(
-                included=True, values_for=dim, values=mvs
+            values = key.pop(dim.id)
+            for value in values.split("+") if isinstance(values, str) else values:
+                # TODO validate values
+                mvs.add(MemberValue(value=value))
+
+            cr.member[dim] = MemberSelection(
+                included=True,
+                values_for=dim,
+                values=list(mvs),  # type: ignore [arg-type]
             )
 
         if len(key):
@@ -1351,13 +1394,13 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
                 "Dimensions {!r} not in {!r}".format(list(key.keys()), self.dimensions)
             )
 
-        return self.ConstraintType(
+        return ConstraintType(
             data_content_region=[cr],
             role=ConstraintRole(role=ConstraintRoleType.allowable),
         )
 
     @classmethod
-    def from_keys(cls, keys):
+    def from_keys(cls, keys) -> Self:
         """Return a new DSD given some *keys*.
 
         The DSD's :attr:`dimensions` refers to a set of new :class:`Concepts <Concept>`
@@ -1374,8 +1417,10 @@ class BaseDataStructureDefinition(Structure, ConstrainableArtefact):
 
         for k in iter_keys:
             for i, (id, kv) in enumerate(k.values.items()):
+                dim = dd[i]
+                assert dim.local_representation and dim.local_representation.enumerated
                 try:
-                    dd[i].local_representation.enumerated.append(Code(id=str(kv.value)))
+                    dim.local_representation.enumerated.append(Code(id=str(kv.value)))
                 except ValueError:
                     pass  # Item already exists
 
@@ -1755,7 +1800,7 @@ class Key:
         result.values.update_fast(self.values)
         return result
 
-    def copy(self, arg=None, **kwargs):
+    def copy(self, arg=None, **kwargs) -> Self:
         result = copy(self)
         for id, value in kwargs.items():
             result[id] = value
@@ -1808,12 +1853,12 @@ class Key:
             self.__class__.__name__, ", ".join(map(str, self.values.values()))
         )
 
-    def order(self, value=None):
+    def order(self, value=None) -> Self:
         if value is None:
             value = self
-        try:
+        if self.described_by:
             return self.described_by.order_key(value)
-        except AttributeError:
+        else:
             return value
 
     def get_values(self):
@@ -2113,6 +2158,14 @@ class BaseSelectionValue:
     """ABC for SDMX 2.1 and 3.0 SelectionValue."""
 
 
+#: Type variable: one concrete subclass of :class:`.BaseSelectionValue`.
+SelectionValueT = TypeVar(
+    "SelectionValueT",
+    "v21.SelectionValue",
+    "v30.SelectionValue",
+)
+
+
 @dataclass
 class BaseMemberValue:
     """Common features of SDMX 2.1 and 3.0 MemberValue."""
@@ -2178,16 +2231,17 @@ class BaseDataKeySet:
 
 
 @dataclass
-class BaseMemberSelection:
+class BaseMemberSelection(Generic[SelectionValueT]):
     """Common features of SDMX 2.1 and 3.0 MemberSelection."""
 
     #:
     values_for: Component
     #:
     included: bool = True
+
     #: Value(s) included in the selection. Note that the name of this attribute is not
     #: stated in the IM, so 'values' is chosen for the implementation in this package.
-    values: list[BaseSelectionValue] = field(default_factory=list)
+    values: list[SelectionValueT] = field(default_factory=list)
 
     def __contains__(self, value):
         """Compare KeyValue to MemberValue."""
@@ -2248,7 +2302,7 @@ class CubeRegion:
         # Return the correct sense
         return result is self.included
 
-    def to_query_string(self, structure):
+    def to_query_string(self, structure) -> str:
         all_values = []
 
         for dim in structure.dimensions:

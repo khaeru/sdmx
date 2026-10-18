@@ -20,15 +20,15 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Information Analysis",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
   "lxml >= 3.6",
   "packaging >= 26",
@@ -36,6 +36,7 @@ dependencies = [
   "platformdirs >= 4.1",
   "python-dateutil",
   "requests >= 2.7",
+  "typing_extensions",
 ]
 
 [project.optional-dependencies]
@@ -83,6 +84,22 @@ files = [
   "doc",
   "sdmx",
 ]
+# Causes >1249 errors as of v2.27.0
+# strict = true
+# The following are implied by strict in mypy 2.4.0
+# check_untyped_defs = true           # 179
+# disallow_any_generics = true        # 138
+# disallow_incomplete_defs = true     # 419
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+# disallow_untyped_defs = true        # 894
+extra_checks = true
+no_implicit_reexport = true
+strict_equality = true
+warn_redundant_casts = true
+# warn_return_any = true              #  41
+warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 # Packages/modules for which no type hints are available.

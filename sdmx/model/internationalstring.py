@@ -75,7 +75,7 @@ class InternationalString:
             case _:
                 try:
                     # Iterable of 2-tuples
-                    value = {  # type: ignore [misc]
+                    value = {  # type: ignore [str-unpack]
                         locale: label for (locale, label) in value
                     }
                 except Exception:

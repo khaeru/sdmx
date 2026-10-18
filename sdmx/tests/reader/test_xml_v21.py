@@ -12,11 +12,12 @@ from lxml import etree
 import sdmx
 import sdmx.message
 from sdmx import urn
+from sdmx.exceptions import XMLParseError
 from sdmx.format.xml import validate_xml
 from sdmx.format.xml.v21 import qname
 from sdmx.model import common, v21
 from sdmx.model.v21 import ContentConstraint, Facet, FacetType, FacetValueType
-from sdmx.reader.xml.v21 import Reader, XMLParseError
+from sdmx.reader.xml.v21 import Reader
 from sdmx.testing.data import SpecimenCollection
 from sdmx.writer.xml import Element as E
 

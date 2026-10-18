@@ -4,10 +4,9 @@ from warnings import warn
 
 from lxml import etree
 
+from sdmx.exceptions import XMLParseError
 from sdmx.format import list_media_types
 from sdmx.reader.base import BaseReader
-
-from .v21 import XMLParseError
 
 __all__ = ["XMLParseError"]
 
@@ -20,7 +19,7 @@ class Reader(BaseReader):
     suffixes = [".xml"]
 
     @classmethod
-    def detect(cls, content):
+    def detect(cls, content) -> bool:
         warn(
             "Reader.detect(bytes); use Converter.handles() instead",
             DeprecationWarning,

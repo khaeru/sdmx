@@ -8,9 +8,8 @@ import pytest
 
 import sdmx
 from sdmx import message
-from sdmx.convert.pandas import Attributes
 from sdmx.format import csv
-from sdmx.format.csv.common import CSVFormatOptions, Labels
+from sdmx.format.csv.common import Attributes, CSVFormatOptions, Labels
 from sdmx.format.csv.v1 import FormatOptions as V1FormatOptions
 from sdmx.format.csv.v2 import FormatOptions as V2FormatOptions
 from sdmx.format.csv.v2 import Keys

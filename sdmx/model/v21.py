@@ -173,7 +173,7 @@ class Constraint(common.BaseConstraint):
         return value in self.data_content_keys
 
 
-class MemberSelection(common.BaseMemberSelection):
+class MemberSelection(common.BaseMemberSelection[SelectionValue]):
     """SDMX 2.1 MemberSelection."""
 
 
@@ -192,7 +192,7 @@ class ContentConstraint(Constraint, common.BaseContentConstraint):
         else:
             raise NotImplementedError("ContentConstraint does not contain a CubeRegion")
 
-    def to_query_string(self, structure):
+    def to_query_string(self, structure) -> str:
         cr_count = len(self.data_content_region)
         try:
             if cr_count > 1:
@@ -269,12 +269,10 @@ class ReportingYearStartDay(DataAttribute):
 
 @dataclass(repr=False)
 @IdentifiableArtefact._preserve("hash")
-class DataStructureDefinition(common.BaseDataStructureDefinition):
+class DataStructureDefinition(
+    common.BaseDataStructureDefinition[ContentConstraint, MemberSelection, MemberValue]
+):
     """SDMX 2.1 DataStructureDefinition (‘DSD’)."""
-
-    MemberValue = MemberValue
-    MemberSelection = MemberSelection
-    ConstraintType = ContentConstraint
 
     #: A :class:`.MeasureDescriptor`.
     measures: MeasureDescriptor = field(default_factory=MeasureDescriptor)
@@ -548,9 +546,9 @@ class MetadataReport(common.AnnotableArtefact):
         )
         for ra in self.metadata:
             if ra.value_for.id == mda_id:
-                return cast("TReportedAttribute", ra)
+                return ra
             elif child := ra.get_child(mda_id):
-                return cast("TReportedAttribute", child)
+                return child
         raise KeyError(mda_id)
 
     def get_value(

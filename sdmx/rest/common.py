@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from copy import copy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 from urllib.parse import urlsplit, urlunsplit
 
 if TYPE_CHECKING:
@@ -124,7 +124,7 @@ class Resource(str, Enum):
     vtlmappingscheme = "vtlmappingscheme"
 
     @classmethod
-    def from_obj(cls, obj):
+    def from_obj(cls, obj) -> Self:
         """Return an enumeration value based on the class of `obj`."""
         value = obj.__class__.__name__
         return cls[VALUE.get(value, value)]
@@ -138,7 +138,7 @@ class Resource(str, Enum):
         return CLASS_NAME.get(value.value, value.value)
 
     @classmethod
-    def describe(cls):
+    def describe(cls) -> str:
         return "{" + " ".join(v.name for v in cls._member_map_.values()) + "}"
 
 

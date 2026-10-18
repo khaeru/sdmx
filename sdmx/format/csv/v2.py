@@ -37,7 +37,7 @@ class FormatOptions(CSVFormatOptions):
     keys: Keys = Keys.none
 
     #: “Custom columns” detected by :meth:`.Reader.inspect_header`.
-    custom_columns: list[bytes] = field(default_factory=list)
+    custom_columns: list[str] = field(default_factory=list)
 
     #: CSV field delimiter.
     delimiter: str = ","

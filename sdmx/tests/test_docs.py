@@ -52,7 +52,7 @@ def test_example() -> None:
 
     data = sdmx.to_pandas(dm).xs("Y15-74", level="age", drop_level=False)
 
-    data.loc[("A", "Y15-74", "PC_ACT", "T")]
+    data.loc[("A", "Y15-74", "PC_ACT", "T")]  # type: ignore [index]
 
     # Further checks per https://github.com/dr-leo/pandaSDMX/issues/157
 
@@ -111,7 +111,7 @@ def test_doc_index1() -> None:
     # StructureMessage is converted to DictLike
     assert isinstance(s, DictLike)
     # "codelist" key retrieves a second-level DictLike
-    assert isinstance(s.codelist, DictLike)  # type: ignore [attr-defined]
+    assert isinstance(s.codelist, DictLike)
 
     # Same effect
     # NB At some times (e.g. between 2024-03-15 and 2024-06-18) this query retrieves

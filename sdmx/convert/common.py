@@ -46,7 +46,8 @@ class DispatchConverter(Converter):
 
     _registry: dict[type, Callable]
 
-    def convert(self, obj, **kwargs):
+    def convert(self, data, **kwargs) -> Any:
+        obj = data
         # Use either type(obj) or a parent type to retrieve a conversion function
         for i, cls in enumerate(type(obj).mro()):
             try:

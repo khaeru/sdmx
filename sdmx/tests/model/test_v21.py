@@ -10,6 +10,10 @@ from sdmx.model import v21 as model
 from sdmx.model.common import (
     AttributeValue,
     Code,
+    Component,
+    ComponentList,
+    ConstraintRole,
+    DataAttribute,
     Dimension,
     DimensionDescriptor,
     Key,
@@ -19,15 +23,11 @@ from sdmx.model.v21 import (
     Annotation,
     AttributeDescriptor,
     Codelist,
-    Component,
-    ComponentList,
     ComponentValue,
     Constraint,
-    ConstraintRole,
     ConstraintRoleType,
     ContentConstraint,
     CubeRegion,
-    DataAttribute,
     DataflowDefinition,
     DataKey,
     DataKeySet,
@@ -434,7 +434,7 @@ class TestDataStructureDefinition:
         keys4 = list(dfd.iter_keys(constraint=cc0))
         assert 1 * 2 * 1 == len(keys4)
 
-    def test_make_constraint(self, dsd) -> None:
+    def test_make_constraint(self, dsd: "DataStructureDefinition") -> None:
         # Create a ContentConstraint (containing a single CubeRegion(included=True))
         with pytest.raises(ValueError):
             dsd.make_constraint(dict(foo="1", bar="2+5", qux="7"))

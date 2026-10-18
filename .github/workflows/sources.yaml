@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  python-version: 3.14
+  python-version: "3.15"
 
 jobs:
   source:

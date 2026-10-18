@@ -153,21 +153,13 @@ def compare_dataclass(left, right, opts: Options, context: str) -> bool:
 # Built-in types
 
 
-# TODO When dropping support for Python <=3.10, change to '@compare.register'
-@compare.register(int)
-@compare.register(str)
-@compare.register(datetime.date)
+@compare.register
 def _eq(left: int | str | datetime.date, right, opts, context=""):
     """Built-in types that must compare equal."""
     return left == right or (not opts.strict and right is None)
 
 
-# TODO When dropping support for Python <=3.10, change to '@compare.register'
-@compare.register(type(None))
-@compare.register(bool)
-@compare.register(float)
-@compare.register(type)
-@compare.register(enum.Enum)
+@compare.register
 def _is(left: None | bool | float | type | enum.Enum, right, opts, context):
     """Built-in types that must compare identical."""
     return left is right or (not opts.strict and right is None or left is None)
@@ -200,9 +192,7 @@ def _(left: dict, right, opts, context=""):
     return result
 
 
-# TODO When dropping support for Python <=3.10, change to '@compare.register'
-@compare.register(list)
-@compare.register(set)
+@compare.register
 def _(left: list | set, right, opts, context=""):
     if len(left) != len(right):
         opts.log(f"Mismatched length: {len(left)} != {len(right)}")

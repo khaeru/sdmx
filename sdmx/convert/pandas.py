@@ -498,7 +498,7 @@ class PandasConverter(DispatchConverter):
         )
 
 
-def to_pandas(obj, **kwargs):
+def to_pandas(obj, **kwargs) -> pd.DataFrame | pd.Series:
     """Convert an SDMX `obj` to :mod:`pandas` object(s).
 
     `kwargs` can include any of the attributes of :class:`.PandasConverter`.
@@ -737,7 +737,11 @@ def _apply_dtype(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
 
 def _convert_datetime(df: "pd.DataFrame", c: "PandasConverter") -> "pd.DataFrame":
     """Possibly convert a column to a pandas datetime dtype."""
-    if c.datetime_dimension is c.datetime_freq is None and c.datetime_axis == -1:
+    if (
+        c.datetime_dimension is None
+        and c.datetime_freq is None
+        and c.datetime_axis == -1
+    ):
         return df
 
     # Identify a time dimension
@@ -866,7 +870,7 @@ def convert_itemscheme(c: "PandasConverter", obj: common.ItemScheme):
     items = {}
     seen: set["Item"] = set()
 
-    def add_item(item):
+    def add_item(item) -> None:
         """Recursive helper for adding items."""
         # Track seen items
         if item in seen:

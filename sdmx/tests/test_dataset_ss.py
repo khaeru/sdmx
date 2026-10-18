@@ -7,7 +7,7 @@ import pytest
 import sdmx
 from sdmx import message
 from sdmx.model import v21 as model
-from sdmx.model.v21 import Key
+from sdmx.model.common import Key
 from sdmx.testing import MessageTest
 
 

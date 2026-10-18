@@ -3,13 +3,14 @@ import re
 import pytest
 
 from sdmx import to_sdmx
+from sdmx.convert import Converter
 from sdmx.reader import (
     detect_content_reader,
     get_reader_for_media_type,
     get_reader_for_path,
     json,
 )
-from sdmx.reader.base import BaseReader, Converter
+from sdmx.reader.base import BaseReader
 
 
 class TestConverter:
