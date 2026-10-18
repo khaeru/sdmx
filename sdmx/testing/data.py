@@ -10,6 +10,7 @@ import pytest
 
 if TYPE_CHECKING:
     import pandas
+    from _pytest.mark.structures import ParameterSet
 
     from sdmx.session import Session
     from sdmx.source import Source
@@ -103,7 +104,7 @@ class SpecimenCollection:
         format: str | None = None,
         kind: str | None = None,
         marks: dict | None = None,
-    ):
+    ) -> list["ParameterSet"]:
         """Generate :func:`pytest.param` from specimens.
 
         One :func:`~.pytest.param` is generated for each specimen that matches the
@@ -113,15 +114,19 @@ class SpecimenCollection:
         # Transform `marks` into a platform-independent mapping from path parts
         _marks = {PurePosixPath(k).parts: v for k, v in (marks or {}).items()}
 
+        result = []
         for path, f, k in self.specimens:
             if (format and format != f) or (kind and kind != k):
                 continue
             p_rel = path.relative_to(self.base_path)
-            yield pytest.param(
-                path,
-                id=str(p_rel),  # String ID for this specimen
-                marks=_marks.get(p_rel.parts, tuple()),  # Look up marks via path parts
+
+            # - Use a string ID for this specimen.
+            # - Look up marks via path parts.
+            result.append(
+                pytest.param(path, id=str(p_rel), marks=_marks.get(p_rel.parts, ()))
             )
+
+        return result
 
     def expected_data(self, path) -> "pandas.DataFrame | None":
         """Return the expected :func:`.to_pandas` result for the specimen `path`.
