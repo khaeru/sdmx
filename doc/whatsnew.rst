@@ -3,8 +3,11 @@
 What's new?
 ***********
 
-Next release
-============
+.. Next release
+.. ============
+
+v2.28.0 (2026-10-18)
+====================
 
 - Add :file:`CONTRIBUTING.md`, including a Code of Conduct for contributors (:pull:`292`).
 - :mod:`sdmx` supports Python 3.15, `released 2026-10-09 <https://www.python.org/downloads/release/python-3150/>`_ (:pull:`293`).
