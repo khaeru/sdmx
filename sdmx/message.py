@@ -157,7 +157,7 @@ class StructureMessage(Message):
     #: Collection of :class:`.CategoryScheme`.
     category_scheme: DLD[str, model.CategoryScheme] = DLD()
     #: Collection of :class:`.Codelist`.
-    codelist: DLD[str, model.Codelist] = DLD()
+    codelist: DLD[str, model.Codelist | v30.GeoCodelist] = DLD()
     #: Collection of :class:`.ConceptScheme`.
     concept_scheme: DLD[str, model.ConceptScheme] = DLD()
     #: Collection of :class:`.ContentConstraint`.
