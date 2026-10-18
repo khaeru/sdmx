@@ -1,6 +1,7 @@
 import logging
 from collections.abc import MutableMapping
 from dataclasses import fields
+from types import UnionType
 from typing import Generic, TypeVar, get_args, get_origin
 
 from sdmx.compare import Comparable
@@ -77,6 +78,10 @@ class DictLike(dict, MutableMapping[KT, VT], Comparable):
         except AttributeError:
             pass
         else:
+            if isinstance(vt, UnionType):
+                vt = get_args(vt)
+            else:
+                vt = get_origin(vt) or vt
             if not isinstance(key, kt):
                 raise TypeError(
                     f"Expected key type {kt.__name__}; got {type(key).__name__}"
@@ -125,10 +130,8 @@ class DictLikeDescriptor(Generic[KT, VT]):
 
         # Identify the field on `obj` that matches self._name
         self._field = next(filter(lambda f: f.name == self._name[1:], fields(obj)))
-        # The type is DictLike[KeyType, ValueType]; retrieve those arguments
-        kt, vt = get_args(self._field.type)
-        # Store. If ValueType is a generic, e.g. list[int], store only List.
-        self._types = (kt, get_origin(vt) or vt)
+        # The type is DictLike[KeyType, ValueType]; retrieve those arguments and store
+        self._types = get_args(self._field.type)
 
     def __get__(self, obj, type) -> DictLike[KT, VT]:
         if obj is None:
