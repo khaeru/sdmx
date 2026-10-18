@@ -3,8 +3,10 @@
 What's new?
 ***********
 
-.. Next release
-.. ============
+Next release
+============
+
+- Add :ref:`LU1` data source: Luxembourg STATEC (LUSTAT) (:pull:`283`).
 
 v2.28.0 (2026-10-18)
 ====================

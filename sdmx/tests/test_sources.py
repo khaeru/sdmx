@@ -577,6 +577,23 @@ class TestLSD(DataSourceTest):
     }
 
 
+class TestLU1(DataSourceTest):
+    """Luxembourg STATEC (LUSTAT)."""
+
+    source_id = "LU1"
+
+    endpoint_args = {
+        "data": dict(resource_id="DF_A1100", params=dict(lastNObservations=1)),
+    }
+
+    xfail = {
+        "metadata": NotImplementedError,  # Internal to sdmx1
+        "organisationscheme": HTTPError,  # 400 Bad Request
+        "registration": ValueError,  # Internal to sdmx1
+        "structure": NotImplementedError,  # 501 Not Implemented
+    }
+
+
 class TestNB(DataSourceTest):
     """Norges Bank.
 
